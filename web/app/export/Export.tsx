@@ -110,7 +110,7 @@ export function Export() {
                     <td>{SEVERITY_LABELS[f.schwere] ?? f.schwere}</td>
                     <td><b>{f.titel}</b><br />{f.begruendung}{istMock(f) && <span className={styles.mock}> Demonstration</span>}</td>
                     <td>{f.vorschlag}</td>
-                    <td>{f.quelle === "regel" ? "Rule" : "Model"} · {f.regel_id}</td>
+                    <td className={styles.regel}>{f.quelle === "regel" ? "Rule" : "Model"}<br />{f.regel_id.replaceAll("_", "_\u200b")}</td>
                     <td className={styles.rechts}>{f.euro_wirkung === null ? "unknown" : euro.format(f.euro_wirkung)}</td>
                   </tr>
                 ))}

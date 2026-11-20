@@ -49,6 +49,7 @@
 .tabelle th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 8px 10px; border-bottom: .5px solid var(--line); white-space: nowrap; }
 .tabelle td { padding: 8px 10px; border-bottom: .5px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
 .oz { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; white-space: nowrap; }
+.tabelle .regel { overflow-wrap: normal; word-break: normal; font-size: 12px; }
 .rechts { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .mock { font-size: 12px; font-weight: 600; color: var(--warn); }
 
