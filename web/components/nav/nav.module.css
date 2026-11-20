@@ -1,0 +1,26 @@
+/* Slim global nav in the Liquid Glass style of lv-upload.module.css. Not sticky: pages keep their own sticky headers. */
+.leiste {
+  max-width: 1080px; margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+}
+.liste {
+  list-style: none; margin: 0 auto; padding: 4px; width: fit-content; max-width: 100%;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; border-radius: 22px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-light), 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .liste { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+.link {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 18px;
+  font-size: 15px; font-weight: 500; color: var(--muted); text-decoration: none; white-space: nowrap;
+}
+.link:hover { color: var(--ink); background: var(--fill); }
+.link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.link[aria-current="page"] { color: var(--ink); font-weight: 600; background: var(--fill-strong); }
+@media (max-width: 400px) { .link { padding: 0 10px; font-size: 14px; } }
+@media print { .leiste { display: none; } }
