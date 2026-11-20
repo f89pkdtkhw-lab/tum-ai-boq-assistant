@@ -1,5 +1,6 @@
 // Export helpers for /export (#15): read a stored Pruefbericht and write it as XLSX without dependencies.
 import type { Finding, Pruefbericht } from "@/lib/api";
+import { bewertungVon, statusName, type Bewertungen } from "./bewertung";
 import { bieterfragen } from "./bieterfragen";
 import { mengenSummen } from "./mengen";
 
@@ -26,16 +27,17 @@ const ITEM_TYPE_LABELS = { normal: "Standard item", bedarf: "Optional item", alt
 
 type Zelle = string | number | null;
 
-export function tabellen(bericht: Pruefbericht): { name: string; zeilen: Zelle[][] }[] {
+export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}): { name: string; zeilen: Zelle[][] }[] {
   const positionen: Zelle[][] = [
     ["OZ", "Short description", "Detailed description", "Quantity", "Unit", "Unit price (EUR)", "Total price (EUR)", "Type", "Title"],
     ...bericht.lv.positionen.map((p) => [p.oz, p.kurztext, p.langtext, p.menge, p.einheit, p.ep, p.gp, ITEM_TYPE_LABELS[p.typ], p.titel_pfad.join(" › ")]),
   ];
   const befunde: Zelle[][] = [
-    ["OZ", "Category", "Severity", "Title", "Explanation", "Suggestion", "Source", "Rule", "Euro impact (EUR)", "Note"],
+    ["OZ", "Category", "Severity", "Title", "Explanation", "Suggestion", "Source", "Rule", "Euro impact (EUR)", "Note", "Review status", "Comment"],
     ...bericht.findings.map((f) => [
       f.oz, CATEGORY_LABELS[f.kategorie], SEVERITY_LABELS[f.schwere], f.titel, f.begruendung, f.vorschlag, f.quelle === "regel" ? "Rule" : "Model", f.regel_id, f.euro_wirkung,
       istMock(f) ? "Demonstration (mock), not a domain finding" : "",
+      statusName(bewertungVon(bewertungen, f.id).status), bewertungVon(bewertungen, f.id).kommentar,
     ]),
   ];
   const m = mengenSummen(bericht.lv.positionen);
@@ -83,8 +85,8 @@ function blatt(zeilen: Zelle[][]) {
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetData>${rows}</sheetData></worksheet>`;
 }
 
-export function xlsxDateien(bericht: Pruefbericht): Record<string, string> {
-  const blaetter = tabellen(bericht);
+export function xlsxDateien(bericht: Pruefbericht, bewertungen: Bewertungen = {}): Record<string, string> {
+  const blaetter = tabellen(bericht, bewertungen);
   const dateien: Record<string, string> = {
     "[Content_Types].xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${blaetter.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`,
@@ -143,7 +145,7 @@ export function zip(dateien: Record<string, string>): Uint8Array {
   return out;
 }
 
-export const xlsx = (bericht: Pruefbericht) => zip(xlsxDateien(bericht));
+export const xlsx = (bericht: Pruefbericht, bewertungen: Bewertungen = {}) => zip(xlsxDateien(bericht, bewertungen));
 
 export function dateiname(name: string, endung: string) {
   const basis = name.normalize("NFKD").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();

@@ -47,7 +47,7 @@
 .hinweis { color: var(--pb-muted); margin: 0 0 12px; }
 .unbekannt { color: var(--pb-muted); font-style: italic; }
 
-.kennzahlen { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.kennzahlen { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 0; }
 .kachel { background: var(--pb-card); border: 1px solid var(--pb-line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
 .kachel dt { color: var(--pb-muted); font-size: 13px; font-weight: 600; }
 .kachel dd { margin: 2px 0 0; font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }

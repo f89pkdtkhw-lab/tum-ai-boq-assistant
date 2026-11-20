@@ -1,9 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Finding, Position, Pruefbericht as PruefberichtDaten } from "@/lib/api";
 import { mengenSchluessel } from "@/lib/mengen";
 import { filtereFindings, normalisiere, positionTrifft } from "@/lib/suche";
+import {
+  anzahlGeprueft, bewertungVon, ladeBewertungen, setze, speichereBewertungen, STATUS,
+  type Bewertung as BewertungDaten, type Bewertungen, type Status,
+} from "@/lib/bewertung";
+import { Bewertung, MitStatus } from "./bewertung/Bewertung";
 import { Mengen } from "./mengen/Mengen";
 import { Bieterfragen } from "./bieterfragen/Bieterfragen";
 import { Suche } from "./suche/Suche";
@@ -89,6 +94,9 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
   const [exportFehler, setExportFehler] = useState("");
   const [einheit, setEinheit] = useState<string | null>(null);
   const [suche, setSuche] = useState("");
+  const [status, setStatus] = useState<Status | null>(null);
+  const [bewertungen, setBewertungen] = useState<Bewertungen>({});
+  const [speicherFehler, setSpeicherFehler] = useState(false);
   const detailRef = useRef<HTMLElement>(null);
   const positionenRef = useRef<HTMLDetailsElement>(null);
 
@@ -116,9 +124,20 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
     [findings],
   );
   const gefiltert = useMemo(
-    () => filtereFindings(sortiert, lv.positionen, { suche, kategorie, schwere }),
-    [sortiert, lv.positionen, suche, kategorie, schwere],
+    () => filtereFindings(sortiert, lv.positionen, { suche, kategorie, schwere })
+      .filter((f) => status === null || bewertungVon(bewertungen, f.id).status === status),
+    [sortiert, lv.positionen, suche, kategorie, schwere, status, bewertungen],
   );
+
+  // Load after mount: localStorage does not exist during server rendering.
+  useEffect(() => { setBewertungen(ladeBewertungen(lv.name, findings)); }, [lv.name, findings]);
+
+  function bewerte(id: string, aenderung: Partial<BewertungDaten>) {
+    const neu = setze(bewertungen, id, aenderung);
+    setBewertungen(neu);
+    setSpeicherFehler(!speichereBewertungen(lv.name, neu));
+  }
+  const geprueft = anzahlGeprueft(findings, bewertungen);
 
   const mockAnzahl = findings.filter(istMock).length;
   const echteAnzahl = findings.length - mockAnzahl;
@@ -164,7 +183,7 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
   }
 
   const sucheAktiv = normalisiere(suche) !== "";
-  const filterAktiv = kategorie !== null || schwere !== null || sucheAktiv;
+  const filterAktiv = kategorie !== null || schwere !== null || status !== null || sucheAktiv;
   const sichtbarePositionen = lv.positionen.filter(
     (p) => (einheit === null || mengenSchluessel(p) === einheit) && positionTrifft(p, suche),
   );
@@ -217,6 +236,11 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
           <dd>{zahl.format(kennzahlen.kritisch)}</dd>
         </div>
         <div className={styles.kachel}>
+          <dt>Reviewed</dt>
+          <dd>{zahl.format(geprueft)} <small className={styles.anzahl}>of {zahl.format(findings.length)}</small></dd>
+          <small>{findings.length === 0 ? "nothing to review" : geprueft === findings.length ? "all findings reviewed" : `${findings.length - geprueft} still open`}</small>
+        </div>
+        <div className={styles.kachel}>
           <dt>Evidenced euro impact</dt>
           <dd>{bekannteEuro.length > 0 ? euro.format(euroSumme) : <Unbekannt />}</dd>
           <small>
@@ -259,6 +283,15 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
             </FilterKnopf>
           ))}
         </fieldset>
+        <fieldset className={styles.filterGruppe}>
+          <legend>Review</legend>
+          <FilterKnopf aktiv={status === null} onClick={() => setStatus(null)}>All</FilterKnopf>
+          {STATUS.map(({ wert, name }) => (
+            <FilterKnopf key={wert} aktiv={status === wert} onClick={() => setStatus(wert)}>
+              {name} <span className={styles.anzahl}>{findings.filter((f) => bewertungVon(bewertungen, f.id).status === wert).length}</span>
+            </FilterKnopf>
+          ))}
+        </fieldset>
       </div>
 
       <div className={styles.layout}>
@@ -275,7 +308,7 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
             <div className={styles.leer}>
               <p>No findings match this filter.</p>
               {filterAktiv && (
-                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setSuche(""); }}>
+                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setStatus(null); setSuche(""); }}>
                   Reset filters
                 </button>
               )}
@@ -284,12 +317,15 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
             <ul className={styles.findings}>
               {gefiltert.map((finding) => (
                 <li key={finding.id}>
-                  <FindingKarte
-                    finding={finding}
-                    gewaehlt={auswahl?.findingId === finding.id}
-                    ozBekannt={positionenNachOz.has(finding.oz)}
-                    onWaehle={() => waehle(finding.oz, finding.id)}
-                  />
+                  <MitStatus status={bewertungVon(bewertungen, finding.id).status} titel={finding.titel}
+                    onAendern={(s) => bewerte(finding.id, { status: s })}>
+                    <FindingKarte
+                      finding={finding}
+                      gewaehlt={auswahl?.findingId === finding.id}
+                      ozBekannt={positionenNachOz.has(finding.oz)}
+                      onWaehle={() => waehle(finding.oz, finding.id)}
+                    />
+                  </MitStatus>
                 </li>
               ))}
             </ul>
@@ -350,6 +386,9 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
               findings={findingsNachOz.get(auswahl.oz) ?? []}
               onWaehle={(id) => waehle(auswahl.oz, id)}
               onSchliessen={() => setAuswahl(null)}
+              bewertungen={bewertungen}
+              onBewerte={bewerte}
+              speicherFehler={speicherFehler}
             />
           ) : (
             <div className={styles.detailLeer}>
@@ -398,9 +437,10 @@ function FindingKarte({ finding, gewaehlt, ozBekannt, onWaehle }: {
   );
 }
 
-function Detail({ oz, findingId, positionen, findings, onWaehle, onSchliessen }: {
+function Detail({ oz, findingId, positionen, findings, onWaehle, onSchliessen, bewertungen, onBewerte, speicherFehler }: {
   oz: string; findingId: string | null; positionen: Position[]; findings: Finding[];
   onWaehle: (id: string) => void; onSchliessen: () => void;
+  bewertungen: Bewertungen; onBewerte: (id: string, a: Partial<BewertungDaten>) => void; speicherFehler: boolean;
 }) {
   const gewaehlt = findings.find((f) => f.id === findingId) ?? null;
   const weitere = findings.filter((f) => f.id !== findingId);
@@ -421,6 +461,8 @@ function Detail({ oz, findingId, positionen, findings, onWaehle, onSchliessen }:
             <dt>Euro impact</dt><dd><Euro wert={gewaehlt.euro_wirkung} /></dd>
             <dt>Source</dt><dd>{gewaehlt.quelle === "regel" ? "Fixed review rule" : "Model"} ({gewaehlt.regel_id})</dd>
           </dl>
+          <Bewertung key={gewaehlt.id} bewertung={bewertungVon(bewertungen, gewaehlt.id)}
+            onAendern={(a) => onBewerte(gewaehlt.id, a)} speicherFehler={speicherFehler} />
         </article>
       )}
 

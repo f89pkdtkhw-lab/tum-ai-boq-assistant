@@ -49,3 +49,13 @@ test("empty report gives header-only sheets", () => {
   assert.equal(mengen.zeilen.length, 1);
   assert.equal(fragen.zeilen.length, 1);
 });
+
+test("Findings sheet carries review status and comment, Open when not reviewed", () => {
+  const b = bericht([p("01.01", "Excavation", 10, "m³")], [f("01.01", "fehler", "hoch", "x"), f("01.01", "risiko", "mittel", "y", "R2")]);
+  const [befunde] = tabellen(b, { "01.01-R2": { status: "verworfen", kommentar: "covered by 01.02" }, "unknown": { status: "bestaetigt", kommentar: "" } });
+  assert.deepEqual(befunde.zeilen[0].slice(-2), ["Review status", "Comment"]);
+  assert.deepEqual(befunde.zeilen[1].slice(-2), ["Open", ""]);
+  assert.deepEqual(befunde.zeilen[2].slice(-2), ["Dismissed", "covered by 01.02"]);
+  assert.deepEqual(tabellen(b)[0].zeilen[2].slice(-2), ["Open", ""], "no decisions means all Open");
+  assert.match(xlsxDateien(b, { "01.01-R1": { status: "bestaetigt", kommentar: "" } })["xl/worksheets/sheet1.xml"], /<c r="K2" t="inlineStr" s="1"><is><t xml:space="preserve">Confirmed<\/t>/);
+});

@@ -1,0 +1,25 @@
+/* Uses the --pb-* tokens of the surrounding review report. */
+.bewertung { display: grid; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--pb-line); min-width: 0; }
+.gruppe { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gruppe legend { float: left; margin-right: 6px; font-size: 13px; font-weight: 600; color: var(--pb-muted); }
+.knopf {
+  font: inherit; font-size: 14px; min-height: 36px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--pb-line); background: var(--pb-card); color: inherit;
+}
+.knopf:hover { border-color: var(--pb-accent); }
+.aktiv { font-weight: 600; border-color: currentColor; background: color-mix(in srgb, currentColor 10%, transparent); }
+.offen { color: var(--pb-accent); }
+.bestaetigt { color: var(--pb-good); }
+.verworfen { color: var(--pb-muted); }
+.label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--pb-muted); }
+.kommentar {
+  font: inherit; font-size: 14px; font-weight: 400; color: var(--pb-ink); background: var(--pb-card); resize: vertical;
+  border: 1px solid var(--pb-line); border-radius: 10px; padding: 8px 10px; min-width: 0;
+}
+.kommentar:focus { border-color: var(--pb-accent); }
+.hinweis { margin: 0; color: var(--pb-muted); font-size: 12.5px; }
+.zeile { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; }
+.wahl {
+  font: inherit; font-size: 13px; font-weight: 600; min-height: 32px; padding: 4px 8px; border-radius: 8px; cursor: pointer;
+  border: 1px solid currentColor; background: var(--pb-card); margin-top: 10px;
+}
