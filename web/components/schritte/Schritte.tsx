@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { type Note, type Step, type StepRequest, STEP_FIXTURES, STEPS, runStep } from "@/lib/comparison-api";
+import { FIXTURE_SOURCES, toSpecifications } from "@/lib/spezifikationen";
+import { Spezifikationen } from "@/components/spezifikationen/Spezifikationen";
 import styles from "./schritte.module.css";
 
 const LABEL: Record<Step, string> = {
   comparison: "Comparison", standards: "Standards", historical_adjustment: "Historical adjustment", what_if: "What-if",
 };
 const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 });
+const LV_OZ = STEP_FIXTURES.comparison.lv.positionen.map((p) => p.oz);
 const value = (v: number | null, unit: string | null) => (v === null ? "–" : `${number.format(v)}${unit ? ` ${unit}` : ""}`);
 
 // Deliberately broken request: a specification on an OZ that is not in the LV, which the backend rejects.
@@ -22,6 +25,9 @@ export function Schritte() {
   const [done, setDone] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sources, setSources] = useState(FIXTURE_SOURCES);
+  const [checkedOn] = useState(() => new Date().toLocaleDateString("sv-SE")); // local YYYY-MM-DD
+  const specifications = toSpecifications(sources, LV_OZ, checkedOn);
   const next: Step | undefined = STEPS[done];
 
   async function run(broken: boolean) {
@@ -29,7 +35,9 @@ export function Schritte() {
     setBusy(true);
     setError(null);
     try {
-      const request = { ...STEP_FIXTURES[next], previous_notes: notes };
+      const fixture = STEP_FIXTURES[next];
+      // Steps that take specifications get the editor's records instead of the fixed fixture list.
+      const request = { ...fixture, ...(fixture.specifications && { specifications }), previous_notes: notes };
       const response = await runStep(broken ? withUnknownOz(request) : request);
       setNotes(response.notes);
       if (response.status === "error") {
@@ -57,12 +65,18 @@ export function Schritte() {
         </p>
       </header>
 
+      <Spezifikationen sources={sources} onChange={setSources} lvOz={LV_OZ} checkedOn={checkedOn} />
+
       <section className={styles.karte} aria-labelledby="input-titel">
         <h2 id="input-titel">Input</h2>
         {loaded ? (
           <ul className={styles.liste}>
             <li>LV <b>{STEP_FIXTURES.comparison.lv.name}</b>, position OZ 01.001</li>
-            <li>Specifications S10 (user: 10 cm) and S12 (internet: 12 cm)</li>
+            <li>
+              {specifications.length > 0
+                ? <>Specifications {specifications.map((s) => `${s.id} (${s.source}: ${s.text})`).join(", ")} from the sources above</>
+                : "No specifications sent (all sources deleted or rejected)"}
+            </li>
             <li>History pool H1–H3 (100 h estimated, 120 h real) and what-if pool W1–W3 (100 h estimated, 140 h real)</li>
           </ul>
         ) : (
