@@ -93,3 +93,29 @@ Ein privates Repo hat im kostenlosen GitHub-Plan 2.000 Minuten im Monat. Windows
 ## Takt bis zur Abgabe
 
 Der Zeitplan bis Sonntag 12:00 steht im [Teamstart](teamstart.md#zeitplan-bis-sonntag-1200). Alle zwei Stunden startet der Lead die Demo von `main` auf dem Präsentationslaptop; Fehler werden sofort Issues.
+
+
+## Graphify: verpflichtender Codekontext
+
+[Graphify](https://github.com/Graphify-Labs/graphify) erschließt Aufrufe und Abhängigkeiten für die Orientierung im Repo. Das PyPI-Paket heißt `graphifyy`, der CLI-Befehl `graphify`, der Assistant-Skill `/graphify` (in Codex `$graphify`). Python 3.11+ und uv oder pipx werden benötigt.
+
+`python tools/setup.py` installiert das fehlende Werkzeug mit uv, ersatzweise pipx, prüft den CLI-Start und führt `graphify install` aus. Fehlt ein Installer, ist Graphify nicht im PATH oder schlägt die Registrierung fehl, meldet das Setup einen Fehler und endet erfolglos. Manuell:
+
+```sh
+uv tool install graphifyy
+# Ohne uv stattdessen: pipx install graphifyy
+graphify install
+```
+
+Vor jeder Aufgabe im Repo den Graph erzeugen bzw. aktualisieren. Der CLI-Lauf beschränkt sich ausdrücklich auf Code und überspringt die semantische Analyse:
+
+```sh
+graphify extract . --code-only
+graphify query "Wie gelangt ein LV vom Import zum Prüfbericht?"
+graphify explain "importiere"
+graphify path "importiere" "pruefe_mit_llm"
+```
+
+Bei vorhandenem reinem Codegraph ist auch `graphify update .` möglich; `/graphify` immer ausdrücklich auf Code ohne semantische Extraktion begrenzen. Gezielt nach einer Graph-Abfrage Dateien lesen und suchen. Generierte Ergebnisse bleiben lokal in `graphify-out/` und sind ignoriert; keinen alten Graph mit semantisch analysierten Dokumenten wiederverwenden.
+
+**Vertraulichkeit:** Die semantische Analyse von PDFs/Dokumenten nutzt ein Modell, auch über den laufenden Assistant. Deshalb nur den lokalen Codepfad verwenden, niemals Partner-LVs oder Dokumente an Graphify/Cloud-Dienste senden. Die versionierte `.graphifyignore` sperrt `data/datensatz/`, `data/testfaelle/`, Dokumente und lokale Zugangsdaten. Ausschlüsse nicht aufheben. Graphify wird als Entwicklerwerkzeug separat installiert, nicht als Produktabhängigkeit; Setup und Tests erstellen keinen Graphen und rufen kein Modell auf.

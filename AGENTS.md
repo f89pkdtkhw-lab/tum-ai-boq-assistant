@@ -55,6 +55,8 @@ Die Schnittstelle zwischen Oberfläche und Backend (`api/app/main.py`, `api/app/
 
 ## 4. Ablauf eines Auftrags
 
+**Graphify ist vor jeder Aufgabe Pflicht:** Nach dem Setup (`python tools/setup.py`) den lokalen Codegraph aktualisieren (`graphify update .` bei vorhandenem Graph; initial `/graphify` mit ausdrücklicher Vorgabe „nur Code, keine semantische Extraktion“). Für einen garantiert reinen AST-Lauf `graphify extract . --code-only` verwenden. Zuerst mit `graphify query`, `graphify explain` oder `graphify path` den betroffenen Code und seine Abhängigkeiten erschließen; danach gezielt Dateien lesen/suchen. `.graphifyignore` gilt immer: `data/datensatz/` und `data/testfaelle/` dürfen nie indexiert werden. Keine PDF-/Dokument-/Medienanalyse und kein Cloud-Upload. Fehlt Graphify oder scheitert die Aktualisierung, Setup reparieren und den Blocker melden, bevor die Implementierung startet. Anleitung: [Graphify](docs/agenten.md#graphify-verpflichtender-codekontext).
+
 1. Ein Auftrag ist ein GitHub-Issue mit verantwortlicher Person, Bereich und Abnahmetest. Fehlt etwas, frag im Issue statt zu raten.
 2. Übernimm ihn sichtbar: `python tools/aufgabe.py <Nr> --uebernehmen` legt Branch `<Nr>-<kurzname>` und einen eigenen Worktree vom frischen `main` an, weist dich zu, setzt das Label `in-arbeit` und postet auf dem Board. Ein Issue mit `in-arbeit` oder fremdem Assignee fasst niemand anderes an. Arbeite nie im Checkout eines anderen Agenten.
 3. Kleine Commits. Stage nur deine eigenen Dateien, nie `git add -A`.

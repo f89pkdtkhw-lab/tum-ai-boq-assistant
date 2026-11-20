@@ -71,3 +71,6 @@ curl -H 'Content-Type: application/json' --data-binary @data/beispiel_lv.json ht
 ```
 
 Die vorhandene Startseite bleibt bis zum UI-Issue eine Mock-Starterseite; `/api/beispiele` liefert die echten synthetischen LV-Strukturen für die neue Oberfläche. Modell-Mock und fehlende Euro-Werte sind sichtbar zu kennzeichnen. Partnerdateien bleiben unverändert in `data/datensatz/`.
+
+
+Graphify ist vor Agentenaufgaben Pflicht (Entwicklerwerkzeug, Python 3.11+): `python tools/setup.py` installiert `graphifyy` mit uv oder pipx und registriert den Skill. Manueller Start: `uv tool install graphifyy`, `graphify install`, dann `graphify extract . --code-only`. Details und vertrauliche Ausschlüsse: [Graphify-Anleitung](docs/agenten.md#graphify-verpflichtender-codekontext).

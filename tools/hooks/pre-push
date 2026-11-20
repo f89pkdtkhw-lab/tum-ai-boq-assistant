@@ -13,6 +13,11 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   esac
 done
 
+# Graphify ist Pflicht für Agenten; offline Tests bleiben auch ohne Installation möglich.
+if ! command -v graphify >/dev/null 2>&1; then
+  echo "! Graphify fehlt: python tools/setup.py ausführen; Codegraph vor der nächsten Aufgabe aktualisieren." >&2
+fi
+
 # Erstes Python 3.11+ finden. Unter Windows kann python3 ein Store-Platzhalter sein.
 PY=""
 for candidate in python3 python py; do
