@@ -134,7 +134,7 @@ def _gemini(prompt, system, chosen, max_tokens):
 
 def _mock(prompt, system, chosen, max_tokens):
     lines = [line.strip() for line in prompt.strip().splitlines() if line.strip()]
-    question = (lines[-1] if lines else "").removeprefix("Frage:").strip()[:160]
+    question = (lines[-1] if lines else "").removeprefix("Frage:").removeprefix("Question:").strip()[:160]
     return f"[Mock response] Answered without a model key: “{question}”. With a key in .env.local, a real model responds."
 
 
