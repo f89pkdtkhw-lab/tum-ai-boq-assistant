@@ -1,12 +1,37 @@
+/* Apple HIG system colors + Liquid Glass material. Components read these tokens. */
 :root {
-  --bg: #f6f7fb; --ink: #11162a; --muted: #5b6478; --line: #e1e5ef; --card: #ffffff;
-  --accent: #4f46e5; --accent-2: #06b6d4; --good: #059669; --warn: #d97706; --bad: #dc2626;
+  --bg: #f2f2f7; --ink: #000000; --muted: rgba(60, 60, 67, .6); --line: rgba(60, 60, 67, .18); --card: #ffffff;
+  --accent: #007aff; --accent-2: #5ac8fa; --good: #34c759; --warn: #ff9500; --bad: #ff3b30;
+  --fill: rgba(120, 120, 128, .12); --fill-strong: rgba(120, 120, 128, .2);
+  --button: #000000; --button-ink: #ffffff;
+  --glass: rgba(255, 255, 255, .62); --glass-edge: rgba(255, 255, 255, .85); --glass-light: rgba(255, 255, 255, .9);
+  --glass-line: rgba(0, 0, 0, .06); --shadow: rgba(0, 0, 0, .08);
+  --glow-a: rgba(255, 255, 255, .95); --glow-b: rgba(209, 213, 224, .7); --glow-c: rgba(0, 122, 255, .07);
+  color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0b0f1a; --ink: #e8ecf5; --muted: #98a2b8; --line: #1e2638; --card: #121829; }
+  :root {
+    --bg: #000000; --ink: #ffffff; --muted: rgba(235, 235, 245, .6); --line: rgba(84, 84, 88, .55); --card: #1c1c1e;
+    --accent: #0a84ff; --accent-2: #64d2ff; --good: #30d158; --warn: #ff9f0a; --bad: #ff453a;
+    --fill: rgba(120, 120, 128, .24); --fill-strong: rgba(120, 120, 128, .36);
+    --button: #ffffff; --button-ink: #000000;
+    --glass: rgba(30, 30, 32, .58); --glass-edge: rgba(255, 255, 255, .1); --glass-light: rgba(255, 255, 255, .16);
+    --glass-line: rgba(255, 255, 255, .06); --shadow: rgba(0, 0, 0, .5);
+    --glow-a: rgba(58, 58, 64, .55); --glow-b: rgba(28, 28, 32, .9); --glow-c: rgba(10, 132, 255, .1);
+    color-scheme: dark;
+  }
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 Inter, "Segoe UI", system-ui, sans-serif; }
+body {
+  margin: 0; min-height: 100vh; color: var(--ink); letter-spacing: -.01em; -webkit-font-smoothing: antialiased;
+  font: 17px/1.41 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, "Segoe UI", system-ui, sans-serif;
+  /* soft ambient light so the glass surfaces have something to refract */
+  background:
+    radial-gradient(40% 35% at 15% 8%, var(--glow-a), transparent 70%),
+    radial-gradient(45% 40% at 90% 18%, var(--glow-c), transparent 70%),
+    radial-gradient(60% 50% at 50% 100%, var(--glow-b), transparent 70%) fixed,
+    var(--bg);
+}
 .shell { max-width: 1040px; margin: 0 auto; padding: 24px 20px 64px; }
 .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .brand { font-weight: 700; letter-spacing: .02em; }

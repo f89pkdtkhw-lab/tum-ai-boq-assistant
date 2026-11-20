@@ -1,104 +1,133 @@
+/* Upload page in Apple Liquid Glass style: tokens from globals.css, 8-pt grid, 44-pt targets,
+   floating glass header, inset-grouped step list, capsule buttons. */
 .seite {
-  --up-ink: var(--ink, #11162a);
-  --up-muted: var(--muted, #5b6478);
-  --up-line: var(--line, #e1e5ef);
-  --up-card: var(--card, #ffffff);
-  --up-accent: var(--accent, #4f46e5);
-  --up-bad: var(--bad, #dc2626);
-  --up-warn: var(--warn, #d97706);
-  --up-good: var(--good, #059669);
-  max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; display: grid; gap: 20px; color: var(--up-ink);
+  max-width: 1080px; margin: 0 auto; display: grid; gap: 24px; color: var(--ink);
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(64px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
 }
-.seite :focus-visible { outline: 3px solid var(--up-accent); outline-offset: 2px; }
+.seite :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-.kopf { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
-.marke { font-weight: 700; letter-spacing: .02em; }
-.status { font: 12px ui-monospace, Menlo, monospace; padding: 4px 10px; border-radius: 999px; border: 1px solid currentColor; }
-.statusWartet { color: var(--up-muted); }
-.statusLive { color: var(--up-good); }
-.statusMock { color: var(--up-warn); }
-.statusOffline { color: var(--up-bad); }
+.kopf, .karte {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-light), 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .kopf, .karte { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
 
-.einleitung { padding: 24px 0 4px; }
-.kicker { margin: 0 0 8px; color: var(--up-accent); font-weight: 600; font-size: 14px; }
-.titel { margin: 0 0 12px; font-size: clamp(28px, 4.6vw, 46px); line-height: 1.08; letter-spacing: -.03em; max-width: 22ch; }
-.lead { margin: 0; color: var(--up-muted); font-size: 18px; max-width: 62ch; }
+.kopf {
+  position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); z-index: 10;
+  min-height: 56px; border-radius: 28px; padding: 6px 8px 6px 20px;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+}
+.marke { font-size: 17px; font-weight: 600; }
+.status {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: 16px;
+  font-size: 13px; font-weight: 500; color: var(--muted); background: var(--fill);
+}
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.statusLive::before { background: var(--good); }
+.statusMock::before { background: var(--warn); }
+.statusOffline::before { background: var(--bad); }
 
-.karte { background: var(--up-card); border: 1px solid var(--up-line); border-radius: 16px; padding: 20px; display: grid; gap: 12px; }
-.abschnitt { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+.einleitung { padding: 24px 0 0; text-align: center; display: grid; gap: 8px; justify-items: center; }
+.kicker { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+.titel { margin: 0; font-size: clamp(34px, 5.4vw, 48px); line-height: 1.08; font-weight: 700; letter-spacing: -.025em; max-width: 20ch; text-wrap: balance; }
+.lead { margin: 0; font-size: 17px; color: var(--muted); max-width: 52ch; text-wrap: pretty; }
+
+.karte { border-radius: 28px; padding: 24px; display: grid; gap: 16px; width: 100%; max-width: 720px; margin: 0 auto; }
+.abschnitt { margin: 0; font-size: 13px; font-weight: 400; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); overflow-wrap: anywhere; }
 
 .ablage {
   position: relative; display: grid; gap: 4px; justify-items: center; text-align: center; cursor: pointer;
-  padding: 28px 16px; border-radius: 14px; border: 2px dashed var(--up-line);
-  background: color-mix(in srgb, var(--up-accent) 4%, transparent); transition: border-color .15s, background .15s;
+  padding: 88px 16px 28px; border-radius: 22px; background: var(--fill);
+  transition: transform .2s ease, background .15s ease, box-shadow .2s ease;
 }
-.ablage:hover, .ablageAktiv { border-color: var(--up-accent); background: color-mix(in srgb, var(--up-accent) 10%, transparent); }
-.ablage:focus-within { outline: 3px solid var(--up-accent); outline-offset: 2px; }
-.ablageGesperrt { cursor: wait; opacity: .7; }
-.dateiEingabe { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: inherit; }
+/* Round upload glyph drawn in CSS, so the component markup stays unchanged. */
+.ablage::before {
+  content: ""; position: absolute; top: 20px; left: 50%; width: 52px; height: 52px; margin-left: -26px; border-radius: 50%;
+  background: var(--card); box-shadow: 0 0 0 .5px var(--glass-line), 0 4px 12px -4px var(--shadow);
+}
+.ablage::after {
+  content: ""; position: absolute; top: 34px; left: 50%; width: 24px; height: 24px; margin-left: -12px; background: var(--ink);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v3.5A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5V14'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v3.5A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5V14'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ablage:hover { background: var(--fill-strong); }
+.ablageAktiv { transform: scale(1.01); box-shadow: inset 0 0 0 2px var(--accent); background: var(--fill-strong); }
+.ablage:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ablageGesperrt { cursor: wait; opacity: .6; }
+.dateiEingabe { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: inherit; z-index: 1; }
 .dateiEingabe:focus-visible { outline: none; }
-.ablageTitel { font-weight: 700; font-size: 17px; overflow-wrap: anywhere; }
-.ablageText { color: var(--up-muted); font-size: 14px; }
+.ablageTitel { font-size: 22px; line-height: 1.27; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.ablageText { font-size: 15px; color: var(--muted); }
 
-.regeln { margin: 0; color: var(--up-muted); font-size: 14px; }
-.dateiFehler { margin: 0; color: var(--up-bad); font-weight: 600; }
+.regeln { margin: 0; padding: 0 4px; font-size: 13px; line-height: 1.38; color: var(--muted); }
+.dateiFehler { margin: 0; padding: 12px 16px; border-radius: 14px; font-size: 15px; font-weight: 500; color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
 
-.aktionen { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+/* Capsule buttons: pressed state shrinks slightly, every target at least 44 pt. */
+.aktionen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .knopf, .knopfZweit, .knopfLeise {
-  font: inherit; font-weight: 600; min-height: 44px; padding: 10px 18px; border-radius: 10px; cursor: pointer;
+  font: inherit; font-size: 17px; font-weight: 600; min-height: 50px; padding: 0 24px; border-radius: 999px; border: 0; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: transform .12s ease, opacity .12s ease, background .12s ease; -webkit-tap-highlight-color: transparent;
 }
-.knopf { border: 0; color: #fff; background: var(--up-accent); }
-.knopfZweit { border: 1px solid var(--up-line); color: inherit; background: var(--up-card); }
-.knopfLeise { border: 0; color: var(--up-muted); background: transparent; text-decoration: underline; padding-inline: 8px; }
-.knopf:hover:not(:disabled) { filter: brightness(1.08); }
-.knopfZweit:hover:not(:disabled) { border-color: var(--up-accent); }
-.knopf:disabled, .knopfZweit:disabled { opacity: .55; cursor: not-allowed; }
+.knopf { color: var(--button-ink); background: var(--button); }
+.knopfZweit { color: var(--ink); background: var(--fill); }
+.knopfLeise { min-height: 44px; padding: 0 12px; font-size: 15px; font-weight: 500; color: var(--accent); background: transparent; }
+.knopf:hover:not(:disabled) { opacity: .86; }
+.knopfZweit:hover:not(:disabled) { background: var(--fill-strong); }
+.knopf:active:not(:disabled), .knopfZweit:active:not(:disabled), .knopfLeise:active { transform: scale(.97); }
+.knopf:disabled, .knopfZweit:disabled { opacity: .35; cursor: not-allowed; }
 
-.schritte { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+/* Steps as an inset-grouped list with hairline separators. */
+.schritte { list-style: none; margin: 0; padding: 0; border-radius: 18px; background: var(--fill); overflow: hidden; }
 .schritt {
-  display: grid; grid-template-columns: 24px 88px 150px 1fr; align-items: center; gap: 10px;
-  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--up-line);
+  position: relative; display: grid; grid-template-columns: 24px 88px 120px minmax(0, 1fr); align-items: center; gap: 12px;
+  min-height: 52px; padding: 12px 16px;
 }
-.schrittName { font-weight: 700; }
-.schrittStatus { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
-.schrittText { color: var(--up-muted); overflow-wrap: anywhere; }
-.symbol { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--up-line); justify-self: center; }
+.schritt + .schritt::before { content: ""; position: absolute; top: 0; left: 52px; right: 0; height: .5px; background: var(--line); }
+.schrittName { font-weight: 600; }
+.schrittStatus { font-size: 13px; font-weight: 600; color: var(--muted); }
+.schrittText { font-size: 15px; color: var(--muted); overflow-wrap: anywhere; }
+.symbol { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); justify-self: center; }
 
-.schritt_wartet .schrittStatus { color: var(--up-muted); }
-.schritt_entfaellt .schrittStatus { color: var(--up-muted); }
 .schritt_entfaellt .symbol { border-style: dashed; }
-.schritt_laeuft { border-color: var(--up-accent); }
-.schritt_laeuft .schrittStatus { color: var(--up-accent); }
-.schritt_laeuft .symbol { border-top-color: var(--up-accent); animation: drehen .8s linear infinite; }
-.schritt_fertig .schrittStatus { color: var(--up-good); }
-.schritt_fertig .symbol { border-color: var(--up-good); background: var(--up-good); }
-.schritt_fehler { border-color: var(--up-bad); }
-.schritt_fehler .schrittStatus { color: var(--up-bad); }
-.schritt_fehler .symbol { border-color: var(--up-bad); background: var(--up-bad); }
+.schritt_laeuft .schrittStatus { color: var(--ink); }
+.schritt_laeuft .symbol { border-color: var(--ink); border-top-color: transparent; animation: drehen .8s linear infinite; }
+.schritt_fertig .schrittStatus { color: var(--good); }
+.schritt_fertig .symbol {
+  border-color: var(--good);
+  background: var(--good) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6.5 12.5 3.5 3.5 7.5-8'/%3E%3C/svg%3E") center / 14px no-repeat;
+}
+.schritt_fehler .schrittStatus { color: var(--bad); }
+.schritt_fehler .symbol { border-color: var(--bad); background: var(--bad); }
 @keyframes drehen { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .schritt_laeuft .symbol { animation-duration: 2.4s; } }
+@media (prefers-reduced-motion: reduce) {
+  .schritt_laeuft .symbol { animation-duration: 2.4s; }
+  .knopf, .knopfZweit, .knopfLeise, .ablage { transition: none; }
+}
 
 .ansage { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.fehler {
-  padding: 16px 18px; border-radius: 12px; border: 1px solid var(--up-bad);
-  background: color-mix(in srgb, var(--up-bad) 6%, transparent); display: grid; gap: 8px;
-}
-.fehler h3 { margin: 0; font-size: 17px; color: var(--up-bad); }
-.fehler p { margin: 0; overflow-wrap: anywhere; }
-.tipp { color: var(--up-muted); font-size: 14px; }
+.fehler { padding: 16px; border-radius: 18px; background: color-mix(in srgb, var(--bad) 12%, transparent); display: grid; gap: 8px; }
+.fehler h3 { margin: 0; font-size: 17px; font-weight: 600; color: var(--bad); }
+.fehler p { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+.tipp { color: var(--muted); }
 .erfolg {
-  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;
-  padding: 12px 16px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--up-good) 55%, transparent);
-  background: color-mix(in srgb, var(--up-good) 8%, transparent);
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 12px 12px 12px 16px; border-radius: 18px; background: color-mix(in srgb, var(--good) 14%, transparent);
 }
-.erfolg p { margin: 0; }
+.erfolg p { margin: 0; font-size: 15px; }
 .fehler:focus, .erfolg:focus { outline: none; }
-.fehler:focus-visible, .erfolg:focus-visible { outline: 3px solid var(--up-accent); outline-offset: 2px; }
+.fehler:focus-visible, .erfolg:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 @media (max-width: 640px) {
-  .karte { padding: 16px; }
-  .schritt { grid-template-columns: 24px 1fr auto; }
+  .kopf { padding-left: 16px; }
+  .karte { padding: 16px; border-radius: 24px; }
+  .schritt { grid-template-columns: 24px minmax(0, 1fr) auto; }
   .schrittText { grid-column: 2 / -1; }
   .aktionen > .knopf, .aktionen > .knopfZweit { flex: 1 1 100%; }
 }
