@@ -1,0 +1,14 @@
+# Vertrauliche Partnerdaten und Testfälle niemals indexieren.
+data/datensatz/
+data/testfaelle/
+# Nur Code analysieren, keine semantischen Dokument-/Medienläufe.
+docs/
+pitch/
+*.md
+*.pdf
+*.docx
+*.xlsx
+# Lokale Zugangsdaten und generierte Ausgaben explizit ausschließen.
+.env
+.env.*
+graphify-out/

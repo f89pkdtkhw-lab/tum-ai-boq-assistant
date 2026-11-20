@@ -2,6 +2,8 @@
 
 TUM.ai Construction Hackathon, 20.–22. November 2026. **Abgabe Sonntag 12:00**, internes Ziel 11:30. Fachwissen und Teamnotizen: [Domäne](domaene.md).
 
+Architekturentwurf, Issue-Zuordnung und spätere Historien-/What-if-Schleife: [Architektur](architektur.md).
+
 ## Die Challenge im Wortlaut (übersetzt)
 
 **Problem.** Leistungsverzeichnisse (LV, engl. Bills of Quantities, BoQ) haben oft mehrere tausend Positionen über viele Kostengruppen, und Positionen hängen gewerkeübergreifend voneinander ab. Firmen fehlt Zeit und Personal, LVs im Detail zu prüfen, Risiken zu erkennen und systematisch aus früheren Projekten zu lernen. Typische Fehler sind Tippfehler, falsche Berechnungen und übersehenes Nachtragspotenzial; jeder kann große finanzielle Folgen haben.

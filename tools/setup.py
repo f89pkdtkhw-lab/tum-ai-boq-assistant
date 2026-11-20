@@ -57,6 +57,32 @@ def key_status(env_file=None):
             for where in ["Umgebung" if os.environ.get(name, "").strip() else ".env.local"]]
 
 
+def setup_graphify():
+    """Install the developer tool if missing and register its assistant skill.
+
+    Never build a graph or send repository content to a model during setup.
+    """
+    executable = shutil.which("graphify")
+    if executable is None:
+        installer = next((name for name in ("uv", "pipx") if shutil.which(name)), None)
+        if installer is None:
+            return "fail", "MISSING: graphify; uv oder pipx installieren, dann Setup erneut ausführen"
+        command = (installer, "tool", "install", "graphifyy") if installer == "uv" else (installer, "install", "graphifyy")
+        code, _ = run(*command, timeout=180)
+        if code:
+            return "fail", f"Installation von graphifyy mit {installer} fehlgeschlagen; manuell installieren und Setup wiederholen"
+        executable = shutil.which("graphify")
+        if executable is None:
+            return "fail", "MISSING: graphify nach Installation nicht im PATH; Tool-Bin-Verzeichnis ergänzen und Setup wiederholen"
+    code, _ = run(executable, "--version")
+    if code:
+        return "fail", "graphify lässt sich nicht starten; Installation prüfen und Setup wiederholen"
+    code, _ = run(executable, "install", timeout=60)
+    if code:
+        return "fail", "graphify install fehlgeschlagen; Assistant-Skill manuell registrieren und Setup wiederholen"
+    return "ok", "graphify verfügbar, Assistant-Skill registriert (nur Code verwenden)"
+
+
 def check(fix_hooks=True):
     """Return (rows, facts). A row is (status, label, detail) with status ok, warn or fail."""
     rows, facts = [], {"System": operating_system()}
@@ -103,6 +129,10 @@ def check(fix_hooks=True):
             code, out = run(sys.executable, str(ROOT / "tools" / "board.py"), "whoami", timeout=30)
             facts["Team-Board"] = "erreichbar" if code == 0 else "nicht erreichbar"
             rows.append(("ok" if code == 0 else "warn", "Team-Board", out.splitlines()[-1] if out else "keine Antwort"))
+
+    status, detail = setup_graphify()
+    facts["Graphify"] = detail
+    rows.append((status, "Graphify", detail))
 
     keys = key_status()
     facts["Schlüssel"] = ", ".join(keys) or "keine (Produkt läuft im Mock)"
