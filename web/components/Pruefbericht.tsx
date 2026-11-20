@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Finding, Position, Pruefbericht as PruefberichtDaten } from "@/lib/api";
 import { mengenSchluessel } from "@/lib/mengen";
+import { baueTitelbaum, imTeilbaum, OHNE_TITEL_NAME, ozImTeilbaum } from "@/lib/titelbaum";
 import { filtereFindings, normalisiere, positionTrifft } from "@/lib/suche";
 import {
   anzahlGeprueft, bewertungVon, ladeBewertungen, setze, speichereBewertungen, STATUS,
@@ -12,6 +13,7 @@ import { Bewertung, MitStatus } from "./bewertung/Bewertung";
 import { Mengen } from "./mengen/Mengen";
 import { Bieterfragen } from "./bieterfragen/Bieterfragen";
 import { Suche } from "./suche/Suche";
+import { Titelbaum } from "./titelbaum/Titelbaum";
 import styles from "./pruefbericht.module.css";
 
 /**
@@ -95,6 +97,7 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
   const [einheit, setEinheit] = useState<string | null>(null);
   const [suche, setSuche] = useState("");
   const [status, setStatus] = useState<Status | null>(null);
+  const [titel, setTitel] = useState<string[] | null>(null);
   const [bewertungen, setBewertungen] = useState<Bewertungen>({});
   const [speicherFehler, setSpeicherFehler] = useState(false);
   const detailRef = useRef<HTMLElement>(null);
@@ -123,10 +126,13 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
       .map(({ finding }) => finding),
     [findings],
   );
+  const titelbaum = useMemo(() => baueTitelbaum(lv.positionen, findings), [lv.positionen, findings]);
+  const ozImTitel = useMemo(() => (titel === null ? null : ozImTeilbaum(lv.positionen, titel)), [lv.positionen, titel]);
   const gefiltert = useMemo(
     () => filtereFindings(sortiert, lv.positionen, { suche, kategorie, schwere })
-      .filter((f) => status === null || bewertungVon(bewertungen, f.id).status === status),
-    [sortiert, lv.positionen, suche, kategorie, schwere, status, bewertungen],
+      .filter((f) => status === null || bewertungVon(bewertungen, f.id).status === status)
+      .filter((f) => ozImTitel === null || ozImTitel.has(f.oz)),
+    [sortiert, lv.positionen, suche, kategorie, schwere, status, bewertungen, ozImTitel],
   );
 
   // Load after mount: localStorage does not exist during server rendering.
@@ -183,14 +189,19 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
   }
 
   const sucheAktiv = normalisiere(suche) !== "";
-  const filterAktiv = kategorie !== null || schwere !== null || status !== null || sucheAktiv;
+  const filterAktiv = kategorie !== null || schwere !== null || status !== null || titel !== null || sucheAktiv;
   const sichtbarePositionen = lv.positionen.filter(
-    (p) => (einheit === null || mengenSchluessel(p) === einheit) && positionTrifft(p, suche),
+    (p) => (einheit === null || mengenSchluessel(p) === einheit) && (titel === null || imTeilbaum(p, titel)) && positionTrifft(p, suche),
   );
 
   function sucheAendern(wert: string) {
     setSuche(wert);
     if (normalisiere(wert) !== "" && positionenRef.current) positionenRef.current.open = true;
+  }
+
+  function waehleTitel(pfad: string[] | null) {
+    setTitel(pfad);
+    if (pfad !== null && positionenRef.current) positionenRef.current.open = true;
   }
 
   function waehleEinheit(schluessel: string | null) {
@@ -263,6 +274,8 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
 
       <Mengen positionen={lv.positionen} aktiv={einheit} onWaehle={waehleEinheit} />
 
+      <Titelbaum baum={titelbaum} aktiv={titel} onWaehle={waehleTitel} />
+
       <Suche wert={suche} onAendern={sucheAendern} zaehler={sucheAktiv
         ? `${sichtbarePositionen.length} of ${lv.positionen.length} items · ${gefiltert.length} of ${findings.length} findings`
         : null} />
@@ -314,7 +327,7 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
             <div className={styles.leer}>
               <p>No findings match this filter.</p>
               {filterAktiv && (
-                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setStatus(null); setSuche(""); }}>
+                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setStatus(null); setTitel(null); setSuche(""); }}>
                   Reset filters
                 </button>
               )}
@@ -339,12 +352,12 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
 
           <details ref={positionenRef} className={styles.positionen}>
             <summary>
-              {einheit === null && !sucheAktiv
+              {einheit === null && titel === null && !sucheAktiv
                 ? `Show all ${lv.positionen.length} items`
-                : `Showing ${sichtbarePositionen.length} of ${lv.positionen.length} items${einheit === null ? "" : ` summed in ${lv.positionen.find((p) => mengenSchluessel(p) === einheit)?.einheit?.trim() ?? einheit}`}${sucheAktiv ? ` matching “${suche.trim()}”` : ""}`}
+                : `Showing ${sichtbarePositionen.length} of ${lv.positionen.length} items${titel === null ? "" : ` under “${titel.length === 0 ? OHNE_TITEL_NAME : titel.join(" › ")}”`}${einheit === null ? "" : ` summed in ${lv.positionen.find((p) => mengenSchluessel(p) === einheit)?.einheit?.trim() ?? einheit}`}${sucheAktiv ? ` matching “${suche.trim()}”` : ""}`}
             </summary>
-            {(einheit !== null || sucheAktiv) && (
-              <button type="button" className={styles.knopfZweit} onClick={() => { setEinheit(null); setSuche(""); }}>Show all items</button>
+            {(einheit !== null || titel !== null || sucheAktiv) && (
+              <button type="button" className={styles.knopfZweit} onClick={() => { setEinheit(null); setTitel(null); setSuche(""); }}>Show all items</button>
             )}
             {lv.positionen.length === 0 ? (
               <p className={styles.leer}>The BoQ contains no items.</p>
