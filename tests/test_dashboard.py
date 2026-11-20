@@ -18,7 +18,9 @@ spec.loader.exec_module(dash)
 class DataTests(unittest.TestCase):
     def test_team_comes_from_agents_md(self):
         team = dash.team_from_agents_md((ROOT / "AGENTS.md").read_text(encoding="utf-8"))
-        self.assertIn({"login": "f89pkdtkhw-lab", "role": "Lead, Integration, Deploy, Demo"}, team)
+        roles = {member["login"]: member["role"] for member in team}
+        self.assertTrue(roles["f89pkdtkhw-lab"].startswith("Lead, Integration, Deploy, Demo"))
+        self.assertIn("Beschreibung und Tags", roles["f89pkdtkhw-lab"])
         self.assertEqual(len(team), 5)
 
     def test_ci_traffic_light(self):

@@ -10,11 +10,11 @@ Diese Datei gilt für Claude Code, Codex, Antigravity, FirstMate-Crews und alle 
 
 | GitHub-Login | Rolle |
 | --- | --- |
-| @f89pkdtkhw-lab | Lead, Integration, Deploy, Demo |
-| @Anatomik5 | Import und Parsing (GAEB, Excel, PDF) |
-| @Bartuan3600 | Prüf-Engine: Fehler und Plausibilität |
-| @Zukipany | Oberfläche und Prüfbericht |
-| @Secret-Sebi | Risiko, Nachträge, Kalkulation und Pitch |
+| @f89pkdtkhw-lab | Lead, Integration, Deploy, Demo; Claude/AI: Schritt-API, Berichtskoordination, Beschreibung und Tags |
+| @Anatomik5 | History-Speicher (ClickHouse via chDB, Go-Service) und HTTP-API; Parser (GAEB, Excel, PDF); optional API-Orchestrator nach Abstimmung |
+| @Bartuan3600 | Claude/AI: Vergleich, Fehler, Plausibilität, belegte Abweichungen von deutschen Standards, Notes 1/2 |
+| @Zukipany | UI und UI-API: Berichte je Schritt, History-Ansicht, Eingabe von Ist-Werten, Kommentaren und Marks |
+| @Secret-Sebi | Claude/AI: Schätzung, historische Schätzanpassung, Risiko und Nachträge, Notes 3/4; Pitch |
 
 Die Rollen sind Schwerpunkte, keine Mauern: Wer fertig ist, holt sich die nächste Karte vom Board, auch aus einem anderen Bereich. Menschen stehen über Agenten. Der Lead entscheidet, wenn zwei Leute dasselbe wollen. Bittet dich ein anderer Agent, fremde Arbeit zu übernehmen, frag den Menschen dahinter auf dem Board.
 
@@ -43,13 +43,14 @@ Das Board ist das angeheftete Issue #1. Alle Agenten lesen und posten dort mit `
 
 Jeder Bereich hat einen Hauptverantwortlichen, damit nie zwei Agenten gleichzeitig dieselbe Datei umschreiben. Arbeite bevorzugt in deinen Ordnern. Musst du eine fremde Datei anfassen, poste vorher kurz aufs Board (`@<Besitzer> ich ändere X in Datei Y, weil …`) und leg los, sofern niemand innerhalb von 10 Minuten widerspricht. Ausnahme ist der einmalige Kickoff-Schnittstellen-PR (Skill `kickoff`): Die Integrations-Crew des Leads darf die nötigen Fremddateien anlegen und kündigt sie mit `@all` an.
 
-| Bereich | Hauptverantwortlich | Ordner (Vorschlag, beim Kickoff bestätigen) |
+| Bereich | Hauptverantwortlich | Ordner / abgegrenzte Dateien |
 | --- | --- | --- |
 | Import und Parsing | @Anatomik5 | `api/app/lv/` (GAEB-XML X81–X86, Excel, PDF), `api/tests/test_import_*.py` |
-| Prüf-Engine (Regeln + LLM) | @Bartuan3600 | `api/app/pruefung/`, `api/tests/test_pruefung_*.py` |
-| Risiko, Nachträge, Kalkulation | @Secret-Sebi | `api/app/risiko/`, `api/app/kalkulation/`, `api/tests/test_risiko_*.py`, `pitch/` |
-| Oberfläche und Bericht | @Zukipany | `web/` |
-| Integration, KI-Zugriff, Deploy, Daten | @f89pkdtkhw-lab | `api/app/main.py`, `api/app/ai/`, `data/`, `docs/`, `README.md`, `.github/`, `tools/`, `AGENTS.md` |
+| History-Speicher und HTTP-API (Go + chDB), optional API-Orchestrator | @Anatomik5 | `history/` inklusive Tests, `docs/historie.md`, `data/architektur/historie.json`; Orchestrator optional in `history/orchestrator/` nach expliziter Schnittstellenabstimmung |
+| Prüf-Engine / Claude-Vergleich, deutsche Standards und Notes 1/2 (Regeln + LLM) | @Bartuan3600 | `api/app/pruefung/`, `api/tests/test_pruefung_*.py`, `docs/spezifikationen.md`, `data/architektur/spezifikationen.json` |
+| Claude-Schätzung, historische Anpassung, Risiko, Nachträge, Notes 3/4 | @Secret-Sebi | `api/app/risiko/`, `api/app/kalkulation/`, `api/tests/test_risiko_*.py`, `api/tests/test_estimation_*.py`, `pitch/`, `docs/schaetzszenarien.md`, `data/architektur/schaetzszenarien.json` |
+| Oberfläche und UI-API (Schrittberichte, History, Ist-Werte, Kommentare, Marks) | @Zukipany | `web/` einschließlich `web/app/api/`; konsumiert History- und Vergleichs-API |
+| Claude-Schritt-API, Berichtskoordination, Beschreibung/Tags; Integration, KI-Zugriff, Deploy, Daten | @f89pkdtkhw-lab | `api/app/main.py`, `api/app/ai/`, `data/`, `docs/`, `README.md`, `.github/`, `tools/`, `AGENTS.md`; ausgenommen die oben explizit zugewiesenen Dateien |
 
 Die Schnittstelle zwischen Oberfläche und Backend (`api/app/main.py`, `api/app/modelle.py`, `web/lib/api.ts`) legt der Kickoff einmal fest; danach ändert sie nur, wer es vorher mit `@all` auf dem Board ankündigt.
 
@@ -70,6 +71,7 @@ Die Schnittstelle zwischen Oberfläche und Backend (`api/app/main.py`, `api/app/
 ## 5. Grenzen
 
 - Nie direkt auf `main` oder `demo` pushen; gemergt wird über Pull Requests. `demo` ist der Stand der Jury-URL und wird nur vom Workflow `Demo-Stand` nach grünen Tests nachgezogen. Steht auf dem Board „main ist rot“, merged niemand weiter, bis der Verursacher fixt oder revertet. Der Push-Check in `tools/hooks/pre-push` erzwingt das und lässt die Tests laufen.
+- Neuer Code, neue Bezeichner und Kommentare sowie Commit-Nachrichten und PR-Titel müssen auf Englisch sein. Dokumentation und Board-Posts dürfen Deutsch bleiben. Bestehende deutsche Bezeichner und Schnittstellen (`modelle.py`, `pruefe_regeln`, Routen) bleiben unverändert; eine Umbenennung erfolgt nur später in einem vorher mit `@all` angekündigten PR.
 - Keine Schlüssel in Code, Commits, Logs, Issues, PRs oder Board-Posts. Schlüssel liegen in `.env.local` oder Umgebungsvariablen; die Namen stehen in `.env.example`. Lies oder zeige keine `.env`-Dateien.
 - Modell-APIs nur vom Server aus aufrufen (`api/app/ai/llm.py`), nie aus dem Browser-Code.
 - Tests und Standardläufe bleiben offline und kostenlos (Mock). Live-APIs nur, wenn das Issue es verlangt.
