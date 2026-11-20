@@ -6,6 +6,8 @@ from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ValidationError
 from .ai import llm
+from .ai.step_api import router as comparison_router
+from .ai.history_metadata import router as metadata_router
 from .lv.importer import importiere
 from .modelle import Beispiel, Beispiele, Kennzahlen, LV, Pruefbericht
 from .pruefung.regeln import pruefe_regeln
@@ -17,6 +19,8 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 app = FastAPI(title="LV-Prüfassistent", version="0.2.0")
+app.include_router(comparison_router)
+app.include_router(metadata_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[s.strip() for s in os.environ.get("WEB_ORIGINS", "http://localhost:3000").split(",") if s.strip()],
