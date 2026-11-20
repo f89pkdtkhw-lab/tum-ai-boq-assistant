@@ -1,4 +1,4 @@
-"""Gemeinsamer LV-Vertrag; JSON-Zahlen, unbekannte Mengen/Preise bleiben null."""
+"""Shared BoQ contract; JSON numbers, unknown quantities/prices remain null."""
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -23,7 +23,7 @@ class LV(Vertrag):
     name: str = Field(min_length=1)
     quelle: str = Field(min_length=1)
     positionen: list[Position] = Field(default_factory=list)
-    # Angegebene Titelsummen; Schlüssel = Titelpfad mit " / ". Fehlende Summen = {}.
+    # Supplied section totals; key = section path joined with " / ". Missing totals = {}.
     summen: dict[str, float] = Field(default_factory=dict)
 
 

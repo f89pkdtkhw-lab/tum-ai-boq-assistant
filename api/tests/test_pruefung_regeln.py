@@ -20,7 +20,7 @@ def test_beispiel_lv_meldet_genau_die_fuenf_erwarteten_regelbefunde():
     gefunden = {(f.oz, f.regel_id) for f in befunde}
     erwartet = {(f["oz"], f["regel_id"]) for f in erwartung["findings"]}
     assert gefunden == erwartet
-    # jede erwartete Kombination genau einmal
+    # each expected combination exactly once
     assert len(befunde) == len(erwartet)
     for finding in befunde:
         assert finding.quelle == "regel"

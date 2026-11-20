@@ -1,4 +1,4 @@
-"""Backend-Tests: laufen offline, kein Schlüssel nötig. Start: cd api && python -m pytest -q"""
+"""Backend tests: run offline, no key required. Run: cd api && python -m pytest -q"""
 import httpx
 import pytest
 from fastapi.testclient import TestClient

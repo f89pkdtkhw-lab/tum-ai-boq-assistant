@@ -1,6 +1,6 @@
-"""Platzhalter: PDF; liefert später unverändert den gemeinsamen LV-Vertrag."""
+"""Placeholder: PDF; will return the shared BoQ contract unchanged."""
 from ..modelle import LV
 
 
 def importiere(dateiname: str, inhalt: bytes) -> LV:
-    raise NotImplementedError("PDF-Import ist noch nicht implementiert. Für die Demo bitte das JSON-Beispiel verwenden.")
+    raise NotImplementedError("PDF import is not implemented yet. Please use the JSON example for the demo.")

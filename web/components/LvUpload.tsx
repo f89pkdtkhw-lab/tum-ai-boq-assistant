@@ -35,22 +35,22 @@ type Ergebnis =
 const SCHRITT_NAMEN: Record<SchrittId, string> = {
   datei: "Upload",
   import: "Import",
-  pruefung: "Prüfung",
+  pruefung: "Review",
 };
 const STATUS_NAMEN: Record<SchrittStatus, string> = {
-  wartet: "wartet",
-  laeuft: "läuft",
-  fertig: "fertig",
-  fehler: "fehlgeschlagen",
-  entfaellt: "entfällt",
+  wartet: "waiting",
+  laeuft: "running",
+  fertig: "done",
+  fehler: "failed",
+  entfaellt: "skipped",
 };
-const BACKEND_TIPP = "Lokal startet python tools/dev.py Oberfläche (Port 3000) und Backend (Port 8000) zusammen.";
-const zahl = new Intl.NumberFormat("de-DE");
+const BACKEND_TIPP = "Locally, python tools/dev.py starts the UI (port 3000) and backend (port 8000) together.";
+const zahl = new Intl.NumberFormat("en-GB");
 
 function groesse(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${zahl.format(Math.round(bytes / 1024))} KiB`;
-  return `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(bytes / (1024 * 1024))} MiB`;
+  return `${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 }).format(bytes / (1024 * 1024))} MiB`;
 }
 
 function endung(name: string) {
@@ -65,11 +65,11 @@ function anzahl(n: number, einzahl: string, mehrzahl: string) {
 /** Local checks before anything is sent; returns a readable reason or null. */
 function lokalerFehler(datei: File): string | null {
   if (!FORMATS.some((f) => f.endung === endung(datei.name))) {
-    return `„${datei.name}“ hat kein unterstütztes Format. Erlaubt sind ${FORMATS.map((f) => f.endung.slice(1).toUpperCase()).join(", ")}.`;
+    return `“${datei.name}” has an unsupported format. Allowed formats: ${FORMATS.map((f) => f.endung.slice(1).toUpperCase()).join(", ")}.`;
   }
-  if (datei.size === 0) return "Die Datei ist leer.";
+  if (datei.size === 0) return "The file is empty.";
   if (datei.size > MAX_BYTES) {
-    return `Die Datei ist ${groesse(datei.size)} groß. Erlaubt sind höchstens 10 MiB. Sie wurde nicht hochgeladen.`;
+    return `The file is ${groesse(datei.size)}. The maximum is 10 MiB. It was not uploaded.`;
   }
   return null;
 }
@@ -77,21 +77,21 @@ function lokalerFehler(datei: File): string | null {
 function startSchritte(lauf: Lauf): Schritte {
   if (lauf.art === "beispiel") {
     return {
-      datei: { status: "entfaellt", text: "Kein Upload: Das synthetische Beispiel liegt bereits auf dem Server." },
-      import: { status: "laeuft", text: "Beispiel-LV wird vom Server geladen …" },
-      pruefung: { status: "wartet", text: "Startet nach dem Import." },
+      datei: { status: "entfaellt", text: "No upload: the synthetic example is already on the server." },
+      import: { status: "laeuft", text: "Loading the example BoQ from the server …" },
+      pruefung: { status: "wartet", text: "Starts after import." },
     };
   }
   return {
-    datei: { status: "laeuft", text: `${lauf.datei.name} (${groesse(lauf.datei.size)}) wird übertragen …` },
-    import: { status: "laeuft", text: "Der Server liest die Datei in derselben Anfrage ein …" },
-    pruefung: { status: "wartet", text: "Startet nach dem Import." },
+    datei: { status: "laeuft", text: `Uploading ${lauf.datei.name} (${groesse(lauf.datei.size)}) …` },
+    import: { status: "laeuft", text: "The server imports the file in the same request …" },
+    pruefung: { status: "wartet", text: "Starts after import." },
   };
 }
 
 function fehlerText(fehler: unknown) {
-  if (fehler instanceof TypeError) return "Keine Verbindung zum Backend.";
-  return fehler instanceof Error && fehler.message ? fehler.message : "Unbekannter Fehler.";
+  if (fehler instanceof TypeError) return "Cannot connect to the backend.";
+  return fehler instanceof Error && fehler.message ? fehler.message : "Unknown error.";
 }
 
 async function backendErreichbar() {
@@ -156,16 +156,16 @@ export function LvUpload() {
       let meldung = fehlerText(fehler);
       let hinweis = tipp;
       if (!(await backendErreichbar())) {
-        meldung = "Das Backend ist nicht erreichbar.";
+        meldung = "The backend is unreachable.";
         hinweis = BACKEND_TIPP;
         setHealth("offline");
       }
       if (!aktuell()) return;
       schritte = { ...schritte, [schritt]: { status: "fehler", text: meldung } };
       if (schritt === "import" && lauf.art === "datei") {
-        schritte.datei = { status: "fertig", text: `${lauf.datei.name} (${groesse(lauf.datei.size)}) übertragen.` };
+        schritte.datei = { status: "fertig", text: `${lauf.datei.name} (${groesse(lauf.datei.size)}) uploaded.` };
       }
-      if (schritte.pruefung.status === "wartet") schritte.pruefung = { status: "wartet", text: "Nicht gestartet." };
+      if (schritte.pruefung.status === "wartet") schritte.pruefung = { status: "wartet", text: "Not started." };
       setErgebnis({ phase: "fehler", lauf, schritte, titel, meldung, tipp: hinweis });
     };
 
@@ -175,29 +175,29 @@ export function LvUpload() {
         lv = await api.importiere(lauf.datei);
       } else {
         const beispiele = await api.examples();
-        if (beispiele.length === 0) throw new Error("Das Backend liefert kein Beispiel-LV.");
+        if (beispiele.length === 0) throw new Error("The backend returned no example BoQ.");
         lv = beispiele[0].lv;
       }
     } catch (fehler) {
       let tipp: string | null = null;
       if (lauf.art === "datei" && lauf.datei.size > GRENZNAH_BYTES) {
         // The dev/start proxy in front of the backend may cut request bodies near the 10 MiB limit.
-        tipp = "Die Datei liegt knapp an der Grenze von 10 MiB. Bitte eine kleinere Datei versuchen.";
+        tipp = "The file is close to the 10 MiB limit. Please try a smaller file.";
       } else if (lauf.art === "datei" && endung(lauf.datei.name) !== ".json") {
-        tipp = "Mit einer LV-JSON-Datei oder dem synthetischen Beispiel lässt sich der Ablauf sofort zeigen.";
+        tipp = "Use a BoQ JSON file or the synthetic example to try the flow immediately.";
       }
-      await scheitern("import", "Import fehlgeschlagen", fehler, tipp);
+      await scheitern("import", "Import failed", fehler, tipp);
       return;
     }
     if (!aktuell()) return;
 
-    const quelle = lv.quelle ? ` aus ${lv.quelle}` : "";
+    const quelle = lv.quelle ? ` from ${lv.quelle}` : "";
     schritte = {
       datei: lauf.art === "datei"
-        ? { status: "fertig", text: `${lauf.datei.name} (${groesse(lauf.datei.size)}) übertragen.` }
+        ? { status: "fertig", text: `${lauf.datei.name} (${groesse(lauf.datei.size)}) uploaded.` }
         : schritte.datei,
-      import: { status: "fertig", text: `${anzahl(lv.positionen.length, "Position", "Positionen")} erkannt${quelle}.` },
-      pruefung: { status: "laeuft", text: "Prüfregeln laufen …" },
+      import: { status: "fertig", text: `${anzahl(lv.positionen.length, "Item", "Items")} detected${quelle}.` },
+      pruefung: { status: "laeuft", text: "Running review rules …" },
     };
     setErgebnis({ phase: "laeuft", lauf, schritte });
 
@@ -205,13 +205,13 @@ export function LvUpload() {
     try {
       bericht = await api.pruefen(lv);
     } catch (fehler) {
-      await scheitern("pruefung", "Prüfung fehlgeschlagen", fehler, null);
+      await scheitern("pruefung", "Review failed", fehler, null);
       return;
     }
     if (!aktuell()) return;
     schritte = {
       ...schritte,
-      pruefung: { status: "fertig", text: `${anzahl(bericht.findings.length, "Eintrag", "Einträge")} im Bericht.` },
+      pruefung: { status: "fertig", text: `${anzahl(bericht.findings.length, "Entry", "Entries")} in the report.` },
     };
     setErgebnis({ phase: "fertig", lauf, schritte, lv, bericht, nummer });
     if (health === "offline") api.health().then(setHealth).catch(() => {});
@@ -230,7 +230,7 @@ export function LvUpload() {
   }
 
   const status = health === null
-    ? { klasse: styles.statusWartet, text: "Backend wird geprüft …" }
+    ? { klasse: styles.statusWartet, text: "Checking backend …" }
     : health === "offline"
       ? { klasse: styles.statusOffline, text: "Backend offline" }
       : { klasse: health.mock ? styles.statusMock : styles.statusLive, text: `${health.provider} · ${health.model}` };
@@ -238,15 +238,15 @@ export function LvUpload() {
   return (
     <main className={styles.seite}>
       <header className={styles.kopf}>
-        <span className={styles.marke}>◆ LV-Prüfassistent</span>
+        <span className={styles.marke}>◆ BoQ Review Assistant</span>
         <span className={`${styles.status} ${status.klasse}`}>{status.text}</span>
       </header>
 
       <section className={styles.einleitung} aria-labelledby="upload-titel">
-        <p className={styles.kicker}>Leistungsverzeichnis prüfen</p>
-        <h1 id="upload-titel" className={styles.titel}>Fehler, Risiken und Nachtragspotenzial im LV finden, bevor das Angebot rausgeht.</h1>
+        <p className={styles.kicker}>Review a bill of quantities</p>
+        <h1 id="upload-titel" className={styles.titel}>Find errors, risks and potential change orders in your BoQ before submitting a bid.</h1>
         <p className={styles.lead}>
-          LV als Datei hochladen. Der Assistent liest die Positionen ein, prüft sie und zeigt jeden Befund mit Positionsnummer und Quelle.
+          Upload a BoQ file. The assistant imports and checks its items, then shows each finding with its item number and source.
         </p>
       </section>
 
@@ -266,33 +266,33 @@ export function LvUpload() {
             onChange={aufAuswahl}
             disabled={busy}
           />
-          <span className={styles.ablageTitel}>{datei ? datei.name : "LV-Datei auswählen"}</span>
+          <span className={styles.ablageTitel}>{datei ? datei.name : "Choose a BoQ file"}</span>
           <span className={styles.ablageText}>
-            {datei ? `${groesse(datei.size)} · andere Datei wählen oder hierher ziehen` : "Klicken, Enter drücken oder Datei hierher ziehen"}
+            {datei ? `${groesse(datei.size)} · choose another file or drag it here` : "Click, press Enter or drag a file here"}
           </span>
         </label>
         <p id="upload-regeln" className={styles.regeln}>
-          Formate: {FORMATS.map((f) => `${f.name} (${f.endung})`).join(", ")}. Höchstens 10 MiB. Die Datei wird nur für diese Prüfung gelesen und nicht gespeichert.
+          Formats: {FORMATS.map((f) => `${f.name} (${f.endung})`).join(", ")}. Maximum 10 MiB. The file is read only for this review and is not stored.
         </p>
         {dateiFehler && <p className={styles.dateiFehler} role="alert">{dateiFehler}</p>}
         <div className={styles.aktionen}>
           <button type="submit" className={styles.knopf} disabled={!datei || !!dateiFehler || busy}>
-            {busy && ergebnis.lauf.art === "datei" ? "Wird geprüft …" : "Datei prüfen"}
+            {busy && ergebnis.lauf.art === "datei" ? "Reviewing …" : "Review file"}
           </button>
           <button type="button" className={styles.knopfZweit} disabled={busy} onClick={() => { waehleDatei(null); if (inputRef.current) inputRef.current.value = ""; void starte({ art: "beispiel" }); }}>
-            {busy && ergebnis.lauf.art === "beispiel" ? "Beispiel wird geprüft …" : "Synthetisches Beispiel prüfen"}
+            {busy && ergebnis.lauf.art === "beispiel" ? "Reviewing example …" : "Review synthetic example"}
           </button>
           {datei && !busy && (
-            <button type="button" className={styles.knopfLeise} onClick={zuruecksetzen}>Auswahl entfernen</button>
+            <button type="button" className={styles.knopfLeise} onClick={zuruecksetzen}>Clear selection</button>
           )}
         </div>
-        <p className={styles.regeln}>Das Beispiel ist ein synthetisches Rohbau-LV ohne Partnerdaten und braucht keinen Upload.</p>
+        <p className={styles.regeln}>The example is a synthetic structural works BoQ without partner data and requires no upload.</p>
       </form>
 
       {ergebnis.phase !== "leer" && (
         <section className={styles.karte} aria-labelledby="ablauf-titel" aria-busy={busy}>
           <h2 id="ablauf-titel" className={styles.abschnitt}>
-            {ergebnis.lauf.art === "datei" ? `Ablauf für ${ergebnis.lauf.datei.name}` : "Ablauf für das synthetische Beispiel"}
+            {ergebnis.lauf.art === "datei" ? `Progress for ${ergebnis.lauf.datei.name}` : "Progress for the synthetic example"}
           </h2>
           <ol className={styles.schritte}>
             {(Object.keys(SCHRITT_NAMEN) as SchrittId[]).map((id) => {
@@ -308,7 +308,7 @@ export function LvUpload() {
             })}
           </ol>
           <div aria-live="polite" className={styles.ansage}>
-            {busy && `${SCHRITT_NAMEN[ergebnis.schritte.pruefung.status === "laeuft" ? "pruefung" : "import"]} läuft.`}
+            {busy && `${SCHRITT_NAMEN[ergebnis.schritte.pruefung.status === "laeuft" ? "pruefung" : "import"]} is running.`}
           </div>
           {ergebnis.phase === "fehler" && (
             <div ref={meldungRef} tabIndex={-1} className={styles.fehler} role="alert">
@@ -316,9 +316,9 @@ export function LvUpload() {
               <p>{ergebnis.meldung}</p>
               {ergebnis.tipp && <p className={styles.tipp}>{ergebnis.tipp}</p>}
               <div className={styles.aktionen}>
-                <button type="button" className={styles.knopf} onClick={() => void starte(ergebnis.lauf)}>Erneut versuchen</button>
+                <button type="button" className={styles.knopf} onClick={() => void starte(ergebnis.lauf)}>Try again</button>
                 {ergebnis.lauf.art === "datei" && (
-                  <button type="button" className={styles.knopfZweit} onClick={zuruecksetzen}>Andere Datei wählen</button>
+                  <button type="button" className={styles.knopfZweit} onClick={zuruecksetzen}>Choose another file</button>
                 )}
               </div>
             </div>
@@ -326,9 +326,9 @@ export function LvUpload() {
           {ergebnis.phase === "fertig" && (
             <div ref={meldungRef} tabIndex={-1} className={styles.erfolg}>
               <p>
-                <strong>{anzahl(ergebnis.lv.positionen.length, "Position", "Positionen")}</strong> importiert und geprüft. Der Prüfbericht steht unten.
+                <strong>{anzahl(ergebnis.lv.positionen.length, "Item", "Items")}</strong> imported and reviewed. The review report is below.
               </p>
-              <button type="button" className={styles.knopfZweit} onClick={() => void starte(ergebnis.lauf)}>Erneut prüfen</button>
+              <button type="button" className={styles.knopfZweit} onClick={() => void starte(ergebnis.lauf)}>Review again</button>
             </div>
           )}
         </section>
