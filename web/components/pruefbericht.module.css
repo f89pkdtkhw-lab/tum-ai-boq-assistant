@@ -37,6 +37,11 @@
   border: 1px solid color-mix(in srgb, var(--pb-warn) 55%, transparent);
   background: color-mix(in srgb, var(--pb-warn) 10%, transparent);
 }
+.offlineHinweis {
+  margin: 0; padding: 12px 14px; border-radius: 12px; font-size: 15px;
+  border: 2px solid var(--pb-bad);
+  background: color-mix(in srgb, var(--pb-bad) 10%, transparent);
+}
 .mockHinweis code { font: 13px ui-monospace, Menlo, monospace; }
 
 .fehler { margin: 0; color: var(--pb-bad); }
