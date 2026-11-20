@@ -1,6 +1,6 @@
-"""Platzhalter: GAEB X83/X84; liefert später unverändert den gemeinsamen LV-Vertrag."""
+"""Placeholder: GAEB X83/X84; will return the shared BoQ contract unchanged."""
 from ..modelle import LV
 
 
 def importiere(dateiname: str, inhalt: bytes) -> LV:
-    raise NotImplementedError("GAEB X83/X84-Import ist noch nicht implementiert. Für die Demo bitte das JSON-Beispiel verwenden.")
+    raise NotImplementedError("GAEB X83/X84 import is not implemented yet. Please use the JSON example for the demo.")

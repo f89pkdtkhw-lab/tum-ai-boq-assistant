@@ -5,12 +5,12 @@ import type { Finding, Position, Pruefbericht as PruefberichtDaten } from "@/lib
 import styles from "./pruefbericht.module.css";
 
 /**
- * Übergabe an die Exportseite (/export, Folgeauftrag #15):
- * Vor dem Wechsel nach /export schreibt der Bericht den aktuell angezeigten
- * `Pruefbericht` unverändert als JSON (`JSON.stringify(bericht)`) unter diesem
- * sessionStorage-Schlüssel. Der JSON-Download enthält genau dasselbe Objekt,
- * sodass /export beide Wege gleich einlesen kann. Format: Typ `Pruefbericht`
- * aus web/lib/api.ts, ohne Hülle. Ein neues Format bekommt einen neuen Schlüssel.
+ * Handoff to the export page (/export, follow-up issue #15):
+ * Before navigating, store the displayed `Pruefbericht` unchanged as JSON
+ * (`JSON.stringify(bericht)`) under this sessionStorage key. The JSON download
+ * contains the same object, so /export can read both sources in the same way.
+ * Format: the unwrapped `Pruefbericht` type from web/lib/api.ts.
+ * A new format requires a new key.
  */
 export const PRUEFBERICHT_SPEICHER_SCHLUESSEL = "lv-pruefbericht-v1";
 
@@ -20,24 +20,24 @@ type Kategorie = Finding["kategorie"];
 type Schwere = Finding["schwere"];
 
 const KATEGORIEN: { wert: Kategorie; name: string }[] = [
-  { wert: "fehler", name: "Fehler" },
-  { wert: "risiko", name: "Risiko" },
-  { wert: "nachtrag", name: "Nachtrag" },
+  { wert: "fehler", name: "Error" },
+  { wert: "risiko", name: "Risk" },
+  { wert: "nachtrag", name: "Change order" },
 ];
 const SCHWEREN: { wert: Schwere; name: string }[] = [
-  { wert: "kritisch", name: "Kritisch" },
-  { wert: "hoch", name: "Hoch" },
-  { wert: "mittel", name: "Mittel" },
-  { wert: "niedrig", name: "Niedrig" },
+  { wert: "kritisch", name: "Critical" },
+  { wert: "hoch", name: "High" },
+  { wert: "mittel", name: "Medium" },
+  { wert: "niedrig", name: "Low" },
 ];
 const SCHWERE_RANG: Record<Schwere, number> = { kritisch: 0, hoch: 1, mittel: 2, niedrig: 3 };
 const TYP_NAME: Record<Position["typ"], string> = {
-  normal: "Normalposition", bedarf: "Bedarfsposition", alternativ: "Alternativposition",
-  zulage: "Zulageposition", pauschal: "Pauschalposition", stundenlohn: "Stundenlohnposition",
+  normal: "Standard item", bedarf: "Optional item", alternativ: "Alternative item",
+  zulage: "Supplement item", pauschal: "Lump sum item", stundenlohn: "Hourly rate item",
 };
 
-const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
-const zahl = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 3 });
+const euro = new Intl.NumberFormat("en-GB", { style: "currency", currency: "EUR" });
+const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 3 });
 
 function istMock(finding: Finding) {
   return finding.regel_id === MOCK_REGEL;
@@ -52,7 +52,7 @@ function schwereName(wert: Schwere) {
 }
 
 function Unbekannt() {
-  return <span className={styles.unbekannt}>unbekannt</span>;
+  return <span className={styles.unbekannt}>unknown</span>;
 }
 
 function Euro({ wert }: { wert: number | null }) {
@@ -63,7 +63,7 @@ function Menge({ menge, einheit }: { menge: number | null; einheit: string | nul
   return (
     <>
       {menge === null ? <Unbekannt /> : zahl.format(menge)}{" "}
-      {einheit ? einheit : <span className={styles.unbekannt}>(Einheit unbekannt)</span>}
+      {einheit ? einheit : <span className={styles.unbekannt}>(unit unknown)</span>}
     </>
   );
 }
@@ -119,7 +119,7 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
 
   function waehle(oz: string, findingId: string | null) {
     setAuswahl({ oz, findingId });
-    // Auf schmalen Bildschirmen steht das Detail unter der Liste: dorthin springen.
+    // On narrow screens, details appear below the list: scroll there.
     requestAnimationFrame(() => {
       const ziel = detailRef.current;
       if (!ziel) return;
@@ -149,7 +149,7 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
       setExportFehler("");
     } catch {
       event.preventDefault();
-      setExportFehler("Der Bericht konnte nicht an die Exportseite übergeben werden (Browserspeicher gesperrt). Bitte stattdessen den JSON-Download nutzen.");
+      setExportFehler("Could not pass the report to the export page (browser storage blocked). Please use the JSON download.");
     }
   }
 
@@ -159,55 +159,55 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
     <section className={styles.bericht} aria-labelledby="pruefbericht-titel">
       <header className={styles.kopf}>
         <div>
-          <p className={styles.kicker}>Prüfbericht</p>
-          <h2 id="pruefbericht-titel" className={styles.titel}>{lv.name || "Unbenanntes LV"}</h2>
-          <p className={styles.quelle}>Quelle: {lv.quelle || <Unbekannt />}</p>
+          <p className={styles.kicker}>Review report</p>
+          <h2 id="pruefbericht-titel" className={styles.titel}>{lv.name || "Unnamed BoQ"}</h2>
+          <p className={styles.quelle}>Source: {lv.quelle || <Unbekannt />}</p>
         </div>
         <div className={styles.aktionen}>
-          <button type="button" className={styles.knopf} onClick={herunterladen}>JSON herunterladen</button>
-          <a className={styles.knopfZweit} href="/export" onClick={zumExport}>Zum Export</a>
+          <button type="button" className={styles.knopf} onClick={herunterladen}>Download JSON</button>
+          <a className={styles.knopfZweit} href="/export" onClick={zumExport}>Export report</a>
         </div>
       </header>
       {exportFehler && <p className={styles.fehler} role="alert">{exportFehler}</p>}
 
       {kennzahlen.modell_mock && (
         <p className={styles.mockHinweis} role="note">
-          <strong>Demonstrationsmodus:</strong> Die Modellprüfung läuft als Offline-Mock. Einträge mit
-          der Kennung <code>{MOCK_REGEL}</code> zeigen nur das Berichtsformat und sind keine fachlichen Befunde.
+          <strong>Demo mode:</strong> The model review runs as an offline mock. Entries with
+          the identifier <code>{MOCK_REGEL}</code> only demonstrate the report format and are not domain findings.
         </p>
       )}
 
       <dl className={styles.kennzahlen}>
         <div className={styles.kachel}>
-          <dt>Positionen</dt>
+          <dt>Items</dt>
           <dd>{zahl.format(kennzahlen.positionen)}</dd>
-          {doppelteOz > 0 && <small>{doppelteOz} OZ mehrfach vergeben</small>}
+          {doppelteOz > 0 && <small>{doppelteOz} duplicate item numbers</small>}
         </div>
         <div className={styles.kachel}>
-          <dt>Einträge</dt>
+          <dt>Entries</dt>
           <dd>{zahl.format(kennzahlen.findings)}</dd>
-          <small>{findings.length === 0 ? "keine Einträge" : mockAnzahl > 0 ? `davon ${mockAnzahl} Demonstration` : "alle aus der Prüfung"}</small>
+          <small>{findings.length === 0 ? "no entries" : mockAnzahl > 0 ? `including ${mockAnzahl} demo entries` : "all from the review"}</small>
         </div>
         <div className={`${styles.kachel} ${kennzahlen.kritisch > 0 ? styles.kachelKritisch : ""}`}>
-          <dt>Kritisch</dt>
+          <dt>Critical</dt>
           <dd>{zahl.format(kennzahlen.kritisch)}</dd>
         </div>
         <div className={styles.kachel}>
-          <dt>Belegte Euro-Wirkung</dt>
+          <dt>Evidenced euro impact</dt>
           <dd>{bekannteEuro.length > 0 ? euro.format(euroSumme) : <Unbekannt />}</dd>
           <small>
             {echteAnzahl === 0
-              ? "keine fachlichen Befunde"
+              ? "no domain findings"
               : euroUnbekannt > 0
-                ? `bei ${euroUnbekannt} von ${echteAnzahl} Befunden unbekannt`
-                : "aus allen Befunden belegt"}
+                ? `unknown for ${euroUnbekannt} of ${echteAnzahl} findings`
+                : "evidenced across all findings"}
           </small>
         </div>
       </dl>
 
-      <div className={styles.filter} role="group" aria-label="Befunde filtern">
+      <div className={styles.filter} role="group" aria-label="Filter findings">
         <fieldset className={styles.filterGruppe}>
-          <legend>Kategorie</legend>
+          <legend>Category</legend>
           <FilterKnopf aktiv={kategorie === null} onClick={() => setKategorie(null)}>
             Alle <span className={styles.anzahl}>{findings.length}</span>
           </FilterKnopf>
@@ -218,8 +218,8 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
           ))}
         </fieldset>
         <fieldset className={styles.filterGruppe}>
-          <legend>Schwere</legend>
-          <FilterKnopf aktiv={schwere === null} onClick={() => setSchwere(null)}>Alle</FilterKnopf>
+          <legend>Severity</legend>
+          <FilterKnopf aktiv={schwere === null} onClick={() => setSchwere(null)}>All</FilterKnopf>
           {SCHWEREN.map(({ wert, name }) => (
             <FilterKnopf key={wert} aktiv={schwere === wert} onClick={() => setSchwere(wert)}>
               <span className={`${styles.punkt} ${styles[`schwere_${wert}`]}`} aria-hidden="true" />
@@ -232,19 +232,19 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
       <div className={styles.layout}>
         <div className={styles.liste}>
           <h3 className={styles.abschnitt}>
-            Befunde <span className={styles.anzahl} aria-live="polite">{gefiltert.length} von {findings.length}</span>
+            Findings <span className={styles.anzahl} aria-live="polite">{gefiltert.length} of {findings.length}</span>
           </h3>
           {findings.length === 0 ? (
             <div className={styles.leer}>
-              <p><strong>Keine Befunde.</strong> Die Prüfung hat für dieses LV keine Auffälligkeiten gemeldet.</p>
-              <p>Das heißt nicht, dass das LV fehlerfrei ist: Es wurden nur die vorhandenen Prüfregeln angewendet.</p>
+              <p><strong>No findings.</strong> The review reported no issues for this BoQ.</p>
+              <p>This does not guarantee an error-free BoQ: only the available review rules were applied.</p>
             </div>
           ) : gefiltert.length === 0 ? (
             <div className={styles.leer}>
-              <p>Kein Befund passt zu diesem Filter.</p>
+              <p>No findings match this filter.</p>
               {filterAktiv && (
                 <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); }}>
-                  Filter zurücksetzen
+                  Reset filters
                 </button>
               )}
             </div>
@@ -264,17 +264,17 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
           )}
 
           <details className={styles.positionen}>
-            <summary>Alle {lv.positionen.length} Positionen anzeigen</summary>
+            <summary>Show all {lv.positionen.length} items</summary>
             {lv.positionen.length === 0 ? (
-              <p className={styles.leer}>Das LV enthält keine Positionen.</p>
+              <p className={styles.leer}>The BoQ contains no items.</p>
             ) : (
               <div className={styles.tabelleRahmen}>
                 <table className={styles.tabelle}>
                   <thead>
                     <tr>
-                      <th scope="col">OZ</th><th scope="col">Kurztext</th><th scope="col" className={styles.rechts}>Menge</th>
-                      <th scope="col" className={styles.rechts}>EP</th><th scope="col" className={styles.rechts}>GP</th>
-                      <th scope="col" className={styles.rechts}>Befunde</th>
+                      <th scope="col">OZ</th><th scope="col">Short description</th><th scope="col" className={styles.rechts}>Quantity</th>
+                      <th scope="col" className={styles.rechts}>Unit price</th><th scope="col" className={styles.rechts}>Total price</th>
+                      <th scope="col" className={styles.rechts}>Findings</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -282,7 +282,7 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
                       <tr key={`${position.oz}-${index}`} className={auswahl?.oz === position.oz ? styles.zeileGewaehlt : undefined}>
                         <td>
                           <button type="button" className={styles.ozKnopf} onClick={() => waehle(position.oz, null)}
-                            aria-label={`Position ${position.oz} anzeigen`}>
+                            aria-label={`Show item ${position.oz}`}>
                             {position.oz}
                           </button>
                         </td>
@@ -313,7 +313,7 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
           ) : (
             <div className={styles.detailLeer}>
               <h3 id="pruefbericht-detail-titel" className={styles.abschnitt}>Details</h3>
-              <p>Befund oder OZ wählen, um Kurztext, Langtext, Begründung und Vorschlag zu sehen.</p>
+              <p>Select a finding or item number to see its short and detailed descriptions, explanation and suggestion.</p>
             </div>
           )}
         </aside>
@@ -335,7 +335,7 @@ function Merkmale({ finding }: { finding: Finding }) {
     <span className={styles.merkmale}>
       <span className={`${styles.schwere} ${styles[`schwere_${finding.schwere}`]}`}>{schwereName(finding.schwere)}</span>
       <span className={styles.marke}>{kategorieName(finding.kategorie)}</span>
-      <span className={styles.marke}>{finding.quelle === "regel" ? "Regel" : "Modell"} · {finding.regel_id}</span>
+      <span className={styles.marke}>{finding.quelle === "regel" ? "Rule" : "Model"} · {finding.regel_id}</span>
       {istMock(finding) && <span className={styles.markeMock}>Demonstration</span>}
     </span>
   );
@@ -350,8 +350,8 @@ function FindingKarte({ finding, gewaehlt, ozBekannt, onWaehle }: {
       <Merkmale finding={finding} />
       <span className={styles.karteTitel}>{finding.titel}</span>
       <span className={styles.karteFuss}>
-        <span>OZ <span className={styles.oz}>{finding.oz}</span>{!ozBekannt && " (nicht im LV)"}</span>
-        <span>Euro-Wirkung: <Euro wert={finding.euro_wirkung} /></span>
+        <span>OZ <span className={styles.oz}>{finding.oz}</span>{!ozBekannt && " (not in BoQ)"}</span>
+        <span>Euro impact: <Euro wert={finding.euro_wirkung} /></span>
       </span>
     </button>
   );
@@ -367,7 +367,7 @@ function Detail({ oz, findingId, positionen, findings, onWaehle, onSchliessen }:
     <div>
       <div className={styles.detailKopf}>
         <h3 id="pruefbericht-detail-titel" className={styles.abschnitt}>OZ <span className={styles.oz}>{oz}</span></h3>
-        <button type="button" className={styles.schliessen} onClick={onSchliessen} aria-label="Details schließen">×</button>
+        <button type="button" className={styles.schliessen} onClick={onSchliessen} aria-label="Close details">×</button>
       </div>
 
       {gewaehlt && (
@@ -375,17 +375,17 @@ function Detail({ oz, findingId, positionen, findings, onWaehle, onSchliessen }:
           <Merkmale finding={gewaehlt} />
           <h4>{gewaehlt.titel}</h4>
           <dl className={styles.felder}>
-            <dt>Begründung</dt><dd>{gewaehlt.begruendung || <Unbekannt />}</dd>
-            <dt>Vorschlag</dt><dd>{gewaehlt.vorschlag || <Unbekannt />}</dd>
-            <dt>Euro-Wirkung</dt><dd><Euro wert={gewaehlt.euro_wirkung} /></dd>
-            <dt>Quelle</dt><dd>{gewaehlt.quelle === "regel" ? "Feste Prüfregel" : "Modell"} ({gewaehlt.regel_id})</dd>
+            <dt>Explanation</dt><dd>{gewaehlt.begruendung || <Unbekannt />}</dd>
+            <dt>Suggestion</dt><dd>{gewaehlt.vorschlag || <Unbekannt />}</dd>
+            <dt>Euro impact</dt><dd><Euro wert={gewaehlt.euro_wirkung} /></dd>
+            <dt>Source</dt><dd>{gewaehlt.quelle === "regel" ? "Fixed review rule" : "Model"} ({gewaehlt.regel_id})</dd>
           </dl>
         </article>
       )}
 
       {weitere.length > 0 && (
         <div className={styles.weitere}>
-          <p>{gewaehlt ? "Weitere Befunde zu dieser OZ:" : "Befunde zu dieser OZ:"}</p>
+          <p>{gewaehlt ? "Other findings for this item number:" : "Findings for this item number:"}</p>
           <ul>
             {weitere.map((f) => (
               <li key={f.id}>
@@ -397,27 +397,27 @@ function Detail({ oz, findingId, positionen, findings, onWaehle, onSchliessen }:
           </ul>
         </div>
       )}
-      {!gewaehlt && findings.length === 0 && <p className={styles.hinweis}>Zu dieser OZ gibt es keine Befunde.</p>}
+      {!gewaehlt && findings.length === 0 && <p className={styles.hinweis}>No findings for this item number.</p>}
 
       {positionen.length === 0 ? (
-        <p className={styles.fehler}>Diese OZ kommt im LV nicht vor. Der Befund lässt sich keiner Originalposition zuordnen.</p>
+        <p className={styles.fehler}>This item number does not exist in the BoQ. The finding cannot be linked to an original item.</p>
       ) : (
         <>
           {positionen.length > 1 && (
-            <p className={styles.warnung}>Die OZ {oz} ist {positionen.length}-mal vergeben. Alle Originalpositionen:</p>
+            <p className={styles.warnung}>Item number {oz} occurs {positionen.length} times. All original items:</p>
           )}
           {positionen.map((position, index) => (
             <article key={index} className={styles.position}>
-              <p className={styles.pfad}>{position.titel_pfad.length > 0 ? position.titel_pfad.join(" / ") : "ohne Titel"}</p>
+              <p className={styles.pfad}>{position.titel_pfad.length > 0 ? position.titel_pfad.join(" / ") : "no section"}</p>
               <h4>{position.kurztext || <Unbekannt />}</h4>
               <p className={styles.langtext}>
-                {position.langtext ? position.langtext : <span className={styles.unbekannt}>Kein Langtext angegeben.</span>}
+                {position.langtext ? position.langtext : <span className={styles.unbekannt}>No detailed description supplied.</span>}
               </p>
               <dl className={styles.werte}>
-                <div><dt>Menge</dt><dd><Menge menge={position.menge} einheit={position.einheit} /></dd></div>
-                <div><dt>EP</dt><dd><Euro wert={position.ep} /></dd></div>
-                <div><dt>GP</dt><dd><Euro wert={position.gp} /></dd></div>
-                <div><dt>Art</dt><dd>{TYP_NAME[position.typ] ?? position.typ}</dd></div>
+                <div><dt>Quantity</dt><dd><Menge menge={position.menge} einheit={position.einheit} /></dd></div>
+                <div><dt>Unit price</dt><dd><Euro wert={position.ep} /></dd></div>
+                <div><dt>Total price</dt><dd><Euro wert={position.gp} /></dd></div>
+                <div><dt>Type</dt><dd>{TYP_NAME[position.typ] ?? position.typ}</dd></div>
               </dl>
             </article>
           ))}

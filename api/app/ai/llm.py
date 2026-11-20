@@ -1,11 +1,11 @@
-"""Eine Schnittstelle für alle Modell-Anbieter, die uns am Wettbewerb gestellt werden könnten.
+"""One interface for all model providers that may be available at the competition.
 
-Auswahl über Umgebungsvariablen (siehe .env.example):
-    LLM_PROVIDER   anthropic | openai | azure | gemini | mock   (leer = erster Anbieter mit Schlüssel, sonst mock)
-    LLM_MODEL      Modellname; ohne Angabe ein Standard pro Anbieter
+Select through environment variables (see .env.example):
+    LLM_PROVIDER   anthropic | openai | azure | gemini | mock   (empty = first provider with a key, otherwise mock)
+    LLM_MODEL      Model name; defaults to a provider-specific model when omitted
 
-`mock` läuft ohne Netz und ohne Schlüssel, damit Demo und Tests immer starten.
-Schlüssel verlassen nie den Server und tauchen in keiner Fehlermeldung auf.
+`mock` runs without network access or keys so the demo and tests always start.
+Keys never leave the server and never appear in error messages.
 """
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
@@ -71,18 +71,18 @@ def complete(prompt, system="", max_tokens=1024):
     chosen = model(name)
     started = time.perf_counter()
     if name != "mock" and not env(KEY_FOR[name]):
-        raise LLMError(f"Für {name} fehlt {KEY_FOR[name]}. Ohne Schlüssel LLM_PROVIDER=mock setzen.")
+        raise LLMError(f"Missing {KEY_FOR[name]} for {name}. Without a key, set LLM_PROVIDER=mock.")
     if not chosen:
-        raise LLMError(f"Für {name} LLM_MODEL setzen (Modellname aus der Doku des Anbieters).")
+        raise LLMError(f"Set LLM_MODEL for {name} (model name from the provider documentation).")
     try:
         text = {"anthropic": _anthropic, "openai": _openai, "azure": _azure, "gemini": _gemini, "mock": _mock}[name](
             prompt, system, chosen, max_tokens)
     except httpx.HTTPStatusError as exc:
-        raise LLMError(f"{name} antwortete mit HTTP {exc.response.status_code}. Schlüssel, Modell und Guthaben prüfen.") from None
+        raise LLMError(f"{name} returned HTTP {exc.response.status_code}. Check the key, model and credit.") from None
     except httpx.HTTPError:
-        raise LLMError(f"{name} ist nicht erreichbar. Netz prüfen oder LLM_PROVIDER=mock.") from None
+        raise LLMError(f"{name} is unreachable. Check the network or set LLM_PROVIDER=mock.") from None
     except (KeyError, IndexError, TypeError, ValueError):
-        raise LLMError(f"{name} lieferte eine unerwartete Antwort.") from None
+        raise LLMError(f"{name} returned an unexpected response.") from None
     return Answer(text.strip(), name, chosen, round((time.perf_counter() - started) * 1000))
 
 
@@ -115,7 +115,7 @@ def _openai(prompt, system, chosen, max_tokens):
 def _azure(prompt, system, chosen, max_tokens):
     endpoint = env("AZURE_OPENAI_ENDPOINT").rstrip("/")
     if not endpoint or not chosen:
-        raise LLMError("Für azure AZURE_OPENAI_ENDPOINT und AZURE_OPENAI_DEPLOYMENT setzen.")
+        raise LLMError("For azure, set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_DEPLOYMENT.")
     version = env("AZURE_OPENAI_API_VERSION") or "2024-10-21"
     data = _post(f"{endpoint}/openai/deployments/{chosen}/chat/completions?api-version={version}",
                  {"api-key": env("AZURE_OPENAI_API_KEY")},
@@ -135,11 +135,11 @@ def _gemini(prompt, system, chosen, max_tokens):
 def _mock(prompt, system, chosen, max_tokens):
     lines = [line.strip() for line in prompt.strip().splitlines() if line.strip()]
     question = (lines[-1] if lines else "").removeprefix("Frage:").strip()[:160]
-    return f"[Mock-Antwort] Ohne Modell-Schlüssel beantwortet: „{question}“. Mit einem Schlüssel in .env.local antwortet ein echtes Modell."
+    return f"[Mock response] Answered without a model key: “{question}”. With a key in .env.local, a real model responds."
 
 
 def mock(prompt, system="", max_tokens=1024):
-    """Expliziter Offline-Aufruf, unabhängig von Schlüsseln und Provider-Konfiguration."""
+    """Explicit offline call, independent of keys and provider configuration."""
     return Answer(_mock(prompt, system, DEFAULT_MODELS["mock"], max_tokens), "mock", DEFAULT_MODELS["mock"], 0)
 
 

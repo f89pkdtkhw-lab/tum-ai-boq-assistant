@@ -11,15 +11,15 @@ type Zustand =
   | { phase: "fertig"; beispiel: Example; bericht: PruefberichtDaten }
   | { phase: "fehler"; schritt: string; meldung: string };
 
-// Darstellungstest des leeren Zustands: /bericht-vorschau?zustand=ohne-befunde
-// blendet alle Einträge aus und sagt das auf der Seite deutlich.
+// Empty-state display test: /bericht-vorschau?zustand=ohne-befunde
+// hides all entries and clearly states this on the page.
 function ohneBefunde(bericht: PruefberichtDaten): PruefberichtDaten {
   return { ...bericht, findings: [], kennzahlen: { ...bericht.kennzahlen, findings: 0, kritisch: 0 } };
 }
 
 function meldung(fehler: unknown) {
-  if (fehler instanceof TypeError) return "Keine Verbindung zum Backend.";
-  return fehler instanceof Error ? fehler.message : "Unbekannter Fehler.";
+  if (fehler instanceof TypeError) return "Cannot connect to the backend.";
+  return fehler instanceof Error ? fehler.message : "Unknown error.";
 }
 
 export function Vorschau() {
@@ -33,7 +33,7 @@ export function Vorschau() {
       const bericht = await api.pruefen(beispiel.lv);
       setZustand({ phase: "fertig", beispiel, bericht });
     } catch (fehler) {
-      setZustand({ phase: "fehler", schritt: "Prüfung des LV", meldung: meldung(fehler) });
+      setZustand({ phase: "fehler", schritt: "Reviewing the BoQ", meldung: meldung(fehler) });
     }
   }, []);
 
@@ -43,12 +43,12 @@ export function Vorschau() {
       const items = await api.examples();
       setBeispiele(items);
       if (items.length === 0) {
-        setZustand({ phase: "fehler", schritt: "Laden der Beispiele", meldung: "Das Backend liefert keine Beispiel-LVs." });
+        setZustand({ phase: "fehler", schritt: "Loading examples", meldung: "The backend returned no example BoQs." });
         return;
       }
       await pruefe(items[0]);
     } catch (fehler) {
-      setZustand({ phase: "fehler", schritt: "Laden der Beispiele", meldung: meldung(fehler) });
+      setZustand({ phase: "fehler", schritt: "Loading examples", meldung: meldung(fehler) });
     }
   }, [pruefe]);
 
@@ -63,16 +63,16 @@ export function Vorschau() {
     <main className={styles.seite}>
       <header className={styles.kopf}>
         <div>
-          <p className={styles.kicker}>Vorschau · synthetisches Beispiel</p>
-          <h1 className={styles.titel}>Prüfbericht für ein Leistungsverzeichnis</h1>
+          <p className={styles.kicker}>Preview · synthetic example</p>
+          <h1 className={styles.titel}>Review report for a bill of quantities</h1>
           <p className={styles.lead}>
-            Diese Seite schickt ein synthetisches Beispiel-LV (keine Partnerdaten) durch die Prüfpipeline und zeigt das Ergebnis.
-            Der Datei-Upload folgt auf der Startseite.
+            This page sends a synthetic example BoQ (no partner data) through the review pipeline and shows the result.
+            File upload is available on the home page.
           </p>
         </div>
         {beispiele.length > 1 && (
           <label className={styles.auswahl}>
-            Beispiel
+            Example
             <select
               value={aktivesBeispiel?.id ?? ""}
               disabled={zustand.phase === "beispiele" || zustand.phase === "pruefen"}
@@ -89,22 +89,22 @@ export function Vorschau() {
 
       {leerTest && (
         <p className={styles.testHinweis} role="note">
-          <strong>Darstellungstest:</strong> Alle Einträge sind ausgeblendet, um den Zustand ohne Befunde zu zeigen. Das ist kein echtes Prüfergebnis.{" "}
-          <a href="/bericht-vorschau">Echten Bericht anzeigen</a>
+          <strong>Display test:</strong> All entries are hidden to show the empty state. This is not an actual review result.{" "}
+          <a href="/bericht-vorschau">Show actual report</a>
         </p>
       )}
 
       <div aria-live="polite" aria-busy={zustand.phase === "beispiele" || zustand.phase === "pruefen"}>
-        {zustand.phase === "beispiele" && <Laden text="Beispiel-LV wird geladen …" />}
-        {zustand.phase === "pruefen" && <Laden text={`„${zustand.beispiel.titel}“ wird geprüft …`} />}
+        {zustand.phase === "beispiele" && <Laden text="Loading example BoQ …" />}
+        {zustand.phase === "pruefen" && <Laden text={`Reviewing “${zustand.beispiel.titel}” …`} />}
         {zustand.phase === "fehler" && (
           <div className={styles.fehler} role="alert">
-            <h2>Der Bericht konnte nicht erstellt werden</h2>
-            <p>Schritt: {zustand.schritt}. {zustand.meldung}</p>
+            <h2>Could not create the report</h2>
+            <p>Step: {zustand.schritt}. {zustand.meldung}</p>
             <p className={styles.tipp}>
-              Läuft das Backend? Lokal startet <code>python tools/dev.py</code> Oberfläche und Backend zusammen.
+              Is the backend running? Locally, <code>python tools/dev.py</code> starts the UI and backend together.
             </p>
-            <button type="button" className={styles.knopf} onClick={() => void lade()}>Erneut versuchen</button>
+            <button type="button" className={styles.knopf} onClick={() => void lade()}>Try again</button>
           </div>
         )}
       </div>

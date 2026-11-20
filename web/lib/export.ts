@@ -18,21 +18,25 @@ export function leseBericht(text: string | null): Pruefbericht | null {
 
 export const istMock = (f: Finding) => f.regel_id === MOCK_REGEL;
 
+const CATEGORY_LABELS = { fehler: "Error", risiko: "Risk", nachtrag: "Change order" };
+const SEVERITY_LABELS = { kritisch: "Critical", hoch: "High", mittel: "Medium", niedrig: "Low" };
+const ITEM_TYPE_LABELS = { normal: "Standard item", bedarf: "Optional item", alternativ: "Alternative item", zulage: "Supplement item", pauschal: "Lump sum item", stundenlohn: "Hourly rate item" };
+
 type Zelle = string | number | null;
 
 export function tabellen(bericht: Pruefbericht): { name: string; zeilen: Zelle[][] }[] {
   const positionen: Zelle[][] = [
-    ["OZ", "Kurztext", "Langtext", "Menge", "Einheit", "EP (EUR)", "GP (EUR)", "Typ", "Titel"],
-    ...bericht.lv.positionen.map((p) => [p.oz, p.kurztext, p.langtext, p.menge, p.einheit, p.ep, p.gp, p.typ, p.titel_pfad.join(" › ")]),
+    ["OZ", "Short description", "Detailed description", "Quantity", "Unit", "Unit price (EUR)", "Total price (EUR)", "Type", "Title"],
+    ...bericht.lv.positionen.map((p) => [p.oz, p.kurztext, p.langtext, p.menge, p.einheit, p.ep, p.gp, ITEM_TYPE_LABELS[p.typ], p.titel_pfad.join(" › ")]),
   ];
   const befunde: Zelle[][] = [
-    ["OZ", "Kategorie", "Schwere", "Titel", "Begründung", "Vorschlag", "Quelle", "Regel", "Euro-Wirkung (EUR)", "Hinweis"],
+    ["OZ", "Category", "Severity", "Title", "Explanation", "Suggestion", "Source", "Rule", "Euro impact (EUR)", "Note"],
     ...bericht.findings.map((f) => [
-      f.oz, f.kategorie, f.schwere, f.titel, f.begruendung, f.vorschlag, f.quelle, f.regel_id, f.euro_wirkung,
-      istMock(f) ? "Demonstration (Mock), kein fachlicher Befund" : "",
+      f.oz, CATEGORY_LABELS[f.kategorie], SEVERITY_LABELS[f.schwere], f.titel, f.begruendung, f.vorschlag, f.quelle === "regel" ? "Rule" : "Model", f.regel_id, f.euro_wirkung,
+      istMock(f) ? "Demonstration (mock), not a domain finding" : "",
     ]),
   ];
-  return [{ name: "Befunde", zeilen: befunde }, { name: "Positionen", zeilen: positionen }];
+  return [{ name: "Findings", zeilen: befunde }, { name: "Items", zeilen: positionen }];
 }
 
 // ---------- XLSX (Office Open XML) ----------

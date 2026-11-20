@@ -43,8 +43,8 @@ def test_acceptance_slab_layers_flag_outliers_with_quantities_and_threshold():
         assert f.quelle == "regel"
         assert f.regel_id == "MENGE_SCHICHTEN_ABWEICHUNG"
         assert f.euro_wirkung is None
-        assert "Median 140 m²" in f.begruendung
-        assert "±10%" in f.begruendung and "keine Norm" in f.begruendung
+        assert "median 140 m²" in f.begruendung
+        assert "±10%" in f.begruendung and "not a standard" in f.begruendung
         for oz, menge in (("01.01", 205), ("01.02", 150), ("01.03", 120), ("01.04", 130)):
             assert f"OZ {oz}" in f.begruendung and f"{menge} m²" in f.begruendung
     oz_in_lv = {p.oz for p in ACCEPTANCE_LV.positionen}
@@ -83,8 +83,8 @@ def test_chairs_tables_ratio_only_when_explicitly_configured():
     assert pruefe_mengen(lv) == []  # not a default rule
     [finding] = pruefe_mengen(lv, ratio_rules=(CHAIRS_PER_TABLE,))
     assert finding.oz == "2" and finding.regel_id == "MENGE_VERHAELTNIS"
-    assert "OZ 2 400 St zu OZ 1 50 St ergibt 8 St/St" in finding.begruendung
-    assert "erwartet 4–6" in finding.begruendung and "keine Baunorm" in finding.begruendung
+    assert "OZ 2 400 St to OZ 1 50 St yields 8 St/St" in finding.begruendung
+    assert "expected 4–6" in finding.begruendung and "keine Baunorm" in finding.begruendung
     ok = _lv(_pos("1", "Tisch", 80, einheit="St", titel=["Saal"]),
              _pos("2", "Stühle", 400, einheit="St", titel=["Saal"]))
     assert pruefe_mengen(ok, ratio_rules=(CHAIRS_PER_TABLE,)) == []
@@ -97,7 +97,7 @@ def test_concrete_reinforcement_within_delimited_title_with_unit_conversion():
     [finding] = pruefe_mengen(high)
     assert finding.oz == "03.02"
     assert "5000 kg" in finding.begruendung and "250 kg/m³" in finding.begruendung
-    assert "kein normativer Grenzwert" in finding.begruendung
+    assert "not a normative limit" in finding.begruendung
     plausible = _lv(_pos("03.01", "Beton C25/30 Bodenplatte", 20, einheit="m³", titel=title),
                     _pos("03.02", "Bewehrung BSt 500", 2, einheit="t", titel=title))
     assert pruefe_mengen(plausible) == []

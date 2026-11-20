@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Vorschau } from "./Vorschau";
 
 export const metadata: Metadata = {
-  title: "Prüfbericht-Vorschau · TUM.ai Construction Hackathon",
-  description: "Synthetisches Beispiel-LV durch die Prüfpipeline und als Prüfbericht dargestellt.",
+  title: "Review report preview · TUM.ai Construction Hackathon",
+  description: "Synthetic example BoQ processed by the review pipeline and displayed as a review report.",
 };
 
 export default function BerichtVorschauSeite() {

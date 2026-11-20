@@ -1,4 +1,4 @@
-"""Offline-Kickoff-API: Import → feste Regeln → Modell-Mock → Bericht."""
+"""Offline kickoff API: import → fixed rules → model mock → report."""
 import json
 import os
 from pathlib import Path
@@ -18,7 +18,7 @@ from .risiko.scoring import bewerte
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
-app = FastAPI(title="LV-Prüfassistent", version="0.2.0")
+app = FastAPI(title="BoQ Review Assistant", version="0.2.0")
 app.include_router(comparison_router)
 app.include_router(metadata_router)
 app.add_middleware(
@@ -34,14 +34,14 @@ class Question(BaseModel):
 
 
 def load_examples():
-    return [Beispiel(id="synthetisch-rohbau", titel="Synthetisches Rohbau-LV",
-                     beschreibung="30 Positionen, 3 Titel, 5 eingebaute Fehler; Fachregeln folgen. Modell ist Mock.",
+    return [Beispiel(id="synthetisch-rohbau", titel="Synthetic structural works BoQ",
+                     beschreibung="30 items, 3 sections, 5 seeded errors; domain rules follow. The model is a mock.",
                      lv=LV.model_validate_json((DATA / "beispiel_lv.json").read_bytes()))]
 
 
 @app.get("/health")
 def health():
-    # Die LV-Pipeline ist unabhängig von eventuell vorhandenen API-Schlüsseln immer Mock.
+    # The BoQ pipeline always uses a mock, regardless of any available API keys.
     return {"ok": True, "provider": "mock", "model": "offline-lv-mock", "mock": True,
             "keys": {name: False for name in ("anthropic", "openai", "azure", "gemini")}}
 
@@ -56,12 +56,12 @@ async def import_lv(datei: UploadFile):
     try:
         inhalt = await datei.read(MAX_UPLOAD_BYTES + 1)
         if len(inhalt) > MAX_UPLOAD_BYTES:
-            raise HTTPException(413, "Datei ist zu groß (maximal 10 MiB).")
+            raise HTTPException(413, "File is too large (maximum 10 MiB).")
         if not inhalt:
-            raise HTTPException(422, "Die hochgeladene Datei ist leer.")
+            raise HTTPException(422, "The uploaded file is empty.")
         return importiere(datei.filename or "", inhalt)
     except ValidationError:
-        raise HTTPException(422, "Ungültiges LV-JSON. Bitte den dokumentierten LV-Vertrag verwenden.") from None
+        raise HTTPException(422, "Invalid BoQ JSON. Please use the documented BoQ contract.") from None
     except NotImplementedError as exc:
         raise HTTPException(501, str(exc)) from None
     except ValueError as exc:
@@ -81,8 +81,8 @@ def pruefen(lv: LV):
 
 @app.post("/api/ask")
 def ask(body: Question):
-    """Bestehende Starterroute bleibt kompatibel, aber verwendet ebenfalls nur den Mock."""
+    """The existing starter route remains compatible and also uses only the mock."""
     context = json.dumps([e.model_dump() for e in load_examples()], ensure_ascii=False)[:6000] if body.use_data else ""
-    prompt = body.question if not context else f"Daten:\n{context}\n\nFrage: {body.question}"
+    prompt = body.question if not context else f"Data:\n{context}\n\nQuestion: {body.question}"
     answer = llm.mock(prompt)
     return {"answer": answer.text, "provider": answer.provider, "model": answer.model, "ms": answer.ms}
