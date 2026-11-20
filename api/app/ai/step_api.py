@@ -163,7 +163,19 @@ def synthetic_note(request: StepRequest) -> Note | None:
     )
 
 
-@router.post("/api/comparison/steps", response_model=StepResponse)
+@router.post(
+    "/api/comparison/steps", response_model=StepResponse,
+    responses={200: {"content": {"application/json": {"example": StepResponse(
+        step="comparison", status="placeholder", notes=[Note(
+            id="Note1", step="comparison", oz="01.001",
+            text="Synthetic placeholder: 10 cm / 12 cm conflict; manual review required. "
+                 "Applicable standard evidence is missing; no verified norm breach.",
+            evidence=[Evidence(reference_id=s["id"], oz=s["oz"], source=s["source"], detail=s["text"])
+                      for s in CONFLICT_EXAMPLE["specifications"]],
+        )], evidence=[Evidence(reference_id=s["id"], oz=s["oz"], source=s["source"], detail=s["text"])
+                      for s in CONFLICT_EXAMPLE["specifications"]],
+    ).model_dump()}}}},
+)
 def comparison_step(request: StepRequest) -> StepResponse:
     if request.step in ("historical_adjustment", "what_if") and not request.history_records:
         return step_error(request, "history_unavailable",

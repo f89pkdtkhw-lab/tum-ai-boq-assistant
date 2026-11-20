@@ -1,4 +1,6 @@
 """Generate offline description/tag fixtures without interpreting user text as instructions."""
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException
 from pydantic import Field, model_validator
 
@@ -37,7 +39,7 @@ class MetadataRequest(Vertrag):
 class MetadataResponse(Vertrag):
     description: str
     tags: list[str]
-    source: str
+    source: Literal["model_mock"]
     estimated_values: list[Measurement]
     real_values: list[Measurement]
     comments: list[str]
@@ -55,7 +57,14 @@ MetadataRequest.model_config["json_schema_extra"] = {"examples": [METADATA_EXAMP
 
 @router.post("/api/history/metadata", response_model=MetadataResponse,
              response_model_exclude_unset=True,
-             responses={503: {"description": "Offline metadata generation failed; no record was stored."}})
+             responses={
+                 200: {"content": {"application/json": {"example": {
+                     "description": "Mock: bridge repair case.", "tags": ["bridge"], "source": "model_mock",
+                     "estimated_values": [], "real_values": METADATA_EXAMPLE["real_values"],
+                     "comments": METADATA_EXAMPLE["comments"], "marks": METADATA_EXAMPLE["marks"],
+                 }}}},
+                 503: {"description": "Offline metadata generation failed; no record was stored."},
+             })
 def history_metadata(request: MetadataRequest) -> MetadataResponse:
     text = " ".join([request.lv.name, *[p.kurztext + " " + p.langtext for p in request.lv.positionen]]).casefold()
     bridge = "bridge" in text or "brücke" in text
