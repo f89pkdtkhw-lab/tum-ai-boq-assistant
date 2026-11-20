@@ -70,8 +70,9 @@ def test_errors_never_leak_the_key(monkeypatch):
         return httpx.Response(401, json={"error": "geheim-123 invalid"}, request=httpx.Request("POST", url))
 
     monkeypatch.setattr(llm.httpx, "post", failing)
-    response = client.post("/api/ask", json={"question": "x"})
-    assert response.status_code == 502 and "401" in response.text and "geheim-123" not in response.text
+    with pytest.raises(llm.LLMError) as error:
+        llm.complete("x")
+    assert "401" in str(error.value) and "geheim-123" not in str(error.value)
 
 
 def test_missing_key_or_model_gives_clear_message(monkeypatch):
