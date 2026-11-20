@@ -1,4 +1,4 @@
-"""Abnahme am HTTP-Vertrag: ohne Schlüssel, ohne externe Dienste."""
+"""HTTP contract acceptance: no keys, no external services."""
 import json
 from pathlib import Path
 from fastapi.testclient import TestClient
@@ -24,8 +24,8 @@ def test_synthetic_upload_then_report_keeps_all_positions_and_source():
     for finding in body["findings"]:
         assert finding["oz"] in {p["oz"] for p in lv["positionen"]}
         assert finding["quelle"] in ("regel", "modell")
-        # Modell-Mock darf keine Euro-Wirkung erfinden; feste Regeln dürfen eine
-        # direkt belegbare (z. B. Rechenfehler-Differenz) ausweisen.
+        # The model mock must not invent euro impact; fixed rules may report a
+        # directly evidenced value (e.g. an arithmetic error difference).
         if finding["quelle"] == "modell":
             assert finding["euro_wirkung"] is None
         else:

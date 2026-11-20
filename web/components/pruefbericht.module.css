@@ -1,4 +1,4 @@
-/* Prüfbericht: nutzt die Farbvariablen aus globals.css, mit eigenen Rückfallwerten. */
+/* Review report: uses color variables from globals.css with its own fallback values. */
 .bericht {
   --pb-ink: var(--ink, #11162a);
   --pb-muted: var(--muted, #5b6478);

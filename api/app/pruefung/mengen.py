@@ -59,8 +59,8 @@ CONCRETE_REINFORCEMENT = RatioRule(
     compare_unit="kg",
     minimum=40.0,
     maximum=200.0,
-    assumption=("Plausibilitätsannahme 40–200 kg Bewehrung je m³ Beton für übliche "
-                "Stahlbetonbauteile; kein normativer Grenzwert, statische Berechnung maßgeblich"),
+    assumption=("Plausibility assumption of 40–200 kg reinforcement per m³ concrete for typical "
+                "reinforced concrete components; not a normative limit, structural calculations govern"),
 )
 
 DEFAULT_RATIO_RULES: tuple[RatioRule, ...] = (CONCRETE_REINFORCEMENT,)
@@ -91,7 +91,7 @@ def _num(value: float) -> str:
 
 
 def _title(pos: Position) -> str:
-    return " / ".join(pos.titel_pfad) or "ohne Titel"
+    return " / ".join(pos.titel_pfad) or "no section"
 
 
 def _hint(id_: str, oz: str, title: str, reason: str, proposal: str, rule_id: str) -> Finding:
@@ -116,7 +116,8 @@ def _check_layers(lv: LV) -> list[Finding]:
         if len(members) < 2:
             continue
         mid = median(q for _, q in members)
-        name = component.capitalize()
+        name = {"bodenplatte": "floor slab", "kellerwand": "basement wall", "decke": "ceiling",
+                "dach": "roof", "terrasse": "terrace", "balkon": "balcony"}[component]
         overview = "; ".join(f"OZ {p.oz} {p.kurztext.strip()} {_num(q)} m²" for p, q in members)
         for pos, quantity in members:
             deviation = (quantity - mid) / mid
@@ -124,12 +125,12 @@ def _check_layers(lv: LV) -> list[Finding]:
                 continue
             findings.append(_hint(
                 f"MENGE_SCHICHTEN_ABWEICHUNG:{pos.oz}", pos.oz,
-                f"Schichtfläche {name} auffällig",
-                (f"{_num(quantity)} m² weicht {deviation:+.0%} vom Median {_num(mid)} m² "
-                 f"der Schichten {name} im Titel „{_title(pos)}“ ab ({overview}). "
-                 f"Annahme: Schichten desselben Bauteils decken etwa dieselbe Fläche ab, "
-                 f"Toleranz ±{LAYER_TOLERANCE:.0%}; keine Norm."),
-                "Fläche gegen Aufmaß bzw. Planunterlagen prüfen; Überstände oder Teilflächen im Langtext begründen.",
+                f"Unusual layer area for {name}",
+                (f"{_num(quantity)} m² deviates {deviation:+.0%} from the median {_num(mid)} m² "
+                 f"of the {name} layers in section “{_title(pos)}” ({overview}). "
+                 f"Assumption: layers of the same component cover approximately the same area, "
+                 f"tolerance ±{LAYER_TOLERANCE:.0%}; not a standard."),
+                "Check the area against measurements or plans; explain overhangs or partial areas in the detailed description.",
                 "MENGE_SCHICHTEN_ABWEICHUNG",
             ))
     return findings
@@ -148,6 +149,7 @@ def _check_ratio(lv: LV, rule: RatioRule) -> list[Finding]:
         elif unit == rule.base_unit and _contains(pos, rule.base_terms):
             base.append((pos, value))
 
+    display_name = "reinforcement per concrete" if rule is CONCRETE_REINFORCEMENT else rule.name
     findings = []
     for base, compare in by_title.values():
         # Only clearly delimited titles: exactly one base and one compare position.
@@ -160,12 +162,12 @@ def _check_ratio(lv: LV, rule: RatioRule) -> list[Finding]:
         unit = f"{rule.compare_unit}/{rule.base_unit}"
         findings.append(_hint(
             f"MENGE_VERHAELTNIS:{rule.name}:{c_pos.oz}", c_pos.oz,
-            f"Mengenverhältnis {rule.name} auffällig",
-            (f"OZ {c_pos.oz} {_num(c_value)} {rule.compare_unit} zu OZ {b_pos.oz} "
-             f"{_num(b_value)} {rule.base_unit} ergibt {_num(round(ratio, 2))} {unit} "
-             f"im Titel „{_title(c_pos)}“, erwartet {_num(rule.minimum)}–{_num(rule.maximum)} "
+            f"Unusual quantity ratio: {display_name}",
+            (f"OZ {c_pos.oz} {_num(c_value)} {rule.compare_unit} to OZ {b_pos.oz} "
+             f"{_num(b_value)} {rule.base_unit} yields {_num(round(ratio, 2))} {unit} "
+             f"in section “{_title(c_pos)}”, expected {_num(rule.minimum)}–{_num(rule.maximum)} "
              f"{unit}. {rule.assumption}."),
-            f"Mengen von OZ {c_pos.oz} und OZ {b_pos.oz} gegen Aufmaß bzw. Planung prüfen.",
+            f"Check quantities for OZ {c_pos.oz} and OZ {b_pos.oz} against measurements or plans.",
             "MENGE_VERHAELTNIS",
         ))
     return findings

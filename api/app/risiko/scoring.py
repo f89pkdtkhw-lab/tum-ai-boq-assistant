@@ -1,4 +1,4 @@
-"""Platzhalter: erhält vorhandene Findings; erfindet keine Scores oder Preise."""
+"""Placeholder: preserves existing findings; does not invent scores or prices."""
 from ..modelle import Finding, LV
 
 

@@ -1,4 +1,4 @@
-"""Formatdispatch ohne Speicherung; jeder Formatimport hat einen eigenen Dateibereich."""
+"""Format dispatch without storage; each format importer has its own file scope."""
 from pathlib import Path
 from ..modelle import LV
 from . import excel, gaeb, pdf
@@ -11,5 +11,5 @@ def importiere(dateiname: str, inhalt: bytes) -> LV:
     parser = {".x83": gaeb.importiere, ".x84": gaeb.importiere,
               ".xlsx": excel.importiere, ".pdf": pdf.importiere}.get(endung)
     if parser is None:
-        raise ValueError("Format nicht unterstützt. Erlaubt: JSON, X83, X84, XLSX, PDF.")
+        raise ValueError("Unsupported format. Allowed: JSON, X83, X84, XLSX, PDF.")
     return parser(dateiname, inhalt)

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Export } from "./Export";
 
 export const metadata: Metadata = {
-  title: "Export · LV-Prüfassistent",
-  description: "Prüfbericht als PDF drucken oder als Excel-Datei herunterladen.",
+  title: "Export · BoQ Review Assistant",
+  description: "Print the review report as PDF or download it as an Excel file.",
 };
 
 export default function ExportSeite() {

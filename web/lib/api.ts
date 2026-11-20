@@ -1,5 +1,5 @@
-// Gemeinsamer Vertrag: docs/schnittstelle.md und api/app/modelle.py.
-// Änderungen zusammen mit dem Backend und vorher mit @all auf dem Board ankündigen.
+// Shared contract: docs/schnittstelle.md and api/app/modelle.py.
+// Coordinate changes with the backend and announce them to @all on the board first.
 export type Position = {
   oz: string; kurztext: string; langtext: string; menge: number | null;
   einheit: string | null; ep: number | null; gp: number | null;
@@ -23,7 +23,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/backend${path}`, init);
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const detail = typeof body.detail === "string" ? body.detail : `Anfrage fehlgeschlagen (${response.status}). Bitte Eingabe prüfen.`;
+    const detail = typeof body.detail === "string" ? body.detail : `Request failed (${response.status}). Please check the input.`;
     throw new Error(detail);
   }
   return body as T;

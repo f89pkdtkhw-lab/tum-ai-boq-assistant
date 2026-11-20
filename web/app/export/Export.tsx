@@ -6,9 +6,11 @@ import { PRUEFBERICHT_SPEICHER_SCHLUESSEL } from "@/components/Pruefbericht";
 import { dateiname, istMock, leseBericht, xlsx } from "@/lib/export";
 import styles from "./export.module.css";
 
-const zahl = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 3 });
-const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
-const KATEGORIE: Record<string, string> = { fehler: "Fehler", risiko: "Risiko", nachtrag: "Nachtrag" };
+const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 3 });
+const euro = new Intl.NumberFormat("en-GB", { style: "currency", currency: "EUR" });
+const KATEGORIE: Record<string, string> = { fehler: "Error", risiko: "Risk", nachtrag: "Change order" };
+
+const SEVERITY_LABELS: Record<string, string> = { kritisch: "Critical", hoch: "High", mittel: "Medium", niedrig: "Low" };
 
 type Zustand = { phase: "laedt" } | { phase: "leer"; fehler: string } | { phase: "bereit"; bericht: Pruefbericht; quelle: string };
 
@@ -20,8 +22,8 @@ export function Export() {
     try { text = window.sessionStorage.getItem(PRUEFBERICHT_SPEICHER_SCHLUESSEL); } catch { /* storage blocked */ }
     const bericht = leseBericht(text);
     setZustand(bericht
-      ? { phase: "bereit", bericht, quelle: "aus der aktuellen Prüfung" }
-      : { phase: "leer", fehler: text ? "Der gespeicherte Bericht ist ungültig." : "" });
+      ? { phase: "bereit", bericht, quelle: "from the current review" }
+      : { phase: "leer", fehler: text ? "The stored report is invalid." : "" });
   }, []);
 
   async function dateiLaden(e: ChangeEvent<HTMLInputElement>) {
@@ -29,8 +31,8 @@ export function Export() {
     if (!datei) return;
     const bericht = leseBericht(await datei.text());
     setZustand(bericht
-      ? { phase: "bereit", bericht, quelle: `aus ${datei.name}` }
-      : { phase: "leer", fehler: `„${datei.name}“ ist kein Prüfbericht. Bitte die JSON-Datei aus „JSON herunterladen“ verwenden.` });
+      ? { phase: "bereit", bericht, quelle: `from ${datei.name}` }
+      : { phase: "leer", fehler: `“${datei.name}” is not a review report. Please use the JSON file from “Download JSON”.` });
   }
 
   function excel(bericht: Pruefbericht) {
@@ -47,13 +49,13 @@ export function Export() {
     return (
       <main className={styles.seite}>
         <section className={`${styles.glas} ${styles.leer}`} aria-labelledby="leer-titel">
-          <h1 id="leer-titel">Kein Prüfbericht zum Exportieren</h1>
+          <h1 id="leer-titel">No review report to export</h1>
           {zustand.fehler && <p className={styles.fehler} role="alert">{zustand.fehler}</p>}
-          <p>Starte eine Prüfung und wähle dort „Zum Export“, oder lade einen gespeicherten Bericht (JSON).</p>
+          <p>Start a review and select “Export report”, or load a saved report (JSON).</p>
           <div className={styles.aktionen}>
-            <a className={styles.knopf} href="/">Zur Prüfung</a>
+            <a className={styles.knopf} href="/">Back to review</a>
             <label className={styles.knopfZweit}>
-              JSON-Bericht laden
+              Load JSON report
               <input type="file" accept=".json,application/json" className={styles.versteckt} onChange={dateiLaden} />
             </label>
           </div>
@@ -69,47 +71,52 @@ export function Export() {
   return (
     <main className={styles.seite}>
       <nav className={`${styles.glas} ${styles.leiste}`} aria-label="Export">
-        <a className={styles.zurueck} href="/">‹ Prüfung</a>
+        <a className={styles.zurueck} href="/">‹ Review</a>
         <div className={styles.aktionen}>
-          <button type="button" className={styles.knopfZweit} onClick={() => window.print()}>Als PDF drucken</button>
-          <button type="button" className={styles.knopf} onClick={() => excel(bericht)}>Excel herunterladen</button>
+          <button type="button" className={styles.knopfZweit} onClick={() => window.print()}>Print as PDF</button>
+          <button type="button" className={styles.knopf} onClick={() => excel(bericht)}>Download Excel</button>
         </div>
       </nav>
 
       <article className={styles.blatt}>
         <header className={styles.kopf}>
-          <p className={styles.eyebrow}>Prüfbericht · {zustand.quelle}</p>
+          <p className={styles.eyebrow}>Review report · {zustand.quelle}</p>
           <h1>{lv.name}</h1>
-          <p className={styles.quelle}>Quelle: {lv.quelle}</p>
+          <p className={styles.quelle}>Source: {lv.quelle}</p>
         </header>
 
         {mock && (
           <p className={styles.hinweis}>
-            Demonstrationsmodus: Die Modellprüfung lief als Offline-Mock. Mit „Demonstration“ markierte Einträge sind keine fachlichen Befunde.
+            Demo mode: The model review ran as an offline mock. Entries marked “Demonstration” are not domain findings.
           </p>
         )}
 
         <dl className={styles.zahlen}>
-          <div><dt>Positionen</dt><dd>{zahl.format(lv.positionen.length)}</dd></div>
-          <div><dt>Einträge</dt><dd>{zahl.format(findings.length)}</dd></div>
-          <div><dt>Kritisch</dt><dd>{zahl.format(kennzahlen.kritisch)}</dd></div>
+          <div><dt>Items</dt><dd>{zahl.format(lv.positionen.length)}</dd></div>
+          <div><dt>Entries</dt><dd>{zahl.format(findings.length)}</dd></div>
+          <div><dt>Critical</dt><dd>{zahl.format(kennzahlen.kritisch)}</dd></div>
         </dl>
 
-        <h2>Befunde</h2>
-        {findings.length === 0 ? <p className={styles.quelle}>Keine Befunde.</p> : (
+        <h2>Findings</h2>
+        {findings.length === 0 ? <p className={styles.quelle}>No findings.</p> : (
           <div className={styles.rahmen}>
             <table className={styles.tabelle}>
-              <thead><tr><th>OZ</th><th>Kategorie</th><th>Schwere</th><th>Befund</th><th>Vorschlag</th><th>Quelle</th><th>Euro-Wirkung</th></tr></thead>
+              <thead><tr><th>OZ</th><th>Category</th><th>Severity</th><th>Finding</th><th>Suggestion</th><th>Source</th><th>Euro impact</th></tr></thead>
               <tbody>
                 {findings.map((f) => (
                   <tr key={f.id}>
                     <td className={styles.oz}>{f.oz}</td>
                     <td>{KATEGORIE[f.kategorie] ?? f.kategorie}</td>
-                    <td>{f.schwere}</td>
+                    <td>{SEVERITY_LABELS[f.schwere] ?? f.schwere}</td>
                     <td><b>{f.titel}</b><br />{f.begruendung}{istMock(f) && <span className={styles.mock}> Demonstration</span>}</td>
                     <td>{f.vorschlag}</td>
+<<<<<<< HEAD
                     <td className={styles.regel}>{f.quelle === "regel" ? "Regel" : "Modell"}<br />{f.regel_id.replaceAll("_", "_\u200b")}</td>
                     <td className={styles.rechts}>{f.euro_wirkung === null ? "unbekannt" : euro.format(f.euro_wirkung)}</td>
+=======
+                    <td>{f.quelle === "regel" ? "Rule" : "Model"} · {f.regel_id}</td>
+                    <td className={styles.rechts}>{f.euro_wirkung === null ? "unknown" : euro.format(f.euro_wirkung)}</td>
+>>>>>>> origin/main
                   </tr>
                 ))}
               </tbody>
@@ -117,10 +124,10 @@ export function Export() {
           </div>
         )}
 
-        <h2>Positionen</h2>
+        <h2>Items</h2>
         <div className={styles.rahmen}>
           <table className={styles.tabelle}>
-            <thead><tr><th>OZ</th><th>Kurztext</th><th className={styles.rechts}>Menge</th><th>Einheit</th><th className={styles.rechts}>EP</th><th className={styles.rechts}>GP</th></tr></thead>
+            <thead><tr><th>OZ</th><th>Short description</th><th className={styles.rechts}>Quantity</th><th>Unit</th><th className={styles.rechts}>Unit price</th><th className={styles.rechts}>Total price</th></tr></thead>
             <tbody>
               {lv.positionen.map((p, i) => (
                 <tr key={`${p.oz}-${i}`}>
