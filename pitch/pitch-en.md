@@ -11,10 +11,10 @@ Draft for issue #17. Perspective: a cost estimator preparing a bid. Numbers mark
 ## Script (about 2 min 25 s)
 
 **[0:00 · Hook]**
-I prepare bids for construction work. When a bill of quantities arrives, I have a few days and three thousand items, and nobody can read all of them properly. If I miss an error, I lose money after I win the job. If I price too high, I lose the job.
+I prepare bids for construction work. When a bill of quantities arrives, I have a few days and thousands of items, and nobody can read all of them properly. If I miss an error, I lose money after I win the job. If I price too high, I lose the job.
 
 **[0:25 · The real problem]**
-At our partner evening, an estimator with ten years of experience said it plainly: the real task is not processing nine thousand items, but finding the hundred that matter.
+At our pitch evening, a partner said it plainly: "The real task is not processing 9,000 items, but finding the 100 most important ones."
 
 **[0:40 · The path, live]**
 This is our assistant. I load a structured bill of quantities. Every item becomes a row with its item number, the OZ. The review runs fixed rules first, then the model.
