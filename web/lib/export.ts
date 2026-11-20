@@ -16,7 +16,7 @@ export function leseBericht(text: string | null): Pruefbericht | null {
   }
 }
 
-export const istMock = (f: Finding) => f.regel_id === MOCK_REGEL;
+export const istMock = (f: Finding) => f.regel_id.startsWith("MOCK_"); // contract: all mock rule IDs start with MOCK_
 
 const CATEGORY_LABELS = { fehler: "Error", risiko: "Risk", nachtrag: "Change order" };
 const SEVERITY_LABELS = { kritisch: "Critical", hoch: "High", mittel: "Medium", niedrig: "Low" };
