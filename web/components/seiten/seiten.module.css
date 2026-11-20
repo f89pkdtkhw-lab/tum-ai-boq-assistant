@@ -1,0 +1,22 @@
+/* Uses the --pb-* tokens of the surrounding review report. */
+.seiten {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+  font-size: 13.5px; min-width: 0;
+}
+.eingerueckt { padding: 10px 14px; border-top: 1px solid var(--pb-line); }
+.knoepfe { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.knopf {
+  font: inherit; padding: 6px 12px; border-radius: 10px; cursor: pointer; min-height: 36px;
+  border: 1px solid var(--pb-line); color: inherit; background: var(--pb-card);
+}
+.knopf:hover:not(:disabled) { border-color: var(--pb-accent); }
+.knopf:disabled { cursor: default; color: var(--pb-muted); opacity: .6; }
+.stand { color: var(--pb-muted); font-variant-numeric: tabular-nums; padding: 0 4px; }
+.groesse { display: flex; align-items: center; gap: 8px; color: var(--pb-muted); }
+.groesse select {
+  font: inherit; color: var(--pb-ink); background: var(--pb-card); min-height: 36px;
+  border: 1px solid var(--pb-line); border-radius: 10px; padding: 4px 8px;
+}
+@media (max-width: 600px) {
+  .stand { flex-basis: 100%; order: -1; padding: 0; }
+}

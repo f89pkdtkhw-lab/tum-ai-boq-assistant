@@ -9,12 +9,14 @@ import {
   anzahlGeprueft, bewertungVon, ladeBewertungen, setze, speichereBewertungen, STATUS,
   type Bewertung as BewertungDaten, type Bewertungen, type Status,
 } from "@/lib/bewertung";
+import { aktuelleSeite, ausschnitt, seiteFuer, seiteNachGroesse, seiteVon, STANDARD_SEITENGROESSE, type Blatt } from "@/lib/seiten";
 import { Bewertung, MitStatus } from "./bewertung/Bewertung";
 import { Mengen } from "./mengen/Mengen";
 import { Bieterfragen } from "./bieterfragen/Bieterfragen";
 import { Suche } from "./suche/Suche";
 import { Titelbaum } from "./titelbaum/Titelbaum";
 import { Top } from "./top/Top";
+import { Seiten } from "./seiten/Seiten";
 import styles from "./pruefbericht.module.css";
 
 /**
@@ -101,8 +103,13 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
   const [titel, setTitel] = useState<string[] | null>(null);
   const [bewertungen, setBewertungen] = useState<Bewertungen>({});
   const [speicherFehler, setSpeicherFehler] = useState(false);
+  const [findingBlatt, setFindingBlatt] = useState<Blatt>({ schluessel: "", seite: 0 });
+  const [findingGroesse, setFindingGroesse] = useState(STANDARD_SEITENGROESSE);
+  const [positionBlatt, setPositionBlatt] = useState<Blatt>({ schluessel: "", seite: 0 });
+  const [positionGroesse, setPositionGroesse] = useState(STANDARD_SEITENGROESSE);
   const detailRef = useRef<HTMLElement>(null);
   const positionenRef = useRef<HTMLDetailsElement>(null);
+  const findingsAnfangRef = useRef<HTMLHeadingElement>(null);
 
   const positionenNachOz = useMemo(() => {
     const karte = new Map<string, Position[]>();
@@ -153,8 +160,14 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
   const euroUnbekannt = echteAnzahl - bekannteEuro.length;
   const doppelteOz = [...positionenNachOz.values()].filter((liste) => liste.length > 1).length;
 
-  function waehle(oz: string, findingId: string | null) {
+  function waehle(oz: string, findingId: string | null, springen = true) {
     setAuswahl({ oz, findingId });
+    // Opened from elsewhere (top panel, title tree, search, detail): show the page that contains it.
+    // A click inside a table passes springen=false, so a duplicate OZ does not jump to its first occurrence.
+    const findingSeiteNeu = !springen || findingId === null ? null : seiteFuer(gefiltert, (f) => f.id === findingId, findingGroesse);
+    if (findingSeiteNeu !== null) setFindingBlatt({ schluessel: findingSchluessel, seite: findingSeiteNeu });
+    const positionSeiteNeu = !springen ? null : seiteFuer(sichtbarePositionen, (p) => p.oz === oz, positionGroesse);
+    if (positionSeiteNeu !== null) setPositionBlatt({ schluessel: positionSchluessel, seite: positionSeiteNeu });
     // On narrow screens, details appear below the list: scroll there.
     requestAnimationFrame(() => {
       const ziel = detailRef.current;
@@ -194,6 +207,32 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
   const sichtbarePositionen = lv.positionen.filter(
     (p) => (einheit === null || mengenSchluessel(p) === einheit) && (titel === null || imTeilbaum(p, titel)) && positionTrifft(p, suche),
   );
+
+  // Paging runs after every filter; a changed filter key shows page 1 again (issue #67).
+  const findingSchluessel = JSON.stringify([kategorie, schwere, status, titel, suche]);
+  const findingSeite = seiteVon(gefiltert.length, aktuelleSeite(findingBlatt, findingSchluessel), findingGroesse);
+  const sichtbareFindings = ausschnitt(gefiltert, findingSeite);
+  const positionSchluessel = JSON.stringify([einheit, titel, suche]);
+  const positionSeite = seiteVon(sichtbarePositionen.length, aktuelleSeite(positionBlatt, positionSchluessel), positionGroesse);
+  const seitenPositionen = ausschnitt(sichtbarePositionen, positionSeite);
+
+  function zumAnfang(anker: HTMLElement | null) {
+    requestAnimationFrame(() => anker?.scrollIntoView({ block: "start" }));
+  }
+  function findingsSteuerung(beschriftung: string, anker: boolean) {
+    return (
+      <Seiten seite={findingSeite} groesse={findingGroesse} beschriftung={beschriftung}
+        onSeite={(seite) => { setFindingBlatt({ schluessel: findingSchluessel, seite }); if (anker) zumAnfang(findingsAnfangRef.current); }}
+        onGroesse={(groesse) => { setFindingGroesse(groesse); setFindingBlatt({ schluessel: findingSchluessel, seite: seiteNachGroesse(findingSeite, groesse) }); }} />
+    );
+  }
+  function positionenSteuerung(beschriftung: string, anker: boolean) {
+    return (
+      <Seiten seite={positionSeite} groesse={positionGroesse} beschriftung={beschriftung} eingerueckt
+        onSeite={(seite) => { setPositionBlatt({ schluessel: positionSchluessel, seite }); if (anker) zumAnfang(positionenRef.current); }}
+        onGroesse={(groesse) => { setPositionGroesse(groesse); setPositionBlatt({ schluessel: positionSchluessel, seite: seiteNachGroesse(positionSeite, groesse) }); }} />
+    );
+  }
 
   function sucheAendern(wert: string) {
     setSuche(wert);
@@ -322,7 +361,7 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
 
       <div className={styles.layout}>
         <div className={styles.liste}>
-          <h3 className={styles.abschnitt}>
+          <h3 ref={findingsAnfangRef} className={styles.abschnitt}>
             Findings <span className={styles.anzahl} aria-live="polite">{gefiltert.length} of {findings.length}</span>
           </h3>
           {findings.length === 0 ? (
@@ -340,8 +379,10 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
               )}
             </div>
           ) : (
+            <>
+            {findingsSteuerung("Findings pages", false)}
             <ul className={styles.findings}>
-              {gefiltert.map((finding) => (
+              {sichtbareFindings.map((finding) => (
                 <li key={finding.id}>
                   <MitStatus status={bewertungVon(bewertungen, finding.id).status} titel={finding.titel}
                     onAendern={(s) => bewerte(finding.id, { status: s })}>
@@ -355,6 +396,8 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
                 </li>
               ))}
             </ul>
+            {sichtbareFindings.length > 10 && findingsSteuerung("Findings pages, bottom", true)}
+            </>
           )}
 
           <details ref={positionenRef} className={styles.positionen}>
@@ -371,6 +414,8 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
             ) : sichtbarePositionen.length === 0 ? (
               <p className={styles.leer}>No positions match.</p>
             ) : (
+              <>
+              {positionenSteuerung("Item pages", false)}
               <div className={styles.tabelleRahmen}>
                 <table className={styles.tabelle}>
                   <thead>
@@ -381,10 +426,10 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
                     </tr>
                   </thead>
                   <tbody>
-                    {sichtbarePositionen.map((position, index) => (
-                      <tr key={`${position.oz}-${index}`} className={auswahl?.oz === position.oz ? styles.zeileGewaehlt : undefined}>
+                    {seitenPositionen.map((position, index) => (
+                      <tr key={`${position.oz}-${positionSeite.von + index}`} className={auswahl?.oz === position.oz ? styles.zeileGewaehlt : undefined}>
                         <td>
-                          <button type="button" className={styles.ozKnopf} onClick={() => waehle(position.oz, null)}
+                          <button type="button" className={styles.ozKnopf} onClick={() => waehle(position.oz, null, false)}
                             aria-label={`Show item ${position.oz}`}>
                             {position.oz}
                           </button>
@@ -399,6 +444,8 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
                   </tbody>
                 </table>
               </div>
+              {seitenPositionen.length > 10 && positionenSteuerung("Item pages, bottom", true)}
+              </>
             )}
           </details>
         </div>
