@@ -4,6 +4,7 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import type { Pruefbericht } from "@/lib/api";
 import { PRUEFBERICHT_SPEICHER_SCHLUESSEL } from "@/components/Pruefbericht";
 import { dateiname, istMock, leseBericht, tabellen, xlsx } from "@/lib/export";
+import { bewertungVon, ladeBewertungen, statusName, type Bewertungen } from "@/lib/bewertung";
 import styles from "./export.module.css";
 
 const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 3 });
@@ -31,7 +32,7 @@ function Blatt({ zeilen, leer }: { zeilen: (string | number | null)[][]; leer: s
   );
 }
 
-type Zustand = { phase: "laedt" } | { phase: "leer"; fehler: string } | { phase: "bereit"; bericht: Pruefbericht; quelle: string };
+type Zustand = { phase: "laedt" } | { phase: "leer"; fehler: string } | { phase: "bereit"; bericht: Pruefbericht; quelle: string; bewertungen: Bewertungen };
 
 export function Export() {
   const [zustand, setZustand] = useState<Zustand>({ phase: "laedt" });
@@ -41,7 +42,7 @@ export function Export() {
     try { text = window.sessionStorage.getItem(PRUEFBERICHT_SPEICHER_SCHLUESSEL); } catch { /* storage blocked */ }
     const bericht = leseBericht(text);
     setZustand(bericht
-      ? { phase: "bereit", bericht, quelle: "from the current review" }
+      ? { phase: "bereit", bericht, quelle: "from the current review", bewertungen: ladeBewertungen(bericht.lv.name, bericht.findings) }
       : { phase: "leer", fehler: text ? "The stored report is invalid." : "" });
   }, []);
 
@@ -50,12 +51,12 @@ export function Export() {
     if (!datei) return;
     const bericht = leseBericht(await datei.text());
     setZustand(bericht
-      ? { phase: "bereit", bericht, quelle: `from ${datei.name}` }
+      ? { phase: "bereit", bericht, quelle: `from ${datei.name}`, bewertungen: ladeBewertungen(bericht.lv.name, bericht.findings) }
       : { phase: "leer", fehler: `“${datei.name}” is not a review report. Please use the JSON file from “Download JSON”.` });
   }
 
-  function excel(bericht: Pruefbericht) {
-    const blob = new Blob([xlsx(bericht) as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  function excel(bericht: Pruefbericht, bewertungen: Bewertungen) {
+    const blob = new Blob([xlsx(bericht, bewertungen) as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const url = URL.createObjectURL(blob);
     const a = Object.assign(document.createElement("a"), { href: url, download: dateiname(bericht.lv.name, "xlsx") });
     a.click();
@@ -83,10 +84,10 @@ export function Export() {
     );
   }
 
-  const { bericht } = zustand;
+  const { bericht, bewertungen } = zustand;
   const { lv, findings, kennzahlen } = bericht;
   const mock = kennzahlen.modell_mock || findings.some(istMock);
-  const blaetter = Object.fromEntries(tabellen(bericht).map((b) => [b.name, b.zeilen]));
+  const blaetter = Object.fromEntries(tabellen(bericht, bewertungen).map((b) => [b.name, b.zeilen]));
 
   return (
     <main className={styles.seite}>
@@ -94,7 +95,7 @@ export function Export() {
         <a className={styles.zurueck} href="/">‹ Review</a>
         <div className={styles.aktionen}>
           <button type="button" className={styles.knopfZweit} onClick={() => window.print()}>Print as PDF</button>
-          <button type="button" className={styles.knopf} onClick={() => excel(bericht)}>Download Excel</button>
+          <button type="button" className={styles.knopf} onClick={() => excel(bericht, bewertungen)}>Download Excel</button>
         </div>
       </nav>
 
@@ -121,7 +122,7 @@ export function Export() {
         {findings.length === 0 ? <p className={styles.quelle}>No findings.</p> : (
           <div className={styles.rahmen}>
             <table className={styles.tabelle}>
-              <thead><tr><th>OZ</th><th>Category</th><th>Severity</th><th>Finding</th><th>Suggestion</th><th>Source</th><th>Euro impact</th></tr></thead>
+              <thead><tr><th>OZ</th><th>Category</th><th>Severity</th><th>Finding</th><th>Suggestion</th><th>Source</th><th>Euro impact</th><th>Review status</th><th>Comment</th></tr></thead>
               <tbody>
                 {findings.map((f) => (
                   <tr key={f.id}>
@@ -132,6 +133,8 @@ export function Export() {
                     <td>{f.vorschlag}</td>
                     <td className={styles.regel}>{f.quelle === "regel" ? "Rule" : "Model"}<br />{f.regel_id.replaceAll("_", "_\u200b")}</td>
                     <td className={styles.rechts}>{f.euro_wirkung === null ? "unknown" : euro.format(f.euro_wirkung)}</td>
+                    <td>{statusName(bewertungVon(bewertungen, f.id).status)}</td>
+                    <td>{bewertungVon(bewertungen, f.id).kommentar}</td>
                   </tr>
                 ))}
               </tbody>
