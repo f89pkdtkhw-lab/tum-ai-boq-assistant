@@ -2,6 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { Finding, Position, Pruefbericht as PruefberichtDaten } from "@/lib/api";
+import { mengenSchluessel } from "@/lib/mengen";
+import { Mengen } from "./mengen/Mengen";
 import styles from "./pruefbericht.module.css";
 
 /**
@@ -40,7 +42,8 @@ const euro = new Intl.NumberFormat("en-GB", { style: "currency", currency: "EUR"
 const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 3 });
 
 function istMock(finding: Finding) {
-  return finding.regel_id === MOCK_REGEL;
+  // Contract (api/app/pruefung/llm_pruefung.py): every model-mock rule ID starts with MOCK_.
+  return finding.regel_id.startsWith("MOCK_");
 }
 
 function kategorieName(wert: Kategorie) {
@@ -81,7 +84,9 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
   const [schwere, setSchwere] = useState<Schwere | null>(null);
   const [auswahl, setAuswahl] = useState<Auswahl | null>(null);
   const [exportFehler, setExportFehler] = useState("");
+  const [einheit, setEinheit] = useState<string | null>(null);
   const detailRef = useRef<HTMLElement>(null);
+  const positionenRef = useRef<HTMLDetailsElement>(null);
 
   const positionenNachOz = useMemo(() => {
     const karte = new Map<string, Position[]>();
@@ -154,6 +159,12 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
   }
 
   const filterAktiv = kategorie !== null || schwere !== null;
+  const sichtbarePositionen = einheit === null ? lv.positionen : lv.positionen.filter((p) => mengenSchluessel(p) === einheit);
+
+  function waehleEinheit(schluessel: string | null) {
+    setEinheit(schluessel);
+    if (schluessel !== null && positionenRef.current) positionenRef.current.open = true;
+  }
 
   return (
     <section className={styles.bericht} aria-labelledby="pruefbericht-titel">
@@ -204,6 +215,8 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
           </small>
         </div>
       </dl>
+
+      <Mengen positionen={lv.positionen} aktiv={einheit} onWaehle={waehleEinheit} />
 
       <div className={styles.filter} role="group" aria-label="Filter findings">
         <fieldset className={styles.filterGruppe}>
@@ -263,8 +276,15 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
             </ul>
           )}
 
-          <details className={styles.positionen}>
-            <summary>Show all {lv.positionen.length} items</summary>
+          <details ref={positionenRef} className={styles.positionen}>
+            <summary>
+              {einheit === null
+                ? `Show all ${lv.positionen.length} items`
+                : `Showing ${sichtbarePositionen.length} of ${lv.positionen.length} items summed in ${sichtbarePositionen[0]?.einheit?.trim() ?? einheit}`}
+            </summary>
+            {einheit !== null && (
+              <button type="button" className={styles.knopfZweit} onClick={() => setEinheit(null)}>Show all items</button>
+            )}
             {lv.positionen.length === 0 ? (
               <p className={styles.leer}>The BoQ contains no items.</p>
             ) : (
@@ -278,7 +298,7 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {lv.positionen.map((position, index) => (
+                    {sichtbarePositionen.map((position, index) => (
                       <tr key={`${position.oz}-${index}`} className={auswahl?.oz === position.oz ? styles.zeileGewaehlt : undefined}>
                         <td>
                           <button type="button" className={styles.ozKnopf} onClick={() => waehle(position.oz, null)}
