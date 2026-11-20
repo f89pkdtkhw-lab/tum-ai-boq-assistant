@@ -57,25 +57,25 @@ Dazu gilt aus der [Skill-Liste](quellen/Skills%20der%20KI.pdf): Die KI kennzeich
 | Woran erkennt der Partner eine gute Lösung? | Findet in Minuten echte Fehler und Risiken, die er sonst übersehen hätte, jeweils mit Positionsnummer und Begründung; weniger Fehlalarme als Treffer. |
 | Erste echte Eingabe | Demo: `data/testfaelle/rohbau_efh/lv_rohbau_efh.pdf` (bekannte 25 Befunde). Format-Breite: `data/datensatz/501-24-01_GAEB-XML_sas.x83` (GAEB DA XML 3.1, 296 Positionen); im Kickoff bestätigen |
 | Erwartete, überprüfbare Ausgabe | Strukturierte Positionsliste + Prüfbericht: Findings mit OZ, Kategorie (Fehler / Risiko / Nachtrag), Schweregrad, Begründung, Quelle (Regel oder Modell), €-Wirkung wo schätzbar |
-| Daten, Werkzeuge, Abgabevorgaben | Datensatz der Challenge; Claude-API (Anthropic-Key); Abgabeformat noch klären |
+| Daten, Werkzeuge, Abgabevorgaben | Datensatz vertraulich; LLM ausschließlich Offline-Mock ohne Schlüssel; Abgabeformat noch klären |
 | Einfachster Vergleich und Messgröße | Testfälle mit **absichtlich eingebauten Fehlern** (`data/testfaelle/`): Trefferquote und Fehlalarme; dazu Zeit pro LV manuell vs. Tool |
-| Was zeigen wir live in drei Minuten? | LV hochladen → Fortschritt → Dashboard: „17 Auffälligkeiten, 3 kritisch, ~42.000 € Risiko“ → Klick auf eine Position → Begründung + Vorschlag für Bieterfrage/Nachtrag |
+| Was zeigen wir live in drei Minuten? | LV hochladen → Positionen → Prüfbericht mit echten Befunden, OZ und Begründung; keine erfundenen Anzahlen oder Euro-Werte. Klick zeigt Position und Bieterfrage. |
 | Wer hebt bei einem Blocker die Hand? | Jeder sofort auf dem Board mit `@f89pkdtkhw-lab` |
 
 ## Was im Datensatz steckt
 
-44 Dateien, 25 MB, in `data/datensatz/` (Stand Fr. 20.11., anonymisiert mit Platzhaltern wie `[FIRMA_096]`):
+44 Dateien, ca. 25 MB, in `data/datensatz/` (Stand Fr. 20.11., anonymisiert mit Platzhaltern wie `[FIRMA_096]`):
 
 | Format | Dateien | Hinweis |
 | --- | --- | --- |
-| GAEB DA XML (`.X83`/`.x83`) | 4: `501-24-01_GAEB-XML_sas.x83` (296 Pos.), `[NUMMER_001]_leer.X83` (248), `8209.003_Leistungsverzeichnis_leer.X83` (159), `GAEB-[PROJEKT_004].X83` (50) | Namespace `http://www.gaeb.de/GAEB_DA_XML/200407`, Langtexte als HTML-artiges Markup |
+| GAEB DA XML (`.X83`/`.x83`) | 4: `501-24-01_GAEB-XML_sas.x83` (296 Pos.), `[NUMMER_001]_leer.X83` (248), `8209.003_Leistungsverzeichnis_leer.X83` (159), `GAEB-[PROJEKT_004].X83` (50) | Namespaces DA XML 3.1 (`200407`) und 3.2 (`DA83/3.2`), Langtexte als HTML-artiges Markup |
 | GAEB 90 Flat-File (`.D83`/`.D84`/`.D86`) | 5, u. a. `Angebot AN24-0305.D84` **mit Preisen** und das passende `Angebot AN24-0305.pdf` | feste 80-Zeichen-Zeilen, Satzarten `00`–`99`, Codepage CP850 |
-| PDF | 33, u. a. `LV_00` bis `LV_23` nach Gewerk, `HEM2301-2_Gesamt-LV.pdf` | Text-PDFs aus AVA-Programmen; prüfen, ob gescannte dabei sind |
+| PDF | 34, u. a. `LV_00` bis `LV_23` nach Gewerk, `HEM2301-2_Gesamt-LV.pdf` | Text-PDFs aus AVA-Programmen; prüfen, ob gescannte dabei sind |
 | Word | `LV-Positionen.docx` | |
 
 Paare aus GAEB-Datei und PDF desselben LVs (z. B. `GAEB-[PROJEKT_004].X83` + `LV-Ausdruck-[PROJEKT_004].pdf`) eignen sich, um den PDF-Import gegen den GAEB-Import zu testen. Die `.D84`/`.D86`-Dateien mit Preisen sind die Basis für EP-Vorschläge aus „historischen“ Daten.
 
-## Kernablauf (Vorschlag, im Kickoff bestätigen)
+## Kernablauf (Kickoff, 20.11.2026)
 
 ```text
 Upload (GAEB .x83/.x84/.d83, .xlsx, .pdf)
@@ -83,7 +83,7 @@ Upload (GAEB .x83/.x84/.d83, .xlsx, .pdf)
   → Prüf-Engine
        feste Regeln:  Menge × EP ≠ GP, Summen je Titel, doppelte/lückenhafte OZ, fehlende Einheit/Menge,
                       Einheit passt nicht zum Text (m² vs. m³), Ausreißer-Mengen, Tippfehler
-       LLM (Claude):  vage/unklare Langtexte, Widersprüche zwischen Positionen, fehlende Positionen je Gewerk,
+       LLM (zunächst ausschließlich Mock):  vage/unklare Langtexte, Widersprüche zwischen Positionen, fehlende Positionen je Gewerk,
                       Bedarfs-/Eventualpositionen, „bauseits“, Pauschalen, Verweise auf nicht beigefügte Pläne
   → Risiko- und Nachtragsscoring je Position (Score 0–100, €-Wirkung)
   → Bericht: Web-Dashboard + Export (PDF/Excel) + Liste von Bieterfragen
@@ -106,3 +106,19 @@ Upload (GAEB .x83/.x84/.d83, .xlsx, .pdf)
 - Welche Formate enthält der Datensatz genau (GAEB-Version, Excel-Layout, gescannte PDFs)?
 - Gibt es historische Preise im Datensatz für die optionale EP-Schätzung?
 - Gestellte API-Zugänge und deren Limit?
+
+
+## Verbindlicher Kickoff-Schnitt (20.11.2026)
+
+Priorität: **1. Parsing/Import (GAEB X83/X84 → Excel → PDF), 2. feste Fehlerprüfung, 3. verständlicher Prüfbericht.** Risiko, Nachträge, Preise, What-if und Pitch folgen dem Kernablauf. Die Fachmodule stehen als Platzhalter bereit; ein erfolgreicher Schnittstellenaufruf ist noch keine fachliche Prüfung.
+
+- Echtes GAEB für den ersten Import: `data/datensatz/501-24-01_GAEB-XML_sas.x83`, DA XML 3.1, **296 Positionen**, keine Preisfelder. Drei weitere X83 mit DA XML 3.2: 248, 159 und 50 Positionen. Kein X84 und kein Excel im Partnerbestand; X84 und Excel deshalb zusätzlich mit synthetischen Fixtures testen. GAEB 90 D83/D84/D86 später, keine vorgetäuschte Unterstützung.
+- Ziel-Demo und Messlatte: `data/testfaelle/rohbau_efh/lv_rohbau_efh.pdf`, 40 Seiten, 25 manuell dokumentierte echte Befunde in `erwartung.md`. Live nutzbar erst nach dem PDF-Import. Bis dahin echter GAEB-Import als erster Meilenstein und das synthetische JSON als Offline-Vertragsdemo.
+- **Annahme (Board-Runde 1, Frist 19:36 CET):** `data/beispiel_lv.json` (30 Positionen, 3 Titel, 5 absichtliche Fehler) trägt die sofort startbare Schnittstelle; `data/beispiel_erwartung.json` ist die Abnahme für das Folge-Issue feste Regeln. Die Platzhalter melden diese fünf Fehler noch nicht.
+- Bereits durch den Startauftrag entschieden: LLM bleibt Mock (`pruefe_mit_llm` ohne Schlüssel, Netzwerk oder Anbieter). Standard-Worker Codex, Claude nur für `modell:ui` und `modell:schwer`. Live-Freischaltung gehört in einen späteren ausdrücklich autorisierten Auftrag.
+- Unbekannte Mengen/Preise bleiben `null`, leere Summen `{}`. Ein unbepreistes X83 ergibt keinen belastbaren Euro-Risikobetrag. Modell-Mocks zählen nicht als echte Treffer. Quellen und Original-OZ bleiben erhalten, auch doppelte OZ werden nicht beim Import entfernt.
+- Drei-Minuten-Szene: Datei auswählen → Positionszahl und Importfehler sehen → feste Befunde nach Schwere filtern → eine Position mit Originaltext, Begründung und Handlungsvorschlag öffnen. Tatsächliche Messergebnisse erst nach dem Demo-/Vergleichs-Issue veröffentlichen.
+
+Die Besitzer-Tabelle aus AGENTS.md §3 ist für diesen Schnitt bestätigt: @Anatomik5 `api/app/lv/`, @Bartuan3600 `api/app/pruefung/`, @Secret-Sebi `api/app/risiko/` und `pitch/`, @Zukipany `web/`, @f89pkdtkhw-lab Integration, KI-Zugriff, Daten und Dokumentation. Der einmalige Schnittstellen-PR legt `api/app/modelle.py`, `main.py`, `web/lib/api.ts` gemeinsam fest. Folge-Issues ändern getrennte Fachmodule und Testdateien; Vertragsänderungen vorher mit @all ankündigen.
+
+Zeitplan: funktionierender Kernablauf vor optionalem Risiko/Pitch; Funktionsstopp Sonntag 22.11. **09:00 Europe/Berlin**, interne Abnahme 11:30, Abgabe 12:00. Offenes Abgabeformat bleibt eine Frage an den Lead und blockiert keine lokale Produktarbeit.

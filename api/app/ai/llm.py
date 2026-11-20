@@ -132,3 +132,8 @@ def _mock(prompt, system, chosen, max_tokens):
     lines = [line.strip() for line in prompt.strip().splitlines() if line.strip()]
     question = (lines[-1] if lines else "").removeprefix("Frage:").strip()[:160]
     return f"[Mock-Antwort] Ohne Modell-Schlüssel beantwortet: „{question}“. Mit einem Schlüssel in .env.local antwortet ein echtes Modell."
+
+
+def mock(prompt, system="", max_tokens=1024):
+    """Expliziter Offline-Aufruf, unabhängig von Schlüsseln und Provider-Konfiguration."""
+    return Answer(_mock(prompt, system, DEFAULT_MODELS["mock"], max_tokens), "mock", DEFAULT_MODELS["mock"], 0)

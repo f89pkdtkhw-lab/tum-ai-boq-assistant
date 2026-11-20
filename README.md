@@ -18,7 +18,7 @@ gh auth login
 git clone https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant.git
 cd tum-ai-boq-assistant
 python tools/setup.py --kommentar 2   # Rechner prüfen, Push-Check aktivieren, Ergebnis in Issue #2
-cp .env.example .env.local            # ANTHROPIC_API_KEY eintragen; ohne Schlüssel läuft der Mock
+# Kein Schlüssel nötig: LV-Prüfung und Starterroute laufen im Offline-Mock
 python tools/dev.py --install         # Oberfläche http://localhost:3000, Backend http://localhost:8000/health
 ```
 
@@ -46,4 +46,28 @@ Auf macOS `python3` statt `python`.
 | [FirstMate](docs/firstmate.md) | Eine Person führt eine ganze Agenten-Crew |
 | [Zugänge](docs/zugaenge.md) | API-Schlüssel für Agenten und Produkt |
 
-Jede Änderung läuft über einen eigenen Branch und Pull Request; der Autor mergt bei grünen Checks selbst. Die CI nutzt den Testbefehl `python -m unittest discover -s tests -v` für das Team-Setup, dazu `cd api && python -m pytest -q` und den Web-Build. Nur grüne Stände von `main` wandern auf den Branch `demo`.
+Jede Änderung läuft über einen eigenen Branch und Pull Request; unter FirstMate mergt ausschließlich der First Mate nach grünen Checks (sonst der Autor selbst). Die CI nutzt den Testbefehl `python -m unittest discover -s tests -v` für das Team-Setup, dazu `cd api && python -m pytest -q` und den Web-Build. Nur grüne Stände von `main` wandern auf den Branch `demo`.
+
+
+## Kickoff-Schnittstelle lokal prüfen
+
+Der Kickoff liefert den Vertrag und Fachplatzhalter. Das synthetische JSON importiert bereits; echte GAEB-/Excel-/PDF-Parser, Fachregeln und Berichtsoberfläche folgen in den zugewiesenen Issues. Die fünf eingebauten Fehler sind Abnahmeziele, noch keine erkannten Befunde. Vertrag und Modulbesitz: [docs/schnittstelle.md](docs/schnittstelle.md).
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r api/requirements.txt -r api/requirements-dev.txt
+(cd web && npm ci --no-audit --no-fund)
+(cd api && ../.venv/bin/python -m pytest -q)
+(cd web && npm run build)
+python3 -m unittest discover -s tests -v
+python3 tools/dev.py
+```
+
+Unter Windows `.venv/Scripts/python.exe` verwenden. `python-multipart` aus `api/requirements.txt` ermöglicht Datei-Uploads mit multipart/form-data; neue Abhängigkeit im Kickoff-Issue dokumentiert. `.venv/`, `node_modules/` und Buildprodukte werden nicht committet.
+
+```sh
+curl -F 'datei=@data/beispiel_lv.json' http://localhost:8000/api/lv/import
+curl -H 'Content-Type: application/json' --data-binary @data/beispiel_lv.json http://localhost:8000/api/lv/pruefen
+```
+
+Die vorhandene Startseite bleibt bis zum UI-Issue eine Mock-Starterseite; `/api/beispiele` liefert die echten synthetischen LV-Strukturen für die neue Oberfläche. Modell-Mock und fehlende Euro-Werte sind sichtbar zu kennzeichnen. Partnerdateien bleiben unverändert in `data/datensatz/`.

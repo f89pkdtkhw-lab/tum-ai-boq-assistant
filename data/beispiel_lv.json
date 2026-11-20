@@ -1,0 +1,397 @@
+{
+  "name": "Synthetisches Rohbau-LV – Kickoff",
+  "quelle": "synthetisch: selbst erstellt, keine Partnerdaten",
+  "positionen": [
+    {
+      "oz": "01.00.0001",
+      "kurztext": "Erdarbeiten Teilfläche 1",
+      "langtext": "Leistung Teilfläche 1 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 11.0,
+      "einheit": "m³",
+      "ep": 20.0,
+      "gp": 999.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "01.00.0002",
+      "kurztext": "Erdarbeiten Teilfläche 2",
+      "langtext": "Leistung Teilfläche 2 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 12.0,
+      "einheit": "m³",
+      "ep": 20.0,
+      "gp": 240.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "01.00.0003",
+      "kurztext": "Erdarbeiten Teilfläche 3",
+      "langtext": "Leistung Teilfläche 3 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 13.0,
+      "einheit": "m³",
+      "ep": 20.0,
+      "gp": 260.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "01.00.0004",
+      "kurztext": "Erdarbeiten Teilfläche 4",
+      "langtext": "Leistung Teilfläche 4 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 14.0,
+      "einheit": "m³",
+      "ep": 20.0,
+      "gp": 280.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "01.00.0005",
+      "kurztext": "Erdarbeiten Teilfläche 5",
+      "langtext": "Leistung Teilfläche 5 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 15.0,
+      "einheit": null,
+      "ep": 20.0,
+      "gp": 300.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "01.00.0006",
+      "kurztext": "Erdarbeiten Teilfläche 6",
+      "langtext": "Leistung Teilfläche 6 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 16.0,
+      "einheit": "m³",
+      "ep": 20.0,
+      "gp": 320.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "01.00.0007",
+      "kurztext": "Erdarbeiten Teilfläche 7",
+      "langtext": "Leistung Teilfläche 7 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 17.0,
+      "einheit": "m³",
+      "ep": 20.0,
+      "gp": 340.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "01.00.0008",
+      "kurztext": "Erdarbeiten Teilfläche 8",
+      "langtext": "Leistung Teilfläche 8 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 18.0,
+      "einheit": "m³",
+      "ep": 20.0,
+      "gp": 360.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "01.00.0009",
+      "kurztext": "Erdarbeiten Teilfläche 9",
+      "langtext": "Leistung Teilfläche 9 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 19.0,
+      "einheit": "m³",
+      "ep": 20.0,
+      "gp": 380.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "01.00.0010",
+      "kurztext": "Erdarbeiten Teilfläche 10",
+      "langtext": "Leistung Teilfläche 10 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 20.0,
+      "einheit": "m³",
+      "ep": 20.0,
+      "gp": 400.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "01 Erdarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0001",
+      "kurztext": "Betonarbeiten Teilfläche 1",
+      "langtext": "Leistung Teilfläche 1 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": null,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 440.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0002",
+      "kurztext": "Betonarbeiten Teilfläche 2",
+      "langtext": "Leistung Teilfläche 2 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 12.0,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 480.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0003",
+      "kurztext": "Betonarbeiten Teilfläche 3",
+      "langtext": "Leistung Teilfläche 3 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 13.0,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 520.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0004",
+      "kurztext": "Betonarbeiten Teilfläche 4",
+      "langtext": "Leistung Teilfläche 4 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 14.0,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 560.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0005",
+      "kurztext": "Betonarbeiten Teilfläche 5",
+      "langtext": "",
+      "menge": 15.0,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 600.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0006",
+      "kurztext": "Betonarbeiten Teilfläche 6",
+      "langtext": "Leistung Teilfläche 6 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 16.0,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 640.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0007",
+      "kurztext": "Betonarbeiten Teilfläche 7",
+      "langtext": "Leistung Teilfläche 7 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 17.0,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 680.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0008",
+      "kurztext": "Betonarbeiten Teilfläche 8",
+      "langtext": "Leistung Teilfläche 8 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 18.0,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 720.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0009",
+      "kurztext": "Betonarbeiten Teilfläche 9",
+      "langtext": "Leistung Teilfläche 9 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 19.0,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 760.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0010",
+      "kurztext": "Betonarbeiten Teilfläche 10",
+      "langtext": "Leistung Teilfläche 10 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 20.0,
+      "einheit": "m³",
+      "ep": 40.0,
+      "gp": 800.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "02 Betonarbeiten"
+      ]
+    },
+    {
+      "oz": "02.00.0010",
+      "kurztext": "Mauerarbeiten Teilfläche 1",
+      "langtext": "Leistung Teilfläche 1 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 11.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 660.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    },
+    {
+      "oz": "03.00.0002",
+      "kurztext": "Mauerarbeiten Teilfläche 2",
+      "langtext": "Leistung Teilfläche 2 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 12.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 720.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    },
+    {
+      "oz": "03.00.0003",
+      "kurztext": "Mauerarbeiten Teilfläche 3",
+      "langtext": "Leistung Teilfläche 3 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 13.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 780.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    },
+    {
+      "oz": "03.00.0004",
+      "kurztext": "Mauerarbeiten Teilfläche 4",
+      "langtext": "Leistung Teilfläche 4 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 14.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 840.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    },
+    {
+      "oz": "03.00.0005",
+      "kurztext": "Mauerarbeiten Teilfläche 5",
+      "langtext": "Leistung Teilfläche 5 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 15.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 900.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    },
+    {
+      "oz": "03.00.0006",
+      "kurztext": "Mauerarbeiten Teilfläche 6",
+      "langtext": "Leistung Teilfläche 6 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 16.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 960.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    },
+    {
+      "oz": "03.00.0007",
+      "kurztext": "Mauerarbeiten Teilfläche 7",
+      "langtext": "Leistung Teilfläche 7 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 17.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 1020.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    },
+    {
+      "oz": "03.00.0008",
+      "kurztext": "Mauerarbeiten Teilfläche 8",
+      "langtext": "Leistung Teilfläche 8 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 18.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 1080.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    },
+    {
+      "oz": "03.00.0009",
+      "kurztext": "Mauerarbeiten Teilfläche 9",
+      "langtext": "Leistung Teilfläche 9 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 19.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 1140.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    },
+    {
+      "oz": "03.00.0010",
+      "kurztext": "Mauerarbeiten Teilfläche 10",
+      "langtext": "Leistung Teilfläche 10 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
+      "menge": 20.0,
+      "einheit": "m²",
+      "ep": 60.0,
+      "gp": 1200.0,
+      "typ": "normal",
+      "titel_pfad": [
+        "03 Mauerarbeiten"
+      ]
+    }
+  ],
+  "summen": {}
+}

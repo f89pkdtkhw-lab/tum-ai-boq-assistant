@@ -1,0 +1,32 @@
+{
+  "hinweis": "Fachliche Abnahme für Folge-Issue feste Regeln, kein aktuelles Ergebnis des Platzhalters. MOCK_LLM zählt nicht als echter Treffer.",
+  "anzahl_positionen": 30,
+  "anzahl_titel": 3,
+  "findings": [
+    {
+      "oz": "01.00.0001",
+      "regel_id": "RECHENFEHLER",
+      "begruendung": "11 × 20 = 220, angegeben GP 999."
+    },
+    {
+      "oz": "01.00.0005",
+      "regel_id": "EINHEIT_FEHLT",
+      "begruendung": "Einheit fehlt."
+    },
+    {
+      "oz": "02.00.0001",
+      "regel_id": "MENGE_FEHLT",
+      "begruendung": "Menge unbekannt; nicht als null Menge behandeln."
+    },
+    {
+      "oz": "02.00.0005",
+      "regel_id": "LANGTEXT_FEHLT",
+      "begruendung": "Langtext leer."
+    },
+    {
+      "oz": "02.00.0010",
+      "regel_id": "OZ_DUPLIKAT",
+      "begruendung": "Zwei Positionen teilen die OZ 02.00.0010; unterschiedliche Titelpfade erhalten."
+    }
+  ]
+}
