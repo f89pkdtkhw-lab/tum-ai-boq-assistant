@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import type { Finding, Position, Pruefbericht as PruefberichtDaten } from "@/lib/api";
 import { mengenSchluessel } from "@/lib/mengen";
 import { Mengen } from "./mengen/Mengen";
+import { Bieterfragen } from "./bieterfragen/Bieterfragen";
 import styles from "./pruefbericht.module.css";
 
 /**
@@ -215,6 +216,8 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
           </small>
         </div>
       </dl>
+
+      <Bieterfragen findings={findings} positionen={lv.positionen} />
 
       <Mengen positionen={lv.positionen} aktiv={einheit} onWaehle={waehleEinheit} />
 
