@@ -21,3 +21,6 @@ next-env.d.ts
 
 # Lokaler Graphify-Codegraph
 graphify-out/
+
+# Local typed document exports; never commit confidential generated data.
+import-output/

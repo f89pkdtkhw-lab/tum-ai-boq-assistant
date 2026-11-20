@@ -62,6 +62,8 @@ python3 -m unittest discover -s tests -v
 python3 tools/dev.py
 ```
 
+For local PDF document classification and page-addressable text extraction, `pypdf` is included in `api/requirements.txt`; install with `.venv/bin/python -m pip install -r api/requirements.txt`. This does not implement PDF table imports. Typed JSON export usage and coverage: [import schemas](docs/import-schemas.md).
+
 On Windows use `.venv/Scripts/python.exe`. `python-multipart` in `api/requirements.txt` enables multipart/form-data uploads; this dependency is documented in the kickoff issue. Do not commit `.venv/`, `node_modules/` or build artifacts.
 
 ```sh

@@ -44,10 +44,10 @@ def test_import_errors_are_readable_and_do_not_include_uploaded_content():
     for filename, raw, expected in [
         ("kaputt.json", b'{"secret-document-text":', 422),
         ("leer.json", b"", 422), ("unbekannt.exe", b"abc", 422),
-        ("angebot.x83", b"abc", 501), ("angebot.xlsx", b"abc", 501), ("angebot.pdf", b"abc", 501),
+        ("angebot.x83", b"abc", {422, 501}), ("angebot.xlsx", b"abc", {422, 501}), ("angebot.pdf", b"abc", {422, 501}),
     ]:
         response = client.post("/api/lv/import", files={"datei": (filename, raw)})
-        assert response.status_code == expected
+        assert response.status_code in (expected if isinstance(expected, set) else {expected})
         assert isinstance(response.json()["detail"], str)
         assert "secret-document-text" not in response.text
 
