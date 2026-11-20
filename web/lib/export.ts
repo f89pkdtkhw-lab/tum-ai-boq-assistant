@@ -1,5 +1,7 @@
 // Export helpers for /export (#15): read a stored Pruefbericht and write it as XLSX without dependencies.
 import type { Finding, Pruefbericht } from "@/lib/api";
+import { bieterfragen } from "./bieterfragen";
+import { mengenSummen } from "./mengen";
 
 export const MOCK_REGEL = "MOCK_LLM";
 
@@ -36,7 +38,22 @@ export function tabellen(bericht: Pruefbericht): { name: string; zeilen: Zelle[]
       istMock(f) ? "Demonstration (mock), not a domain finding" : "",
     ]),
   ];
-  return [{ name: "Findings", zeilen: befunde }, { name: "Items", zeilen: positionen }];
+  const m = mengenSummen(bericht.lv.positionen);
+  const mengen: Zelle[][] = [
+    ["Scope", "Title", "Unit", "Quantity", "Items"],
+    ...m.einheiten.map((e) => ["Total", "", e.einheit, e.summe, e.positionen]),
+    ...m.titel.flatMap((t) => m.einheiten.filter((e) => e.schluessel in t.summen).map((e) => ["Title", t.titel, e.einheit, t.summen[e.schluessel], null])),
+    ...(m.ausserVertrag ? [["Excluded: optional or alternative", "", "", null, m.ausserVertrag]] : []),
+    ...(m.ohneMenge ? [["Excluded: no quantity or unit", "", "", null, m.ohneMenge]] : []),
+  ];
+  const fragen: Zelle[][] = [
+    ["OZ", "Short description", "Title", "Question", "Note"],
+    ...bieterfragen(bericht.findings, bericht.lv.positionen).map((f) => [f.oz, f.kurztext, f.titel, f.frage, f.mock ? "Demonstration (mock)" : ""]),
+  ];
+  return [
+    { name: "Findings", zeilen: befunde }, { name: "Items", zeilen: positionen },
+    { name: "Quantities", zeilen: mengen }, { name: "Bidder questions", zeilen: fragen },
+  ];
 }
 
 // ---------- XLSX (Office Open XML) ----------
