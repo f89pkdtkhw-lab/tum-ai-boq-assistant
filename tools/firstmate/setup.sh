@@ -66,9 +66,13 @@ mkdir -p "$FM/config" "$FM/data"
 
 echo herdr > "$FM/config/backend"
 cp "$HERE/crew-dispatch.json" "$FM/config/crew-dispatch.json"
-if [ -f "$FM/data/captain.md" ]; then
-  echo "! $FM/data/captain.md existiert schon und bleibt unverändert. Vorlage: tools/firstmate/captain.md"
+if [ -f "$FM/data/captain.md" ] && grep -q "tum-ai-boq-assistant" "$FM/data/captain.md"; then
+  echo "! $FM/data/captain.md gehört schon zu diesem Repo und bleibt unverändert. Vorlage: tools/firstmate/captain.md"
 else
+  if [ -f "$FM/data/captain.md" ]; then
+    cp "$FM/data/captain.md" "$FM/data/captain.md.bak-$(date +%Y%m%d-%H%M%S)"
+    echo "✓ Alte Captain-Vorlieben gesichert (captain.md.bak-…)"
+  fi
   sed -e "s/<LOGIN>/$LOGIN/g" -e "s/<NAME>/$NAME/g" -e "s/<BOARD>/$BOARD/g" "$HERE/captain.md" > "$FM/data/captain.md"
 fi
 
@@ -80,6 +84,7 @@ Nächste Schritte:
   1. herdr starten, in einem Fenster: cd "$FM" && claude
   2. Beim ersten Start prüft FirstMate fehlende Werkzeuge und fragt vor jeder Installation.
   3. Schreib dem First Mate:
-     "Füge https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant als Projekt im Modus direct-PR +yolo hinzu."
+     "Füge https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant als Projekt im Modus direct-PR +yolo hinzu.
+      Arbeite danach autonom laut captain.md: Lagebild mit tools/stand.py, freie agent-bereit-Issues ziehen."
   4. Fürs Handy: im First-Mate-Fenster /remote-control eingeben und in der Claude-App unter Code verbinden.
 EOF

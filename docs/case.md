@@ -20,13 +20,42 @@ TUM.ai Construction Hackathon, 20.–22. November 2026. **Abgabe Sonntag 12:00**
 
 **Erwartetes Ergebnis:** Web-App oder Assistenz-Tool mit Upload-Funktion · verständlicher Risiko- und Prüfbericht · Pitch aus Sicht eines Kalkulators.
 
+## Was die Partner beim Pitch-Abend gesagt haben
+
+Quelle: [Transkript](quellen/Challenge_A_Beyond_the_Line_Item_Transcription.pdf) (European Hackathon League, Fr. 20.11.).
+
+- **Dominik, CFO einer Luxemburger Baufirma (Infrastruktur).** Bieter haben wenig Zeit; Preise kommen aus Nachunternehmer-Anfragen und eigener Erfahrung, zusammengeführt in der Kalkulationssoftware. Vergeben wird meist nach Preis: **zu hoch heißt, der Auftrag ist weg, zu niedrig (weil man etwas übersehen hat) heißt Verlust.** Reihenfolge: **erst Fehlererkennung**, dann Risiko, dann optional Preise und What-if.
+- **Daten:** **9 anonymisierte LVs** (kleine Brückensanierung bis Großprojekt), für **2 davon echte Ausführungsdaten** (Ist-Stunden, Abrechnungsmengen, Nachtragsliste). **Vertraulich: nicht in öffentliche Repos.**
+- **Christian, Kalkulator seit 10 Jahren („Excel ist mein bester Freund“):**
+  - **Mengenverhältnisse:** 400 Stühle, aber nur 50 Tische → da stimmt was nicht.
+  - **Aggregation:** „2 blaue, 2 rote, 88 grüne Tische“ zusammenfassen; „Beton ist Beton“: Gesamtmenge über alle Betonsorten, statt sie bei 9.000 Positionen von Hand zu summieren.
+  - **Duplikate** erkennen.
+  - **Knifflige Positionen:** wenig Detail, Spezialgewerk (Beispiel Audioanlage: 50.000 € oder 200.000 €?), oft klein irgendwo versteckt.
+  - **„Die eigentliche Aufgabe ist nicht, 9.000 Positionen zu verarbeiten, sondern die 100 wichtigsten zu finden.“**
+- **Gewünschte Demo:** ein LV hochladen und den Risiko-/Fehlerbericht zurückbekommen. **Pitch aus Sicht eines Kalkulators:** Wie verändert das Tool die Angebotsbearbeitung?
+
+## Was daraus für das Produkt folgt (Priorität)
+
+1. **Fehler** mit OZ und Begründung: Rechnung, fehlende Menge/Einheit, Kurztext ≠ Langtext, Tippfehler, Einheiten- und Maßfehler, veraltete Normen.
+2. **Plausibilität über Positionen hinweg:** Mengenverhältnisse verwandter Positionen (Abdichtung ↔ Dämmung ↔ Folie, Schalung ↔ Beton, Beton ↔ Bewehrung kg/m³), Duplikate.
+3. **Aggregation:** Summen nach Stoff/Gewerk (Beton m³, Stahl kg, Mauerwerk m²) als Kennzahlen-Kacheln.
+4. **Top 100 statt 9.000:** Ranking nach €-Wirkung × Unsicherheit; knifflige Positionen (vage, Spezialgewerk, pauschal, Bedarf, Stundenlohn) nach oben.
+5. **Nachtrags- und Streitpotenzial** und daraus formulierte **Bieterfragen**.
+6. Optional: EP-Vorschläge aus den 2 Projekten mit Ist-Daten, What-if auf Materialpreise.
+
+Dazu gilt aus der [Skill-Liste](quellen/Skills%20der%20KI.pdf): Die KI kennzeichnet jede Schätzung als Schätzung und gibt nie einen Preis ohne Freigabe des Kalkulators heraus.
+
+## Testfälle
+
+- `data/testfaelle/rohbau_efh/`: Muster-LV Rohbau Einfamilienhaus (PDF, 40 Seiten) mit **25 manuell gefundenen echten Befunden** in [erwartung.md](../data/testfaelle/rohbau_efh/erwartung.md). Ideal als Demo-LV und als Messlatte (Trefferquote, Fehlalarme).
+
 ## Entscheidungen des Teams
 
 | Entscheidung | Antwort des Teams |
 | --- | --- |
 | Wer hat welches Problem? | Kalkulator/Angebotsbearbeiter in einem Bauunternehmen bekommt vom Bauherrn bzw. Architekten ein LV (oft GAEB) und hat wenige Tage bis zur Angebotsabgabe. Er kann nicht 3.000 Positionen lesen. |
 | Woran erkennt der Partner eine gute Lösung? | Findet in Minuten echte Fehler und Risiken, die er sonst übersehen hätte, jeweils mit Positionsnummer und Begründung; weniger Fehlalarme als Treffer. |
-| Erste echte Eingabe | Vorschlag: `data/datensatz/501-24-01_GAEB-XML_sas.x83` (GAEB DA XML 3.1, 296 Positionen); im Kickoff bestätigen |
+| Erste echte Eingabe | Demo: `data/testfaelle/rohbau_efh/lv_rohbau_efh.pdf` (bekannte 25 Befunde). Format-Breite: `data/datensatz/501-24-01_GAEB-XML_sas.x83` (GAEB DA XML 3.1, 296 Positionen); im Kickoff bestätigen |
 | Erwartete, überprüfbare Ausgabe | Strukturierte Positionsliste + Prüfbericht: Findings mit OZ, Kategorie (Fehler / Risiko / Nachtrag), Schweregrad, Begründung, Quelle (Regel oder Modell), €-Wirkung wo schätzbar |
 | Daten, Werkzeuge, Abgabevorgaben | Datensatz der Challenge; Claude-API (Anthropic-Key); Abgabeformat noch klären |
 | Einfachster Vergleich und Messgröße | Testfälle mit **absichtlich eingebauten Fehlern** (`data/testfaelle/`): Trefferquote und Fehlalarme; dazu Zeit pro LV manuell vs. Tool |

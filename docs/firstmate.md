@@ -13,6 +13,28 @@ So greift es bei uns ineinander:
 | Team-Board, Issue #1 | Die First Mates und Agenten verschiedener Personen geben sich darüber Arbeit weiter |
 | Handy | Claude-App mit Remote Control zum Reden, GitHub-App für Erwähnungen auf dem Board |
 
+## Maximal autonom: jede Person spricht nur mit ihrem First Mate
+
+```text
+ Laptop 1..5: Mensch ──► First Mate (Claude ODER Codex) ──► 3–5 Worker (Claude/Codex je nach Aufgabe)
+                               │  liest/schreibt                    │ eigener Worktree + Branch pro Issue
+                               ▼                                    ▼
+            GitHub = einziger gemeinsamer Stand:  Issues (Queue) · Label in-arbeit (Sperre) · Board #1 (Funk) · PRs + CI
+                               ▲
+                     python3 tools/stand.py  →  Lagebild aller fünf Crews + Überschneidungs-Warnung
+```
+
+1. **Ein Gesprächspartner.** Du redest nur mit deinem First Mate, am Laptop oder per `/remote-control` vom Handy. Er zerlegt, startet Worker, überwacht, mergt.
+2. **Ziehen statt zuteilen.** Ist ein Worker-Platz frei, holt sich der First Mate mit `python3 tools/stand.py --naechstes` das nächste freie `agent-bereit`-Issue (erst deine, dann unverteilte) und übernimmt es mit `python3 tools/aufgabe.py <Nr> --uebernehmen`. Das setzt dich als Assignee und das Label `in-arbeit`: Für alle anderen First Mates ist das Issue damit gesperrt.
+3. **Keine Überlappung.** Jedes Issue nennt seinen *Bereich* (Dateien/Ordner). `tools/stand.py` warnt, wenn zwei laufende Issues denselben Bereich oder zwei offene PRs dieselbe Datei anfassen. Der First Mate pausiert dann den späteren und klärt es auf dem Board.
+4. **Alle sehen alles.** Jeder First Mate ruft bei jeder Runde `tools/stand.py` und `tools/board unread` auf; Merges, die andere betreffen, gehen mit `@all` aufs Board.
+5. **Queue leer?** Der First Mate schneidet in seinem Bereich selbst neue Issues aus `docs/case.md` (Skill `auftrag-schneiden`) und kündigt sie an. Der Lead-First-Mate (@f89pkdtkhw-lab) hält die Gesamt-Queue gefüllt.
+6. **Claude ↔ Codex ohne Verlust.** Der Stand einer Aufgabe liegt nie nur in einer Session, sondern im Issue, im Branch, in `.auftrag.md` und im Übergabe-Kommentar (Skill `handoff`). Darum kann ein Codex-Worker fortsetzen, was ein Claude-Worker begonnen hat. Der First Mate wählt pro Aufgabe nach `crew-dispatch.json` und weicht bei leerem Kontingent (`quota-axi`) automatisch auf den anderen Anbieter aus. Auch der First Mate selbst ist austauschbar: Session beenden, in `~/firstmate` `codex` statt `claude` starten; Backlog und Captain-Vorlieben liegen in `~/firstmate/data/` und gelten weiter.
+
+Die Regeln dafür stehen in [tools/firstmate/captain.md](../tools/firstmate/captain.md); `bash tools/firstmate/setup.sh "Vorname"` schreibt sie in deinen FirstMate (eine alte Fassung wird vorher gesichert).
+
+**Wer keinen FirstMate hat** (z. B. Windows ohne WSL), arbeitet genauso, nur von Hand: `python tools/stand.py --naechstes`, dann `python tools/aufgabe.py <Nr> --uebernehmen` und den Ordner in Claude Code oder Codex öffnen.
+
 ## Installation auf dem Mac
 
 In dieser Reihenfolge, Befehle von oben nach unten:

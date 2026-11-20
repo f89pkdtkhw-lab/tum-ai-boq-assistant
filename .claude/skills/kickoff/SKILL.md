@@ -11,7 +11,7 @@ Du bist die Integrations-Crew von @f89pkdtkhw-lab. Der Aufruf ist der Startauftr
 
 ## 1. Case und Daten erfassen (5 Minuten)
 
-Lies `docs/case.md`, `docs/domaene.md` und zusätzlichen Kontext aus dem Aufruf. Sichte `data/datensatz/`: welche Dateiformate (GAEB `.x83/.x84/.d83/.p83`, `.xlsx`, `.pdf`), wie viele Positionen, gibt es Preise. Wähle **ein** mittelgroßes LV als „erste echte Eingabe“ und trage es im Case-Brief ein. Fehlt der Datensatz, bitte den Lead auf dem Board, ihn nach `data/datensatz/` zu legen, und arbeite mit einer kleinen selbst gebauten Nachbildung in `data/beispiel_lv.json` weiter.
+Lies `docs/case.md`, `docs/domaene.md` und zusätzlichen Kontext aus dem Aufruf. Sichte `data/datensatz/`: welche Dateiformate (GAEB `.x83/.x84/.d83/.p83`, `.xlsx`, `.pdf`), wie viele Positionen, gibt es Preise. Demo-LV ist `data/testfaelle/rohbau_efh/lv_rohbau_efh.pdf` mit 25 bekannten echten Befunden in `erwartung.md` (Messlatte für Trefferquote). Wähle zusätzlich ein GAEB-LV aus dem Datensatz für die Format-Breite und trage beide im Case-Brief ein. Lies dort auch den Abschnitt „Was die Partner gesagt haben“. Fehlt der Datensatz, bitte den Lead auf dem Board, ihn nach `data/datensatz/` zu legen, und arbeite mit einer kleinen selbst gebauten Nachbildung in `data/beispiel_lv.json` weiter.
 
 ## 2. Demo-Szene festlegen (5 Minuten)
 
@@ -48,10 +48,10 @@ Für diesen einmaligen PR darf die Integrations-Crew Dateien in fremden Bereiche
 Bestätige die Tabelle in `AGENTS.md` Abschnitt 3. Schneide mit `auftrag-schneiden` acht bis zwölf Issues: senkrechte Scheiben, jede mit einem Hauptverantwortlichen, Abnahmetest, Zielbranch `main`, genau einem Modell-Label und Zuweisung. Plane mindestens:
 
 - @Anatomik5: GAEB-XML-Import (X83/X84) für das gewählte echte LV; danach Excel-Import; danach PDF-Import (Text + Tabellen, OCR nur wenn nötig)
-- @Bartuan3600: feste Prüfregeln (Rechnung, Summen, OZ, Einheit, Menge, Platzhaltertexte); danach LLM-Prüfung für vage Texte und Widersprüche in Batches mit strukturiertem JSON-Output
-- @Secret-Sebi: Risiko-/Nachtragsscoring mit Signalwortkatalog und Positionstypen (Bedarf, Pauschale, Stundenlohn); Testfälle mit eingebauten Fehlern in `data/testfaelle/`; Pitch aus Kalkulatorsicht in `pitch/`
+- @Bartuan3600: feste Prüfregeln (Rechnung, Summen, OZ, fehlende Menge/Einheit, Kurztext ≠ Langtext, Maß-/Einheitenfehler, Tippfehler, Duplikate); danach Mengenverhältnis-Regeln zwischen verwandten Positionen („400 Stühle / 50 Tische“); danach LLM-Prüfung für vage Texte, Widersprüche und veraltete Normen in Batches mit strukturiertem JSON-Output
+- @Secret-Sebi: Risiko-/Nachtragsscoring mit Signalwortkatalog und Positionstypen (Bedarf, Pauschale, Stundenlohn, Spezialgewerk); Aggregation nach Stoff/Gewerk (Beton m³, Stahl kg) und **Top-100-Ranking** nach €-Wirkung × Unsicherheit; Bieterfragen-Generator; Pitch aus Kalkulatorsicht in `pitch/`
 - @Zukipany: Upload-Seite mit Fortschritt; Prüfbericht-Dashboard (Kennzahlen, Findings-Liste mit Filter, Positionsdetail); Export als PDF/Excel
-- @f89pkdtkhw-lab: LLM-Zugriff und Kostenbremse (Batching, Caching), Deploy und Demo-Skript in `docs/demo.md`, Vergleich manuell vs. Tool in `data/vergleich.md`
+- @f89pkdtkhw-lab: LLM-Zugriff und Kostenbremse (Batching, Caching), Deploy und Demo-Skript in `docs/demo.md`, Messung gegen `data/testfaelle/rohbau_efh/erwartung.md` (Trefferquote, Fehlalarme) in `data/vergleich.md`
 
 Jeder Verweis auf eine erst entstehende Datei nennt das liefernde Issue als Blocker. Nur Issues ohne offene Blocker erhalten sofort `agent-bereit`.
 

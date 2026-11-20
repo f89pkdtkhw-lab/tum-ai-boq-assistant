@@ -16,6 +16,18 @@ Abgeschrieben von zwei Notizblatt-Fotos, sinngemäß:
 - **Adaptive Learning** über echte Daten: der Ansatz lernt aus abgerechneten Projekten.
 - **Baukalkulations-PDF** (Lehrbuch/Leitfaden) als Wissensquelle zum Lernen.
 
+Ausführlicher, strukturiert und mit **12 % AGK** als Richtwert: [Notizen-Kontext](quellen/Challenge_A_Notizen_Kontext.pdf). Weitere Datenquelle neben cosuno: Ausschreibungen der Deutschen Bahn. Ein Ziel aus den Notizen: ähnliche Positionen automatisch zusammenfassen (z. B. verschiedene Betonsorten) und sich auf die ~100 wichtigsten statt aller 9.000 Zeilen konzentrieren.
+
+## 20 Fähigkeiten einer Kalkulations-KI (Kurzfassung)
+
+Volltext: [Skills der KI](quellen/Skills%20der%20KI.pdf). Fett = für unseren Prototyp relevant.
+
+- **Unterlagen verstehen:** **LV auswerten (Positionstypen: Bedarf, Alternative, Wahl)** · **Vertragsbedingungen prüfen** (VOB/B, ZTV, Vertragsstrafen, Sicherheiten, Fristen) · **Widersprüche und Lücken als Rückfragen formulieren** · **Mengen plausibilisieren**
+- **Kalkulieren:** Aufwandswerte · Lohn (Mittellohn + Lohnnebenkosten) · Material (Preisgleitung, Verschnitt) · Geräte (BGL) · Nachunternehmer · Baustellengemeinkosten · Zuschläge AGK, W+G
+- **Risiko und Strategie:** **Risiken mit Eintrittswahrscheinlichkeit × Schadenshöhe** · **Wagnis in € statt pauschal** · Bauzeit · **Nachtragspotenzial (und wo man selbst gefährdet ist)** · Angebotsstrategie (konservativ, marktgerecht, aggressiv)
+- **Ergebnis und Qualität:** Angebot erstellen · **Plausibilitätschecks €/m², €/m³, Rechenfehler** · Lernen aus Nachkalkulation
+- **Leitplanken:** Schätzungen immer kennzeichnen; Preis nie ohne Freigabe des Kalkulators herausgeben.
+
 ## Begriffe
 
 | Begriff | Bedeutung |
@@ -34,6 +46,7 @@ Abgeschrieben von zwei Notizblatt-Fotos, sinngemäß:
 | Bieterfrage | Rückfrage an den Auftraggeber während der Angebotsphase; günstigste Art, Unklarheiten zu klären |
 | DIN 276 | Kostengruppen (KG 300 Bauwerk – Baukonstruktion, KG 400 Technische Anlagen …) |
 | STLB-Bau / StLB | standardisierte Leistungstexte; Abweichungen davon sind ein Prüfsignal |
+| DIN 18195 → DIN 18533 | Abdichtungsnorm DIN 18195 wurde 2017 durch DIN 18531–18535 ersetzt; ein LV, das noch DIN 18195-4 nennt, ist veraltet |
 | VOB/A § 7 | Leistung ist **eindeutig und erschöpfend** zu beschreiben; ungewöhnliche Wagnisse dürfen dem Bieter nicht aufgebürdet werden |
 
 ## GAEB-Formate

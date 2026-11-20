@@ -37,6 +37,8 @@ Das Board ist das angeheftete Issue #1. Alle Agenten lesen und posten dort mit `
 | `tools/board wait` | blockiert, bis jemand anderes postet; `--nur-erwaehnungen` wartet auf eine Erwähnung |
 | `tools/board whoami` | eigener Login, Repo und Board |
 
+**Lagebild:** `python tools/stand.py` zeigt alle laufenden (`in-arbeit`), freien (`agent-bereit`) und blockierten Issues, offene PRs mit CI und warnt vor Überschneidungen. `python tools/stand.py --naechstes` schlägt dir das nächste freie Issue vor. Jeder First Mate ruft es bei jeder Runde auf, jeder Worker vor Arbeitsbeginn.
+
 ## 3. Wer besitzt was
 
 Jeder Bereich hat einen Hauptverantwortlichen, damit nie zwei Agenten gleichzeitig dieselbe Datei umschreiben. Arbeite bevorzugt in deinen Ordnern. Musst du eine fremde Datei anfassen, poste vorher kurz aufs Board (`@<Besitzer> ich ändere X in Datei Y, weil …`) und leg los, sofern niemand innerhalb von 10 Minuten widerspricht. Ausnahme ist der einmalige Kickoff-Schnittstellen-PR (Skill `kickoff`): Die Integrations-Crew des Leads darf die nötigen Fremddateien anlegen und kündigt sie mit `@all` an.
@@ -54,13 +56,14 @@ Die Schnittstelle zwischen Oberfläche und Backend (`api/app/main.py`, `api/app/
 ## 4. Ablauf eines Auftrags
 
 1. Ein Auftrag ist ein GitHub-Issue mit verantwortlicher Person, Bereich und Abnahmetest. Fehlt etwas, frag im Issue statt zu raten.
-2. Übernimm ihn sichtbar: `python tools/aufgabe.py <Nr> --uebernehmen` legt Branch `<Nr>-<kurzname>` und einen eigenen Worktree vom frischen `main` an, weist dich zu und postet auf dem Board. Arbeite nie im Checkout eines anderen Agenten.
+2. Übernimm ihn sichtbar: `python tools/aufgabe.py <Nr> --uebernehmen` legt Branch `<Nr>-<kurzname>` und einen eigenen Worktree vom frischen `main` an, weist dich zu, setzt das Label `in-arbeit` und postet auf dem Board. Ein Issue mit `in-arbeit` oder fremdem Assignee fasst niemand anderes an. Arbeite nie im Checkout eines anderen Agenten.
 3. Kleine Commits. Stage nur deine eigenen Dateien, nie `git add -A`.
 4. Prüfe, bevor du „fertig“ sagst: `python -m unittest discover -s tests -v`, `cd api && python -m pytest -q`, das Abnahmebeispiel aus dem Issue und, bei Oberflächen, ein Blick im Browser. Schreib dazu, was du ausgeführt hast.
 5. `git fetch` und `git rebase origin/main`, dann pushen und einen Pull Request mit `Closes #<Nr>` öffnen. Nie einen geteilten Branch force-pushen.
 6. Unter FirstMate (`direct-PR +yolo`) öffnet die Crew den fertigen Pull Request; der First Mate mergt nach lokal erfolgreichen Tests und grünen Checks. Ohne FirstMate mergst du selbst: `gh pr checks --watch`, danach `gh pr merge --squash --delete-branch`.
 7. Ändert dein Merge etwas, worauf andere bauen (API-Route, Datenmodell einer LV-Position, Finding-Format, Umgebungsvariable), poste es mit `@all` auf dem Board.
-8. Räum deinen Worktree auf: `git worktree remove ../<repo>-<Nr>` (unter FirstMate macht das der First Mate).
+8. Musst du mittendrin aufhören (Kontingent, Kontext voll, Wechsel Claude ↔ Codex), committe den Zwischenstand auf deinen Branch und schreib mit `handoff` einen Übergabe-Kommentar ins Issue. So kann jeder andere Agent nahtlos weitermachen.
+9. Räum deinen Worktree auf: `git worktree remove ../<repo>-<Nr>` (unter FirstMate macht das der First Mate).
 
 ## 5. Grenzen
 
@@ -68,6 +71,7 @@ Die Schnittstelle zwischen Oberfläche und Backend (`api/app/main.py`, `api/app/
 - Keine Schlüssel in Code, Commits, Logs, Issues, PRs oder Board-Posts. Schlüssel liegen in `.env.local` oder Umgebungsvariablen; die Namen stehen in `.env.example`. Lies oder zeige keine `.env`-Dateien.
 - Modell-APIs nur vom Server aus aufrufen (`api/app/ai/llm.py`), nie aus dem Browser-Code.
 - Tests und Standardläufe bleiben offline und kostenlos (Mock). Live-APIs nur, wenn das Issue es verlangt.
+- **Der Datensatz ist vertraulich** (Vorgabe des Partners): nur in diesem privaten Repo, nie in öffentliche Repos, Gists, Pastebins oder fremde Dienste außer dem konfigurierten LLM-Anbieter.
 - Echte LVs aus dem Datensatz bleiben in `data/datensatz/` und werden nicht verändert. Testfälle mit eingebauten Fehlern liegen getrennt in `data/testfaelle/`.
 - Jedes Finding nennt seine Quelle: Positionsnummer (OZ) und ob es aus einer festen Regel oder vom Modell stammt. Keine erfundenen Positionen, Preise oder Normen.
 - Neue Abhängigkeiten nur mit Eintrag im Issue, in `api/requirements.txt` bzw. `web/package.json` und Startbefehl in der README.
@@ -111,6 +115,7 @@ Jedes Issue trägt genau ein Label `modell:klein`, `modell:ui`, `modell:schwer`,
 | Tests, Pflicht vor jedem Push | `python -m unittest discover -s tests -v` |
 | Produkt lokal starten (Oberfläche :3000, Backend :8000) | `python tools/dev.py` |
 | Produkt-Tests | `cd api && python -m pytest -q` und `cd web && npm run build` |
+| Lagebild aller Crews / nächstes freies Issue | `python tools/stand.py` / `python tools/stand.py --naechstes` |
 | Rechner prüfen und Push-Check aktivieren | `python tools/setup.py` |
 | Issue als eigenen Worktree beginnen | `python tools/aufgabe.py <Nr> --uebernehmen` |
 | Skills für Claude Code spiegeln | `python tools/agents_sync.py` |
