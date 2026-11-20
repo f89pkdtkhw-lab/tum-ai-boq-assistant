@@ -1,0 +1,38 @@
+.seite { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; display: grid; gap: 20px; }
+.kopf { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.kicker { margin: 0 0 6px; color: var(--accent, #4f46e5); font-weight: 600; font-size: 14px; }
+.titel { margin: 0 0 8px; font-size: clamp(26px, 4.2vw, 40px); line-height: 1.1; letter-spacing: -.03em; }
+.lead { margin: 0; color: var(--muted, #5b6478); max-width: 64ch; }
+.auswahl { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted, #5b6478); }
+.auswahl select {
+  font: inherit; font-size: 15px; font-weight: 400; color: var(--ink, #11162a); min-height: 44px; padding: 8px 12px;
+  border-radius: 10px; border: 1px solid var(--line, #e1e5ef); background: var(--card, #fff);
+}
+.testHinweis {
+  margin: 0; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--accent, #4f46e5); background: color-mix(in srgb, var(--accent, #4f46e5) 8%, transparent);
+}
+.testHinweis a { color: var(--accent, #4f46e5); }
+.laden {
+  display: flex; align-items: center; gap: 12px; padding: 20px; border-radius: 14px;
+  border: 1px solid var(--line, #e1e5ef); background: var(--card, #fff); color: var(--muted, #5b6478);
+}
+.kreisel {
+  width: 20px; height: 20px; border-radius: 50%; flex: none;
+  border: 3px solid var(--line, #e1e5ef); border-top-color: var(--accent, #4f46e5); animation: drehen .8s linear infinite;
+}
+@keyframes drehen { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .kreisel { animation-duration: 2.4s; } }
+.fehler {
+  padding: 18px 20px; border-radius: 14px; background: var(--card, #fff);
+  border: 1px solid var(--bad, #dc2626); display: grid; gap: 8px; justify-items: start;
+}
+.fehler h2 { margin: 0; font-size: 18px; color: var(--bad, #dc2626); }
+.fehler p { margin: 0; }
+.tipp { color: var(--muted, #5b6478); font-size: 14px; }
+.tipp code { font: 13px ui-monospace, Menlo, monospace; }
+.knopf {
+  font: inherit; font-weight: 600; padding: 10px 16px; min-height: 44px; border: 0; border-radius: 10px; cursor: pointer;
+  color: #fff; background: var(--accent, #4f46e5); margin-top: 4px;
+}
+.knopf:focus-visible, .auswahl select:focus-visible, .testHinweis a:focus-visible { outline: 3px solid var(--accent, #4f46e5); outline-offset: 2px; }
