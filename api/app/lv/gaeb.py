@@ -3,6 +3,7 @@ import base64
 import hashlib
 import math
 import re
+from pathlib import Path
 from decimal import Decimal, InvalidOperation
 from xml.etree import ElementTree as ET
 from ..modelle import LV, Position
@@ -59,6 +60,9 @@ def decimal_value(text, sources, scale=0):
 
 def parse_gaeb(dateiname: str, inhalt: bytes) -> BoQDocument:
     """Parse XML; the document export keeps every input byte, including unknown tags."""
+    if Path(dateiname).suffix.lower() in (".d83", ".d84", ".d86"):
+        from .gaeb90 import parse_legacy
+        return parse_legacy(dateiname, inhalt)
     # Reject DTDs/entities before parsing, including UTF-16/32 representations.
     if re.search(br"<!\s*(DOCTYPE|ENTITY)\b", inhalt.replace(b"\x00", b""), re.I):
         raise ValueError("GAEB XML declarations with DTDs or entities are not supported.")

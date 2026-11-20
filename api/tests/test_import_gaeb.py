@@ -64,3 +64,47 @@ def test_invalid_xml_and_numbers_return_safe_http_errors():
         result = TestClient(app).post("/api/lv/import", files={"datei": ("broken.x83", content)})
         assert result.status_code == 422
         assert "secret-document-text" not in result.text
+
+
+def test_legacy_gaeb_preserves_scaled_values_and_original_lines():
+    from app.lv.gaeb import parse_gaeb
+    def record(kind, fields):
+        line = list(" " * 80)
+        line[:2] = kind
+        for start, text in fields:
+            line[start:start + len(text)] = text
+        return "".join(line)
+    raw = "\r\n".join([
+        record("00", [(10, "84"), (62, "1122PPPPI"), (72, "90")]),
+        record("21", [(2, "01010001 "), (11, "NN"), (23, "00000002000"), (34, "m2")]),
+        record("23", [(2, "01010001 "), (12, "00000012500"), (24, "000000002500")]),
+        record("25", [(2, "Synthetic wall")]),
+        record("26", [(2, "Überbau with no lost text")]),
+        record("99", []),
+    ]).encode("cp850")
+    doc = parse_gaeb("offer.d84", raw)
+    p, = doc.positions
+    assert (p.oz.value, p.quantity.value, p.unit_price.value, p.total_price.value) == ("01.01.0001", "2.000", "12.500", "25.00")
+    assert p.unit_price.original == "00000012500"
+    assert p.unit_price.sources[0].line == 3
+    assert p.detailed_text.value == "Überbau with no lost text"
+
+
+def test_every_partner_gaeb_file_in_place_has_expected_count_and_raw_roundtrip():
+    import base64
+    from app.lv.gaeb import parse_gaeb
+    dataset = Path(__file__).resolve().parents[2] / "data/datensatz"
+    expected = {"501-24-01_GAEB-XML_sas.x83": 296, "[NUMMER_001]_leer.X83": 248,
+                "8209.003_Leistungsverzeichnis_leer.X83": 159, "GAEB-[PROJEKT_004].X83": 50,
+                "8209.003_Leistungsverzeichnis_leer.D83": 159, "Angebot AN24-0305.D84": 274,
+                "StBALV23040.D84": 249, "StBALV23040.D86": 249, "[ORT_024] LV24069.D86": 197}
+    files = [p for p in dataset.iterdir() if p.suffix.lower() in (".x83", ".x84", ".d83", ".d84", ".d86")]
+    assert set(p.name for p in files) == set(expected)
+    for path in files:
+        raw = path.read_bytes()
+        doc = parse_gaeb(path.name, raw)
+        assert len(doc.positions) == expected[path.name]
+        assert base64.b64decode(doc.raw.content) == raw, "Original source bytes must survive"
+        assert all(p.oz.sources for p in doc.positions)
+        if "leer" in path.stem or path.suffix.lower() == ".x83":
+            assert all(p.unit_price is None and p.total_price is None for p in doc.positions)
