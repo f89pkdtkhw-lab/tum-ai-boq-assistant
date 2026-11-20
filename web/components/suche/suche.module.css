@@ -1,0 +1,16 @@
+/* Uses the --pb-* tokens of the surrounding review report. */
+.suche { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; }
+.label { font-size: 13px; font-weight: 600; color: var(--pb-muted); }
+.feld { position: relative; flex: 1 1 260px; min-width: 0; max-width: 520px; }
+.eingabe {
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; min-height: 40px; padding: 8px 40px 8px 14px;
+  border-radius: 999px; border: 1px solid var(--pb-line); background: var(--pb-card); color: inherit;
+}
+.eingabe:hover, .eingabe:focus { border-color: var(--pb-accent); }
+.eingabe::-webkit-search-cancel-button { display: none; }
+.leeren {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px;
+  border: 0; border-radius: 50%; background: transparent; color: var(--pb-muted); font-size: 20px; line-height: 1; cursor: pointer;
+}
+.leeren:hover { color: var(--pb-ink); background: var(--pb-soft); }
+.zaehler { color: var(--pb-muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }

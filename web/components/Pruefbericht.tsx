@@ -3,8 +3,10 @@
 import { useMemo, useRef, useState } from "react";
 import type { Finding, Position, Pruefbericht as PruefberichtDaten } from "@/lib/api";
 import { mengenSchluessel } from "@/lib/mengen";
+import { filtereFindings, normalisiere, positionTrifft } from "@/lib/suche";
 import { Mengen } from "./mengen/Mengen";
 import { Bieterfragen } from "./bieterfragen/Bieterfragen";
+import { Suche } from "./suche/Suche";
 import styles from "./pruefbericht.module.css";
 
 /**
@@ -86,6 +88,7 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
   const [auswahl, setAuswahl] = useState<Auswahl | null>(null);
   const [exportFehler, setExportFehler] = useState("");
   const [einheit, setEinheit] = useState<string | null>(null);
+  const [suche, setSuche] = useState("");
   const detailRef = useRef<HTMLElement>(null);
   const positionenRef = useRef<HTMLDetailsElement>(null);
 
@@ -112,8 +115,9 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
       .map(({ finding }) => finding),
     [findings],
   );
-  const gefiltert = sortiert.filter(
-    (f) => (kategorie === null || f.kategorie === kategorie) && (schwere === null || f.schwere === schwere),
+  const gefiltert = useMemo(
+    () => filtereFindings(sortiert, lv.positionen, { suche, kategorie, schwere }),
+    [sortiert, lv.positionen, suche, kategorie, schwere],
   );
 
   const mockAnzahl = findings.filter(istMock).length;
@@ -159,8 +163,16 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
     }
   }
 
-  const filterAktiv = kategorie !== null || schwere !== null;
-  const sichtbarePositionen = einheit === null ? lv.positionen : lv.positionen.filter((p) => mengenSchluessel(p) === einheit);
+  const sucheAktiv = normalisiere(suche) !== "";
+  const filterAktiv = kategorie !== null || schwere !== null || sucheAktiv;
+  const sichtbarePositionen = lv.positionen.filter(
+    (p) => (einheit === null || mengenSchluessel(p) === einheit) && positionTrifft(p, suche),
+  );
+
+  function sucheAendern(wert: string) {
+    setSuche(wert);
+    if (normalisiere(wert) !== "" && positionenRef.current) positionenRef.current.open = true;
+  }
 
   function waehleEinheit(schluessel: string | null) {
     setEinheit(schluessel);
@@ -221,6 +233,10 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
 
       <Mengen positionen={lv.positionen} aktiv={einheit} onWaehle={waehleEinheit} />
 
+      <Suche wert={suche} onAendern={sucheAendern} zaehler={sucheAktiv
+        ? `${sichtbarePositionen.length} of ${lv.positionen.length} items · ${gefiltert.length} of ${findings.length} findings`
+        : null} />
+
       <div className={styles.filter} role="group" aria-label="Filter findings">
         <fieldset className={styles.filterGruppe}>
           <legend>Category</legend>
@@ -259,7 +275,7 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
             <div className={styles.leer}>
               <p>No findings match this filter.</p>
               {filterAktiv && (
-                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); }}>
+                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setSuche(""); }}>
                   Reset filters
                 </button>
               )}
@@ -281,15 +297,17 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
 
           <details ref={positionenRef} className={styles.positionen}>
             <summary>
-              {einheit === null
+              {einheit === null && !sucheAktiv
                 ? `Show all ${lv.positionen.length} items`
-                : `Showing ${sichtbarePositionen.length} of ${lv.positionen.length} items summed in ${sichtbarePositionen[0]?.einheit?.trim() ?? einheit}`}
+                : `Showing ${sichtbarePositionen.length} of ${lv.positionen.length} items${einheit === null ? "" : ` summed in ${lv.positionen.find((p) => mengenSchluessel(p) === einheit)?.einheit?.trim() ?? einheit}`}${sucheAktiv ? ` matching “${suche.trim()}”` : ""}`}
             </summary>
-            {einheit !== null && (
-              <button type="button" className={styles.knopfZweit} onClick={() => setEinheit(null)}>Show all items</button>
+            {(einheit !== null || sucheAktiv) && (
+              <button type="button" className={styles.knopfZweit} onClick={() => { setEinheit(null); setSuche(""); }}>Show all items</button>
             )}
             {lv.positionen.length === 0 ? (
               <p className={styles.leer}>The BoQ contains no items.</p>
+            ) : sichtbarePositionen.length === 0 ? (
+              <p className={styles.leer}>No positions match.</p>
             ) : (
               <div className={styles.tabelleRahmen}>
                 <table className={styles.tabelle}>
