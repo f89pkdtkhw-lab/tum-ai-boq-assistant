@@ -22,7 +22,7 @@ class SharedInstructionTests(unittest.TestCase):
         self.assertEqual(claude[0].strip(), "@AGENTS.md")
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("## Code Review Rules", agents)
-        self.assertFalse((ROOT / "GEMINI.md").exists(), "Antigravity soll AGENTS.md lesen, keine zweite Regeldatei")
+        self.assertFalse((ROOT / "GEMINI.md").exists(), "Antigravity must read AGENTS.md, not a second rules file")
 
     def test_docs_and_ci_use_the_same_test_command(self):
         for path in ("AGENTS.md", "README.md", ".github/PULL_REQUEST_TEMPLATE.md",
@@ -33,7 +33,7 @@ class SharedInstructionTests(unittest.TestCase):
     def test_skills_are_valid_and_mirrored_for_claude_code(self):
         sync = load("agents_sync")
         self.assertGreaterEqual(len(sync.skill_dirs()), 1)
-        self.assertEqual(sync.problems(), [], "python tools/agents_sync.py ausführen")
+        self.assertEqual(sync.problems(), [], "run python tools/agents_sync.py")
 
     def test_skill_check_reports_broken_frontmatter(self):
         sync = load("agents_sync")
@@ -61,8 +61,8 @@ class SharedInstructionTests(unittest.TestCase):
     def test_rules_name_the_configured_board_and_every_role(self):
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         issue = json.loads((ROOT / "tools" / "board.json").read_text(encoding="utf-8"))["issue"]
-        self.assertIn(f"angeheftete Issue #{issue}", agents)
-        for heading in ("## 2. Das Board", "## 3. Wer besitzt was", "gh pr merge --squash --delete-branch"):
+        self.assertIn(f"pinned issue #{issue}", agents)
+        for heading in ("## 2. The board", "## 3. Ownership", "gh pr merge --squash --delete-branch"):
             self.assertIn(heading, agents)
 
     def test_vendored_skills_keep_their_license(self):
@@ -77,7 +77,7 @@ class SharedInstructionTests(unittest.TestCase):
             with self.subTest(path=path):
                 script = (ROOT / path).read_bytes()
                 self.assertTrue(script.startswith(shebang))
-                self.assertNotIn(b"\r\n", script, "Skripte brauchen LF-Zeilenenden, sonst laufen sie unter macOS nicht")
+                self.assertNotIn(b"\r\n", script, "Scripts need LF line endings to run on macOS")
         hook = (ROOT / "tools" / "hooks" / "pre-push").read_bytes()
         self.assertIn(b"refs/heads/main", hook)
         self.assertIn(b"refs/heads/demo", hook)
@@ -108,7 +108,7 @@ class TaskScriptTests(unittest.TestCase):
         cls.task = load("aufgabe")
 
     def test_reads_issue_form_fields(self):
-        body = ("### Verantwortliche Person\n\nleon1ce\n\n### Ergebnis und Abnahmetest\n\nNach Reset ist das Feld leer.\n\n"
+        body = ("### Verantwortliche Person\n\nleon1ce\n\n### Ergebnis und Abnahmetest\n\nAfter reset the field is empty.\n\n"
                 "### Bereich\n\nweb/app/page.tsx\n\n### Zielbranch\n\nmain\n\n"
                 "### Werkzeug\n\nCodex\n\n### Schnittstellen und Abhängigkeiten\n\n_No response_")
         fields = self.task.parse_form(body)
@@ -117,15 +117,29 @@ class TaskScriptTests(unittest.TestCase):
         self.assertNotIn("Schnittstellen und Abhängigkeiten", fields)
         self.assertEqual(self.task.base_branch(fields, body), "main")
 
+    def test_english_form_produces_assignment_and_explicit_target_branch(self):
+        body = ("### Owner\n\nexample-user\n\n### Scope\n\nweb/app/page.tsx\n\n"
+                "### Target branch\n\nrelease/english\n\n### Tool\n\nCodex\n\n"
+                "### Outcome and acceptance test\n\nAn empty upload displays an error.\n\n"
+                "### Interfaces and dependencies\n\nBlocked by #12.")
+        fields = self.task.parse_form(body)
+        self.assertEqual(self.task.base_branch(fields, body), "release/english")
+        text = self.task.assignment({"number": 7, "title": "Upload", "body": body},
+                                    fields, "7-upload", "release/english")
+        for value in ("**Owner:** example-user", "web/app/page.tsx", "**Tool:** Codex",
+                      "An empty upload displays an error.", "Blocked by #12."):
+            self.assertIn(value, text)
+        self.assertNotIn("see issue text below", text)
+
     def test_finds_target_branch_in_free_text_issues(self):
-        self.assertEqual(self.task.base_branch({}, "Mit Tastatur geprüft. PR-Ziel ist main."), "main")
-        self.assertEqual(self.task.base_branch({}, "Der Case startet auf `main`."), "main")
-        self.assertIsNone(self.task.base_branch({}, "Die domain bleibt gleich."))
+        self.assertEqual(self.task.base_branch({}, "Keyboard checked. PR target is main."), "main")
+        self.assertEqual(self.task.base_branch({}, "The case starts on `main`."), "main")
+        self.assertIsNone(self.task.base_branch({}, "The domain stays unchanged."))
 
     def test_branch_names_are_short_and_ascii(self):
         self.assertEqual(self.task.branch_name(7, "Freitag · Agentenauftrag Oberfläche: Eingabe zurücksetzen"),
                          "7-eingabe-zuruecksetzen")
-        name = self.task.branch_name(12, "Aufgabe · " + "sehr lange Beschreibung " * 5)
+        name = self.task.branch_name(12, "Task · " + "very long description " * 5)
         self.assertLessEqual(len(name), 43)
         self.assertRegex(name, r"^12-[a-z0-9-]+[a-z0-9]$")
         self.assertEqual(self.task.branch_name(3, "···"), "3")
@@ -142,7 +156,7 @@ class TaskScriptTests(unittest.TestCase):
         self.assertIn("claude --model opus", ui["Claude Code"])
         self.assertNotIn("Codex", ui)
         text = self.task.assignment({"number": 3, "title": "t", "labels": [{"name": "modell:bugfix"}]}, {}, "3-t", "main")
-        self.assertIn("Modellklasse:** `bugfix`", text)
+        self.assertIn("Model class:** `bugfix`", text)
 
     def test_model_table_matches_firstmate_rules_and_labels(self):
         models = json.loads((ROOT / "tools" / "modelle.json").read_text(encoding="utf-8"))["klassen"]
@@ -158,7 +172,7 @@ class TaskScriptTests(unittest.TestCase):
     def test_assignment_names_branch_target_and_acceptance(self):
         issue = {"number": 7, "title": "Reset", "url": "https://example.test/7", "body": "Text"}
         text = self.task.assignment(issue, {"Bereich": "web/app/page.tsx"}, "7-reset", "main")
-        for fragment in ("Issue #7", "`7-reset`", "`main`", "web/app/page.tsx",
+        for fragment in ("issue #7", "`7-reset`", "`main`", "web/app/page.tsx",
                          "Closes #7", "python -m unittest discover -s tests -v", "AGENTS.md"):
             self.assertIn(fragment, text)
 

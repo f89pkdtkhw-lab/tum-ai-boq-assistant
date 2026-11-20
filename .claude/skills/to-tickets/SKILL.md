@@ -4,7 +4,7 @@ description: Break a plan, spec, or the current conversation into a set of trace
 disable-model-invocation: true
 ---
 
-<!-- Generiert aus .agents/skills/to-tickets/SKILL.md mit python tools/agents_sync.py. Hier nicht bearbeiten. -->
+<!-- Generated from .agents/skills/to-tickets/SKILL.md using python tools/agents_sync.py. Do not edit here. -->
 
 # To Tickets
 

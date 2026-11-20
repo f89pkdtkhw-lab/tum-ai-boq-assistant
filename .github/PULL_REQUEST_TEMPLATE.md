@@ -1,18 +1,18 @@
-## Aufgabe und Zielbranch
+## Task and target branch
 
-Closes #… · Zielbranch: …
+Closes #… · Target branch: …
 
-## Was kann man jetzt tun?
+## What can users do now?
 
 …
 
-## Geprüft
+## Validation
 
-- [ ] `python -m unittest discover -s tests -v` ausgeführt
-- [ ] Abnahmebeispiel aus dem Issue geprüft
-- [ ] Nur Dateien im eigenen Bereich laut Besitzer-Tabelle geändert
-- [ ] Geänderte Schnittstellen mit `@all` auf dem Board angekündigt
+- [ ] Ran `python -m unittest discover -s tests -v`
+- [ ] Checked the issue acceptance example
+- [ ] Changed only files within own scope according to ownership table
+- [ ] Announced changed interfaces with `@all` on the board
 
-Erstellt mit: Claude Code / Codex / Antigravity / FirstMate / Jules / von Hand
+Created with: Claude Code / Codex / Antigravity / FirstMate / Jules / manually
 
-Der Autor mergt selbst, sobald die Checks grün sind. Ergebnis und offene Fragen: …
+The author merges after green checks; under FirstMate, the First Mate merges. Result and open questions: …

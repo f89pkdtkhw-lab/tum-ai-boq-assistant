@@ -3,7 +3,7 @@ name: tdd
 description: Test-driven development. Use when the user wants to build features or fix bugs test-first, mentions "red-green-refactor", or wants integration tests.
 ---
 
-<!-- Generiert aus .agents/skills/tdd/SKILL.md mit python tools/agents_sync.py. Hier nicht bearbeiten. -->
+<!-- Generated from .agents/skills/tdd/SKILL.md using python tools/agents_sync.py. Do not edit here. -->
 
 # Test-Driven Development
 

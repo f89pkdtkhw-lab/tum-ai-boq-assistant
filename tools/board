@@ -1,11 +1,11 @@
 #!/bin/sh
-# Kurzform für macOS, Linux und Git Bash: tools/board <post|unread|read|wait|whoami>
-# Sucht das erste Python 3.8+ und startet tools/board.py.
+# Shortcut for macOS, Linux and Git Bash: tools/board <post|unread|read|wait|whoami>
+# Find the first Python 3.8+ and start tools/board.py.
 for candidate in python3 python py; do
   if command -v "$candidate" >/dev/null 2>&1 &&
      "$candidate" -c "import sys; sys.exit(sys.version_info < (3, 8))" >/dev/null 2>&1; then
     exec "$candidate" "$(dirname "$0")/board.py" "$@"
   fi
 done
-echo "board: kein Python 3.8 oder neuer gefunden" >&2
+echo "board: no Python 3.8 or newer found" >&2
 exit 1

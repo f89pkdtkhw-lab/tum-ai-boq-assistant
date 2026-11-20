@@ -1,33 +1,33 @@
-name: Fehler
-description: Ein reproduzierbarer Fehler in Demo oder Produkt
-title: "Fehler · "
+name: Bug
+description: A reproducible bug in the demo or product
+title: "Bug · "
 labels: []
 body:
   - type: textarea
     id: steps
     attributes:
-      label: Eingabe und Schritte
-      placeholder: "Offline-Modus, Feld leer lassen, auf Find a room klicken."
+      label: Input and steps
+      placeholder: "Offline mode, leave the field empty, click Find a room."
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: Erwartet
+      label: Expected
     validations:
       required: true
   - type: textarea
     id: observed
     attributes:
-      label: Beobachtet
-      description: Fehlermeldung, Screenshot oder Ausgabe einfügen. Keine Schlüssel.
+      label: Observed
+      description: Include error message, screenshot or output. No keys.
     validations:
       required: true
   - type: input
     id: commit
     attributes:
-      label: Branch, Commit und Rechner
-      description: Steht in der Ausgabe von python tools/setup.py.
+      label: Branch, commit and machine
+      description: Shown in python tools/setup.py output.
       placeholder: "main @ 5276e22, macOS 15"
     validations:
       required: true

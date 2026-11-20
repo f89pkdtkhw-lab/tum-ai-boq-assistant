@@ -1,12 +1,12 @@
-"""Lagebild für alle Menschen und Agenten: wer arbeitet woran, was ist frei, wo droht Überschneidung.
+"""Situation report for people and agents: who works on what, available tasks and potential overlaps.
 
-    python tools/stand.py                      # Gesamtbild: in Arbeit, bereit, blockiert, offene PRs, Konflikte
-    python tools/stand.py --naechstes          # das nächste freie Issue für dich (erst deine, dann unverteilte)
+    python tools/stand.py                      # Overview: active, ready, blocked, open PRs, conflicts
+    python tools/stand.py --naechstes          # Next available issue for you (yours first, then unassigned)
     python tools/stand.py --naechstes --login Zukipany
-    python tools/stand.py --json               # maschinenlesbar für First Mates
+    python tools/stand.py --json               # Machine-readable for First Mates
 
-Jeder First Mate ruft das bei jedem Aufsichtsdurchgang auf, jeder Worker vor Arbeitsbeginn.
-Braucht nur Python und die angemeldete GitHub CLI (gh). Liest nur, ändert nichts.
+Every First Mate runs this each supervision round; every worker runs it before starting.
+Requires only Python and an authenticated GitHub CLI (gh). Read-only.
 """
 import argparse
 import importlib.util
@@ -35,7 +35,7 @@ def gh_json(*args):
         done = subprocess.run(["gh", *args], cwd=ROOT, capture_output=True, text=True,
                               encoding="utf-8", errors="replace", timeout=60)
     except FileNotFoundError:
-        raise Stop("gh nicht gefunden. https://cli.github.com installieren, dann gh auth login.") from None
+        raise Stop("gh not found. Install https://cli.github.com, then run gh auth login.") from None
     if done.returncode:
         raise Stop((done.stderr or done.stdout).strip().splitlines()[-1])
     return json.loads(done.stdout or "null")
@@ -50,7 +50,7 @@ def logins(item):
 
 
 def area_paths(text):
-    """Split a 'Bereich' field into normalized path prefixes."""
+    """Split a scope field into normalized path prefixes."""
     parts = []
     for raw in (text or "").replace("\n", ",").replace(";", ",").split(","):
         path = raw.strip().strip("`").strip().rstrip("/").lstrip("./")
@@ -64,7 +64,7 @@ def paths_overlap(a, b):
 
 
 def area_conflicts(issues):
-    """Pairs of claimed issues whose Bereich overlaps."""
+    """Pairs of claimed issues whose scopes overlap."""
     found = []
     for i, first in enumerate(issues):
         for second in issues[i + 1:]:
@@ -89,10 +89,10 @@ def ci_state(checks):
     if not states:
         return "–"
     if states & {"FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED"}:
-        return "rot"
+        return "red"
     if states & {"PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "WAITING"}:
-        return "läuft"
-    return "grün"
+        return "running"
+    return "green"
 
 
 def classify(issue):
@@ -114,13 +114,13 @@ def collect():
     merged = gh_json("pr", "list", "--state", "merged", "--limit", "5", "--json", "number,title,author,mergedAt")
     issues = []
     for issue in raw_issues:
-        if issue["number"] in (1, 2):  # Board und Setup-Check sind keine Aufträge
+        if issue["number"] in (1, 2):  # Board and setup check are not tasks
             continue
         fields = parse_form(issue.get("body"))
         issues.append({
             "number": issue["number"], "title": issue["title"], "status": classify(issue),
             "assignees": logins(issue), "labels": sorted(labels_of(issue)),
-            "bereich": area_paths(fields.get("Bereich", "")),
+            "bereich": area_paths(fields.get("Scope", fields.get("Bereich", ""))),
         })
     prs = [{
         "number": pr["number"], "title": pr["title"], "branch": pr["headRefName"],
@@ -150,36 +150,37 @@ def render(data):
     by_status = {}
     for issue in data["issues"]:
         by_status.setdefault(issue["status"], []).append(issue)
+    display_status = {"in Arbeit": "IN PROGRESS", "bereit": "READY", "blockiert": "BLOCKED", "offen": "OPEN"}
     for status in ("in Arbeit", "bereit", "blockiert", "offen"):
         rows = by_status.get(status, [])
-        out.append(f"\n== {status.upper()} ({len(rows)})")
+        out.append(f"\n== {display_status[status]} ({len(rows)})")
         for i in rows:
-            who = ", ".join("@" + a for a in i["assignees"]) or "frei"
-            area = ", ".join(i["bereich"]) or "Bereich fehlt!"
+            who = ", ".join("@" + a for a in i["assignees"]) or "unassigned"
+            area = ", ".join(i["bereich"]) or "Scope missing!"
             out.append(f"  #{i['number']:<4} {i['title'][:60]:<60} {who:<22} {area}")
-    out.append(f"\n== OFFENE PRs ({len(data['prs'])})")
+    out.append(f"\n== OPEN PRs ({len(data['prs'])})")
     for pr in data["prs"]:
-        flag = " (Entwurf)" if pr["draft"] else ""
+        flag = " (draft)" if pr["draft"] else ""
         out.append(f"  PR #{pr['number']:<4} CI {pr['ci']:<6} @{pr['author']:<16} {pr['title'][:60]}{flag}")
-    out.append("\n== ZULETZT GEMERGT")
+    out.append("\n== RECENTLY MERGED")
     for pr in data["merged"]:
         out.append(f"  PR #{pr['number']:<4} {pr['mergedAt'][:16].replace('T', ' ')}  {pr['title'][:70]}")
     if data["bereich_konflikte"] or data["datei_konflikte"]:
-        out.append("\n!! ÜBERSCHNEIDUNGEN – vor dem Weiterarbeiten auf dem Board klären")
+        out.append("\n!! OVERLAPS – resolve on the board before continuing")
         for c in data["bereich_konflikte"]:
-            out.append(f"  Issues #{c['issues'][0]} und #{c['issues'][1]} teilen {', '.join(c['pfade'])}")
+            out.append(f"  Issues #{c['issues'][0]} and #{c['issues'][1]} share {', '.join(c['pfade'])}")
         for c in data["datei_konflikte"]:
-            out.append(f"  {c['pfad']} wird von PRs {', '.join('#' + str(n) for n in c['prs'])} geändert")
+            out.append(f"  {c['pfad']} is changed by PRs {', '.join('#' + str(n) for n in c['prs'])}")
     else:
-        out.append("\n✓ Keine Überschneidungen zwischen laufenden Aufträgen und offenen PRs.")
+        out.append("\n✓ No overlaps between active tasks and open PRs.")
     return "\n".join(out)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--json", action="store_true", help="Ausgabe als JSON")
-    parser.add_argument("--naechstes", action="store_true", help="nächstes freies Issue vorschlagen")
-    parser.add_argument("--login", help="GitHub-Login (Standard: angemeldeter gh-Nutzer)")
+    parser.add_argument("--json", action="store_true", help="output as JSON")
+    parser.add_argument("--naechstes", action="store_true", help="suggest next available issue")
+    parser.add_argument("--login", help="GitHub login (default: authenticated gh user)")
     args = parser.parse_args()
     try:
         data = collect()
@@ -190,9 +191,9 @@ def main():
                 print(json.dumps(pick, ensure_ascii=False))
             elif pick:
                 print(f"#{pick['number']} {pick['title']}\n"
-                      f"Übernehmen: python tools/aufgabe.py {pick['number']} --uebernehmen")
+                      f"Claim: python tools/aufgabe.py {pick['number']} --uebernehmen")
             else:
-                print("Kein freies agent-bereit-Issue. Lead auf dem Board fragen oder Folge-Issue schneiden.")
+                print("No available agent-bereit issue. Ask the lead on the board or create a follow-up issue.")
             return 0
         print(json.dumps(data, ensure_ascii=False, indent=1) if args.json else render(data))
     except Stop as exc:

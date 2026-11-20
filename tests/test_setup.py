@@ -27,6 +27,6 @@ class TeamSetupTests(unittest.TestCase):
         lines = (ROOT / ".env.example").read_text(encoding="utf-8").splitlines()
         settings = [line.partition("=") for line in lines if line and not line.startswith("#")]
         names = [name for name, _, _ in settings]
-        self.assertEqual(len(names), len(set(names)), "Jede Variable nur einmal")
+        self.assertEqual(len(names), len(set(names)), "Each variable occurs only once")
         self.assertTrue({"OPENAI_API_KEY", "OPENAI_MODEL", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "LLM_PROVIDER"} <= set(names))
         self.assertTrue(all(separator == "=" and not value for _, separator, value in settings))

@@ -5,7 +5,7 @@ argument-hint: "What will the next session be used for?"
 disable-model-invocation: true
 ---
 
-<!-- Generiert aus .agents/skills/handoff/SKILL.md mit python tools/agents_sync.py. Hier nicht bearbeiten. -->
+<!-- Generated from .agents/skills/handoff/SKILL.md using python tools/agents_sync.py. Do not edit here. -->
 
 Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS (`$TMPDIR`, else `/tmp`; `%TEMP%` on Windows) - not the current workspace.
 

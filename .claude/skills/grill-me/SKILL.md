@@ -4,6 +4,6 @@ description: A relentless interview to sharpen a plan or design.
 disable-model-invocation: true
 ---
 
-<!-- Generiert aus .agents/skills/grill-me/SKILL.md mit python tools/agents_sync.py. Hier nicht bearbeiten. -->
+<!-- Generated from .agents/skills/grill-me/SKILL.md using python tools/agents_sync.py. Do not edit here. -->
 
 Call the Skill tool with "grilling".

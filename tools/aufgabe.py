@@ -1,11 +1,11 @@
-"""Beginnt ein GitHub-Issue auf eigenem Branch und Worktree und schreibt den Agentenauftrag.
+"""Start a GitHub issue on its own branch and worktree and write the agent assignment.
 
-    python tools/aufgabe.py 7                  # Worktree neben dem Repo, Branch 7-<kurzname>
-    python tools/aufgabe.py 7 --uebernehmen    # zusätzlich zuweisen und Übernahme kommentieren
-    python tools/aufgabe.py 7 --hier           # ohne Worktree im aktuellen Ordner
+    python tools/aufgabe.py 7                  # Worktree beside the repository, branch 7-<short-name>
+    python tools/aufgabe.py 7 --uebernehmen    # Also assign and comment on the claim
+    python tools/aufgabe.py 7 --hier           # Without a worktree in the current folder
 
-Danach den angezeigten Ordner in Claude Code, Codex oder Antigravity öffnen und schreiben:
-„Lies .auftrag.md und setze den Auftrag um.“
+Then open the displayed folder in Claude Code, Codex or Antigravity and say:
+“Read .auftrag.md and implement the task.”
 """
 import argparse
 import json
@@ -16,8 +16,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 KNOWN_BASES = ("main",)
-EMPTY = {"", "_No response_", "keine", "-", "–"}
-PROMPT = "Lies .auftrag.md und setze den Auftrag um."
+EMPTY = {"", "_No response_", "keine", "none", "-", "–"}
+PROMPT = "Read .auftrag.md and implement the task."
 MODELS = json.loads((ROOT / "tools" / "modelle.json").read_text(encoding="utf-8"))["klassen"]
 
 
@@ -44,7 +44,7 @@ class Stop(Exception):
 def run(*command, cwd=ROOT, check=True):
     done = subprocess.run(command, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if check and done.returncode:
-        raise Stop(f"{' '.join(command)} schlug fehl:\n{(done.stderr or done.stdout).strip()}")
+        raise Stop(f"{' '.join(command)} failed:\n{(done.stderr or done.stdout).strip()}")
     return done.stdout.strip()
 
 
@@ -64,7 +64,7 @@ def parse_form(body):
 
 
 def base_branch(fields, body):
-    value = fields.get("Zielbranch", "").strip().strip("`").strip()
+    value = fields.get("Target branch", fields.get("Zielbranch", "")).strip().strip("`").strip()
     if re.fullmatch(r"[A-Za-z0-9._/-]+", value):
         return value
     for name in KNOWN_BASES:
@@ -89,40 +89,43 @@ def assignment(issue, fields, branch, base):
     klasse = model_class(issue.get("labels"))
     models = MODELS[klasse]
 
-    def field(name, fallback="siehe Issue-Text unten"):
-        return fields.get(name, fallback)
+    def field(name, fallback="see issue text below"):
+        legacy = {"Owner": "Verantwortliche Person", "Scope": "Bereich", "Tool": "Werkzeug",
+                  "Outcome and acceptance test": "Ergebnis und Abnahmetest",
+                  "Interfaces and dependencies": "Schnittstellen und Abhängigkeiten"}
+        return fields.get(name, fields.get(legacy.get(name), fallback))
 
     return "\n".join([
-        f"# Auftrag aus Issue #{number}: {issue['title']}",
+        f"# Task from issue #{number}: {issue['title']}",
         "",
-        f"Bearbeite Issue #{number} ({issue.get('url', '')}) auf Branch `{branch}`. "
-        f"Der Pull Request geht auf `{base}`. Halte dich an `AGENTS.md`.",
+        f"Implement issue #{number} ({issue.get('url', '')}) on branch `{branch}`. "
+        f"Target the pull request at `{base}`. Follow `AGENTS.md`.",
         "",
-        f"- **Verantwortlich:** {field('Verantwortliche Person')}",
-        f"- **Bereich, nur diese Dateien ändern:** {field('Bereich')}",
-        f"- **Werkzeug:** {field('Werkzeug', 'egal')}",
-        f"- **Schnittstellen und Abhängigkeiten:** {field('Schnittstellen und Abhängigkeiten', 'keine genannt')}",
-        f"- **Modellklasse:** `{klasse}` ({models['beschreibung']}): Claude `{models.get('claude') or '–'}`, "
-        f"Codex `{models.get('codex') or '–'}`. Läufst du mit einem anderen Modell, sag es im Pull Request.",
+        f"- **Owner:** {field('Owner')}",
+        f"- **Scope, change only these files:** {field('Scope')}",
+        f"- **Tool:** {field('Tool', 'any')}",
+        f"- **Interfaces and dependencies:** {field('Interfaces and dependencies', 'none specified')}",
+        f"- **Model class:** `{klasse}` ({models['beschreibung']}): Claude `{models.get('claude') or '–'}`, "
+        f"Codex `{models.get('codex') or '–'}`. If using a different model, state it in the pull request.",
         "",
-        "## Ergebnis und Abnahmetest",
+        "## Outcome and acceptance test",
         "",
-        field("Ergebnis und Abnahmetest"),
+        field("Outcome and acceptance test"),
         "",
-        "## So schließt du ab",
+        "## How to finish",
         "",
-        "1. Teste mit `python -m unittest discover -s tests -v` und spiele das Abnahmebeispiel durch.",
-        "2. Lies vorher `tools/board unread`; Änderungen an fremden Dateien oder geteilten Schnittstellen "
-        "erst auf dem Board abstimmen.",
-        f"3. `git fetch`, `git rebase origin/{base}`, pushen und Pull Request auf `{base}` mit `Closes #{number}` öffnen.",
-        "4. Berichte Ergebnis, ausgeführte Tests und offene Punkte im Pull Request.",
-        "5. Unter FirstMate öffnest du den fertigen PR; der First Mate mergt nach grünen Checks. "
-        "Sonst merge selbst: `gh pr checks --watch`, dann `gh pr merge --squash --delete-branch`.",
-        "6. Ändert der Merge eine geteilte Schnittstelle, poste es mit `@all` auf dem Board (`tools/board post`).",
+        "1. Run `python -m unittest discover -s tests -v` and the acceptance example.",
+        "2. Read `tools/board unread` first; coordinate changes to other owners' files or shared interfaces "
+        "on the board beforehand.",
+        f"3. `git fetch`, `git rebase origin/{base}`, push and open a pull request targeting `{base}` with `Closes #{number}`.",
+        "4. Report the result, tests performed and open points in the pull request.",
+        "5. Under FirstMate, open the finished PR; the First Mate merges after green checks. "
+        "Otherwise merge yourself: `gh pr checks --watch`, then `gh pr merge --squash --delete-branch`.",
+        "6. If the merge changes a shared interface, post with `@all` on the board (`tools/board post`).",
         "",
-        "## Issue-Text",
+        "## Issue text",
         "",
-        (issue.get("body") or "").strip() or "(leer)",
+        (issue.get("body") or "").strip() or "(empty)",
         "",
     ])
 
@@ -130,18 +133,18 @@ def assignment(issue, fields, branch, base):
 def prepare(number, base_override=None, here=False):
     issue = json.loads(run("gh", "issue", "view", str(number), "--json", "number,title,body,url,state,labels"))
     if issue.get("state") != "OPEN":
-        raise Stop(f"Issue #{number} ist nicht offen.")
+        raise Stop(f"Issue #{number} is not open.")
     fields = parse_form(issue.get("body"))
     base = base_override or base_branch(fields, issue.get("body"))
     if not base:
-        raise Stop(f"Issue #{number} nennt keinen Zielbranch. Ergänze ihn im Issue oder nutze --basis main.")
+        raise Stop(f"Issue #{number} does not specify a target branch. Add it to the issue or use --basis main.")
     branch = branch_name(number, issue["title"])
     run("git", "fetch", "origin", base)
     has_branch = bool(run("git", "branch", "--list", branch))
 
     if here:
         if run("git", "status", "--porcelain"):
-            raise Stop("Im aktuellen Ordner gibt es ungesicherte Änderungen. Erst committen oder --hier weglassen.")
+            raise Stop("The current folder has uncommitted changes. Commit first or omit --hier.")
         if has_branch:
             run("git", "switch", branch)
         else:
@@ -162,41 +165,41 @@ def claim(number, branch, tool):
     login = run("gh", "api", "user", "--jq", ".login")
     run("gh", "issue", "edit", str(number), "--add-assignee", "@me", "--add-label", "in-arbeit")
     run("gh", "issue", "comment", str(number), "--body",
-        f"Übernommen von @{login} mit {tool} auf Branch `{branch}`.")
+        f"Claimed by @{login} using {tool} on branch `{branch}`.")
     board = subprocess.run([sys.executable, str(ROOT / "tools" / "board.py"), "post",
-                            f"[{login} · {tool}] übernimmt #{number} auf Branch `{branch}`."],
+                            f"[{login} · {tool}] claims #{number} on branch `{branch}`."],
                            cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if board.returncode:
-        print(f"! Board-Post nicht möglich: {(board.stderr or board.stdout).strip()}")
+        print(f"! Could not post on board: {(board.stderr or board.stdout).strip()}")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("issue", type=int, help="Nummer des GitHub-Issues")
-    parser.add_argument("--basis", help="Zielbranch, falls das Issue keinen nennt")
-    parser.add_argument("--hier", action="store_true", help="ohne Worktree im aktuellen Ordner arbeiten")
-    parser.add_argument("--uebernehmen", action="store_true", help="dich zuweisen und Übernahme kommentieren")
-    parser.add_argument("--werkzeug", help="z. B. Claude Code, Codex oder Antigravity (für den Kommentar)")
+    parser.add_argument("issue", type=int, help="GitHub issue number")
+    parser.add_argument("--basis", help="target branch if the issue does not specify one")
+    parser.add_argument("--hier", action="store_true", help="work in the current folder without a worktree")
+    parser.add_argument("--uebernehmen", action="store_true", help="assign yourself and comment on the claim")
+    parser.add_argument("--werkzeug", help="e.g. Claude Code, Codex or Antigravity (for the comment)")
     args = parser.parse_args()
     try:
         issue, fields, branch, base, folder = prepare(args.issue, args.basis, args.hier)
         if args.uebernehmen:
-            claim(args.issue, branch, args.werkzeug or fields.get("Werkzeug", "einem Coding-Agenten"))
+            claim(args.issue, branch, args.werkzeug or fields.get("Tool", fields.get("Werkzeug", "a coding agent")))
     except Stop as exc:
         print(f"✗ {exc}")
         return 1
     print(f"✓ Issue #{issue['number']}: {issue['title']}")
-    print(f"✓ Ordner {folder}")
-    print(f"✓ Branch {branch}, Pull Request später auf {base}")
-    print(f"✓ Auftrag in {folder / '.auftrag.md'}")
+    print(f"✓ Folder {folder}")
+    print(f"✓ Branch {branch}, pull request will target {base}")
+    print(f"✓ Assignment in {folder / '.auftrag.md'}")
     print()
     klasse = model_class(issue.get("labels"))
-    print(f'Nächster Schritt: cd "{folder}", dann je nach Werkzeug (Modellklasse {klasse}: {MODELS[klasse]["beschreibung"]})')
+    print(f'Next step: cd "{folder}", then choose a tool (model class {klasse}: {MODELS[klasse]["beschreibung"]})')
     for tool, command in launch_commands(klasse).items():
         print(f"  {tool + ':':<13} {command}")
-    print(f"  Antigravity:  den Ordner öffnen und in den Agent-Chat schreiben: {PROMPT}")
+    print(f"  Antigravity:  open the folder and type in the agent chat: {PROMPT}")
     print()
-    print(f"Am Ende: git push -u origin {branch}, danach Pull Request auf {base} mit Closes #{issue['number']}.")
+    print(f"At the end: git push -u origin {branch}, then a pull request targeting {base} with Closes #{issue['number']}.")
     return 0
 
 

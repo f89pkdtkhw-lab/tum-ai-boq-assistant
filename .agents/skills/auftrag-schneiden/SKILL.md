@@ -1,48 +1,48 @@
 ---
 name: auftrag-schneiden
-description: Zerlegt den Case-Brief oder einen Plan in parallele GitHub-Issues in unserem Format, mit Besitzer aus der Besitzer-Tabelle, getrenntem Datei-Bereich, Abnahmetest, Zielbranch und Abhängigkeiten, sodass viele Agenten gleichzeitig arbeiten, ohne sich zu stören.
+description: Split the case brief or a plan into parallel GitHub issues in our format, with owners from the ownership table, separate file scopes, acceptance tests, target branches and dependencies so agents can work without collisions.
 ---
 
-Lies `docs/case.md`, die Besitzer-Tabelle in `AGENTS.md` (Abschnitt 3), die offenen Issues (`gh issue list --state open`) und die Ordnerstruktur. Kläre das Ziel der nächsten Demo in einem Satz, bevor du schneidest. Ist der Plan noch unscharf, schlage zuerst `grill-me` vor.
+Read `docs/case.md`, the ownership table in `AGENTS.md` (section 3), open issues (`gh issue list --state open`) and the folder structure. State the next demo's goal in one sentence before splitting. If the plan is unclear, suggest `grill-me` first.
 
-1. Schneide nach den Regeln aus dem Skill `to-tickets`: senkrechte Scheiben, die einen schmalen, aber vollständigen Weg durch alle Schichten bauen und für sich vorführbar sind. Jede Scheibe passt in ein frisches Kontextfenster.
-2. Jeder Auftrag liegt im Bereich genau eines Besitzers aus der Besitzer-Tabelle. Zwei offene Aufträge teilen sich keine Datei. Wo das nicht geht, kommt zuerst ein kurzer Auftrag für die gemeinsame Schnittstelle mit festen Beispieldaten, damit Oberfläche und Logik danach parallel starten.
-3. Lege die Schnittstelle ausdrücklich fest: Funktionsnamen oder Route, Felder, eine Beispiel-Eingabe und die erwartete Ausgabe.
-4. Schreib jeden Abnahmetest als konkrete Eingabe und überprüfbares Ergebnis, nicht als Absicht.
-5. Zeig die Liste als Tabelle (Titel, Besitzer, Bereich, blockiert durch, Werkzeug). Im Kickoff ist der Case-Startauftrag die Zustimmung: Lege die Issues sofort an, Blocker zuerst; die Freigaberunde aus `to-tickets` entfällt. Außerhalb des Kickoffs lege sie erst nach Zustimmung an. Nutze genau diese Überschriften, damit `tools/aufgabe.py` sie lesen kann:
+1. Follow `to-tickets`: vertical slices providing a narrow but complete path through all layers, independently demonstrable. Each slice fits a fresh context window.
+2. Each task belongs to exactly one owner from the ownership table. No two open tasks share a file. Where unavoidable, first create a short shared-interface task with fixed example data, allowing UI and logic to start in parallel afterwards.
+3. Define the interface explicitly: function names or route, fields, example input and expected output.
+4. Write each acceptance test as concrete input and a verifiable result, not an intention.
+5. Show a table (title, owner, scope, blocked by, tool). During kickoff, the case-start instruction is approval: create issues immediately, blockers first; skip the `to-tickets` approval round. Outside kickoff, create them only after approval. Use exactly these headings so `tools/aufgabe.py` can read them:
 
 ```markdown
-### Verantwortliche Person
+### Owner
 
 github-login
 
-### Ergebnis und Abnahmetest
+### Outcome and acceptance test
 
-Für die Eingabe … zeigt die Oberfläche …
+For input … the UI displays …
 
-### Bereich
+### Scope
 
 web/src/suche/, tests/test_suche.py
 
-### Zielbranch
+### Target branch
 
 main
 
-### Werkzeug
+### Tool
 
-egal
+any
 
-### Schnittstellen und Abhängigkeiten
+### Interfaces and dependencies
 
-Blockiert durch #12 (Datenformat).
+Blocked by #12 (data format).
 ```
 
 ```sh
-gh issue create --title "Aufgabe · …" --body-file auftrag.md --label agent-bereit --label modell:ui --assignee github-login
+gh issue create --title "Task · …" --body-file auftrag.md --label agent-bereit --label modell:ui --assignee github-login
 ```
 
-Gib jedem Issue genau ein Modell-Label nach Aufgabe: `modell:klein` (kleine, klar beschriebene Änderung), `modell:ui` (Oberfläche für die Demo), `modell:schwer` (Schnittstelle, Architektur, unklar), `modell:bugfix` (Implementierung gegen fertige Spezifikation oder Fehler mit bekannter Ursache), `modell:recherche` (nur lesen und berichten) oder `modell:text` (Doku, Pitch, Texte nach geklärtem Plan, günstiges Modell). Unklare Produktentscheidungen bleiben `modell:schwer`. Der First Mate und `tools/aufgabe.py` wählen danach das Modell.
+Give each issue exactly one model label: `modell:klein` (small, clearly specified change), `modell:ui` (demo UI), `modell:schwer` (interface, architecture, unclear), `modell:bugfix` (implementation against a finished spec or known bug cause), `modell:recherche` (read and report only), or `modell:text` (documentation, pitch, text after planning; inexpensive model). Unclear product decisions remain `modell:schwer`. The First Mate and `tools/aufgabe.py` select the model accordingly.
 
-Nennt ein Issue eine Datei, die erst ein anderes Issue liefert, trage dessen Nummer und die Datei unter „Schnittstellen und Abhängigkeiten“ als Blocker ein. Prüfe das besonders für Pitch-Verweise auf `docs/demo.md` und `data/vergleich.md`. Jedes Logik-Issue bekommt sein eigenes bereits verdrahtetes Platzhalter-Modul mit festem Vertrag und eine eigene Testdatei; `api/app/main.py` bleibt im vorgeschalteten Schnittstellen-PR.
+If an issue names a file delivered by another issue, list that issue number and file as a blocker under “Interfaces and dependencies”. Check this especially for pitch references to `docs/demo.md` and `data/vergleich.md`. Every logic issue gets its own connected placeholder module with a fixed contract and its own test file; `api/app/main.py` remains in the preceding interface PR.
 
-Setze `agent-bereit` (auch beim obigen `gh issue create`) nur, wenn Bereich, Abnahmetest und Zielbranch vollständig sind und kein Blocker offen ist. Der zuständige First Mate ergänzt das Label nach dem Merge der Blocker. Poste am Ende auf dem Board, welche Issues sofort starten können, und erwähne die Besitzer mit ihrem GitHub-Login.
+Set `agent-bereit` (including in `gh issue create` above) only when scope, acceptance test and target branch are complete and no blocker remains open. The responsible First Mate adds the label after blockers merge. Finish with a board post naming immediately available issues and mentioning owners by GitHub login.

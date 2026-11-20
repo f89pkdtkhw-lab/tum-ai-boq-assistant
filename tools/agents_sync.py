@@ -1,10 +1,10 @@
-"""Spiegelt die Team-Skills für Claude Code und prüft ihr Format.
+"""Mirror team skills for Claude Code and validate their format.
 
-Codex und Antigravity lesen `.agents/skills/` direkt, Claude Code nur `.claude/skills/`.
-Symlinks gehen unter Windows oft kaputt, deshalb erzeugt dieses Skript eine Kopie.
+Codex and Antigravity read `.agents/skills/` directly; Claude Code reads only `.claude/skills/`.
+Symlinks often break on Windows, so this script creates a copy.
 
-    python tools/agents_sync.py           # Kopie aktualisieren
-    python tools/agents_sync.py --check   # nur prüfen, Exit-Code 1 bei Abweichung
+    python tools/agents_sync.py           # Update the copy
+    python tools/agents_sync.py --check   # Check only, exit code 1 on differences
 """
 import argparse
 from pathlib import Path
@@ -14,8 +14,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / ".agents" / "skills"
 TARGET = ROOT / ".claude" / "skills"
-NOTE = ("<!-- Generiert aus .agents/skills/{name}/SKILL.md mit python tools/agents_sync.py. "
-        "Hier nicht bearbeiten. -->")
+NOTE = ("<!-- Generated from .agents/skills/{name}/SKILL.md using python tools/agents_sync.py. "
+        "Do not edit here. -->")
 VALID_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
@@ -27,10 +27,10 @@ def read_frontmatter(text):
     """Return the top-level frontmatter fields and the offset where the body starts."""
     text = text.replace("\r\n", "\n")
     if not text.startswith("---\n"):
-        raise ValueError("beginnt nicht mit YAML-Frontmatter (---)")
+        raise ValueError("does not start with YAML frontmatter (---)")
     end = text.find("\n---\n", 3)
     if end < 0:
-        raise ValueError("Frontmatter wird nicht mit --- abgeschlossen")
+        raise ValueError("frontmatter is not closed with ---")
     fields = {}
     for line in text[4:end].splitlines():
         key, separator, value = line.partition(":")
@@ -42,21 +42,21 @@ def read_frontmatter(text):
 def skill_problems(skill_dir):
     path = skill_dir / "SKILL.md"
     if not path.is_file():
-        return [f"{skill_dir.name}: SKILL.md fehlt"]
+        return [f"{skill_dir.name}: SKILL.md is missing"]
     try:
         fields, _ = read_frontmatter(path.read_text(encoding="utf-8"))
     except (ValueError, UnicodeDecodeError) as exc:
         return [f"{skill_dir.name}: {exc}"]
     problems = []
     if not VALID_NAME.match(skill_dir.name) or len(skill_dir.name) > 64:
-        problems.append(f"{skill_dir.name}: Ordnername nur aus a-z, 0-9 und Bindestrichen, höchstens 64 Zeichen")
+        problems.append(f"{skill_dir.name}: folder name must use a-z, 0-9 and hyphens, at most 64 characters")
     if fields.get("name") != skill_dir.name:
-        problems.append(f"{skill_dir.name}: name im Frontmatter muss dem Ordnernamen entsprechen")
+        problems.append(f"{skill_dir.name}: frontmatter name must match the folder name")
     description = fields.get("description", "")
     if not description:
-        problems.append(f"{skill_dir.name}: description fehlt")
+        problems.append(f"{skill_dir.name}: description is missing")
     elif len(description) > 1024:
-        problems.append(f"{skill_dir.name}: description ist länger als 1024 Zeichen")
+        problems.append(f"{skill_dir.name}: description exceeds 1024 characters")
     return problems
 
 
@@ -99,12 +99,12 @@ def problems():
         return found
     expected, actual = expected_files(), actual_files()
     for path in sorted(expected.keys() - actual.keys()):
-        found.append(f".claude/skills/{path} fehlt")
+        found.append(f".claude/skills/{path} is missing")
     for path in sorted(actual.keys() - expected.keys()):
-        found.append(f".claude/skills/{path} hat keine Quelle in .agents/skills")
+        found.append(f".claude/skills/{path} has no source in .agents/skills")
     for path in sorted(expected.keys() & actual.keys()):
         if expected[path] != actual[path]:
-            found.append(f".claude/skills/{path} weicht von .agents/skills ab")
+            found.append(f".claude/skills/{path} differs from .agents/skills")
     return found
 
 
@@ -129,23 +129,23 @@ def sync():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--check", action="store_true", help="nur prüfen, nichts schreiben")
+    parser.add_argument("--check", action="store_true", help="check only, write nothing")
     args = parser.parse_args()
     if args.check:
         found = problems()
         for problem in found:
             print(f"✗ {problem}")
         if found:
-            print("Behebe das in .agents/skills und führe python tools/agents_sync.py aus.")
+            print("Fix this in .agents/skills and run python tools/agents_sync.py.")
             return 1
-        print(f"✓ {len(skill_dirs())} Skills, Kopie für Claude Code ist aktuell.")
+        print(f"✓ {len(skill_dirs())} skills; Claude Code copy is up to date.")
         return 0
     try:
         names = sync()
     except ValueError as exc:
         print(exc)
         return 1
-    print(f"✓ {len(names)} Skills nach .claude/skills gespiegelt: {', '.join(names)}")
+    print(f"✓ {len(names)} skills mirrored to .claude/skills: {', '.join(names)}")
     return 0
 
 

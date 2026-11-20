@@ -1,12 +1,12 @@
-"""Kommandozentrale im Browser: alle Agenten live, First Mate steuern, Rückfragen beantworten, Board posten.
+"""Browser command center: live agents, First Mate controls, answers and board posts.
 
-    python3 tools/dashboard.py              # dann http://localhost:8770 öffnen
+    python3 tools/dashboard.py              # Then open http://localhost:8770
     python3 tools/dashboard.py --port 8771
 
-Quellen: Herdr (jeder Agent mit Status und farbigem Fensterinhalt), quota-axi und GitHub über gh.
-Fehlt eine Quelle, laufen die übrigen weiter. Der Server lauscht nur auf 127.0.0.1. Schreibende
-Aufrufe (Prompt, Tasten, Board-Post) brauchen das Sitzungs-Token der ausgelieferten Seite und
-denselben Origin, damit keine andere Website deine Agenten steuern kann.
+Sources: Herdr (each agent with status and colored pane contents), quota-axi and GitHub via gh.
+If a source is missing, the others keep running. The server listens only on 127.0.0.1.
+Write requests (prompts, keys, board posts) require the served page's session token and
+matching Origin, preventing another website from controlling your agents.
 """
 import argparse
 from collections import deque
@@ -61,7 +61,7 @@ def run_checked(*command, timeout=20):
 
 
 def team_from_agents_md(text):
-    """Read the '| @login | Rolle |' rows of section 1 in AGENTS.md."""
+    """Read the '| @login | Role |' rows of section 1 in AGENTS.md."""
     section = text.split("## 1.", 1)[-1].split("\n## ", 1)[0]
     return [{"login": login, "role": role.strip()}
             for login, role in re.findall(r"^\|\s*@([A-Za-z0-9-]+)\s*\|\s*([^|]+?)\s*\|", section, re.M)]
@@ -133,12 +133,12 @@ def crew_events(before, after):
     for agent in after:
         previous = old.pop(agent["id"], None)
         if previous is None:
-            events.append(("spawn", f"{name(agent)} gestartet ({agent.get('agent', '?')})", agent["id"]))
+            events.append(("spawn", f"{name(agent)} started ({agent.get('agent', '?')})", agent["id"]))
         elif previous["status"] != agent["status"]:
             kind = "blocked" if agent["status"] == "blocked" else "status"
             events.append((kind, f"{name(agent)}: {previous['status']} → {agent['status']}", agent["id"]))
     for gone in old.values():
-        events.append(("exit", f"{name(gone)} beendet", gone["id"]))
+        events.append(("exit", f"{name(gone)} stopped", gone["id"]))
     return events
 
 
@@ -152,15 +152,15 @@ def github_events(before, after):
         previous = old_prs.get(pr["number"])
         label = f"PR #{pr['number']} {pr['title'][:60]}"
         if previous is None:
-            events.append(("pr", f"{label} geöffnet von @{pr['author']}", None))
+            events.append(("pr", f"{label} opened by @{pr['author']}", None))
         elif previous["state"] != pr["state"]:
             events.append(("merge" if pr["state"] == "MERGED" else "pr", f"{label}: {pr['state'].lower()}", None))
         elif previous["ci"] != pr["ci"] and pr["ci"] in {"green", "red"}:
-            events.append(("ci-" + pr["ci"], f"{label}: Checks {'grün' if pr['ci'] == 'green' else 'rot'}", None))
+            events.append(("ci-" + pr["ci"], f"{label}: Checks {'green' if pr['ci'] == 'green' else 'red'}", None))
     old_pipe, new_pipe = before.get("pipeline") or {}, after.get("pipeline") or {}
     if new_pipe.get("status") in {"success", "failure"} and old_pipe.get("status") != new_pipe.get("status"):
         events.append(("ci-green" if new_pipe["status"] == "success" else "ci-red",
-                       f"main {'grün' if new_pipe['status'] == 'success' else 'ROT'} auf {new_pipe.get('checked')}, Demo auf {new_pipe.get('demo') or '–'}", None))
+                       f"main {'green' if new_pipe['status'] == 'success' else 'RED'} at {new_pipe.get('checked')}, demo at {new_pipe.get('demo') or '–'}", None))
     seen = {post["id"] for post in before.get("board", [])}
     for post in after.get("board", []):
         if post["id"] not in seen:
@@ -214,11 +214,11 @@ class State:
 
 def poll_crew(state):
     if not shutil.which("herdr"):
-        state.put("crew", [], "Herdr nicht gefunden: Dashboard dort starten, wo Herdr läuft (Ubuntu/macOS).")
+        state.put("crew", [], "Herdr not found: start the dashboard where Herdr runs (Ubuntu/macOS).")
         return
     raw_panes, raw_agents = run("herdr", "pane", "list"), run("herdr", "agent", "list")
     if raw_panes is None:
-        state.put("crew", [], "Herdr läuft nicht. Erst die Leitstelle oder herdr starten.")
+        state.put("crew", [], "Herdr is not running. Start the control station or herdr first.")
         return
     agents = {a["pane_id"]: a for a in json.loads(raw_agents or "{}").get("result", {}).get("agents", [])
               if a.get("pane_id")}
@@ -252,10 +252,10 @@ def git_branch(cwd):
 
 def poll_quota(state):
     if not shutil.which("quota-axi"):
-        state.put("quota", [], "quota-axi nicht gefunden.")
+        state.put("quota", [], "quota-axi not found.")
         return
     raw = run("quota-axi", "--json", "--max-age", "2m", timeout=60)
-    state.put("quota", quota_summary(json.loads(raw)) if raw else [], None if raw else "quota-axi lieferte nichts.")
+    state.put("quota", quota_summary(json.loads(raw)) if raw else [], None if raw else "quota-axi returned nothing.")
 
 
 def load_board():
@@ -271,7 +271,7 @@ def poll_github(state, board):
     prs = run("gh", "pr", "list", "--state", "all", "--limit", "15",
               "--json", "number,title,author,state,isDraft,headRefName,url,updatedAt,statusCheckRollup")
     if issues is None or prs is None:
-        state.put("github", None, "GitHub nicht erreichbar: gh auth login prüfen.")
+        state.put("github", None, "GitHub unreachable: check gh auth login.")
         return
     try:
         board_issue, login = board.issue_number(), board.me()
@@ -324,10 +324,10 @@ def poller(state, every, task, *args):
 def send_prompt(state, pane_id, text):
     agent = state.agent(pane_id)
     if not agent:
-        return False, "Diesen Agenten gibt es nicht mehr."
+        return False, "This agent no longer exists."
     text = text.strip()
     if not text or len(text) > 8000:
-        return False, "Leerer oder zu langer Text."
+        return False, "Empty or overly long text."
     if agent["status"] in {"blocked", "shell"}:
         # A blocked agent waits at a question or approval, a shell waits for a command: type like a person.
         ok, message = run_checked("herdr", "pane", "send-text", pane_id, text)
@@ -337,19 +337,19 @@ def send_prompt(state, pane_id, text):
 
 def send_keys(state, pane_id, keys):
     if not state.agent(pane_id):
-        return False, "Diesen Agenten gibt es nicht mehr."
+        return False, "This agent no longer exists."
     if not keys or not all(key in ALLOWED_KEYS for key in keys):
-        return False, "Nicht erlaubte Taste."
+        return False, "Key not allowed."
     return run_checked("herdr", "pane", "send-keys", pane_id, *keys)
 
 
 def post_board(board, text):
     text = text.strip()
     if not text or len(text) > 4000:
-        return False, "Leerer oder zu langer Post."
+        return False, "Empty or overly long post."
     try:
         if not board.PREFIX.match(text):
-            text = f"[{board.me()} · Leitstelle] {text}"
+            text = f"[{board.me()} · Control station] {text}"
         return run_checked("gh", "issue", "comment", str(board.issue_number()), "--repo", board.repo(),
                            "--body", text)
     except board.BoardError as exc:
@@ -382,14 +382,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if not self.local_host():
-            self.send(403, "text/plain; charset=utf-8", b"Nur lokal erreichbar.")
+            self.send(403, "text/plain; charset=utf-8", b"Available locally only.")
         elif self.path == "/":
             self.send(200, "text/html; charset=utf-8",
                       PAGE.read_text(encoding="utf-8").replace("__TOKEN__", self.token).encode("utf-8"))
         elif self.path == "/api/state":
             self.send_json(200, self.state.snapshot())
         else:
-            self.send(404, "text/plain; charset=utf-8", b"Nicht gefunden.")
+            self.send(404, "text/plain; charset=utf-8", b"Not found.")
 
     def do_POST(self):
         host = self.headers.get("Host", "")
@@ -401,7 +401,7 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length) if 0 < length <= 16384 else b""
         if (not self.local_host() or self.headers.get("Origin") != f"http://{host}"
                 or not secrets.compare_digest(self.headers.get("X-Leitstelle-Token", ""), self.token)):
-            self.send_json(403, {"ok": False, "message": "Nicht erlaubt."})
+            self.send_json(403, {"ok": False, "message": "Not allowed."})
             return
         try:
             if not raw:
@@ -410,7 +410,7 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(body, dict):
                 raise ValueError
         except (ValueError, UnicodeDecodeError):
-            self.send_json(400, {"ok": False, "message": "Ungültige Anfrage."})
+            self.send_json(400, {"ok": False, "message": "Invalid request."})
             return
         if self.path == "/api/prompt":
             ok, message = send_prompt(self.state, str(body.get("id", "")), str(body.get("text", "")))
@@ -421,7 +421,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == "/api/board":
             ok, message = post_board(self.board, str(body.get("text", "")))
         else:
-            self.send_json(404, {"ok": False, "message": "Nicht gefunden."})
+            self.send_json(404, {"ok": False, "message": "Not found."})
             return
         self.send_json(200 if ok else 422, {"ok": ok, "message": message[-400:]})
 
@@ -434,7 +434,7 @@ def main():
     for every, task, extra in ((2, poll_crew, ()), (60, poll_quota, ()), (20, poll_github, (board,))):
         threading.Thread(target=poller, args=(state, every, task, *extra), daemon=True).start()
     server = ThreadingHTTPServer(("127.0.0.1", args.port), partial(Handler, state=state, board=board, token=token))
-    print(f"Kommandozentrale läuft: http://localhost:{args.port}  (Strg+C beendet)", flush=True)
+    print(f"Command center running: http://localhost:{args.port}  (Ctrl+C stops it)", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
