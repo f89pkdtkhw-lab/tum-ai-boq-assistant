@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/", label: "Upload & report" },
   { href: "/schritte", label: "Step reports" },
   { href: "/export", label: "Export" },
+  { href: "/history", label: "History" },
 ];
 
 export function Nav() {
