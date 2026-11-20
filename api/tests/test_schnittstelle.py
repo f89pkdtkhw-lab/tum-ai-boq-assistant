@@ -24,7 +24,12 @@ def test_synthetic_upload_then_report_keeps_all_positions_and_source():
     for finding in body["findings"]:
         assert finding["oz"] in {p["oz"] for p in lv["positionen"]}
         assert finding["quelle"] in ("regel", "modell")
-        assert finding["euro_wirkung"] is None
+        # Modell-Mock darf keine Euro-Wirkung erfinden; feste Regeln dürfen eine
+        # direkt belegbare (z. B. Rechenfehler-Differenz) ausweisen.
+        if finding["quelle"] == "modell":
+            assert finding["euro_wirkung"] is None
+        else:
+            assert finding["euro_wirkung"] is None or isinstance(finding["euro_wirkung"], (int, float))
 
 
 def test_examples_include_the_same_typed_lv():
@@ -32,7 +37,7 @@ def test_examples_include_the_same_typed_lv():
     assert response.status_code == 200
     item = response.json()["items"][0]
     assert item["id"] == "synthetisch-rohbau"
-    assert item["lv"] == json.loads((ROOT / "data/beispiel_lv.json").read_text())
+    assert item["lv"] == json.loads((ROOT / "data/beispiel_lv.json").read_text(encoding="utf-8"))
 
 
 def test_import_errors_are_readable_and_do_not_include_uploaded_content():
@@ -72,7 +77,7 @@ def test_public_routes_remain_mock_even_with_provider_selected(monkeypatch):
     monkeypatch.setattr(httpx, "post", no_network)
     assert client.get("/health").json()["mock"] is True
     assert client.post("/api/ask", json={"question": "Offline?"}).json()["provider"] == "mock"
-    lv = json.loads((ROOT / "data/beispiel_lv.json").read_text())
+    lv = json.loads((ROOT / "data/beispiel_lv.json").read_text(encoding="utf-8"))
     assert client.post("/api/lv/pruefen", json=lv).json()["kennzahlen"]["modell_mock"] is True
 
 

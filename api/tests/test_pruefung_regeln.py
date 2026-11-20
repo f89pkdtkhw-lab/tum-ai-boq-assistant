@@ -1,6 +1,146 @@
-from app.modelle import LV
+import json
+from pathlib import Path
+
+from app.modelle import LV, Position
 from app.pruefung.regeln import pruefe_regeln
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_empty_lv_has_no_invented_findings():
     assert pruefe_regeln(LV(name="Leer", quelle="synthetisch")) == []
+
+
+def test_beispiel_lv_meldet_genau_die_fuenf_erwarteten_regelbefunde():
+    lv = LV.model_validate_json((ROOT / "data/beispiel_lv.json").read_bytes())
+    erwartung = json.loads((ROOT / "data/beispiel_erwartung.json").read_text())
+
+    befunde = pruefe_regeln(lv)
+
+    gefunden = {(f.oz, f.regel_id) for f in befunde}
+    erwartet = {(f["oz"], f["regel_id"]) for f in erwartung["findings"]}
+    assert gefunden == erwartet
+    # jede erwartete Kombination genau einmal
+    assert len(befunde) == len(erwartet)
+    for finding in befunde:
+        assert finding.quelle == "regel"
+        assert finding.regel_id != "MOCK_LLM"
+        assert finding.oz in {p.oz for p in lv.positionen}
+
+
+def test_rechenfehler_an_01_00_0001_nennt_differenz():
+    lv = LV.model_validate_json((ROOT / "data/beispiel_lv.json").read_bytes())
+    befund = next(f for f in pruefe_regeln(lv) if f.regel_id == "RECHENFEHLER")
+    assert befund.oz == "01.00.0001"
+    assert befund.euro_wirkung == 779.0
+
+
+def test_rechenfehler_sauberer_kontrollfall_bei_korrektem_gp():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", menge=10.0, einheit="m³", ep=20.0, gp=200.0, langtext="x"),
+    ])
+    assert pruefe_regeln(lv) == []
+
+
+def test_keine_rechenbefunde_bei_fehlender_menge_oder_preis():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", menge=None, einheit="m³", ep=20.0, gp=200.0, langtext="x"),
+        Position(oz="02", menge=10.0, einheit="m³", ep=None, gp=200.0, langtext="x"),
+        Position(oz="03", menge=10.0, einheit="m³", ep=20.0, gp=None, langtext="x"),
+    ])
+    befunde = pruefe_regeln(lv)
+    assert all(f.regel_id != "RECHENFEHLER" for f in befunde)
+    assert {f.regel_id for f in befunde if f.oz == "01"} == {"MENGE_FEHLT"}
+
+
+def test_null_menge_wird_nicht_als_menge_fehlt_gemeldet():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", menge=0.0, einheit="m³", ep=20.0, gp=0.0, langtext="x"),
+    ])
+    assert pruefe_regeln(lv) == []
+
+
+def test_titelsumme_falsch_und_sauberer_kontrollfall():
+    gemeinsame_positionen = [
+        Position(oz="01", menge=10.0, einheit="m³", ep=20.0, gp=200.0, langtext="x", titel_pfad=["T"]),
+        Position(oz="02", menge=5.0, einheit="m³", ep=20.0, gp=100.0, langtext="x", titel_pfad=["T"]),
+    ]
+    falsch = LV(name="Test", quelle="synthetisch", positionen=gemeinsame_positionen, summen={"T": 999.0})
+    befund = next(f for f in pruefe_regeln(falsch) if f.regel_id == "TITELSUMME_FALSCH")
+    assert befund.oz == "01"
+
+    korrekt = LV(name="Test", quelle="synthetisch", positionen=gemeinsame_positionen, summen={"T": 300.0})
+    assert all(f.regel_id != "TITELSUMME_FALSCH" for f in pruefe_regeln(korrekt))
+
+
+def test_titelsumme_ohne_vollstaendige_preise_wird_nicht_erfunden():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", menge=10.0, einheit="m³", ep=20.0, gp=200.0, langtext="x", titel_pfad=["T"]),
+        Position(oz="02", menge=None, einheit="m³", ep=None, gp=None, langtext="x", titel_pfad=["T"]),
+    ], summen={"T": 200.0})
+    assert all(f.regel_id != "TITELSUMME_FALSCH" for f in pruefe_regeln(lv))
+
+
+def test_text_widerspruch_zwischen_kurztext_und_langtext():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", kurztext="Beton 10 m³ einbauen", langtext="Es werden 15 m³ Beton eingebaut."),
+    ])
+    befund = next(f for f in pruefe_regeln(lv) if f.regel_id == "TEXT_WIDERSPRUCH")
+    assert befund.oz == "01"
+
+
+def test_text_widerspruch_sauberer_kontrollfall_bei_uebereinstimmung():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", kurztext="Beton 10 m³ einbauen", langtext="Es werden 10 m³ Beton eingebaut."),
+    ])
+    assert all(f.regel_id != "TEXT_WIDERSPRUCH" for f in pruefe_regeln(lv))
+
+
+def test_einheit_tippfehler_bekannte_schreibweise():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[Position(oz="01", einheit="qm", langtext="x")])
+    befund = next(f for f in pruefe_regeln(lv) if f.regel_id == "EINHEIT_TIPPFEHLER")
+    assert befund.oz == "01"
+
+
+def test_einheit_tippfehler_sauberer_kontrollfall_bei_korrekter_einheit():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[Position(oz="01", einheit="m²", langtext="x")])
+    assert all(f.regel_id != "EINHEIT_TIPPFEHLER" for f in pruefe_regeln(lv))
+
+
+def test_inhalt_duplikat_bei_identischen_positionen_unter_anderer_oz():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", kurztext="Beton", langtext="x", einheit="m³", menge=5.0, ep=100.0, gp=500.0),
+        Position(oz="02", kurztext="Beton", langtext="x", einheit="m³", menge=5.0, ep=100.0, gp=500.0),
+    ])
+    befund = next(f for f in pruefe_regeln(lv) if f.regel_id == "INHALT_DUPLIKAT")
+    assert befund.oz == "02"
+
+
+def test_inhalt_duplikat_sauberer_kontrollfall_bei_unterschiedlichem_inhalt():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", kurztext="Beton", langtext="x", einheit="m³", menge=5.0, ep=100.0, gp=500.0),
+        Position(oz="02", kurztext="Mauerwerk", langtext="y", einheit="m²", menge=5.0, ep=50.0, gp=250.0),
+    ])
+    assert all(f.regel_id != "INHALT_DUPLIKAT" for f in pruefe_regeln(lv))
+
+
+def test_oz_duplikat_erzeugt_genau_einen_befund_je_oz_nicht_je_position():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", langtext="x", titel_pfad=["A"]),
+        Position(oz="01", langtext="x", titel_pfad=["B"]),
+        Position(oz="01", langtext="x", titel_pfad=["C"]),
+    ])
+    duplikate = [f for f in pruefe_regeln(lv) if f.regel_id == "OZ_DUPLIKAT"]
+    assert len(duplikate) == 1
+    assert duplikate[0].oz == "01"
+
+
+def test_alle_befunde_haben_echte_oz_stabile_id_und_regelquelle():
+    lv = LV.model_validate_json((ROOT / "data/beispiel_lv.json").read_bytes())
+    befunde_a = pruefe_regeln(lv)
+    befunde_b = pruefe_regeln(lv)
+    assert [f.id for f in befunde_a] == [f.id for f in befunde_b]
+    assert len({f.id for f in befunde_a}) == len(befunde_a)
+    for f in befunde_a:
+        assert f.quelle == "regel"
+        assert f.oz in {p.oz for p in lv.positionen}
