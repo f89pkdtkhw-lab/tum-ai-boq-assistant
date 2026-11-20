@@ -86,7 +86,7 @@ function dateiname(name: string) {
 
 type Auswahl = { oz: string; findingId: string | null };
 
-export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
+export function Pruefbericht({ bericht, offline = false }: { bericht: PruefberichtDaten; offline?: boolean }) {
   const { lv, findings, kennzahlen } = bericht;
   const [kategorie, setKategorie] = useState<Kategorie | null>(null);
   const [schwere, setSchwere] = useState<Schwere | null>(null);
@@ -212,6 +212,12 @@ export function Pruefbericht({ bericht }: { bericht: PruefberichtDaten }) {
         </div>
       </header>
       {exportFehler && <p className={styles.fehler} role="alert">{exportFehler}</p>}
+
+      {offline && (
+        <p className={styles.offlineHinweis} role="note">
+          <strong>Offline example – not live analysis.</strong> The backend is unreachable; this is a saved report for the synthetic example BoQ.
+        </p>
+      )}
 
       {kennzahlen.modell_mock && (
         <p className={styles.mockHinweis} role="note">

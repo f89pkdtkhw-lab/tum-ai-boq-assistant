@@ -3,6 +3,7 @@
 import { type ChangeEvent, type DragEvent, type FormEvent, useEffect, useRef, useState } from "react";
 import { api, type Health, type LV, type Pruefbericht as PruefberichtDaten } from "@/lib/api";
 import { Pruefbericht } from "@/components/Pruefbericht";
+import { bietetOffline, ladeOfflineBericht } from "@/lib/offline";
 import styles from "./lv-upload.module.css";
 
 // Same limit as MAX_UPLOAD_BYTES in api/app/main.py; checked locally so oversized files never leave the browser.
@@ -29,8 +30,8 @@ type Lauf =
 type Ergebnis =
   | { phase: "leer" }
   | { phase: "laeuft"; lauf: Lauf; schritte: Schritte }
-  | { phase: "fertig"; lauf: Lauf; schritte: Schritte; lv: LV; bericht: PruefberichtDaten; nummer: number }
-  | { phase: "fehler"; lauf: Lauf; schritte: Schritte; titel: string; meldung: string; tipp: string | null };
+  | { phase: "fertig"; lauf: Lauf; schritte: Schritte; lv: LV; bericht: PruefberichtDaten; nummer: number; offline: boolean }
+  | { phase: "fehler"; lauf: Lauf; schritte: Schritte; titel: string; meldung: string; tipp: string | null; offline: boolean };
 
 const SCHRITT_NAMEN: Record<SchrittId, string> = {
   datei: "Upload",
@@ -155,7 +156,8 @@ export function LvUpload() {
     const scheitern = async (schritt: SchrittId, titel: string, fehler: unknown, tipp: string | null) => {
       let meldung = fehlerText(fehler);
       let hinweis = tipp;
-      if (!(await backendErreichbar())) {
+      const erreichbar = await backendErreichbar();
+      if (!erreichbar) {
         meldung = "The backend is unreachable.";
         hinweis = BACKEND_TIPP;
         setHealth("offline");
@@ -166,7 +168,7 @@ export function LvUpload() {
         schritte.datei = { status: "fertig", text: `${lauf.datei.name} (${groesse(lauf.datei.size)}) uploaded.` };
       }
       if (schritte.pruefung.status === "wartet") schritte.pruefung = { status: "wartet", text: "Not started." };
-      setErgebnis({ phase: "fehler", lauf, schritte, titel, meldung, tipp: hinweis });
+      setErgebnis({ phase: "fehler", lauf, schritte, titel, meldung, tipp: hinweis, offline: bietetOffline(fehler, erreichbar) });
     };
 
     let lv: LV;
@@ -213,8 +215,27 @@ export function LvUpload() {
       ...schritte,
       pruefung: { status: "fertig", text: `${anzahl(bericht.findings.length, "Entry", "Entries")} in the report.` },
     };
-    setErgebnis({ phase: "fertig", lauf, schritte, lv, bericht, nummer });
+    setErgebnis({ phase: "fertig", lauf, schritte, lv, bericht, nummer, offline: false });
     if (health === "offline") api.health().then(setHealth).catch(() => {});
+  }
+
+  async function zeigeOffline(lauf: Lauf, schritte: Schritte) {
+    const nummer = ++laufNummer.current;
+    let bericht: PruefberichtDaten;
+    try {
+      bericht = await ladeOfflineBericht();
+    } catch (fehler) {
+      if (nummer !== laufNummer.current) return;
+      const meldung = fehlerText(fehler);
+      setErgebnis({ phase: "fehler", lauf, schritte, titel: "Offline example unavailable", meldung, tipp: BACKEND_TIPP, offline: false });
+      return;
+    }
+    if (nummer !== laufNummer.current) return;
+    const text = "Offline example: saved report, not a live analysis.";
+    setErgebnis({
+      phase: "fertig", lauf, lv: bericht.lv, bericht, nummer, offline: true,
+      schritte: { ...schritte, pruefung: { status: "fertig", text } },
+    });
   }
 
   function absenden(event: FormEvent) {
@@ -317,6 +338,11 @@ export function LvUpload() {
               {ergebnis.tipp && <p className={styles.tipp}>{ergebnis.tipp}</p>}
               <div className={styles.aktionen}>
                 <button type="button" className={styles.knopf} onClick={() => void starte(ergebnis.lauf)}>Try again</button>
+                {ergebnis.offline && (
+                  <button type="button" className={styles.knopfZweit} onClick={() => void zeigeOffline(ergebnis.lauf, ergebnis.schritte)}>
+                    Show offline example report
+                  </button>
+                )}
                 {ergebnis.lauf.art === "datei" && (
                   <button type="button" className={styles.knopfZweit} onClick={zuruecksetzen}>Choose another file</button>
                 )}
@@ -326,7 +352,9 @@ export function LvUpload() {
           {ergebnis.phase === "fertig" && (
             <div ref={meldungRef} tabIndex={-1} className={styles.erfolg}>
               <p>
-                <strong>{anzahl(ergebnis.lv.positionen.length, "Item", "Items")}</strong> imported and reviewed. The review report is below.
+                {ergebnis.offline
+                  ? <>The backend is unreachable. Below is the saved report for the synthetic example, not an analysis of your file.</>
+                  : <><strong>{anzahl(ergebnis.lv.positionen.length, "Item", "Items")}</strong> imported and reviewed. The review report is below.</>}
               </p>
               <button type="button" className={styles.knopfZweit} onClick={() => void starte(ergebnis.lauf)}>Review again</button>
             </div>
@@ -335,7 +363,7 @@ export function LvUpload() {
       )}
 
       {ergebnis.phase === "fertig" && (
-        <Pruefbericht key={ergebnis.nummer} bericht={ergebnis.bericht} />
+        <Pruefbericht key={ergebnis.nummer} bericht={ergebnis.bericht} offline={ergebnis.offline} />
       )}
     </main>
   );
