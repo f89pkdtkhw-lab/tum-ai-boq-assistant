@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Leitstelle · Kommandozentrale</title>
+<title>Control station · Command center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -217,7 +217,7 @@
 </head>
 <body>
 <header>
-  <div class="brand"><div class="logo">◆</div><div><b>LEITSTELLE</b><small>START HACK MÜNCHEN · KOMMANDOZENTRALE</small></div></div>
+  <div class="brand"><div class="logo">◆</div><div><b>CONTROL STATION</b><small>START HACK MUNICH · COMMAND CENTER</small></div></div>
   <nav id="nav">
     <button data-view="ops" class="active">OPS<kbd>1</kbd></button>
     <button data-view="wall">WALL<kbd>2</kbd></button>
@@ -226,16 +226,16 @@
   </nav>
   <div></div>
   <div class="hud">
-    <a class="pipe" id="pipe" target="_blank" title="Checks auf main und Stand der Jury-URL (Branch demo)"><b>MAIN ◌</b><span>DEMO –</span></a>
-    <div class="countdown mono" id="countdown">--:--:--<small>T-minus interne Abgabe</small></div>
+    <a class="pipe" id="pipe" target="_blank" title="Checks on main and jury URL revision (demo branch)"><b>MAIN ◌</b><span>DEMO –</span></a>
+    <div class="countdown mono" id="countdown">--:--:--<small>T-minus internal submission</small></div>
     <div class="stats">
-      <div class="stat w"><b id="n-working">0</b><span>aktiv</span></div>
-      <div class="stat b" id="stat-b"><b id="n-blocked">0</b><span>wartet</span></div>
-      <div class="stat"><b id="n-idle">0</b><span>bereit</span></div>
+      <div class="stat w"><b id="n-working">0</b><span>active</span></div>
+      <div class="stat b" id="stat-b"><b id="n-blocked">0</b><span>waiting</span></div>
+      <div class="stat"><b id="n-idle">0</b><span>ready</span></div>
     </div>
     <div class="quota" id="quota"></div>
-    <button class="send" id="kick-open" title="Case einfügen und die ganze Crew starten">▶ KICKOFF</button>
-    <button class="btn" id="bell">ALARM AUS</button>
+    <button class="send" id="kick-open" title="Paste the case and start the whole crew">▶ KICKOFF</button>
+    <button class="btn" id="bell">ALARMS OFF</button>
   </div>
 </header>
 
@@ -245,18 +245,18 @@
     <div class="panel" id="fm-panel">
       <div class="ph"><span class="dot" id="fm-dot"></span><h2 id="fm-title">First Mate</h2><span class="tag" id="fm-meta">–</span><span class="tag" id="fm-status">–</span></div>
       <div class="note" id="crew-note" hidden></div>
-      <pre class="term" id="fm-term">Warte auf Herdr …</pre>
-      <div class="hint" id="fm-hint" hidden>Der First Mate wartet auf eine Antwort: Zahl oder Pfeile und Enter, oder Text.</div>
-      <div class="composer"><textarea id="fm-input" rows="1" placeholder="> Befehl an den First Mate   (Enter senden · Umschalt+Enter Zeile)"></textarea><button class="send" id="fm-send">SEND</button></div>
+      <pre class="term" id="fm-term">Waiting for Herdr …</pre>
+      <div class="hint" id="fm-hint" hidden>The First Mate is waiting for an answer: number or arrows and Enter, or text.</div>
+      <div class="composer"><textarea id="fm-input" rows="1" placeholder="> Command to First Mate   (Enter sends · Shift+Enter newline)"></textarea><button class="send" id="fm-send">SEND</button></div>
       <div class="keys" id="fm-keys"></div>
     </div>
     <div class="panel">
-      <div class="ph"><h2 id="board-title">Team-Board</h2><a class="tag" id="board-link" target="_blank">GITHUB ↗</a></div>
+      <div class="ph"><h2 id="board-title">Team board</h2><a class="tag" id="board-link" target="_blank">GITHUB ↗</a></div>
       <div class="feed" id="board"></div>
-      <div class="composer"><textarea id="board-input" rows="1" placeholder="> Post ans Team · @login erwähnt"></textarea><button class="send" id="board-send">POST</button></div>
+      <div class="composer"><textarea id="board-input" rows="1" placeholder="> Post to team · @login mentions"></textarea><button class="send" id="board-send">POST</button></div>
     </div>
     <div class="panel full">
-      <div class="ph"><h2>Crew · Live-Kacheln</h2><span class="tag" id="crew-count">0</span><button class="btn" data-goto="wall">ALLE FENSTER GROSS →</button></div>
+      <div class="ph"><h2>Crew · Live tiles</h2><span class="tag" id="crew-count">0</span><button class="btn" data-goto="wall">EXPAND ALL WINDOWS →</button></div>
       <div class="crew" id="crew"></div>
     </div>
     <div class="cols full">
@@ -270,12 +270,12 @@
     <div class="panel">
       <div class="toolbar">
         <div class="seg" id="wall-filter">
-          <button data-f="all" class="on">ALLE</button><button data-f="agents">AGENTEN</button><button data-f="working">AKTIV</button>
-          <button data-f="blocked">WARTET</button><button data-f="shell">SHELLS</button>
+          <button data-f="all" class="on">ALL</button><button data-f="agents">AGENTS</button><button data-f="working">ACTIVE</button>
+          <button data-f="blocked">WAITING</button><button data-f="shell">SHELLS</button>
         </div>
         <div class="seg" id="wall-cols"><button data-c="1">1</button><button data-c="2">2</button><button data-c="3" class="on">3</button><button data-c="4">4</button><button data-c="6">6</button></div>
         <div class="seg" id="wall-size"><button data-s="s">S</button><button data-s="m" class="on">M</button><button data-s="l">L</button></div>
-        <span class="grow"></span><span class="tag" id="wall-count">0 FENSTER</span>
+        <span class="grow"></span><span class="tag" id="wall-count">0 WINDOWS</span>
       </div>
     </div>
     <div class="wall" id="wall"></div>
@@ -284,42 +284,42 @@
   <!-- TOPOLOGY -->
   <section class="view" id="v-topo">
     <div class="panel" id="topo-wrap">
-      <div class="ph"><h2>Topologie · Captain → First Mate → Crew → GitHub</h2><span class="tag" id="topo-meta">–</span></div>
+      <div class="ph"><h2>Topology · Captain → First Mate → Crew → GitHub</h2><span class="tag" id="topo-meta">–</span></div>
       <svg id="topo" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="legend"><span><i class="dot working"></i>aktiv</span><span><i class="dot blocked"></i>wartet auf dich</span><span><i class="dot"></i>bereit</span><span><i class="dot shell"></i>shell</span><span>Klick auf Knoten öffnet Konsole</span></div>
+      <div class="legend"><span><i class="dot working"></i>active</span><span><i class="dot blocked"></i>waiting for you</span><span><i class="dot"></i>ready</span><span><i class="dot shell"></i>shell</span><span>Click a node to open its console</span></div>
     </div>
   </section>
 
   <!-- TELEMETRY -->
   <section class="view" id="v-tel">
-    <div class="panel kpi"><span>Agenten online</span><b id="k-agents">0</b><small id="k-agents-s">–</small></div>
-    <div class="panel kpi"><span>Aktiv / wartet</span><b id="k-load">0 / 0</b><small id="k-load-s">–</small></div>
-    <div class="panel kpi"><span>PRs gemergt</span><b id="k-merged">0</b><small id="k-merged-s">–</small></div>
-    <div class="panel kpi"><span>Uptime</span><b id="k-uptime">–</b><small id="k-uptime-s">Leitstelle-Server</small></div>
-    <div class="panel span2"><div class="ph"><h2>Last · letzte 60 min</h2><span class="tag"><span style="color:var(--green)">━</span> aktiv <span style="color:var(--amber)">━</span> wartet <span style="color:var(--cyan)">┄</span> agenten</span></div><svg id="chart" preserveAspectRatio="none"></svg></div>
-    <div class="panel span2"><div class="ph"><h2>Kontingente · alle Fenster</h2></div><div id="quota-detail"></div></div>
+    <div class="panel kpi"><span>Agents online</span><b id="k-agents">0</b><small id="k-agents-s">–</small></div>
+    <div class="panel kpi"><span>Active / waiting</span><b id="k-load">0 / 0</b><small id="k-load-s">–</small></div>
+    <div class="panel kpi"><span>PRs merged</span><b id="k-merged">0</b><small id="k-merged-s">–</small></div>
+    <div class="panel kpi"><span>Uptime</span><b id="k-uptime">–</b><small id="k-uptime-s">Control station server</small></div>
+    <div class="panel span2"><div class="ph"><h2>Load · last 60 min</h2><span class="tag"><span style="color:var(--green)">━</span> active <span style="color:var(--amber)">━</span> waiting <span style="color:var(--cyan)">┄</span> agents</span></div><svg id="chart" preserveAspectRatio="none"></svg></div>
+    <div class="panel span2"><div class="ph"><h2>Quotas · all windows</h2></div><div id="quota-detail"></div></div>
     <div class="panel span4">
       <div class="ph"><h2>Event-Stream</h2>
-        <div class="seg" id="ev-filter"><button data-k="all" class="on">ALLE</button><button data-k="agent">AGENTEN</button><button data-k="github">GITHUB</button><button data-k="board">BOARD</button></div>
+        <div class="seg" id="ev-filter"><button data-k="all" class="on">ALL</button><button data-k="agent">AGENTS</button><button data-k="github">GITHUB</button><button data-k="board">BOARD</button></div>
       </div>
       <div class="log" id="log"></div>
     </div>
   </section>
 </main>
-<footer><span id="updated">verbinde …</span><span><a href="https://tum-ai-boq-assistant-rcpj.vercel.app" target="_blank">LIVE-APP ↗</a> · <a href="https://tum-ai-boq-assistant.vercel.app/health" target="_blank">BACKEND ↗</a> · herdr · quota-axi · gh · 127.0.0.1 · token-geschützt</span></footer>
+<footer><span id="updated">connecting …</span><span><a href="https://tum-ai-boq-assistant-rcpj.vercel.app" target="_blank">LIVE-APP ↗</a> · <a href="https://tum-ai-boq-assistant.vercel.app/health" target="_blank">BACKEND ↗</a> · herdr · quota-axi · gh · 127.0.0.1 · token protected</span></footer>
 
 <dialog id="zoom">
   <div class="ph"><span class="dot" id="z-dot"></span><h2 id="z-title"></h2><span class="tag" id="z-meta"></span><span class="tag" id="z-status"></span><button class="btn" id="z-close">ESC</button></div>
   <pre class="term" id="z-term"></pre>
-  <div class="hint" id="z-hint" hidden>Dieses Fenster wartet auf eine Antwort: Zahl oder Pfeile und Enter, oder Text.</div>
-  <div class="composer"><textarea id="z-input" rows="1" placeholder="> Nachricht an dieses Fenster   (Enter senden)"></textarea><button class="send" id="z-send">SEND</button></div>
+  <div class="hint" id="z-hint" hidden>This window is waiting for an answer: number or arrows and Enter, or text.</div>
+  <div class="composer"><textarea id="z-input" rows="1" placeholder="> Message to this window   (Enter sends)"></textarea><button class="send" id="z-send">SEND</button></div>
   <div class="keys" id="z-keys"></div>
 </dialog>
 <dialog id="kick" style="height:auto">
-  <div class="ph"><h2>Kickoff · Case einfügen</h2><button class="btn" id="kick-close">ESC</button></div>
-  <div style="padding:14px 16px;font:12px var(--mono);color:var(--muted)">Füge den zugeteilten Case ein: Text, Link oder beides, gern mit Notizen vom Partner. Der First Mate startet eine Crew mit dem Skill <b style="color:var(--cyan)">kickoff</b>: Case-Brief, Schnittstelle mit Beispieldaten, Besitzer-Tabelle, Issues mit agent-bereit und Startschuss auf dem Board. Danach sagt jede Person ihrem First Mate, er soll ihre Issues abarbeiten.</div>
-  <div class="composer" style="border-top:0"><textarea id="kick-input" rows="10" style="min-height:220px" placeholder="> Partner, Problem, Bewertungskriterien, Links, gestellte Zugänge …"></textarea></div>
-  <div class="composer"><span style="flex:1;font:11px var(--mono);color:var(--dim)">geht als Prompt an den First Mate · Enter = neue Zeile</span><button class="send" id="kick-send">▶ KICKOFF STARTEN</button></div>
+  <div class="ph"><h2>Kickoff · Paste case</h2><button class="btn" id="kick-close">ESC</button></div>
+  <div style="padding:14px 16px;font:12px var(--mono);color:var(--muted)">Paste the assigned case: text, link or both, including partner notes. The First Mate starts a crew using the skill <b style="color:var(--cyan)">kickoff</b>: case brief, interface with example data, ownership table, agent-bereit issues and board announcement. Afterwards, each person asks their First Mate to process their issues.</div>
+  <div class="composer" style="border-top:0"><textarea id="kick-input" rows="10" style="min-height:220px" placeholder="> Partner, problem, judging criteria, links, provided access …"></textarea></div>
+  <div class="composer"><span style="flex:1;font:11px var(--mono);color:var(--dim)">sent as a prompt to First Mate · Enter = newline</span><button class="send" id="kick-send">▶ START KICKOFF</button></div>
 </dialog>
 <div class="toasts" id="toasts"></div>
 
@@ -328,7 +328,7 @@
   const $ = (id) => document.getElementById(id);
   const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
   const SVG = (tag, attrs = {}, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text !== undefined) n.textContent = text; return n; };
-  const STATUS = { working: "aktiv", blocked: "wartet auf dich", idle: "bereit", done: "fertig", unknown: "unbekannt", shell: "shell" };
+  const STATUS = { working: "active", blocked: "waiting for you", idle: "ready", done: "done", unknown: "unknown", shell: "shell" };
   const KEYS = [["⏎", "enter"], ["Esc", "esc"], ["↑", "up"], ["↓", "down"], ["Tab", "tab"], ["1", "1"], ["2", "2"], ["3", "3"], ["y", "y"], ["n", "n"], ["^C", "ctrl+c", "warn"]];
   const MINI_KEYS = [["⏎", "enter"], ["Esc", "esc"], ["↑", "up"], ["↓", "down"], ["1", "1"], ["2", "2"], ["^C", "ctrl+c", "warn"]];
   let state = null, me = null, zoomId = null, view = "ops", alarms = false, lastStatus = {}, seenPost = null, firstLoad = true;
@@ -366,7 +366,7 @@
 
   // ---------- helpers ----------
   function ago(iso, future) { let s = Math.max(0, (future ? new Date(iso) - Date.now() : Date.now() - new Date(iso)) / 1000);
-    if (s < 60) return future ? "gleich" : Math.floor(s) + "s"; if (s < 3600) return Math.floor(s / 60) + "m"; if (s < 86400) return Math.floor(s / 3600) + "h " + Math.floor(s % 3600 / 60) + "m"; return Math.floor(s / 86400) + "d " + Math.floor(s % 86400 / 3600) + "h"; }
+    if (s < 60) return future ? "soon" : Math.floor(s) + "s"; if (s < 3600) return Math.floor(s / 60) + "m"; if (s < 86400) return Math.floor(s / 3600) + "h " + Math.floor(s % 3600 / 60) + "m"; return Math.floor(s / 86400) + "d " + Math.floor(s % 86400 / 3600) + "h"; }
   const hue = (n) => { let h = 0; for (const c of n || "") h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h} 85% 66%)`; };
   const label = (a) => a.firstMate ? "FIRST MATE" : (a.branch && a.branch !== "HEAD" ? a.branch : a.title || a.folder || a.id);
   const crew = () => (state && state.crew) || [];
@@ -374,11 +374,11 @@
   function toast(t, k = "") { const n = el("div", "toast " + k, t); $("toasts").append(n); setTimeout(() => n.remove(), k === "alert" ? 9000 : 3800); }
   function beep() { try { const a = new AudioContext(), o = a.createOscillator(), g = a.createGain(); o.type = "triangle"; o.frequency.setValueAtTime(880, a.currentTime); o.frequency.setValueAtTime(1320, a.currentTime + .12);
       g.gain.setValueAtTime(.0001, a.currentTime); g.gain.exponentialRampToValueAtTime(.18, a.currentTime + .02); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .35); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + .4); } catch (e) {} }
-  function alarm(t) { toast(t, "alert"); if (!alarms) return; beep(); if ("Notification" in window && Notification.permission === "granted") new Notification("Leitstelle", { body: t }); }
+  function alarm(t) { toast(t, "alert"); if (!alarms) return; beep(); if ("Notification" in window && Notification.permission === "granted") new Notification("Control station", { body: t }); }
   async function act(path, body) {
     try { const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Leitstelle-Token": TOKEN }, body: JSON.stringify(body) });
-      const j = await r.json(); toast(j.ok ? "✓ gesendet" : "✗ " + j.message, j.ok ? "ok" : "err"); return j.ok; }
-    catch (e) { toast("✗ Server nicht erreichbar", "err"); return false; }
+      const j = await r.json(); toast(j.ok ? "✓ sent" : "✗ " + j.message, j.ok ? "ok" : "err"); return j.ok; }
+    catch (e) { toast("✗ Server unreachable", "err"); return false; }
   }
   function composer(input, button, send) {
     const go = async () => { const t = input.value.trim(); if (!t) return; button.disabled = true; if (await send(t)) { input.value = ""; input.style.height = ""; } button.disabled = false; input.focus(); };
@@ -403,13 +403,13 @@
   document.addEventListener("keydown", (e) => { if (e.target.closest("textarea, input") || $("zoom").open) return; const v = { 1: "ops", 2: "wall", 3: "topo", 4: "tel" }[e.key]; if (v) setView(v); });
 
   // ---------- OPS ----------
-  composer($("fm-input"), $("fm-send"), (t) => firstMate() ? act("/api/prompt", { id: firstMate().id, text: t }) : (toast("✗ Kein First Mate gefunden", "err"), false));
+  composer($("fm-input"), $("fm-send"), (t) => firstMate() ? act("/api/prompt", { id: firstMate().id, text: t }) : (toast("✗ No First Mate found", "err"), false));
   keyRow($("fm-keys"), KEYS, () => firstMate() && firstMate().id);
   composer($("board-input"), $("board-send"), (t) => act("/api/board", { text: t }));
   function renderOps() {
     const fm = firstMate();
     if (fm) consoleView(fm, $("fm-term"), $("fm-dot"), $("fm-title"), $("fm-status"), $("fm-hint"), $("fm-meta"));
-    else if (!state.errors.crew) $("fm-term").textContent = "Kein First Mate gefunden.\nIn Herdr: cd ~/firstmate && claude";
+    else if (!state.errors.crew) $("fm-term").textContent = "No First Mate found.\nIn Herdr: cd ~/firstmate && claude";
     const workers = crew().filter((a) => !a.firstMate && a.isAgent);
     const order = { blocked: 0, working: 1, idle: 2, done: 3, unknown: 4 };
     workers.sort((a, b) => (order[a.status] ?? 5) - (order[b.status] ?? 5));
@@ -423,27 +423,27 @@
       ansi(t.querySelector(".term"), a.screen.slice(-15)); frag.append(t);
     }
     box.replaceChildren(frag);
-    if (!workers.length) box.append(el("div", "empty", "// noch keine Worker · gib dem First Mate oben eine Aufgabe"));
+    if (!workers.length) box.append(el("div", "empty", "// no workers yet · give the First Mate a task above"));
     $("crew-count").textContent = workers.length + " WORKER";
     renderGithub();
   }
   function renderGithub() {
     const gh = state.github; $("gh-note").hidden = !state.errors.github; $("gh-note").textContent = state.errors.github || ""; if (!gh) return;
     const logins = new Set(gh.team.map((t) => t.login.toLowerCase())), total = Math.max(1, gh.issues.length), team = $("team"); team.replaceChildren();
-    for (const m of [...gh.team, { login: null, role: "unzugewiesen" }]) {
+    for (const m of [...gh.team, { login: null, role: "unassigned" }]) {
       const mine = gh.issues.filter((i) => m.login ? i.assignees.some((x) => x.toLowerCase() === m.login.toLowerCase()) : !i.assignees.some((x) => logins.has(x.toLowerCase())));
       if (!m.login && !mine.length) continue;
-      const b = el("div", "member"), h = el("div", "mh"), n = el("span", "", m.login ? "@" + m.login : "ohne Besitzer"); if (m.login) n.style.color = hue(m.login);
+      const b = el("div", "member"), h = el("div", "mh"), n = el("span", "", m.login ? "@" + m.login : "no owner"); if (m.login) n.style.color = hue(m.login);
       h.append(n, el("span", "", (m.role || "") + " · " + mine.length)); const bar = el("div", "bar"), fill = el("i"); fill.style.width = 100 * mine.length / total + "%"; bar.append(fill);
       const ul = el("ul"); for (const i of mine.slice(0, 4)) { const li = el("li"), a = el("a", "", "#" + i.number + " " + i.title); a.href = i.url; a.target = "_blank"; if (i.labels.includes("agent-bereit")) a.style.color = "var(--green)"; li.append(a); ul.append(li); }
       b.append(h, bar, ul); team.append(b);
     }
-    const prs = $("prs"); prs.replaceChildren(); if (!gh.prs.length) prs.append(el("div", "empty", "// keine pull requests"));
+    const prs = $("prs"); prs.replaceChildren(); if (!gh.prs.length) prs.append(el("div", "empty", "// no pull requests"));
     for (const p of gh.prs.slice(0, 12)) { const r = el("div", "pr"), t = el("a", "t", "#" + p.number + " " + p.title); t.href = p.url; t.target = "_blank"; const c = el("span", "ci " + p.ci); c.title = "checks: " + p.ci;
       r.append(c, t, el("span", "badge " + p.state, p.state === "MERGED" ? "merged" : p.state === "OPEN" ? (p.draft ? "draft" : "open") : "closed"), el("span", "badge", ago(p.updatedAt))); prs.append(r); }
-    $("board-title").textContent = "Team-Board" + (gh.boardIssue ? " · #" + gh.boardIssue : "");
+    $("board-title").textContent = "Team board" + (gh.boardIssue ? " · #" + gh.boardIssue : "");
     if (gh.boardIssue) $("board-link").href = "https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant/issues/" + gh.boardIssue;
-    const feed = $("board"), top = feed.scrollTop < 20; feed.replaceChildren(); if (!gh.board.length) feed.append(el("div", "empty", "// noch keine posts"));
+    const feed = $("board"), top = feed.scrollTop < 20; feed.replaceChildren(); if (!gh.board.length) feed.append(el("div", "empty", "// no posts yet"));
     const re = me ? new RegExp("(^|[^\\w-])@(" + me + "|all)(?![\\w-])", "i") : null;
     for (const p of [...gh.board].reverse()) { const m = re && re.test(p.body) && p.user !== me, b = el("div", "post" + (m ? " mention" : "")), meta = el("div", "meta");
       const av = el("span", "av", (p.user || "?")[0].toUpperCase()); av.style.background = hue(p.user); meta.append(av, document.createTextNode("@" + p.user + " · " + ago(p.createdAt)));
@@ -464,18 +464,18 @@
       if (!c) { c = el("div", "wcard"); c.dataset.id = a.id;
         const h = el("div", "th"); h.append(el("span", "dot"), el("span", "n"), el("span", "tag"), el("span", "tag br"), el("span", "exp", "⤢"));
         h.querySelector(".exp").onclick = () => openZoom(a.id);
-        const comp = el("div", "composer"), ta = el("textarea"), sb = el("button", "send", "SEND"); ta.rows = 1; ta.placeholder = "> an " + a.id; comp.append(ta, sb);
+        const comp = el("div", "composer"), ta = el("textarea"), sb = el("button", "send", "SEND"); ta.rows = 1; ta.placeholder = "> to " + a.id; comp.append(ta, sb);
         composer(ta, sb, (t) => act("/api/prompt", { id: a.id, text: t }));
         const keys = el("div", "keys"); keyRow(keys, MINI_KEYS, () => a.id);
         c.append(h, el("pre", "term"), el("div", "hint"), comp, keys); }
       c.className = "wcard " + a.status; c.querySelector(".dot").className = "dot " + a.status; c.querySelector(".n").textContent = label(a);
       c.querySelector(".tag").textContent = a.agent + " · " + a.id; c.querySelector(".br").textContent = (a.folder || "–");
-      const hint = c.querySelector(".hint"); hint.hidden = a.status !== "blocked"; hint.textContent = "wartet auf Antwort";
+      const hint = c.querySelector(".hint"); hint.hidden = a.status !== "blocked"; hint.textContent = "waiting for an answer";
       const term = c.querySelector(".term"), bottom = term.scrollHeight - term.scrollTop - term.clientHeight < 30; if (ansi(term, a.screen) && bottom) term.scrollTop = term.scrollHeight;
       frag.append(c);
     }
-    box.replaceChildren(frag); if (!show.length) box.append(el("div", "empty", "// keine fenster für diesen filter"));
-    $("wall-count").textContent = show.length + " / " + crew().length + " FENSTER";
+    box.replaceChildren(frag); if (!show.length) box.append(el("div", "empty", "// no windows for this filter"));
+    $("wall-count").textContent = show.length + " / " + crew().length + " WINDOWS";
   }
 
   // ---------- TOPOLOGY ----------
@@ -500,7 +500,7 @@
       if (n.onclick) g.onclick = n.onclick; g.append(SVG("title", {}, n.tip || n.title)); gNodes.append(g); return n;
     };
     const color = (s) => ({ working: "var(--green)", blocked: "var(--amber)", done: "var(--cyan)", shell: "var(--dim)" })[s] || "var(--muted)";
-    const cap = node({ x: W * .08, y: H * .42, w: 150, h: 58, kick: "CAPTAIN", title: me ? "@" + me : "du", sub: "Browser · Handy", cls: "core", accent: "var(--pink)", glow: true });
+    const cap = node({ x: W * .08, y: H * .42, w: 150, h: 58, kick: "CAPTAIN", title: me ? "@" + me : "you", sub: "Browser · Phone", cls: "core", accent: "var(--pink)", glow: true });
     const mate = node({ x: W * .3, y: H * .42, w: 196, h: 72, kick: "FIRST MATE", title: fm ? (STATUS[fm.status] || fm.status).toUpperCase() : "OFFLINE",
       sub: fm ? fm.agent + " · " + fm.id : "cd ~/firstmate && claude", sub2: fm ? "dispatch · supervise · merge" : "", status: fm && fm.status, cls: "core " + (fm ? fm.status : ""),
       accent: "var(--cyan)", glow: true, onclick: fm ? () => openZoom(fm.id) : null });
@@ -515,19 +515,19 @@
     });
     const open = gh ? gh.prs.filter((p) => p.state === "OPEN") : [], merged = gh ? gh.prs.filter((p) => p.state === "MERGED") : [];
     const red = open.filter((p) => p.ci === "red").length, pend = open.filter((p) => p.ci === "pending").length;
-    const prN = node({ x: W * .9, y: H * .3, w: 170, h: 62, kick: "GITHUB · PULL REQUESTS", title: open.length + " offen · " + merged.length + " merged", sub: "CI " + (red ? red + " rot" : pend ? pend + " läuft" : "grün"),
+    const prN = node({ x: W * .9, y: H * .3, w: 170, h: 62, kick: "GITHUB · PULL REQUESTS", title: open.length + " open · " + merged.length + " merged", sub: "CI " + (red ? red + " red" : pend ? pend + " running" : "green"),
       cls: red ? "blocked" : "", accent: red ? "var(--red)" : "var(--violet)", glow: true });
-    const boardN = node({ x: W * .9, y: H * .58, w: 170, h: 62, kick: "TEAM-BOARD", title: gh && gh.boardIssue ? "#" + gh.boardIssue + " · " + gh.board.length + " posts" : "–",
+    const boardN = node({ x: W * .9, y: H * .58, w: 170, h: 62, kick: "TEAM BOARD", title: gh && gh.boardIssue ? "#" + gh.boardIssue + " · " + gh.board.length + " posts" : "–",
       sub: gh && gh.board.length ? "@" + gh.board[gh.board.length - 1].user + " · " + ago(gh.board[gh.board.length - 1].createdAt) : "", accent: "var(--pink)", glow: true });
-    const team = node({ x: W * .9, y: H * .82, w: 170, h: 52, kick: "TEAM", title: gh ? gh.team.length + " personen" : "–", sub: gh ? gh.issues.length + " offene issues" : "", accent: "var(--blue)" });
+    const team = node({ x: W * .9, y: H * .82, w: 170, h: 52, kick: "TEAM", title: gh ? gh.team.length + " people" : "–", sub: gh ? gh.issues.length + " open issues" : "", accent: "var(--blue)" });
     for (const n of placed) edge(n, prN, n.status === "working" ? "flow" : "soft");
     edge(mate, boardN, "soft"); edge(boardN, team, "soft");
-    if (!placed.length) { const ghost = node({ x: W * .58, y: H * .42, w: 230, h: 58, kick: "CREW · STANDBY", title: "0 Worker", sub: "Auftrag an den First Mate → Worker erscheinen hier", accent: "var(--dim)" });
+    if (!placed.length) { const ghost = node({ x: W * .58, y: H * .42, w: 230, h: 58, kick: "CREW · STANDBY", title: "0 Worker", sub: "Give First Mate a task → workers appear here", accent: "var(--dim)" });
       edge(mate, ghost, "soft"); edge(ghost, prN, "soft"); }
     quota.forEach((q, i) => { const n = node({ x: W * .3 + (i - (quota.length - 1) / 2) * 150, y: H * .86, w: 138, h: 50, kick: "QUOTA · " + q.provider.toUpperCase(), title: q.percent + " %",
       sub: q.window + (q.resetsAt ? " · reset " + ago(q.resetsAt, true) : ""), accent: q.percent < 15 ? "var(--red)" : q.percent < 40 ? "var(--amber)" : "var(--green)" });
       gEdges.append(SVG("path", { d: `M${n.x},${n.y - n.h / 2} L${mate.x},${mate.y + mate.h / 2}`, class: "edge soft" })); });
-    $("topo-meta").textContent = `${crew().length} FENSTER · ${workers.filter((a) => a.status === "working").length} AKTIV · ${open.length} PR OFFEN`;
+    $("topo-meta").textContent = `${crew().length} WINDOWS · ${workers.filter((a) => a.status === "working").length} ACTIVE · ${open.length} PR OPEN`;
   }
 
   // ---------- TELEMETRY ----------
@@ -535,11 +535,11 @@
   const EVGROUP = { spawn: "agent", blocked: "agent", status: "agent", exit: "agent", pr: "github", merge: "github", "ci-green": "github", "ci-red": "github", board: "board" };
   function renderTel() {
     const agents = crew().filter((a) => a.isAgent), working = agents.filter((a) => a.status === "working").length, blocked = agents.filter((a) => a.status === "blocked").length;
-    $("k-agents").textContent = agents.length; $("k-agents-s").textContent = crew().length + " fenster · " + (crew().length - agents.length) + " shells";
-    $("k-load").textContent = working + " / " + blocked; $("k-load-s").textContent = blocked ? "⚠ " + blocked + " wartet auf dich" : "niemand blockiert";
+    $("k-agents").textContent = agents.length; $("k-agents-s").textContent = crew().length + " windows · " + (crew().length - agents.length) + " shells";
+    $("k-load").textContent = working + " / " + blocked; $("k-load-s").textContent = blocked ? "⚠ " + blocked + " waiting for you" : "nobody blocked";
     const gh = state.github, merged = gh ? gh.prs.filter((p) => p.state === "MERGED") : [];
-    $("k-merged").textContent = merged.length; $("k-merged-s").textContent = gh ? gh.prs.filter((p) => p.state === "OPEN").length + " offen · letzte 15 PRs" : "–";
-    $("k-uptime").textContent = ago(state.started); $("k-uptime-s").textContent = "seit " + new Date(state.started).toLocaleTimeString("de-DE");
+    $("k-merged").textContent = merged.length; $("k-merged-s").textContent = gh ? gh.prs.filter((p) => p.state === "OPEN").length + " open · last 15 PRs" : "–";
+    $("k-uptime").textContent = ago(state.started); $("k-uptime-s").textContent = "since " + new Date(state.started).toLocaleTimeString("en-GB");
     // chart
     const svg = $("chart"), W = 600, H = 190, hist = state.history || [], n = Math.max(2, hist.length), max = Math.max(3, ...hist.map((h) => h.agents));
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.replaceChildren();
@@ -550,34 +550,34 @@
       svg.append(SVG("path", { d: path("agents"), fill: "none", stroke: "var(--cyan)", "stroke-width": 1.2, "stroke-dasharray": "4 4" }));
       svg.append(SVG("path", { d: path("working"), fill: "none", stroke: "var(--green)", "stroke-width": 2 }));
       svg.append(SVG("path", { d: path("blocked"), fill: "none", stroke: "var(--amber)", "stroke-width": 2 }));
-    } else svg.append(SVG("text", { x: 14, y: 30, fill: "var(--muted)", "font-family": "JetBrains Mono, monospace", "font-size": 12 }, "// sammle daten … (alle 10 s ein messpunkt)"));
+    } else svg.append(SVG("text", { x: 14, y: 30, fill: "var(--muted)", "font-family": "JetBrains Mono, monospace", "font-size": 12 }, "// collecting data … (one sample every 10 s)"));
     // quota detail
     const qd = $("quota-detail"); qd.replaceChildren();
     for (const q of state.quota || []) { const r = el("div", "qrow"); r.append(el("b", "", q.provider + (q.plan ? " · " + q.plan : "")));
       for (const w of q.windows) { const b = el("div", "qbar"), t = el("div", "track"), f = el("i"); f.style.width = w.percent + "%";
         f.style.background = w.percent < 15 ? "var(--red)" : w.percent < 40 ? "var(--amber)" : "linear-gradient(90deg,var(--cyan),var(--green))"; t.append(f); b.append(el("span", "", w.label), t, el("span", "", w.percent + "%")); r.append(b); }
       qd.append(r); }
-    if (!(state.quota || []).length) qd.append(el("div", "empty", state.errors.quota || "// keine kontingentdaten"));
+    if (!(state.quota || []).length) qd.append(el("div", "empty", state.errors.quota || "// no quota data"));
     // log
     const log = $("log"), evs = [...(state.events || [])].reverse().filter((e) => evFilter === "all" || EVGROUP[e.kind] === evFilter); log.replaceChildren();
-    for (const e of evs) { const r = el("div", "ev" + (e.ref ? " click" : "")); r.append(el("time", "", new Date(e.t).toLocaleTimeString("de-DE")), el("span", "k " + e.kind, e.kind), el("span", "", e.text));
+    for (const e of evs) { const r = el("div", "ev" + (e.ref ? " click" : "")); r.append(el("time", "", new Date(e.t).toLocaleTimeString("en-GB")), el("span", "k " + e.kind, e.kind), el("span", "", e.text));
       if (e.ref) r.onclick = () => openZoom(e.ref); log.append(r); }
-    if (!evs.length) log.append(el("div", "empty", "// noch keine ereignisse · sie entstehen, sobald sich status, prs oder board ändern"));
+    if (!evs.length) log.append(el("div", "empty", "// no events yet · events appear when status, PRs or board change"));
   }
 
   // ---------- kickoff ----------
-  const KICKOFF = (caseText) => "Kickoff für TUM.ai Construction Hackathon. Starte im Projekt tum-ai-boq-assistant sofort einen Crewmate mit dem stärksten Modell, "
-    + "der den Skill kickoff aus dem Repo ausführt und ihn bis zum Startschuss-Post auf dem Board durchzieht. Gib ihm den Case unten vollständig mit. "
-    + "Melde mir die verstrichene Zeit, die angelegten Issues und alle Annahmen.\n\n--- CASE ---\n" + caseText;
+  const KICKOFF = (caseText) => "Kickoff for TUM.ai Construction Hackathon. Immediately start a crewmate with the strongest model in project tum-ai-boq-assistant, "
+    + "running the repository kickoff skill through the start announcement on the board. Give it the complete case below. "
+    + "Report elapsed time, created issues and all assumptions.\n\n--- CASE ---\n" + caseText;
   $("kick-open").onclick = () => { $("kick").showModal(); $("kick-input").focus(); };
   $("kick-close").onclick = () => $("kick").close();
   $("kick-input").onkeydown = (e) => e.stopPropagation();
   $("kick-send").onclick = async () => {
     const text = $("kick-input").value.trim(), fm = firstMate();
-    if (!text) return toast("✗ Erst den Case einfügen", "err");
-    if (!fm) return toast("✗ Kein First Mate gefunden: in Herdr cd ~/firstmate && claude", "err");
+    if (!text) return toast("✗ Paste the case first", "err");
+    if (!fm) return toast("✗ No First Mate found: in Herdr cd ~/firstmate && claude", "err");
     $("kick-send").disabled = true;
-    if (await act("/api/prompt", { id: fm.id, text: KICKOFF(text) })) { $("kick").close(); $("kick-input").value = ""; setView("ops"); toast("▶ Kickoff läuft · der First Mate startet die Crew", "ok"); }
+    if (await act("/api/prompt", { id: fm.id, text: KICKOFF(text) })) { $("kick").close(); $("kick-input").value = ""; setView("ops"); toast("▶ Kickoff running · First Mate is starting the crew", "ok"); }
     $("kick-send").disabled = false;
   };
 
@@ -599,16 +599,16 @@
     if (p) {
       const red = p.status === "failure", ok = p.status === "success", pipe = $("pipe");
       pipe.className = "pipe " + (red ? "red" : ok ? "green" : "run"); if (p.url) pipe.href = p.url;
-      pipe.firstChild.textContent = red ? "MAIN ✗ ROT" : ok ? "MAIN ● GRÜN" : "MAIN ◌ PRÜFT";
-      pipe.lastChild.textContent = "DEMO " + (p.demo || "–") + (p.demo && p.demo === p.main ? " · aktuell" : red ? " · eingefroren" : " · zieht nach");
+      pipe.firstChild.textContent = red ? "MAIN ✗ RED" : ok ? "MAIN ● GREEN" : "MAIN ◌ CHECKING";
+      pipe.lastChild.textContent = "DEMO " + (p.demo || "–") + (p.demo && p.demo === p.main ? " · current" : red ? " · frozen" : " · updating");
     }
-    document.title = (p && p.status === "failure" ? "✗ MAIN · " : "") + (b ? "⚠ " + b + " · " : w ? "● " + w + " · " : "") + "Leitstelle";
+    document.title = (p && p.status === "failure" ? "✗ MAIN · " : "") + (b ? "⚠ " + b + " · " : w ? "● " + w + " · " : "") + "Control station";
   }
   function alarms_() {
-    for (const a of crew()) { if (!firstLoad && a.status === "blocked" && lastStatus[a.id] !== "blocked") alarm("⚠ " + label(a) + " wartet auf dich"); lastStatus[a.id] = a.status; }
+    for (const a of crew()) { if (!firstLoad && a.status === "blocked" && lastStatus[a.id] !== "blocked") alarm("⚠ " + label(a) + " waiting for you"); lastStatus[a.id] = a.status; }
     const gh = state.github; if (!gh) return; me = gh.me || me;
     const n = gh.board.length ? gh.board[gh.board.length - 1] : null, re = me ? new RegExp("(^|[^\\w-])@(" + me + "|all)(?![\\w-])", "i") : null;
-    if (n && seenPost !== null && n.id !== seenPost && n.user !== me && re && re.test(n.body)) alarm("💬 @" + n.user + " erwähnt dich"); if (n) seenPost = n.id;
+    if (n && seenPost !== null && n.id !== seenPost && n.user !== me && re && re.test(n.body)) alarm("💬 @" + n.user + " mentions you"); if (n) seenPost = n.id;
   }
   function render() {
     if (!state) return;
@@ -622,10 +622,10 @@
     $("countdown").className = "countdown mono" + (left < 3 * 3.6e6 ? " hot" : left < 12 * 3.6e6 ? " warn" : ""); }
   async function refresh() {
     try { state = await (await fetch("/api/state", { cache: "no-store" })).json(); alarms_(); render(); tick(); firstLoad = false;
-      $("updated").textContent = "● LIVE · " + new Date().toLocaleTimeString("de-DE") + " · " + crew().length + " fenster · " + (state.events || []).length + " events"; }
-    catch (e) { $("updated").textContent = "○ OFFLINE · läuft python3 tools/dashboard.py?"; }
+      $("updated").textContent = "● LIVE · " + new Date().toLocaleTimeString("en-GB") + " · " + crew().length + " windows · " + (state.events || []).length + " events"; }
+    catch (e) { $("updated").textContent = "○ OFFLINE · is python3 tools/dashboard.py running?"; }
   }
-  function paintBell() { $("bell").textContent = alarms ? "ALARM AN" : "ALARM AUS"; $("bell").classList.toggle("on", alarms); }
+  function paintBell() { $("bell").textContent = alarms ? "ALARMS ON" : "ALARMS OFF"; $("bell").classList.toggle("on", alarms); }
   $("bell").onclick = async () => { alarms = !alarms; if (alarms && "Notification" in window && Notification.permission === "default") await Notification.requestPermission(); store("ls-alarm", alarms ? "1" : "0"); paintBell(); if (alarms) beep(); };
   window.addEventListener("resize", () => view === "topo" && render());
   // restore preferences

@@ -1,38 +1,38 @@
-name: Teamaufgabe
-description: Eine übernehmbare Aufgabe mit prüfbarem Ergebnis, für Menschen und Coding-Agenten
-title: "Aufgabe · "
+name: Team task
+description: A claimable task with a verifiable result, for people and coding agents
+title: "Task · "
 body:
   - type: markdown
     attributes:
       value: |
-        Mit `python tools/aufgabe.py <Nr>` entsteht daraus ein eigener Branch, ein Worktree und ein Auftrag für Claude Code, Codex oder Antigravity. Sind Bereich, Abnahmetest und Zielbranch vollständig, setzt das Label `agent-bereit`.
+        `python tools/aufgabe.py <number>` creates a separate branch, worktree and assignment for Claude Code, Codex or Antigravity. When scope, acceptance test and target branch are complete, add `agent-bereit`.
   - type: input
     id: owner
     attributes:
-      label: Verantwortliche Person
-      placeholder: GitHub-Name
+      label: Owner
+      placeholder: GitHub login
     validations:
       required: true
   - type: textarea
     id: result
     attributes:
-      label: Ergebnis und Abnahmetest
-      description: Mit welcher Eingabe zeigt was welches überprüfbare Ergebnis?
-      placeholder: "Für 5 Personen im Offline-Modus zeigt die Oberfläche Isar mit 6 Plätzen."
+      label: Outcome and acceptance test
+      description: Which input produces which verifiable result, and where?
+      placeholder: "For 5 people in offline mode, the UI shows Isar with 6 seats."
     validations:
       required: true
   - type: input
     id: area
     attributes:
-      label: Bereich
-      description: Dateien oder Ordner, die dieser Auftrag ändern darf. Zwei offene Aufträge teilen sich keine Datei.
+      label: Scope
+      description: Files or folders this task may change. No two open tasks share a file.
       placeholder: "api/app/pruefung/regeln.py, api/tests/test_regeln.py"
     validations:
       required: true
   - type: dropdown
     id: base
     attributes:
-      label: Zielbranch
+      label: Target branch
       options:
         - main
     validations:
@@ -40,20 +40,20 @@ body:
   - type: dropdown
     id: tool
     attributes:
-      label: Werkzeug
+      label: Tool
       options:
-        - egal
+        - any
         - Claude Code
         - Codex
         - Antigravity
         - Jules
-        - von Hand
+        - manually
     validations:
       required: false
   - type: textarea
     id: interface
     attributes:
-      label: Schnittstellen und Abhängigkeiten
-      description: Geteilte Felder oder Formate, die sich ändern, und Issues, auf die dieser Auftrag wartet.
+      label: Interfaces and dependencies
+      description: Shared fields or formats that change, and issues this task depends on.
     validations:
       required: false

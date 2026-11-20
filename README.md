@@ -1,57 +1,56 @@
-# LV-Prüfassistent · TUM.ai Construction Hackathon 2026
+# LV Review Assistant · TUM.ai Construction Hackathon 2026
 
-**Challenge A: AI Estimation and Bid Assistant for Bills of Quantities.** Ein Kalkulator lädt ein Leistungsverzeichnis (GAEB, Excel oder PDF) hoch und bekommt in Minuten einen Prüfbericht: Rechen- und Formfehler, unklare oder widersprüchliche Positionen, Risiken und Nachtragspotenzial, jeweils mit Positionsnummer und Begründung.
+**Challenge A: AI Estimation and Bid Assistant for Bills of Quantities.** An estimator uploads a bill of quantities (GAEB, Excel or PDF) and receives a review report in minutes: arithmetic and formatting errors, unclear or contradictory items, risks and Nachtrag potential, each with an item number and explanation.
 
-- Case, Ziel und Kernablauf: [docs/case.md](docs/case.md)
-- Fachwissen LV, GAEB, Kalkulation und unsere Notizen: [docs/domaene.md](docs/domaene.md)
-- Wie fünf Laptops zusammenarbeiten: [docs/teamstart.md](docs/teamstart.md)
-- Regeln für Menschen und Agenten: [AGENTS.md](AGENTS.md)
+- Case, goal and core flow: [docs/case.md](docs/case.md)
+- LV, GAEB, estimation terminology and team notes: [docs/domaene.md](docs/domaene.md)
+- Working together on five laptops: [docs/teamstart.md](docs/teamstart.md)
+- Rules for people and agents: [AGENTS.md](AGENTS.md)
 
-**Abgabe: Sonntag, 22.11.2026, 12:00.** Internes Ziel 11:30, Funktionsstopp 09:00.
+**Submission: Sunday, 22 November 2026, 12:00 Munich time.** Internal target 11:30, feature freeze 09:00.
 
-## Schnellstart
+## Quick start
 
-Git, Python 3.11+, Node 20+ und die GitHub CLI installieren, Einladung annehmen, dann:
+Install Git, Python 3.11+, Node 20+ and the GitHub CLI, accept the invitation, then:
 
 ```sh
 gh auth login
 git clone https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant.git
 cd tum-ai-boq-assistant
-python tools/setup.py --kommentar 2   # Rechner prüfen, Push-Check aktivieren, Ergebnis in Issue #2
-# Kein Schlüssel nötig: LV-Prüfung und Starterroute laufen im Offline-Mock
-python tools/dev.py --install         # Oberfläche http://localhost:3000, Backend http://localhost:8000/health
+python tools/setup.py --kommentar 2   # Check the machine, enable the push check, report in issue #2
+# No key needed: LV review and the starter route run with the offline mock
+python tools/dev.py --install         # UI http://localhost:3000, backend http://localhost:8000/health
 ```
 
-Auf macOS `python3` statt `python`.
+On macOS, use `python3` instead of `python`.
 
-## Aufbau
+## Structure
 
-| Ordner | Inhalt |
+| Folder | Contents |
 | --- | --- |
-| `web/` | Next.js-Oberfläche: Upload, Positionstabelle, Prüfbericht |
-| `api/` | FastAPI-Backend; `api/app/ai/llm.py` kapselt Anthropic, OpenAI, Azure, Gemini und einen Offline-Mock |
-| `data/datensatz/` | Beispiel-LVs der Challenge (unverändert) |
-| `data/testfaelle/` | LVs mit absichtlich eingebauten Fehlern für die Messung |
-| `docs/` | Case, Domäne, Team- und Agenten-Anleitungen |
-| `tools/` | Board, Aufgaben-Worktrees, Setup-Check, Dashboard, FirstMate |
-| `.agents/skills/` | Skills für Claude Code und Codex (`kickoff`, `grill-me`, `tdd`, `pitch-probe` …) |
+| `web/` | Next.js UI: upload, item table, review report |
+| `api/` | FastAPI backend; `api/app/ai/llm.py` wraps Anthropic, OpenAI, Azure, Gemini and an offline mock |
+| `data/datensatz/` | Challenge example LVs (unchanged) |
+| `data/testfaelle/` | LVs with deliberately introduced errors for evaluation |
+| `docs/` | Case, domain, team and agent guides |
+| `tools/` | Board, task worktrees, setup check, dashboard, FirstMate |
+| `.agents/skills/` | Skills for Claude Code and Codex (`kickoff`, `grill-me`, `tdd`, `pitch-probe` …) |
 
-## Wo ihr arbeitet
+## Where to work
 
-| Ort | Wofür |
+| Place | Purpose |
 | --- | --- |
-| [Team-Board (Issue #1)](https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant/issues/1) | Funk zwischen allen Menschen und Agenten: `tools/board post "[Name · Agent] …"` |
-| [Issues](https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant/issues) | Aufträge mit verantwortlicher Person, Bereich und Abnahmetest; `agent-bereit` = ein Agent kann sofort loslegen |
-| [Mit Coding-Agenten arbeiten](docs/agenten.md) | Claude Code, Codex, Autonomie-Stufen, Cloud-Agenten |
-| [FirstMate](docs/firstmate.md) | Eine Person führt eine ganze Agenten-Crew |
-| [Zugänge](docs/zugaenge.md) | API-Schlüssel für Agenten und Produkt |
+| [Team board (issue #1)](https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant/issues/1) | Communication between all people and agents: `tools/board post "[Name · Agent] …"` |
+| [Issues](https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant/issues) | Tasks with an owner, scope and acceptance test; `agent-bereit` means an agent can start immediately |
+| [Working with coding agents](docs/agenten.md) | Claude Code, Codex, autonomy levels, cloud agents |
+| [FirstMate](docs/firstmate.md) | One person manages an entire agent crew |
+| [Access](docs/zugaenge.md) | API keys for agents and the product |
 
-Jede Änderung läuft über einen eigenen Branch und Pull Request; unter FirstMate mergt ausschließlich der First Mate nach grünen Checks (sonst der Autor selbst). Die CI nutzt den Testbefehl `python -m unittest discover -s tests -v` für das Team-Setup, dazu `cd api && python -m pytest -q` und den Web-Build. Nur grüne Stände von `main` wandern auf den Branch `demo`.
+Every change goes through a separate branch and pull request. Under FirstMate, only the First Mate merges after green checks; otherwise the author merges. CI runs `python -m unittest discover -s tests -v` for team tooling, plus `cd api && python -m pytest -q` and the web build. Only green revisions of `main` reach the `demo` branch.
 
+## Check the kickoff interface locally
 
-## Kickoff-Schnittstelle lokal prüfen
-
-Der Kickoff liefert den Vertrag und Fachplatzhalter. Das synthetische JSON importiert bereits; echte GAEB-/Excel-/PDF-Parser, Fachregeln und Berichtsoberfläche folgen in den zugewiesenen Issues. Die fünf eingebauten Fehler sind Abnahmeziele, noch keine erkannten Befunde. Vertrag und Modulbesitz: [docs/schnittstelle.md](docs/schnittstelle.md).
+The kickoff provides the contract and domain placeholders. Synthetic JSON already imports; real GAEB/Excel/PDF parsers, domain rules and the report UI follow in their assigned issues. The five deliberately introduced errors are acceptance targets, not findings detected by the kickoff placeholders. Contract and module ownership: [docs/schnittstelle.md](docs/schnittstelle.md).
 
 ```sh
 python3 -m venv .venv
@@ -63,14 +62,13 @@ python3 -m unittest discover -s tests -v
 python3 tools/dev.py
 ```
 
-Unter Windows `.venv/Scripts/python.exe` verwenden. `python-multipart` aus `api/requirements.txt` ermöglicht Datei-Uploads mit multipart/form-data; neue Abhängigkeit im Kickoff-Issue dokumentiert. `.venv/`, `node_modules/` und Buildprodukte werden nicht committet.
+On Windows use `.venv/Scripts/python.exe`. `python-multipart` in `api/requirements.txt` enables multipart/form-data uploads; this dependency is documented in the kickoff issue. Do not commit `.venv/`, `node_modules/` or build artifacts.
 
 ```sh
 curl -F 'datei=@data/beispiel_lv.json' http://localhost:8000/api/lv/import
 curl -H 'Content-Type: application/json' --data-binary @data/beispiel_lv.json http://localhost:8000/api/lv/pruefen
 ```
 
-Die vorhandene Startseite bleibt bis zum UI-Issue eine Mock-Starterseite; `/api/beispiele` liefert die echten synthetischen LV-Strukturen für die neue Oberfläche. Modell-Mock und fehlende Euro-Werte sind sichtbar zu kennzeichnen. Partnerdateien bleiben unverändert in `data/datensatz/`.
+At kickoff, the existing home page remains a mock starter until the UI issue; `/api/beispiele` supplies complete synthetic LV structures for the new UI. Clearly mark model mocks and missing euro values. Partner files remain unchanged in `data/datensatz/`.
 
-
-Graphify ist vor Agentenaufgaben Pflicht (Entwicklerwerkzeug, Python 3.11+): `python tools/setup.py` installiert `graphifyy` mit uv oder pipx und registriert den Skill. Manueller Start: `uv tool install graphifyy`, `graphify install`, dann `graphify extract . --code-only`. Details und vertrauliche Ausschlüsse: [Graphify-Anleitung](docs/agenten.md#graphify-verpflichtender-codekontext).
+Graphify is mandatory before agent tasks (developer tool, Python 3.11+). `python tools/setup.py` installs `graphifyy` with uv or pipx and registers the skill. Manual setup: `uv tool install graphifyy`, `graphify install`, then `graphify extract . --code-only`. Details and confidential exclusions: [Graphify guide](docs/agenten.md#graphify-mandatory-code-context).

@@ -60,8 +60,8 @@ class GraphifySetupTests(unittest.TestCase):
         self.assertEqual(run.call_count, 1)
 
     def test_broken_cli_and_failed_skill_registration_are_failures(self):
-        for results, expected in [([(1, "error")], "starten"),
-                                  ([(0, "v"), (1, "error")], "install fehlgeschlagen")]:
+        for results, expected in [([(1, "error")], "cannot start"),
+                                  ([(0, "v"), (1, "error")], "install failed")]:
             with self.subTest(expected=expected):
                 status, detail, _ = self.provision(iter(["/tools/graphify"]), set(), results)
                 self.assertEqual(status, "fail")

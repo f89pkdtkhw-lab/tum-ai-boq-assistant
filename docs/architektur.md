@@ -1,45 +1,45 @@
-# Architektur: LV-Prüfung und spätere Lernschleife
+# Architecture: LV review and later learning loop
 
-Quelle: vom Lead geteiltes Architekturdiagramm, hier nach dessen Abschrift dokumentiert (20.11.2026). Es beschreibt das Zielbild; die Kästen sind keine Aussage über bereits implementierte Funktionen. Der aktuelle Vertrag steht in [schnittstelle.md](schnittstelle.md).
+Source: architecture diagram shared by the lead, documented from its transcription (20 November 2026). It describes the target design; boxes do not claim implemented features. Current contract: [schnittstelle.md](schnittstelle.md).
 
-**Verbindliche Priorität: Parsing → feste Fehlerprüfung → verständlicher Bericht.** Zuerst P1 #6, #7, #8 und #12 fertigstellen. LLM bleibt im Offline-Mock; „Claude“ bezeichnet im Entwurf einen späteren serverseitigen Modellschritt, keine Freigabe für Live-Aufrufe. Neue Historien-, Spezifikations- und Szenariofunktionen kommen nach P1. Unbekannte Preise bleiben `null`, Schätzungen brauchen die Freigabe des Kalkulators.
+**Binding priority: parsing → fixed error detection → clear report.** Complete P1 #6, #7, #8 and #12 first. LLM stays offline mock; “Claude” in the draft means a later server-side model step, not permission for live calls. History, specification and scenario features follow P1. Unknown prices remain `null`; estimates require estimator approval.
 
-## Ablauf als Text
+## Flow in words
 
-1. **History (PDF, GAEB, Excel)** → Server → Parse. Ein Claude-Schritt neben Parse erzeugt eine als KI-generiert gekennzeichnete Beschreibung. Die historischen Daten fließen in **History storage (chDB)** mit den Feldern **date**, **description**, **tags**, **estimated_values**, **real_values**, **marks**. chDB ist die gewünschte Speicheroption des Entwurfs, noch keine installierte Abhängigkeit oder fertige Datenbank.
-2. **Plan (PDF, GAEB, Excel)** → Server → Parse → Claude. In diesen Modellschritt fließen **Specification from user** und **Specification from Internet** als nachvollziehbar belegte Quellen ein.
-3. Claude → **Claude Comparison** → **Note 1**: Ergebnis des ersten Vergleichs.
-4. Claude Comparison → **Find Differences between given and overall specifications with German Standard priority** → **Note 2**. Deutsche Standards erhalten im Zielbild Priorität; Anwendbarkeit und Quelle müssen geprüft sein. Unbelegte Modellbehauptungen sind keine Normprüfung.
-5. Danach: **Claude take history from storage 10–20 cases (or 3), recently better the same cases. Adjust estimated values** → **Note 3**. Möglichst aktuelle, vergleichbare Fälle wählen; tatsächliche Fallzahl und Auswahlbegründung nennen.
-6. Danach: **Claude take history from storage 10–20 any cases (or 3), recently better. Adjust estimated values** → **Note 4 What if**. Ein breiterer aktueller Fallpool liefert ein getrenntes hypothetisches Szenario mit expliziten Annahmen.
-7. **Note 1–4** → **Report + estimations + Overall risk for each position** → **User Marks** → Rückkopplung in History storage. Nutzerbewertungen, Sollwerte, Ist-Beobachtungen und Modellschätzungen getrennt halten; Original-OZ und Herkunft erhalten.
+1. **History (PDF, GAEB, Excel)** → server → parse. A Claude step beside parsing generates a description marked as AI-generated. Historical data flows into **history storage (chDB)** with **date**, **description**, **tags**, **estimated_values**, **real_values**, **marks**. chDB is the proposed storage option, not an installed dependency or finished database.
+2. **Plan (PDF, GAEB, Excel)** → server → parse → Claude. **Specification from user** and **Specification from Internet** enter this model step as traceable, evidenced sources.
+3. Claude → **Claude Comparison** → **Note 1**: first comparison result.
+4. Claude Comparison → **Find differences between given and overall specifications with German Standard priority** → **Note 2**. The target design prioritizes German standards; applicability and source must be verified. Unsupported model claims are not standards compliance checks.
+5. Next: **Claude retrieves 10–20 comparable historical cases (or 3), preferring recent ones, and adjusts estimated values** → **Note 3**. State actual case count and selection rationale.
+6. Next: **Claude retrieves 10–20 arbitrary historical cases (or 3), preferring recent ones, and adjusts estimated values** → **Note 4 What if**. A broader recent pool produces a separate hypothetical scenario with explicit assumptions.
+7. **Notes 1–4** → **Report + estimations + overall risk per item** → **User Marks** → feedback into history storage. Keep user assessments, planned values, actual observations and model estimates separate; preserve original OZ and provenance.
 
-## Zielbild als Mermaid
+## Target design in Mermaid
 
 ```mermaid
 flowchart TD
     H["History: PDF, GAEB, Excel"] --> HS["Server: History"]
     HS --> HP["Parse: History"]
     HP --> DB[("History storage: Go + chDB / ClickHouse<br/>date · description · tags<br/>estimated_values · real_values · marks")]
-    HP --> HD["Claude: Beschreibung erzeugen"]
+    HP --> HD["Claude: generate description"]
     HD --> DB
 
     P["Plan: PDF, GAEB, Excel"] --> PS["Server: Plan"]
     PS --> PP["Parse: Plan"]
-    PP --> C["Claude: Plan und Spezifikationen"]
+    PP --> C["Claude: plan and specifications"]
     U["Specification from user"] --> C
     I["Specification from Internet"] --> C
     C --> CC["Claude Comparison"]
-    CC --> N1["Note 1: Vergleich"]
-    CC --> D["Find Differences: given vs. overall specifications<br/>German Standard priority"]
-    D --> N2["Note 2: Abweichungen"]
-    D --> A["Claude: 10–20 vergleichbare Fälle, ggf. 3<br/>aktuell bevorzugt · Schätzwerte anpassen"]
+    CC --> N1["Note 1: comparison"]
+    CC --> D["Find differences: given vs. overall specifications<br/>German Standard priority"]
+    D --> N2["Note 2: deviations"]
+    D --> A["Claude: 10–20 comparable cases, or 3<br/>prefer recent · adjust estimates"]
     DB --> A
-    A --> N3["Note 3: historische Anpassung"]
-    A --> W["Claude: 10–20 beliebige Fälle, ggf. 3<br/>aktuell bevorzugt · Schätzwerte anpassen"]
+    A --> N3["Note 3: historical adjustment"]
+    A --> W["Claude: 10–20 arbitrary cases, or 3<br/>prefer recent · adjust estimates"]
     DB --> W
     W --> N4["Note 4: What if"]
-    N1 --> R["Report + estimations<br/>Overall risk for each position"]
+    N1 --> R["Report + estimations<br/>Overall risk for each item"]
     N2 --> R
     N3 --> R
     N4 --> R
@@ -47,81 +47,80 @@ flowchart TD
     M --> DB
 ```
 
-## Abdeckung durch bestehende Issues #6–#17
+## Coverage by existing issues #6–#17
 
-Die Tabelle ordnet geplante Arbeit zu; sie meldet keine Fertigstellung. Server und gemeinsames LV-/Finding-Modell sind seit dem Kickoff vorhanden. Eine separate History-Route und Notes 1–4 sind darin nicht definiert.
+This table maps planned work, not completion. The server and shared LV/finding model exist since kickoff. They do not define a separate history route or Notes 1–4.
 
-| Kasten im Diagramm | Bestehende Issues | Abdeckung und verbleibende Lücke |
+| Diagram box | Existing issues | Coverage and remaining gap |
 | --- | --- | --- |
-| History-Eingang PDF/GAEB/Excel | #6 GAEB, #9 Excel, #10 PDF | Parser wiederverwendbar; History-Aufnahme fehlt. |
-| Server (History und Plan) | #6/#9/#10, #12 Upload, #16 Demo | Bestehender Import-/Prüfserver; kein eigener History-Ablauf. |
-| Parse (History und Plan) | #6/#9/#10 | Strukturierte Originalpositionen; keine Soll-/Ist-Zuordnung zur Historie. |
-| Claude-Beschreibung und Tags neben History-Parse | #23, #16 Modellzugriff | Mock-Metadaten-API bei @f89pkdtkhw-lab. |
-| History storage Go/chDB mit Beschreibung, Tags, Soll/Ist und Marks | #18 | Speicher und HTTP-API bei @Anatomik5. |
-| Plan-Eingang PDF/GAEB/Excel | #6/#9/#10, #12 | Upload und Import, ohne zusätzliche Spezifikationseingabe. |
-| Specification from user | keines | Quellenvertrag #19; UI-API #24. |
-| Specification from Internet | keines | Neu: verifizierbarer Quellenvertrag #19; kein automatischer Internetabruf. |
-| Claude für Plan und Spezifikationen | #13/#16 teilweise | Mock-Infrastruktur vorhanden/geplant; Spezifikationskontext fehlt. |
-| Claude Comparison | #7 feste Fehler, #11 Mengen, #13 Mock | Teilweise fachliche Vergleiche; kein allgemeiner Spezifikationsvergleich. |
-| Note 1 | #7/#11/#13, Anzeige #8/#12 | Findings statt eigenem Note-Vertrag; Spezifikationsbezug #19. |
-| Differences / German Standard priority | #7/#11/#13 teilweise | Plausibilität und belegte Mock-Normhinweise; keine allgemeine oder rechtlich verbindliche Normprüfung. Quellenpriorität #19 fehlt. |
-| Note 2 | #8/#12/#15 Darstellung/Export | Spezifikationsabweichung #19, Schritt-API #23 und Anzeige #24. |
-| Historie: 10–20 vergleichbare Fälle, ggf. 3; Schätzanpassung | keines | Neu: Auswahl, Evidenz und Schätzvertrag #20 nach #18. |
-| Note 3 | keines | Neu: belegte historische Anpassung #20. |
-| Historie: 10–20 beliebige Fälle, ggf. 3; What-if | keines | Neu: getrenntes hypothetisches Szenario #20. |
-| Note 4 What if | keines | Neu: Annahmen, Unsicherheit und Fallbezug #20. |
-| Report + estimations + overall risk je Position | #8 Bericht, #12 Upload→Bericht, #15 Export; #14 Risiko | Bericht und regelbasierte Risiken abgedeckt; historische Preise/Schätzungen und Notes-Zusammenführung fehlen. |
-| User Marks → History storage | #18 | Speicherung/HTTP bei @Anatomik5; UI und UI-API separat bei @Zukipany. |
-| Vorführbarer Gesamtweg und Pitch | #16 Demo/Messung, #17 Pitch | Prüft/erklärt den tatsächlich funktionierenden Kern; kein Ersatz für fehlende Kästen. |
+| History PDF/GAEB/Excel input | #6 GAEB, #9 Excel, #10 PDF | Reusable parsers; history ingestion missing. |
+| Server (history and plan) | #6/#9/#10, #12 upload, #16 demo | Existing import/review server; no dedicated history flow. |
+| Parse (history and plan) | #6/#9/#10 | Structured original items; no planned/actual history mapping. |
+| Claude description and tags beside history parsing | #23, #16 model access | Mock metadata API with @f89pkdtkhw-lab. |
+| Go/chDB history storage with description, tags, planned/actual values and marks | #18 | Storage and HTTP API with @Anatomik5. |
+| Plan PDF/GAEB/Excel input | #6/#9/#10, #12 | Upload and import, without additional specification input. |
+| Specification from user | None | Source contract #19; UI API #24. |
+| Specification from Internet | None | New: verifiable source contract #19; no automatic internet retrieval. |
+| Claude for plan and specifications | #13/#16 partially | Mock infrastructure exists/planned; specification context missing. |
+| Claude Comparison | #7 fixed errors, #11 quantities, #13 mock | Partial domain comparisons; no general specification comparison. |
+| Note 1 | #7/#11/#13, display #8/#12 | Findings instead of a dedicated note contract; specification links #19. |
+| Differences / German Standard priority | #7/#11/#13 partially | Plausibility and evidenced mock standards hints; no general or legally binding compliance check. Source priority #19 missing. |
+| Note 2 | #8/#12/#15 display/export | Specification deviations #19, step API #23, display #24. |
+| History: 10–20 comparable cases, or 3; estimate adjustment | None | New: selection, evidence and estimation contract #20 after #18. |
+| Note 3 | None | New: evidenced historical adjustment #20. |
+| History: 10–20 arbitrary cases, or 3; what-if | None | New: separate hypothetical scenario #20. |
+| Note 4 What if | None | New: assumptions, uncertainty and case links #20. |
+| Report + estimations + overall risk per item | #8 report, #12 upload→report, #15 export; #14 risk | Report and rule-based risks covered; historical prices/estimates and note coordination missing. |
+| User Marks → history storage | #18 | Storage/HTTP with @Anatomik5; UI and UI API separately with @Zukipany. |
+| Demonstrable complete flow and pitch | #16 demo/evaluation, #17 pitch | Verifies/explains the working core; does not replace missing boxes. |
 
-## Zuständigkeiten und API-Grenzen
+## Responsibilities and API boundaries
 
-@Anatomik5 besitzt Parser und den Go-History-Service in `history/` (ClickHouse via chDB) samt HTTP-API. Ein zusätzlicher API-Orchestrator ist optional und wird erst nach gemeinsamer Vertragsabstimmung beauftragt. Die konkrete Go/chDB-Anbindung wird in #18 dokumentiert und offline geprüft; hier wird keine Abhängigkeit installiert.
+@Anatomik5 owns parsers and the Go history service in `history/` (ClickHouse via chDB), including HTTP API. An additional API orchestrator is optional and assigned only after shared contract agreement. Concrete Go/chDB integration is documented and tested offline in #18; this document installs no dependency.
 
-@Zukipany besitzt `web/` und die UI-API in `web/app/api/`: Berichte pro Vergleichsschritt, History-Ansicht sowie Eingabe von Ist-Werten, Kommentaren und Marks. Die UI-API konsumiert die History- und Vergleichs-API; Modellaufrufe laufen weiterhin ausschließlich serverseitig über `api/app/ai/llm.py`.
+@Zukipany owns `web/` and the UI API in `web/app/api/`: reports per comparison step, history view, actual values, comments and marks. The UI API consumes history and comparison APIs; model calls remain server-only through `api/app/ai/llm.py`.
 
-Die Claude/AI-Schicht wird ohne überlappende Module geteilt: @Bartuan3600 besitzt `api/app/pruefung/` (Vergleich, belegte Abweichungen von deutschen Standards, Notes 1/2); @Secret-Sebi besitzt `api/app/risiko/` und `api/app/kalkulation/` (Schätzungen, historische Anpassung, Risiko, Notes 3/4); @f89pkdtkhw-lab besitzt `api/app/ai/` (Schritt-API, Zusammenführung des Berichts, Beschreibung und Tag-Erzeugung) und behält Integration/Deploy/Demo. Fachlogik bleibt in den jeweiligen Modulen.
+The Claude/AI layer has nonoverlapping modules: @Bartuan3600 owns `api/app/pruefung/` (comparison, evidenced deviations from German standards, Notes 1/2); @Secret-Sebi owns `api/app/risiko/` and `api/app/kalkulation/` (estimates, historical adjustment, risk, Notes 3/4); @f89pkdtkhw-lab owns `api/app/ai/` (step API, report coordination, description/tag generation), plus integration/deployment/demo. Domain logic stays in its respective modules.
 
-Die folgenden neuen Routen sind **Vertragsvorschläge**, keine vorhandenen Endpunkte. Implementierung erst nach den genannten Blockern und vorab mit `@all` angekündigtem Vertrag:
+The following routes are **contract proposals**, not existing endpoints. Implement only after named blockers and a prior `@all` contract announcement:
 
-| API | Besitzer | Vorgeschlagener Vertrag |
+| API | Owner | Proposed contract |
 | --- | --- | --- |
-| History-HTTP-API | @Anatomik5 | `POST /history/records` aufnehmen; `GET /history/records?tags=bridge&limit=20` aktuelle vergleichbare Fälle suchen; `GET /history/records/{case_id}` lesen; `PATCH /history/records/{case_id}` Ist-Werte/Kommentare/Marks aktualisieren. Filter, Reihenfolge und Fehler werden in #18 festgelegt. |
-| Claude-Vergleich je Schritt | @f89pkdtkhw-lab, Fachmodule @Bartuan3600 / @Secret-Sebi | `POST /api/comparison/steps`: `step`, `lv`, `specifications`, `history_records`, `previous_notes` → `step`, `status`, `notes`, `findings`, `evidence`, `errors`. Notes behalten Quellen, Original-OZ und gegebenenfalls Fall-IDs; Fehler sind schrittbezogen sichtbar. |
-| UI-API | @Zukipany | `web/app/api/`: Schrittberichte und History lesen, Nutzereingaben validieren, Beschreibung/Tags serverseitig erzeugen lassen und anschließend per History-API speichern; Backendfehler verständlich anzeigen. Genaue UI-Routen werden im UI-Auftrag festgelegt. |
+| History HTTP API | @Anatomik5 | `POST /history/records` ingest; `GET /history/records?tags=bridge&limit=20` find recent comparable cases; `GET /history/records/{case_id}` read; `PATCH /history/records/{case_id}` update actual values/comments/marks. Filters, ordering and errors defined in #18. |
+| Claude step comparison | @f89pkdtkhw-lab, domain modules @Bartuan3600 / @Secret-Sebi | `POST /api/comparison/steps`: `step`, `lv`, `specifications`, `history_records`, `previous_notes` → `step`, `status`, `notes`, `findings`, `evidence`, `errors`. Notes retain sources, original OZ and case IDs where applicable; errors remain visible per step. |
+| UI API | @Zukipany | `web/app/api/`: read step reports/history, validate user input, generate descriptions/tags server-side, then save through history API; display backend errors clearly. Exact UI routes are defined in the UI task. |
 
-Bestehende deutsche Bezeichner, `modelle.py`, `pruefe_regeln` und vorhandene Routen bleiben bestehen. Neuer Code, Bezeichner, Kommentare, Commits und PR-Titel sind Englisch; eine spätere Umbenennung erfordert einen separaten, vorher mit `@all` angekündigten PR. Die neuen englischen Felder werden an der API-Grenze abgebildet, ohne das vorhandene LV-/Finding-Modell umzubenennen.
+Existing German identifiers, `modelle.py`, `pruefe_regeln` and routes remain. All new code, identifiers, comments, documentation, issues, board posts, commits and PRs are English. Renaming requires a separate PR announced with `@all` beforehand. Map new English fields at the API boundary without renaming the existing LV/finding model.
 
-## History-Datensatz: Vorschlag zur Bestätigung durch @Anatomik5
+## History record: proposal for confirmation by @Anatomik5
 
-**Feldtypen und HTTP-Details sind ein Vorschlag und müssen von @Anatomik5 in #18 bestätigt werden.** Die fachlichen Inhalte stammen aus der Rollenabsprache. Beschreibung und Tags erzeugt die AI-Schicht aus dem bereitgestellten Fall; Ist-Werte, Kommentare, Marks und die Erklärung, was passiert ist und warum, kommen vom Nutzer. Die Generierung darf fehlende Nutzerdaten nicht erfinden.
+**Field types and HTTP details are proposals requiring @Anatomik5's confirmation in #18.** Domain contents come from the role agreement. The AI layer generates descriptions and tags from the supplied case; users supply actual values, comments, marks, and explanations of what happened and why. Generation must not invent missing user data.
 
-| Feld | Vorgeschlagener JSON-Typ | Bedeutung |
+| Field | Proposed JSON type | Meaning |
 | --- | --- | --- |
-| `case_id` | string | Stabile Fallreferenz für Lesen, Suche und Änderungen. |
-| `date` | string (ISO-8601-Datum) | Falldatum für Aktualität und Sortierung. |
-| `description` | string | Als AI-generiert gekennzeichnete Fallbeschreibung; im Standardlauf Mock. |
-| `tags` | array of string | AI-generierte Suchbegriffe, z. B. `bridge`; aktuelle ähnliche Fälle zuerst über Tags finden, dann anhand der Beschreibung prüfen. |
-| `estimated_values` | array of measurement | Schätz-/Sollwerte, getrennt von Beobachtungen. |
-| `real_values` | array of measurement | Vom Nutzer eingetragene Ist-Werte; unbekannt bleibt `null`. |
-| `comments` | array of string | Optionale Nutzerkommentare. |
-| `marks` | array of object | Nutzerurteile mit `oz`, `title_path`, `status`, optional `what_happened` und `reason`; was geschah und warum darf fehlen. |
+| `case_id` | string | Stable reference for reading, searching and updating. |
+| `date` | string (ISO-8601 date) | Case date for recency and sorting. |
+| `description` | string | Case description labelled AI-generated; mock in standard runs. |
+| `tags` | array of string | AI-generated search terms, e.g. `bridge`; find recent similar cases by tags, then check descriptions. |
+| `estimated_values` | array of measurement | Estimated/planned values, separate from observations. |
+| `real_values` | array of measurement | User-entered actual values; unknown remains `null`. |
+| `comments` | array of string | Optional user comments. |
+| `marks` | array of object | User assessments with `oz`, `title_path`, `status`, optional `what_happened` and `reason`; explanations may be absent. |
 
-Vorgeschlagenes `measurement`: `{oz, title_path, metric, value, unit}` mit `value: number | null`; Original-OZ und Titelpfad erhalten Mehrdeutigkeiten. Beschreibungen/Tags sind keine Nutzermarks. Herkunft (Nutzer, Regel, Modell/Mock), Fallbezug und Kennzeichnung als Schätzung müssen beim Speichern und Lesen erhalten bleiben; das genaue Metadatenformat legt #18 fest. Keine vertraulichen Roh-LVs an zusätzliche Dienste senden.
+Proposed `measurement`: `{oz, title_path, metric, value, unit}` with `value: number | null`; original OZ and section path preserve ambiguities. Descriptions/tags are not user marks. Provenance (user, rule, model/mock), case links and estimate labels must survive storage and reading; #18 defines exact metadata. Do not send confidential raw LVs to additional services.
 
-Synthetisches Beispiel: Fall `H1`, Datum `2026-11-20`, Beschreibung `Mock: bridge repair`, Tags `["bridge"]`, Schätzung `100 h`, Ist-Wert `120 h`, OZ `01.001`, Titelpfad `["Bridge"]`, Nutzer-Mark `confirmed`, `what_happened: extra work`, `reason: user-reported access restriction`. Erneutes Lesen erhält diese getrennten Angaben; eine fehlende Erklärung bleibt fehlend. Vergleichbare Fälle werden nach Tags und Aktualität gesucht und anschließend anhand der Beschreibung geprüft.
+Synthetic example: case `H1`, date `2026-11-20`, description `Mock: bridge repair`, tags `["bridge"]`, estimate `100 h`, actual `120 h`, OZ `01.001`, section path `["Bridge"]`, user mark `confirmed`, `what_happened: extra work`, `reason: user-reported access restriction`. Reading again preserves these separate facts; a missing explanation remains missing. Find comparable cases by tags and recency, then check descriptions.
 
-## Folgeaufträge nach P1
+## Follow-up tasks after P1
 
-Ziel der nächsten Demo bleibt Upload → Fehlerprüfung → verständlicher Bericht. Die folgende Erweiterung folgt erst nach P1; LLM bleibt offline im Mock. Kein Auftrag startet mit offenen Blockern.
+The next demo still targets upload → error detection → clear report. Extensions follow P1; LLM stays offline mock. No task starts with open blockers.
 
-| Issue / Ergebnis | Besitzer | Bereich | Blockiert durch | Werkzeug |
+| Issue / deliverable | Owner | Scope | Blocked by | Tool |
 | --- | --- | --- | --- | --- |
-| #18 Go/chDB-History, HTTP-API und User Marks | @Anatomik5 | history/, docs/historie.md, data/architektur/historie.json | #6, #7, #12 | Codex, modell:schwer |
-| #19 Quellenpriorität, Spezifikationen, Notes 1/2 | @Bartuan3600 | docs/spezifikationen.md, data/architektur/spezifikationen.json | #7, #12, #13 | Codex, modell:schwer |
-| #20 Historische Schätzanpassung, Notes 3/4 | @Secret-Sebi | docs/schaetzszenarien.md, data/architektur/schaetzszenarien.json | #18, #19, #14 | Codex, modell:schwer |
+| #18 Go/chDB history, HTTP API and user marks | @Anatomik5 | history/, docs/historie.md, data/architektur/historie.json | #6, #7, #12 | Codex, modell:schwer |
+| #19 Source priority, specifications, Notes 1/2 | @Bartuan3600 | docs/spezifikationen.md, data/architektur/spezifikationen.json | #7, #12, #13 | Codex, modell:schwer |
+| #20 Historical estimate adjustment, Notes 3/4 | @Secret-Sebi | docs/schaetzszenarien.md, data/architektur/schaetzszenarien.json | #18, #19, #14 | Codex, modell:schwer |
+| #23 Comparison-step API, descriptions and tags | @f89pkdtkhw-lab | api/app/ai/step_api.py, history_metadata.py, own tests; main.py only router mount | #18, #19, #20, #13, #16 | Codex, modell:schwer |
+| #24 UI API, step reports and history entry | @Zukipany | web/app/history/, web/components/history/, web/app/api/history/, web/app/api/comparison/, own API adapters | #18, #23, #12 | Claude, modell:ui |
 
-| #23 Vergleichsschritt-API, Beschreibung und Tags | @f89pkdtkhw-lab | api/app/ai/step_api.py, history_metadata.py, eigene Tests; main.py nur Router-Mount | #18, #19, #20, #13, #16 | Codex, modell:schwer |
-| #24 UI-API, Schrittberichte und History-Eingabe | @Zukipany | web/app/history/, web/components/history/, web/app/api/history/, web/app/api/comparison/, eigene API-Adapter | #18, #23, #12 | Claude, modell:ui |
-
-#24 bleibt bis zur Annahme der Repo-Einladung technisch unzugewiesen; fachlicher Besitzer ist @Zukipany. Alle neuen Aufträge sind blockiert und ohne `agent-bereit`; keine Übernahme bestehender Parser-, Prüf- oder UI-Dateien. Die frühere Ankündigung `api/app/historie/` wird durch `history/` unter @Anatomik5 ersetzt.
+#24 remains technically unassigned until the repository invitation is accepted; its domain owner is @Zukipany. All new tasks are blocked without `agent-bereit`; no takeover of existing parser, review or UI files. The earlier `api/app/historie/` announcement is superseded by `history/` under @Anatomik5.

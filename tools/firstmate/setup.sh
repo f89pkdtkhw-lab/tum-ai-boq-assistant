@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Richtet FirstMate für unser Team ein. Läuft auf macOS und unter Linux/WSL, nicht in Windows selbst.
+# Set up FirstMate for our team. Runs on macOS and Linux/WSL, not directly on Windows.
 #
 #   bash tools/firstmate/setup.sh "Raban"
 #
-# Prüft die Werkzeuge, klont FirstMate nach ~/firstmate (oder $FIRSTMATE_DIR) und schreibt
-# die lokalen, nicht eingecheckten Einstellungen: Herdr als Fensterverwaltung, unsere
-# Modellwahl pro Aufgabe und die Vorlieben des Captains mit Team-Board und Repo-Regeln.
-# Installiert selbst nichts; was fehlt, steht am Ende mit Befehl da.
+# Check tools, clone FirstMate into ~/firstmate (or $FIRSTMATE_DIR) and write
+# local, untracked settings: Herdr window management, our
+# per-task model selection and captain preferences with team board and repository rules.
+# Installs nothing automatically; missing tools are listed with install commands.
 set -eo pipefail
 
 NAME="${1:-}"
@@ -17,22 +17,22 @@ FM="${FIRSTMATE_DIR:-$HOME/firstmate}"
 case "$(uname -s)" in
   Darwin) OS=mac ;;
   Linux) OS=linux ;;
-  *) echo "✗ FirstMate läuft nur auf macOS oder Linux/WSL. Unter Windows: siehe docs/firstmate.md, Abschnitt WSL."; exit 1 ;;
+  *) echo "✗ FirstMate runs only on macOS or Linux/WSL. On Windows: see the WSL section in docs/firstmate.md."; exit 1 ;;
 esac
 
 hint() {
   case "$1" in
     git) [ "$OS" = mac ] && echo "xcode-select --install" || echo "sudo apt install -y git" ;;
-    gh) [ "$OS" = mac ] && echo "brew install gh" || echo "siehe https://github.com/cli/cli/blob/trunk/docs/install_linux.md" ;;
+    gh) [ "$OS" = mac ] && echo "brew install gh" || echo "see https://github.com/cli/cli/blob/trunk/docs/install_linux.md" ;;
     jq) [ "$OS" = mac ] && echo "brew install jq" || echo "sudo apt install -y jq" ;;
     tmux) [ "$OS" = mac ] && echo "brew install tmux" || echo "sudo apt install -y tmux" ;;
-    node|npm) [ "$OS" = mac ] && echo "brew install node" || echo "sudo apt install -y nodejs npm (oder nvm)" ;;
+    node|npm) [ "$OS" = mac ] && echo "brew install node" || echo "sudo apt install -y nodejs npm (or nvm)" ;;
     python3) [ "$OS" = mac ] && echo "brew install python" || echo "sudo apt install -y python3" ;;
-    claude) echo "curl -fsSL https://claude.ai/install.sh | bash, danach claude starten und anmelden" ;;
-    codex) echo "npm install -g @openai/codex, danach codex starten und mit ChatGPT anmelden" ;;
+    claude) echo "curl -fsSL https://claude.ai/install.sh | bash, then start claude and sign in" ;;
+    codex) echo "npm install -g @openai/codex, then start codex and sign in with ChatGPT" ;;
     herdr) [ "$OS" = mac ] && echo "brew install herdr" || echo "curl -fsSL https://herdr.dev/install.sh | sh" ;;
     quota-axi) echo "npm install -g quota-axi" ;;
-    gemini) echo "npm install -g @google/gemini-cli, danach gemini starten und mit Google anmelden" ;;
+    gemini) echo "npm install -g @google/gemini-cli, then start gemini and sign in with Google" ;;
   esac
 }
 
@@ -43,13 +43,13 @@ for tool in git gh jq tmux node npm python3 claude codex herdr quota-axi; do
 done
 
 if [ "${#missing[@]}" -gt 0 ]; then
-  echo "✗ Es fehlen noch Werkzeuge:"
+  echo "✗ Missing tools:"
   for tool in "${missing[@]}"; do echo "    $tool: $(hint "$tool")"; done
-  echo "Installiere sie und starte das Skript erneut."
+  echo "Install them and rerun this script."
   exit 1
 fi
 if ! gh auth status >/dev/null 2>&1; then
-  echo "✗ GitHub CLI ist nicht angemeldet: gh auth login"
+  echo "✗ GitHub CLI is not signed in: gh auth login"
   exit 1
 fi
 
@@ -58,7 +58,7 @@ NAME="${NAME:-$LOGIN}"
 BOARD="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['issue'])" "$REPO_ROOT/tools/board.json")"
 
 if [ -d "$FM/.git" ]; then
-  echo "✓ FirstMate liegt schon in $FM"
+  echo "✓ FirstMate already exists in $FM"
 else
   git clone https://github.com/kunchenguid/firstmate "$FM"
 fi
@@ -67,24 +67,24 @@ mkdir -p "$FM/config" "$FM/data"
 echo herdr > "$FM/config/backend"
 cp "$HERE/crew-dispatch.json" "$FM/config/crew-dispatch.json"
 if [ -f "$FM/data/captain.md" ] && grep -q "tum-ai-boq-assistant" "$FM/data/captain.md"; then
-  echo "! $FM/data/captain.md gehört schon zu diesem Repo und bleibt unverändert. Vorlage: tools/firstmate/captain.md"
+  echo "! $FM/data/captain.md already belongs to this repository and is preserved. Template: tools/firstmate/captain.md"
 else
   if [ -f "$FM/data/captain.md" ]; then
     cp "$FM/data/captain.md" "$FM/data/captain.md.bak-$(date +%Y%m%d-%H%M%S)"
-    echo "✓ Alte Captain-Vorlieben gesichert (captain.md.bak-…)"
+    echo "✓ Old captain preferences backed up (captain.md.bak-…)"
   fi
   sed -e "s/<LOGIN>/$LOGIN/g" -e "s/<NAME>/$NAME/g" -e "s/<BOARD>/$BOARD/g" "$HERE/captain.md" > "$FM/data/captain.md"
 fi
 
-echo "✓ Herdr als Fensterverwaltung, Modellwahl und Captain-Vorlieben für @$LOGIN eingerichtet."
-for tool in "${optional[@]}"; do echo "! Optional für Recherche-Aufgaben: $tool ($(hint "$tool"))"; done
+echo "✓ Herdr window management, model selection and captain preferences configured for @$LOGIN."
+for tool in "${optional[@]}"; do echo "! Optional for research tasks: $tool ($(hint "$tool"))"; done
 cat <<EOF
 
-Nächste Schritte:
-  1. herdr starten, in einem Fenster: cd "$FM" && claude
-  2. Beim ersten Start prüft FirstMate fehlende Werkzeuge und fragt vor jeder Installation.
-  3. Schreib dem First Mate:
-     "Füge https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant als Projekt im Modus direct-PR +yolo hinzu.
-      Arbeite danach autonom laut captain.md: Lagebild mit tools/stand.py, freie agent-bereit-Issues ziehen."
-  4. Fürs Handy: im First-Mate-Fenster /remote-control eingeben und in der Claude-App unter Code verbinden.
+Next steps:
+  1. Start herdr, then in a window: cd "$FM" && claude
+  2. On first start FirstMate checks missing tools and asks before each installation.
+  3. Tell the First Mate:
+     "Add https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant as a project in direct-PR +yolo mode.
+      Then work autonomously according to captain.md: overview with tools/stand.py, pull available agent-bereit issues."
+  4. For your phone: enter /remote-control in the First Mate window and connect in the Claude app under Code.
 EOF

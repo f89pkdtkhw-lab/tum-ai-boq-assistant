@@ -1,41 +1,41 @@
-# LV-Schnittstelle v0.2
+# LV interface v0.2
 
-Verbindliche Implementierung: `api/app/modelle.py`; TypeScript-Spiegel: `web/lib/api.ts`. Besitzer-Tabelle bestätigt in `docs/case.md`. Änderungen an Routen oder Feldern vorab mit @all auf Board #1 ankündigen.
+Authoritative implementation: `api/app/modelle.py`; TypeScript mirror: `web/lib/api.ts`. Ownership is confirmed in `docs/case.md`. Announce route or field changes with @all on board #1 beforehand.
 
 ## HTTP
 
-| Route | Eingabe | Erfolg | Fehler |
+| Route | Input | Success | Error |
 | --- | --- | --- | --- |
-| `GET /health` | keine | `{ok:true, provider:"mock", model:"offline-lv-mock", mock:true, keys:{…false}}` | — |
-| `GET /api/beispiele` | keine | `{items:[{id,titel,beschreibung,lv}]}` | — |
-| `POST /api/lv/import` | multipart/form-data, Feld `datei`, max. 10 MiB | `LV` | 413 zu groß; 422 leer/ungültig/Format unbekannt; 501 bekannter Import noch Platzhalter |
-| `POST /api/lv/pruefen` | `LV` als application/json | `Pruefbericht` | 422 falscher Vertrag |
+| `GET /health` | None | `{ok:true, provider:"mock", model:"offline-lv-mock", mock:true, keys:{…false}}` | — |
+| `GET /api/beispiele` | None | `{items:[{id,titel,beschreibung,lv}]}` | — |
+| `POST /api/lv/import` | multipart/form-data, field `datei`, max. 10 MiB | `LV` | 413 too large; 422 empty/invalid/unknown format; 501 known importer still a placeholder |
+| `POST /api/lv/pruefen` | `LV` as application/json | `Pruefbericht` | 422 invalid contract |
 
-Im Kickoff nur JSON-Import. X83/X84, XLSX und PDF sind explizite Platzhalter; jedes zugewiesene Format-Issue ersetzt ausschließlich sein Modul. Dateien werden nicht dauerhaft gespeichert. Fehlerantworten enthalten `detail` als verständlichen Text; FastAPI-Validierungsfehler verwenden die übliche Liste, die der Client als allgemeine Eingabemeldung anzeigt.
+At kickoff, only JSON imports. X83/X84, XLSX and PDF are explicit placeholders; each assigned format issue replaces only its module. Files are not stored permanently. Error responses contain a readable `detail` string; FastAPI validation errors use the usual list, displayed by the client as a general input error.
 
-`GET /api/beispiele` liefert vollständige, typisierte synthetische LVs, keine Partnerdateien. `POST /api/ask` bleibt für die Starterseite kompatibel und antwortet erzwungen als Mock; die LV-Pipeline verwendet keinen Modellanbieter. `/health` meldet den tatsächlichen Offline-Modus der Produktpipeline, keine Schlüsselbestände.
+`GET /api/beispiele` returns complete typed synthetic LVs, never partner files. `POST /api/ask` remains compatible with the starter page and always returns a mock; the LV pipeline uses no model provider. `/health` reports the product pipeline's actual offline mode, not its key inventory.
 
-## Daten und Bedeutung
+## Data and semantics
 
-`Position`: `oz`, `kurztext`, `langtext`, `menge`, `einheit`, `ep`, `gp`, `typ`, `titel_pfad`. `oz` ist ein nicht leerer Originalwert; weder neu nummerieren noch doppelte OZ entfernen. Mengen und Preise sind JSON-Zahlen oder `null`; `null` ist unbekannt, `0` ist eine bekannte Null. Negative Werte für Prüfregeln erhalten. Nicht endliche Zahlen werden abgelehnt. `titel_pfad` enthält geordnete Titelbezeichnungen; keine implizite Normalisierung von Einheiten. `typ`: `normal|bedarf|alternativ|zulage|pauschal|stundenlohn`; unbekannte Semantik nicht erfinden.
+`Position`: `oz`, `kurztext`, `langtext`, `menge`, `einheit`, `ep`, `gp`, `typ`, `titel_pfad`. `oz` is a nonempty original value: never renumber or remove duplicate OZ. Quantities and prices are JSON numbers or `null`; `null` means unknown and `0` means a known zero. Preserve negatives for review rules. Reject nonfinite numbers. `titel_pfad` contains ordered section names; do not implicitly normalize units. `typ`: `normal|bedarf|alternativ|zulage|pauschal|stundenlohn`; do not invent unknown semantics.
 
-`LV`: `name`, `quelle`, `positionen`, `summen`. `quelle` beschreibt die Herkunft (Dateiname/Format), keine Datei-URL. `summen` enthält ausschließlich angegebene Titelsummen, Schlüssel Titelpfad verbunden mit ` / `. Beispiel: `{"01 Erdarbeiten": 1234.5}`. `{}` bedeutet keine vorliegenden Summen. Keine erfundenen oder aus fehlenden Preisen berechneten Summen.
+`LV`: `name`, `quelle`, `positionen`, `summen`. `quelle` describes origin (filename/format), not a file URL. `summen` contains only stated section totals, keyed by section path joined with ` / `. Example: `{"01 Erdarbeiten": 1234.5}` (earthworks section). `{}` means no totals supplied. Never invent totals or calculate them from missing prices.
 
-`Finding`: `id`, `oz`, `kategorie` (`fehler|risiko|nachtrag`), `schwere` (`kritisch|hoch|mittel|niedrig`), `titel`, `begruendung`, `vorschlag`, `quelle` (`regel|modell`), `regel_id`, `euro_wirkung` (Zahl oder `null`). ID innerhalb des Berichts eindeutig und für gleiche Eingaben stabil; OZ muss aus dem LV stammen. Bei mehreren betroffenen Positionen pro OZ einen Befund erzeugen und Bezug im Text nennen. Befunde auf LV-/Titelebene an eine tatsächlich betroffene OZ hängen und den Geltungsbereich erklären. Keine erfundenen Normen oder Preise. Euro-Wirkung nur mit belegbarer Grundlage; Schätzungen im Text kennzeichnen.
+`Finding`: `id`, `oz`, `kategorie` (`fehler|risiko|nachtrag` = error/risk/Nachtrag), `schwere` (`kritisch|hoch|mittel|niedrig` = critical/high/medium/low), `titel`, `begruendung`, `vorschlag`, `quelle` (`regel|modell` = rule/model), `regel_id`, `euro_wirkung` (number or `null`). IDs are unique within a report and stable for identical input; OZ must come from the LV. For multiple affected items, create a finding for each OZ and explain the relationship. Attach LV/section-level findings to an actually affected OZ and explain their scope. Never invent standards or prices. Euro impact requires an evidenced basis; label estimates in the text.
 
-`Pruefbericht`: `lv` unverändertes Eingabemodell, `findings`, `kennzahlen` mit `positionen`, `findings`, `kritisch`, `modell_mock`. `findings` zählt sämtliche angezeigten Einträge einschließlich des klar markierten Demonstrations-Mocks, keine behaupteten echten Fehler. Die Evaluation schließt `regel_id == "MOCK_LLM"` aus.
+`Pruefbericht`: unchanged input `lv`, `findings`, `kennzahlen` containing `positionen`, `findings`, `kritisch`, `modell_mock`. `findings` counts all displayed entries, including the clearly marked demo mock, without claiming they are real errors. Evaluation excludes `regel_id == "MOCK_LLM"`.
 
-Beispiel-Eingabe: `data/beispiel_lv.json` (30 Positionen). POST `/api/lv/pruefen` liefert derzeit dieselben 30 Positionen und einen Eintrag `MOCK_LLM` an OZ `01.00.0001`, keine fachlich bestätigten Findings, `euro_wirkung:null`, `kennzahlen:{positionen:30,findings:1,kritisch:0,modell_mock:true}`. Fünf erwartete echte Regelbefunde für den Folgeauftrag: `data/beispiel_erwartung.json`.
+Kickoff example: `data/beispiel_lv.json` (30 items). POST `/api/lv/pruefen` returns those 30 items and one `MOCK_LLM` entry at OZ `01.00.0001`, no confirmed domain findings, `euro_wirkung:null`, `kennzahlen:{positionen:30,findings:1,kritisch:0,modell_mock:true}`. Five expected real rule findings for the follow-up task: `data/beispiel_erwartung.json`.
 
-## Verdrahtete Fachgrenzen
+## Connected domain boundaries
 
-| Modul | Vertrag | Kickoff-Verhalten |
+| Module | Contract | Kickoff behavior |
 | --- | --- | --- |
-| `lv/importer.py` | `importiere(dateiname, inhalt: bytes) -> LV` | JSON validieren, Formatdispatch |
-| `lv/gaeb.py`, `lv/excel.py`, `lv/pdf.py` | jeweils `importiere(dateiname, inhalt: bytes) -> LV` | `NotImplementedError` → HTTP 501 |
-| `pruefung/regeln.py` | `pruefe_regeln(lv) -> list[Finding]` | leere Liste |
-| `pruefung/mengen.py` | `pruefe_mengen(lv) -> list[Finding]` | leere Liste |
-| `pruefung/llm_pruefung.py` | `pruefe_mit_llm(lv) -> list[Finding]` | markierter Offline-Mock an erster echter OZ; leeres LV → [] |
-| `risiko/scoring.py` | `bewerte(lv, findings) -> list[Finding]` | bestehende Findings erhalten |
+| `lv/importer.py` | `importiere(dateiname, inhalt: bytes) -> LV` | Validate JSON, dispatch formats |
+| `lv/gaeb.py`, `lv/excel.py`, `lv/pdf.py` | Each: `importiere(dateiname, inhalt: bytes) -> LV` | `NotImplementedError` → HTTP 501 |
+| `pruefung/regeln.py` | `pruefe_regeln(lv) -> list[Finding]` | Empty list |
+| `pruefung/mengen.py` | `pruefe_mengen(lv) -> list[Finding]` | Empty list |
+| `pruefung/llm_pruefung.py` | `pruefe_mit_llm(lv) -> list[Finding]` | Marked offline mock on first actual OZ; empty LV → [] |
+| `risiko/scoring.py` | `bewerte(lv, findings) -> list[Finding]` | Preserve existing findings |
 
-`main.py` ruft alle Grenzen bereits auf. Jeder Logikauftrag besitzt eine eigene Testdatei. Importfehler sollen durch `ValueError` mit sicherer Nachricht gemeldet werden; Parser dürfen keinen vertraulichen Dateiinhalt in Fehlertexten ausgeben. Der feste Regelsatz nutzt `RECHENFEHLER`, `EINHEIT_FEHLT`, `MENGE_FEHLT`, `LANGTEXT_FEHLT`, `OZ_DUPLIKAT` für die fünf synthetischen Abnahmekriterien; zusätzliche Regeln brauchen eigene stabile IDs.
+`main.py` already calls all boundaries. Every logic task owns a separate test file. Report import errors through `ValueError` with a safe message; parsers must never expose confidential file contents in errors. The fixed rule set uses `RECHENFEHLER`, `EINHEIT_FEHLT`, `MENGE_FEHLT`, `LANGTEXT_FEHLT`, `OZ_DUPLIKAT` for the five synthetic acceptance criteria; additional rules need their own stable IDs.

@@ -1,67 +1,67 @@
-# FirstMate: ein Agent als Manager einer ganzen Crew
+# FirstMate: one agent manages a whole crew
 
-Jede Person spricht nur noch mit einem Agenten, dem First Mate. Er zerlegt die Arbeit, startet für jede Aufgabe einen eigenen Coding-Agenten in einem eigenen Git-Worktree, überwacht ihn bis zum Merge und meldet sich nur, wenn eine Entscheidung nötig ist. Dieses Setup hat bei Knight Hacks und Cal Hacks Preise gewonnen, mit 72 und 252 Worker-Agenten auf einer Seite eines Viererteams. Die Werkzeuge sind Open Source: [FirstMate](https://github.com/kunchenguid/firstmate) und quota-axi von Kun Chen, [Herdr](https://github.com/herdrdev/herdr) von herdrdev, [Handy](https://github.com/cjpais/Handy) von CJ Pais.
+Each person talks to a single agent, the First Mate. It splits work, launches each task in a separate coding agent and Git worktree, monitors it through merge, and asks only when a decision is needed. This setup won prizes at Knight Hacks and Cal Hacks, with 72 and 252 worker agents on one side of a four-person team. The tools are open source: [FirstMate](https://github.com/kunchenguid/firstmate) and quota-axi by Kun Chen, [Herdr](https://github.com/herdrdev/herdr) by herdrdev, [Handy](https://github.com/cjpais/Handy) by CJ Pais.
 
-So greift es bei uns ineinander:
+How our pieces fit together:
 
-| Baustein | Aufgabe |
+| Component | Purpose |
 | --- | --- |
-| First Mate pro Person | Arbeitet die Issues seines Menschen ab, nur in dessen Ordnern laut Besitzer-Tabelle in `AGENTS.md` |
-| Crew | Claude Code und Codex als Worker, Modell je nach Aufgabe aus `tools/firstmate/crew-dispatch.json` |
-| Herdr | Ein Fenster pro Agent; man sieht, wer arbeitet und wer wartet |
-| quota-axi | Neue Arbeit geht zum Abo mit dem meisten Restkontingent |
-| Team-Board, Issue #1 | Die First Mates und Agenten verschiedener Personen geben sich darüber Arbeit weiter |
-| Handy | Claude-App mit Remote Control zum Reden, GitHub-App für Erwähnungen auf dem Board |
+| First Mate per person | Processes their human's issues, only in their folders according to `AGENTS.md` ownership |
+| Crew | Claude Code and Codex workers, model selected per task from `tools/firstmate/crew-dispatch.json` |
+| Herdr | One window per agent, showing who is working and waiting |
+| quota-axi | New work goes to the subscription with the most remaining quota |
+| Team board, issue #1 | First Mates and agents working for different people hand over work here |
+| Phone | Claude app with Remote Control for conversation, GitHub app for board mentions |
 
-## Maximal autonom: jede Person spricht nur mit ihrem First Mate
+## Maximum autonomy: everyone talks only to their First Mate
 
 ```text
- Laptop 1..5: Mensch ──► First Mate (Claude ODER Codex) ──► 3–5 Worker (Claude/Codex je nach Aufgabe)
-                               │  liest/schreibt                    │ eigener Worktree + Branch pro Issue
-                               ▼                                    ▼
-            GitHub = einziger gemeinsamer Stand:  Issues (Queue) · Label in-arbeit (Sperre) · Board #1 (Funk) · PRs + CI
+ Laptops 1..5: Human ──► First Mate (Claude OR Codex) ──► 3–5 workers (Claude/Codex per task)
+                               │ reads/writes                  │ separate worktree + branch per issue
+                               ▼                               ▼
+               GitHub = only shared state: Issues (queue) · in-arbeit (lock) · board #1 (communication) · PRs + CI
                                ▲
-                     python3 tools/stand.py  →  Lagebild aller fünf Crews + Überschneidungs-Warnung
+                     python3 tools/stand.py → all five crews + overlap warnings
 ```
 
-1. **Ein Gesprächspartner.** Du redest nur mit deinem First Mate, am Laptop oder per `/remote-control` vom Handy. Er zerlegt, startet Worker, überwacht, mergt.
-2. **Ziehen statt zuteilen.** Ist ein Worker-Platz frei, holt sich der First Mate mit `python3 tools/stand.py --naechstes` das nächste freie `agent-bereit`-Issue (erst deine, dann unverteilte) und übernimmt es mit `python3 tools/aufgabe.py <Nr> --uebernehmen`. Das setzt dich als Assignee und das Label `in-arbeit`: Für alle anderen First Mates ist das Issue damit gesperrt.
-3. **Keine Überlappung.** Jedes Issue nennt seinen *Bereich* (Dateien/Ordner). `tools/stand.py` warnt, wenn zwei laufende Issues denselben Bereich oder zwei offene PRs dieselbe Datei anfassen. Der First Mate pausiert dann den späteren und klärt es auf dem Board.
-4. **Alle sehen alles.** Jeder First Mate ruft bei jeder Runde `tools/stand.py` und `tools/board unread` auf; Merges, die andere betreffen, gehen mit `@all` aufs Board.
-5. **Queue leer?** Der First Mate schneidet in seinem Bereich selbst neue Issues aus `docs/case.md` (Skill `auftrag-schneiden`) und kündigt sie an. Der Lead-First-Mate (@f89pkdtkhw-lab) hält die Gesamt-Queue gefüllt.
-6. **Claude ↔ Codex ohne Verlust.** Der Stand einer Aufgabe liegt nie nur in einer Session, sondern im Issue, im Branch, in `.auftrag.md` und im Übergabe-Kommentar (Skill `handoff`). Darum kann ein Codex-Worker fortsetzen, was ein Claude-Worker begonnen hat. Der First Mate wählt pro Aufgabe nach `crew-dispatch.json` und weicht bei leerem Kontingent (`quota-axi`) automatisch auf den anderen Anbieter aus. Auch der First Mate selbst ist austauschbar: Session beenden, in `~/firstmate` `codex` statt `claude` starten; Backlog und Captain-Vorlieben liegen in `~/firstmate/data/` und gelten weiter.
+1. **One contact.** Talk only to your First Mate, on the laptop or via `/remote-control` on your phone. It splits work, launches workers, monitors and merges.
+2. **Pull work.** When a worker slot is free, the First Mate uses `python3 tools/stand.py --naechstes` to find the next available `agent-bereit` issue (yours first, then unassigned), and claims it with `python3 tools/aufgabe.py <number> --uebernehmen`. This assigns you and sets `in-arbeit`, locking the issue for other First Mates.
+3. **No overlap.** Every issue states its scope (files/folders). `tools/stand.py` warns if two active issues overlap or two open PRs change the same file. The First Mate pauses the later task and resolves it on the board.
+4. **Everyone sees everything.** Every First Mate runs `tools/stand.py` and `tools/board unread` each round; merges affecting others get an `@all` board post.
+5. **Queue empty?** The First Mate creates more scoped issues from `docs/case.md` (`auftrag-schneiden` skill) and announces them. The lead's First Mate (@f89pkdtkhw-lab) keeps the overall queue filled.
+6. **Claude ↔ Codex without losing progress.** Task state lives in the issue, branch, `.auftrag.md` and handover comment (`handoff` skill), never only in a session. A Codex worker can continue a Claude worker's task. The First Mate selects per `crew-dispatch.json` and switches provider when quota runs out (`quota-axi`). The First Mate itself is replaceable: end the session, start `codex` instead of `claude` in `~/firstmate`; backlog and captain preferences persist in `~/firstmate/data/`.
 
-Die Regeln dafür stehen in [tools/firstmate/captain.md](../tools/firstmate/captain.md); `bash tools/firstmate/setup.sh "Vorname"` schreibt sie in deinen FirstMate (eine alte Fassung wird vorher gesichert).
+Rules are in [tools/firstmate/captain.md](../tools/firstmate/captain.md). `bash tools/firstmate/setup.sh "First name"` writes them into your FirstMate (backing up an older version first).
 
-**Wer keinen FirstMate hat** (z. B. Windows ohne WSL), arbeitet genauso, nur von Hand: `python tools/stand.py --naechstes`, dann `python tools/aufgabe.py <Nr> --uebernehmen` und den Ordner in Claude Code oder Codex öffnen.
+**Without FirstMate** (e.g. Windows without WSL), follow the same process manually: `python tools/stand.py --naechstes`, then `python tools/aufgabe.py <number> --uebernehmen`, then open the folder in Claude Code or Codex.
 
-## Installation auf dem Mac
+## Install on Mac
 
-In dieser Reihenfolge, Befehle von oben nach unten:
+Run commands in this order:
 
 ```sh
 brew install --cask ghostty                  # Terminal
 curl -fsSL https://claude.ai/install.sh | bash
-npm install -g @openai/codex                 # oder: brew install --cask codex
+npm install -g @openai/codex                 # Or: brew install --cask codex
 brew install herdr gh jq tmux node
 npm install -g quota-axi
-brew install --cask handy                    # Diktieren, kostenlos und offline; Alternative: Wispr Flow
+brew install --cask handy                    # Free offline dictation; alternative: Wispr Flow
 ```
 
-Danach `claude` und `codex` je einmal starten und anmelden, `gh auth login` ausführen und im Team-Repo:
+Start `claude` and `codex` once each and sign in, run `gh auth login`, then in the team repository:
 
 ```sh
-bash tools/firstmate/setup.sh "Dein Vorname"
+bash tools/firstmate/setup.sh "Your first name"
 ```
 
-Das Skript prüft alle Werkzeuge, klont FirstMate nach `~/firstmate` und schreibt dort die lokalen Einstellungen: Herdr als Fensterverwaltung, unsere Modellwahl und deine Captain-Vorlieben mit Board, Besitzer-Tabelle und Merge durch den First Mate.
+The script checks all tools, clones FirstMate into `~/firstmate` and writes local settings: Herdr window management, our model selection, and your captain preferences including board, ownership and First Mate merges.
 
-## Installation unter Windows (WSL)
+## Install on Windows (WSL)
 
-FirstMate und Herdr brauchen macOS oder Linux. Unter Windows läuft beides in WSL, einem Linux direkt in Windows.
+FirstMate and Herdr require macOS or Linux. On Windows, both run in WSL, Linux inside Windows.
 
-1. PowerShell **als Administrator** öffnen, `wsl --install -d Ubuntu` ausführen und Windows neu starten. Danach Ubuntu aus dem Startmenü öffnen und einen Linux-Benutzer anlegen.
-2. In Ubuntu die Grundwerkzeuge installieren:
+1. Open PowerShell **as Administrator**, run `wsl --install -d Ubuntu`, restart Windows. Open Ubuntu from Start and create a Linux user.
+2. Install basic tools in Ubuntu:
 
    ```sh
    sudo apt update && sudo apt install -y git jq tmux python3 python3-venv nodejs npm curl
@@ -70,9 +70,9 @@ FirstMate und Herdr brauchen macOS oder Linux. Unter Windows läuft beides in WS
    curl -fsSL https://herdr.dev/install.sh | sh
    ```
 
-   Die GitHub CLI nach der [Linux-Anleitung](https://github.com/cli/cli/blob/trunk/docs/install_linux.md) installieren, dann `gh auth login`.
-3. Claude Code und Codex in Ubuntu je einmal starten und anmelden. Die Anmeldung unter Windows gilt in WSL nicht.
-4. Das Team-Repo **im Linux-Dateisystem** klonen, nicht unter `/mnt/c`, sonst sind Git und die Agenten langsam:
+   Install GitHub CLI using the [Linux instructions](https://github.com/cli/cli/blob/trunk/docs/install_linux.md), then `gh auth login`.
+3. Start Claude Code and Codex once each in Ubuntu and sign in. Windows sign-in does not carry over to WSL.
+4. Clone the team repo **inside the Linux filesystem**, not `/mnt/c`, which slows Git and agents:
 
    ```sh
    git clone https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant.git ~/tum-ai-boq-assistant
@@ -80,72 +80,72 @@ FirstMate und Herdr brauchen macOS oder Linux. Unter Windows läuft beides in WS
    bash tools/firstmate/setup.sh "Raban"
    ```
 
-Als Terminal dient Windows Terminal mit dem Ubuntu-Profil statt Ghostty. Handy oder Wispr Flow gibt es auch für Windows.
+Use Windows Terminal's Ubuntu profile instead of Ghostty. Handy and Wispr Flow are also available for Windows.
 
-## Eine Session starten
+## Start a session
 
-1. Terminal öffnen und `herdr` starten.
-2. In einem Herdr-Fenster: `cd ~/firstmate` und `claude`.
-3. Beim ersten Mal: „Füge https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant als Projekt im Modus direct-PR +yolo hinzu.“ `direct-PR` heißt, die Crew öffnet fertige Pull Requests; mit `+yolo` mergt der First Mate nach erfolgreichen lokalen Tests und grünen GitHub-Checks. Die Worker mergen nicht selbst. Ohne FirstMate gilt der Selbst-Merge aus `AGENTS.md`.
-4. Dann sagst du, was gebaut werden soll, z. B. „Arbeite alle Issues mit Label agent-bereit ab, die mir zugewiesen sind.“ Der First Mate öffnet pro Worker ein Herdr-Fenster; du kannst in jedes hineinklicken.
+1. Open a terminal and start `herdr`.
+2. In a Herdr window: `cd ~/firstmate`, then `claude`.
+3. First time: “Add https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant as a project in direct-PR +yolo mode.” `direct-PR` means the crew opens finished PRs; `+yolo` means the First Mate merges after successful local tests and green GitHub checks. Workers do not merge. Without FirstMate, use self-merge from `AGENTS.md`.
+4. State what to build, e.g. “Process all agent-bereit issues assigned to me.” The First Mate opens a Herdr window per worker; click any window to inspect it.
 
-Bleibt ein Worker an einer Rückfrage hängen, kann der First Mate sie selbst beantworten, indem er in dessen Fenster tippt. Läuft ein Abo leer, wählt er über quota-axi für neue Aufgaben den Anbieter mit Reserve.
+If a worker is waiting for clarification, the First Mate can answer in its window. When a subscription runs out, it uses quota-axi to select a provider with remaining capacity for new tasks.
 
-## Leitstelle: alles in einem Fenster
+## Control station: everything in one window
 
 ```sh
 bash tools/leitstelle.sh
 ```
 
-Öffnet ein Fenster mit drei Bereichen: links Herdr mit First Mate und allen Worker-Fenstern (dort `claude` eingeben), rechts oben `quota-axi` mit dem Restkontingent jedes Abos, rechts unten die letzten Posts vom Team-Board. Klicken wechselt den Bereich, ebenso Strg+B und eine Pfeiltaste. Strg+B, dann D schließt das Fenster, ohne etwas zu beenden; derselbe Befehl holt die Leitstelle zurück. Unter Windows startet eine Desktop-Verknüpfung `Leitstelle.cmd` das Gleiche in Ubuntu:
+Opens three panes: Herdr with First Mate and worker windows on the left (type `claude` there), `quota-axi` with subscription quotas at upper right, and recent board posts at lower right. Click to switch panes, or Ctrl+B then an arrow. Ctrl+B then D detaches without stopping anything; the same command reattaches. On Windows, a desktop shortcut `Leitstelle.cmd` opens the same view in Ubuntu:
 
 ```bat
 @echo off
 wt.exe wsl.exe -d Ubuntu --cd ~ -- bash -lc "~/tum-ai-boq-assistant/tools/leitstelle.sh"
 ```
 
-## Kommandozentrale im Browser
+## Browser command center
 
-Die Leitstelle startet nebenbei `python3 tools/dashboard.py`; unter Windows öffnet die Desktop-Verknüpfung `Dashboard.cmd` es direkt. Im Browser unter http://localhost:8770:
+The control station also starts `python3 tools/dashboard.py`; on Windows, desktop shortcut `Dashboard.cmd` opens it directly. Visit http://localhost:8770:
 
-- **First-Mate-Konsole** in Farbe mit Eingabefeld (Enter sendet) und Knöpfen für Enter, Esc, Pfeile, 1–3, y/n und Strg+C.
-- **Live-Kachel pro Worker**; wer auf dich wartet, steht gelb leuchtend ganz vorn. Klick öffnet die Konsole des Workers, dort beantwortest du Rückfragen direkt.
-- **Team-Board** mit Eingabefeld, Erwähnungen hervorgehoben; Posts ohne Präfix bekommen `[<login> · Leitstelle]`.
-- Kontingent-Ringe, Countdown bis Sonntag 11:30 (internes Ziel), Issues pro Person, PRs mit CI-Ampel.
-- **Alarme** (Glocke oben rechts): Ton und Windows-Benachrichtigung, wenn ein Agent wartet oder du erwähnt wirst.
+- **First Mate console** in color with an input field (Enter sends) and buttons for Enter, Esc, arrows, 1–3, y/n and Ctrl+C.
+- **Live tile per worker**; workers waiting for you appear first in yellow. Click to open the console and answer directly.
+- **Team board** with input and highlighted mentions; posts without a prefix receive `[<login> · Control station]`.
+- Quota rings, countdown to Sunday 11:30 (internal target), issues per person, PRs with CI status.
+- **Alarms** (bell at top right): sound and Windows notification when an agent waits or you are mentioned.
 
-Die Seite steuert echte Agenten. Sie lauscht nur auf 127.0.0.1, und jeder steuernde Aufruf braucht das Sitzungs-Token der Seite und denselben Origin.
+The page controls real agents. It listens only on 127.0.0.1; every control request requires the page's session token and matching Origin.
 
-## Vom Handy aus steuern
+## Control from your phone
 
-- **Reden:** Im First-Mate-Fenster `/remote-control` eingeben oder die Session gleich mit `claude remote-control` starten. In der Claude-App auf dem Handy unter Code erscheint die Session; dort schreibst oder diktierst du wie am Laptop. Der Laptop muss an und online bleiben.
-- **Gerufen werden:** Agenten erwähnen dich auf dem Board mit deinem GitHub-Login, wenn sie eine Entscheidung, einen Zugang oder Hilfe brauchen. Installiere die GitHub-App, aktiviere Push-Nachrichten für Erwähnungen und abonniere Issue #1. Jede Erwähnung kommt dann als Nachricht aufs Handy.
-- **Auf dem Laufenden bleiben:** Jeder fertige Merge, der andere betrifft, steht mit `@all` auf dem Board; die GitHub-App zeigt das Board als Verlauf.
+- **Talk:** enter `/remote-control` in the First Mate window or start with `claude remote-control`. Find the session in the Claude app's Code tab; type or dictate as on the laptop. The laptop must remain on and online.
+- **Get called:** agents mention your GitHub login on the board when they need a decision, access or help. Install GitHub's app, enable mention notifications and subscribe to issue #1. Every mention then reaches your phone.
+- **Stay informed:** every completed merge affecting others is announced with `@all`; the GitHub app shows board history.
 
-## Modellwahl
+## Model selection
 
-`tools/firstmate/crew-dispatch.json` wird bei der Einrichtung nach `~/firstmate/config/` kopiert. FirstMate liest die Regeln in normaler Sprache und wählt pro Aufgabe:
+Setup copies `tools/firstmate/crew-dispatch.json` to `~/firstmate/config/`. FirstMate reads the natural-language rules and selects per task:
 
-| Aufgabe | Claude | Codex | Google |
+| Task | Claude | Codex | Google |
 | --- | --- | --- | --- |
-| Kleine Änderung in ein bis zwei Dateien | haiku | gpt-6-luna | – |
-| Oberfläche, die die Jury sieht | opus | – | – |
-| Schwer oder unklar, Schnittstelle, Planung | opus | gpt-6.1-sol | – |
-| Implementierung gegen fertige Spezifikation oder Fehler mit bekannter Ursache (`modell:bugfix`) | sonnet | gpt-6.1-sol | – |
-| Recherche und Lesen | – | gpt-6.1-sol | – |
-| Doku, Pitch, Texte nach geklärtem Plan (`modell:text`) | haiku | gpt-6-luna | – |
-| Alles andere | sonnet | gpt-6.1-sol | – |
+| Small change in one or two files | haiku | gpt-6-luna | – |
+| UI visible to the jury | opus | – | – |
+| Hard or unclear, interface, planning | opus | gpt-6.1-sol | – |
+| Implementation against a finished spec or known bug cause (`modell:bugfix`) | sonnet | gpt-6.1-sol | – |
+| Research and reading | – | gpt-6.1-sol | – |
+| Documentation, pitch, text after planning (`modell:text`) | haiku | gpt-6-luna | – |
+| Everything else | sonnet | gpt-6.1-sol | – |
 
-`modell:bugfix` behält seinen Namen für spezifizierte Implementierung und bekannte Fehlerursachen. Modellnamen ändern sich oft. Vergleiche sie vor dem Wochenende mit der Modellauswahl in Claude Code und Codex und passe die Datei an. `quota-axi --tui` zeigt das Restkontingent jedes Abos live. Nach Änderungen an den Repo-Vorlagen die Einrichtung erneut ausführen, damit die Modellregeln aktualisiert werden. Bestehende Captain-Vorlieben bleiben dabei erhalten; Änderungen aus `tools/firstmate/captain.md` lässt du deinen First Mate vor dem Kickoff übernehmen.
+`modell:bugfix` retains its name for specified implementations and known bug causes. Model names change often: check Claude Code and Codex model selectors before the weekend and update the file. `quota-axi --tui` shows remaining subscription quota live. Rerun setup after changing repository templates to update model rules. Existing captain preferences remain; ask your First Mate to incorporate changes from `tools/firstmate/captain.md` before kickoff.
 
-## Wer FirstMate nutzt
+## Who uses FirstMate
 
-Empfehlung: Die beiden Mac-Nutzer richten FirstMate ein; die Windows-Laptops arbeiten direkt mit Claude Code oder Codex und `tools/aufgabe.py`. Wer unter Windows eine Crew will, nimmt den WSL-Weg oben.
+Recommendation: the two Mac users set up FirstMate; Windows laptops work directly with Claude Code or Codex and `tools/aufgabe.py`. Windows users wanting a crew use WSL as above.
 
-## Grenzen
+## Boundaries
 
-- Jede Crew arbeitet in den Ordnern ihres Menschen. Die Integrations-Crew des Leads darf einmalig die minimal nötigen Fremddateien für die Kickoff-Schnittstelle anpassen, nach Ankündigung mit `@all` und mit späterer Besitzer-Zuordnung einschließlich eigener Modul-Tests. Die Besitzer-Tabelle muss vor dem Code stehen. Danach starten die First Mates die auf dem Board angekündigten `agent-bereit`-Issues ohne weitere Bestätigung; Folge-Issues geben sie nach dem Merge der benannten Blocker frei.
-- Viele Worker auf einem GitHub-Konto teilen sich 5.000 API-Aufrufe pro Stunde. Deshalb beobachtet nur der First Mate das Board; Worker lesen es vor Commits. Sind FirstMate-Variablen (`FM_…`) gesetzt, schalten die Claude-Hooks die Warte-Schleife von selbst ab; sonst vor dem Start `export BOARD_WAIT=off` setzen.
-- Herdr, Ghostty und Homebrew-Befehle oben gelten für den Mac; unter Windows nur über WSL.
+- Each crew works in its human's folders. The lead's integration crew may once modify the minimum cross-owner files needed for the kickoff interface, announced with `@all`, with subsequent owner assignment and module tests. Establish ownership before coding. Afterwards, First Mates start announced `agent-bereit` issues without further confirmation and release follow-up issues after named blockers merge.
+- Workers on one GitHub account share 5,000 API calls per hour. Only the First Mate watches the board; workers read it before commits. With FirstMate variables (`FM_…`), Claude hooks automatically disable the wait loop; otherwise set `export BOARD_WAIT=off` before starting.
+- Herdr, Ghostty and Homebrew commands above target Mac; on Windows use WSL.
 
-Gemini CLI nimmt keine privaten Google-Konten mehr an. Das Google-Abo nutzt ihr über Antigravity in der IDE.
+Gemini CLI no longer accepts private Google accounts. Use the Google subscription through Antigravity in the IDE.

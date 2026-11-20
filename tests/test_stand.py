@@ -1,7 +1,8 @@
-"""Offline-Tests für das Lagebild tools/stand.py."""
+"""Offline tests for the tools/stand.py situation report."""
 import importlib.util
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("team_stand", ROOT / "tools" / "stand.py")
@@ -10,7 +11,7 @@ spec.loader.exec_module(stand)
 
 
 def issue(number, status, bereich, assignees=()):
-    return {"number": number, "title": f"Aufgabe {number}", "status": status,
+    return {"number": number, "title": f"Task {number}", "status": status,
             "assignees": list(assignees), "labels": [], "bereich": bereich}
 
 
@@ -41,11 +42,21 @@ class StandTests(unittest.TestCase):
         self.assertEqual(stand.next_issue(data, "Bartuan3600")["number"], 6)
         self.assertEqual(stand.next_issue(data, "Zukipany")["number"], 5)
 
+    def test_collect_reads_english_and_legacy_scopes(self):
+        items = [{"number": number, "title": "Import", "body": f"### {heading}\n\napi/app/lv/",
+                  "labels": [{"name": "in-arbeit"}], "assignees": []}
+                 for number, heading in ((3, "Scope"), (4, "Bereich"))]
+        with patch.object(stand, "gh_json", side_effect=[items, [], []]):
+            data = stand.collect()
+        self.assertEqual([item["bereich"] for item in data["issues"]],
+                         [["api/app/lv"], ["api/app/lv"]])
+        self.assertEqual(data["bereich_konflikte"][0]["issues"], [3, 4])
+
     def test_ci_state(self):
         self.assertEqual(stand.ci_state([]), "–")
-        self.assertEqual(stand.ci_state([{"conclusion": "SUCCESS"}]), "grün")
-        self.assertEqual(stand.ci_state([{"conclusion": "SUCCESS"}, {"status": "IN_PROGRESS"}]), "läuft")
-        self.assertEqual(stand.ci_state([{"conclusion": "FAILURE"}]), "rot")
+        self.assertEqual(stand.ci_state([{"conclusion": "SUCCESS"}]), "green")
+        self.assertEqual(stand.ci_state([{"conclusion": "SUCCESS"}, {"status": "IN_PROGRESS"}]), "running")
+        self.assertEqual(stand.ci_state([{"conclusion": "FAILURE"}]), "red")
 
 
 if __name__ == "__main__":

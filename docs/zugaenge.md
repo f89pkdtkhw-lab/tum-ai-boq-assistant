@@ -1,42 +1,42 @@
-# Gestellte Zugänge am Wettbewerb
+# Access provided at the competition
 
-Partner und Veranstalter stellen oft Modell-Zugänge, als Konto oder als API-Schlüssel. Es gibt zwei getrennte Verwendungen: für eure **Coding-Agenten** und für euer **Produkt**. Schlüssel gehören nie in den Chat, aufs Board, in Issues oder ins Repo; teilt sie nur über einen Passwortmanager.
+Partners and organizers often provide model access through accounts or API keys. There are two separate uses: **coding agents** and the **product**. Never put keys in chat, board posts, issues or the repository; share them only through a password manager.
 
-## Für die Coding-Agenten
+## Coding agents
 
-| Zugang | Claude Code | Codex |
+| Access | Claude Code | Codex |
 | --- | --- | --- |
-| Konto (Login) | `claude`, dann `/login` mit dem gestellten Konto | `codex`, dann „Sign in“ mit dem gestellten Konto |
-| API-Schlüssel | `export ANTHROPIC_API_KEY=…` vor dem Start | `codex login --api-key …` |
-| AWS Bedrock | `export CLAUDE_CODE_USE_BEDROCK=1` plus AWS-Zugang | – |
-| Google Vertex | `export CLAUDE_CODE_USE_VERTEX=1` plus Google-Projekt | – |
+| Account login | Start `claude`, then `/login` with the provided account | Start `codex`, then “Sign in” with the provided account |
+| API key | `export ANTHROPIC_API_KEY=…` before starting | `codex login --api-key …` |
+| AWS Bedrock | `export CLAUDE_CODE_USE_BEDROCK=1` plus AWS access | – |
+| Google Vertex | `export CLAUDE_CODE_USE_VERTEX=1` plus Google project | – |
 
-Mit einem gestellten API-Budget statt eigener Abos sieht quota-axi kein Kontingent. Dann den First Mate auf Budget stellen:
+With a provided API budget rather than personal subscriptions, quota-axi cannot see the quota. Switch the First Mate to budget mode:
 
 ```sh
-bash tools/firstmate/modus.sh budget   # günstigere Modelle, ein gemeinsames Budget, höchstens 4 Worker
-bash tools/firstmate/modus.sh abo      # zurück zu den eigenen Abos
+bash tools/firstmate/modus.sh budget   # Cheaper models, shared budget, at most 4 workers
+bash tools/firstmate/modus.sh abo      # Return to personal subscriptions
 ```
 
-## Für das Produkt
+## Product
 
 ```sh
 cp .env.example .env.local
 ```
 
-In `.env.local` den Schlüssel des gestellten Anbieters eintragen und `LLM_PROVIDER` sowie `LLM_MODEL` setzen. Ohne Eintrag nimmt das Backend den ersten Anbieter mit Schlüssel, ohne jeden Schlüssel den Mock. `python tools/setup.py` zeigt, welche Schlüssel gefunden wurden, nie ihren Wert. `http://localhost:8000/health` zeigt Anbieter und Modell, mit dem das Produkt gerade läuft.
+Enter the provider's key in `.env.local` and set `LLM_PROVIDER` and `LLM_MODEL`. Without an explicit provider, the backend selects the first provider with a key, or the mock if no key exists. `python tools/setup.py` shows which keys were found, never their values. `http://localhost:8000/health` shows the product's current provider and model.
 
-| Anbieter | Variablen |
+| Provider | Variables |
 | --- | --- |
 | Anthropic | `ANTHROPIC_API_KEY`, optional `ANTHROPIC_BASE_URL` |
-| OpenAI oder kompatibler Endpunkt | `OPENAI_API_KEY`, `LLM_MODEL`, optional `OPENAI_BASE_URL` |
+| OpenAI or compatible endpoint | `OPENAI_API_KEY`, `LLM_MODEL`, optional `OPENAI_BASE_URL` |
 | Azure OpenAI | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT` |
 | Google Gemini | `GEMINI_API_KEY` |
 
-Für ein öffentliches Deploy (Vercel oder Render, siehe `render.yaml`) tragt ihr dieselben Variablen im Dashboard des Hosters ein. Für GitHub Actions: `gh secret set NAME`.
+For a public deployment (Vercel or Render, see `render.yaml`), enter the same variables in the host's dashboard. For GitHub Actions: `gh secret set NAME`.
 
-## Budget im Blick
+## Watch the budget
 
-- Pay-per-Use-Schlüssel können in einer Stunde leer sein, wenn viele Worker Opus nutzen. Budget-Modus nutzt Haiku und Sonnet und Opus nur für die schwersten Aufgaben.
-- Tests und Demo laufen im Mock und kosten nichts. Echte Modellaufrufe nur dort, wo das Issue es verlangt.
-- Fragt am Stand des Partners nach dem Limit des Schlüssels und tragt es in `docs/case.md` ein.
+- Pay-per-use keys can run out within an hour if many workers use Opus. Budget mode uses Haiku and Sonnet, with Opus reserved for the hardest tasks.
+- Tests and the demo use the mock and cost nothing. Make real model calls only when required by the issue.
+- Ask the partner at their booth for the key's limit and record it in `docs/case.md`.

@@ -3,13 +3,13 @@ name: grilling
 description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases.
 ---
 
-<!-- Generiert aus .agents/skills/grilling/SKILL.md mit python tools/agents_sync.py. Hier nicht bearbeiten. -->
+<!-- Generated from .agents/skills/grilling/SKILL.md using python tools/agents_sync.py. Do not edit here. -->
 
 In the team kickoff, use the bounded board workflow below instead of the unbounded interview and final confirmation. Outside kickoff, follow the interview rules that follow.
 
 ## Kickoff on the team board
 
-Post at most two rounds via `tools/board post -` (stdin), starting with `[<Name> · <Agent>] @f89pkdtkhw-lab Kickoff · Runde <N>`. Number each question, phrase it so “yes” accepts the recommendation, and give a concrete recommendation and reason. End with `Ohne Antwort bis <HH:MM mit Zeitzone>: **Annahme** <Empfehlung>.` The single deadline is ten minutes after kickoff step 3 starts; round 2 never resets it. Read replies with `tools/board unread`; research facts and prepare independent work meanwhile. At the deadline, record unanswered recommendations as **Annahme** in `docs/case.md` and on the board, then proceed without final confirmation. No questions means no wait. Do not invent credentials or mandatory partner data.
+Post at most two rounds via `tools/board post -` (stdin), starting with `[<Name> · <Agent>] @f89pkdtkhw-lab Kickoff · Round <N>`. Number each question, phrase it so “yes” accepts the recommendation, and give a concrete recommendation and reason. End with `Without a reply by <HH:MM with time zone>: **Assumption** <recommendation>.` The single deadline is ten minutes after kickoff step 3 starts; round 2 never resets it. Read replies with `tools/board unread`; research facts and prepare independent work meanwhile. At the deadline, record unanswered recommendations as **Assumption** in `docs/case.md` and on the board, then proceed without final confirmation. No questions means no wait. Do not invent credentials or mandatory partner data.
 
 ## Interview outside kickoff
 

@@ -1,24 +1,24 @@
 #!/bin/sh
-# Push-Check für alle im Team und alle Coding-Agenten.
-# Aktiviert durch: python tools/setup.py
-# Nur im Notfall überspringen: git push --no-verify
+# Push check for everyone on the team and all coding agents.
+# Enabled by: python tools/setup.py
+# Skip only in an emergency: git push --no-verify
 
-# Direkte Pushes auf die gemeinsamen Branches verhindern, dort wird nur per Pull Request gemergt.
+# Prevent direct pushes to shared branches; changes arrive only through pull requests.
 while read -r local_ref local_sha remote_ref remote_sha; do
   case "$remote_ref" in
     refs/heads/main|refs/heads/demo)
-      echo "✗ Kein direkter Push auf ${remote_ref#refs/heads/}. Bitte eigenen Branch pushen und einen Pull Request öffnen." >&2
+      echo "✗ No direct push to ${remote_ref#refs/heads/}. Push your own branch and open a pull request." >&2
       exit 1
       ;;
   esac
 done
 
-# Graphify ist Pflicht für Agenten; offline Tests bleiben auch ohne Installation möglich.
+# Graphify is mandatory for agents; offline tests work without installation.
 if ! command -v graphify >/dev/null 2>&1; then
-  echo "! Graphify fehlt: python tools/setup.py ausführen; Codegraph vor der nächsten Aufgabe aktualisieren." >&2
+  echo "! Graphify missing: run python tools/setup.py; update the code graph before the next task." >&2
 fi
 
-# Erstes Python 3.11+ finden. Unter Windows kann python3 ein Store-Platzhalter sein.
+# Find the first Python 3.11+. On Windows python3 may be a Store placeholder.
 PY=""
 for candidate in python3 python py; do
   if command -v "$candidate" >/dev/null 2>&1 &&
@@ -28,12 +28,12 @@ for candidate in python3 python py; do
   fi
 done
 if [ -z "$PY" ]; then
-  echo "✗ Push-Check: kein Python 3.11 oder neuer gefunden." >&2
+  echo "✗ Push check: no Python 3.11 or newer found." >&2
   exit 1
 fi
 
 cd "$(git rev-parse --show-toplevel)" || exit 1
 if ! "$PY" -m unittest discover -s tests -q; then
-  echo "✗ Tests fehlgeschlagen, Push abgebrochen. Behebe die Fehler oben und pushe erneut." >&2
+  echo "✗ Tests failed, push aborted. Fix the errors above and push again." >&2
   exit 1
 fi

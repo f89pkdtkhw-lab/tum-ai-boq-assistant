@@ -1,7 +1,7 @@
 name: Demo-Stand
-# Die Jury-URL (Vercel-Produktion) folgt dem Branch demo. Dieser Workflow schiebt main nur dann nach demo,
-# wenn Tests und Produkt-Build auf main grün sind. Ist main rot, bleibt demo auf dem letzten grünen Stand,
-# und es gibt einen Alarm auf dem Team-Board mit @all. Wird main wieder grün, endet der Alarm.
+# The jury URL (Vercel production) follows demo. This workflow promotes main to demo only
+# when tests and product build on main pass. If main is red, demo stays on the last green revision
+# and an @all alarm is posted on the team board. The alarm closes when main is green again.
 on:
   workflow_run:
     workflows: ["Team-Checks"]
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Stand prüfen, befördern oder alarmieren
+      - name: Check revision, promote or alert
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -40,7 +40,7 @@ jobs:
           board=$(python3 -c "import json; print(json.load(open('tools/board.json'))['issue'])")
           short=${SHA:0:7}
           if [ -n "${RUN_ID:-}" ]; then
-            # Nur die Pflicht-Jobs zählen; Windows/macOS-Läufe dürfen die Demo nicht blockieren.
+            # Only required jobs count; Windows/macOS runs must not block the demo.
             failed=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select(.name=="test" or .name=="produkt") | select(.conclusion!="success")] | length')
             total=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select(.name=="test" or .name=="produkt")] | length')
           else
@@ -50,22 +50,22 @@ jobs:
           if [ "$total" -gt 0 ] && [ "$failed" -eq 0 ]; then
             git fetch -q origin demo 2>/dev/null || true
             if git rev-parse -q --verify origin/demo >/dev/null && ! git merge-base --is-ancestor origin/demo "$SHA"; then
-              echo "::warning::demo ist nicht Vorfahre von $short, keine Beförderung."; exit 0
+              echo "::warning::demo is not an ancestor of $short; skipping promotion."; exit 0
             fi
             git push origin "$SHA:refs/heads/demo"
-            echo "✓ demo steht jetzt auf $short"
+            echo "✓ demo is now at $short"
             if [ -n "$alarm" ]; then
-              gh issue close "$alarm" -R "$REPO" --comment "main ist wieder grün ($short), demo ist nachgezogen."
-              gh issue comment "$board" -R "$REPO" --body "[CI · Wächter] main ist wieder grün. Die Demo zeigt jetzt $short."
+              gh issue close "$alarm" -R "$REPO" --comment "main is green again ($short); demo updated."
+              gh issue comment "$board" -R "$REPO" --body "[CI · Watcher] main is green again. The demo now shows $short."
             fi
           else
-            echo "✗ main ist rot auf $short, demo bleibt stehen."
+            echo "✗ main is red at $short; demo stays unchanged."
             if [ -z "$alarm" ]; then
               author=$(gh api "repos/$REPO/commits/$SHA" --jq '.author.login // .commit.author.name')
               title=$(gh api "repos/$REPO/commits/$SHA" --jq '.commit.message | split("\n")[0]')
               demo=$(git rev-parse --short origin/demo 2>/dev/null || echo "–")
-              gh issue create -R "$REPO" --label main-rot --label blocker --title "main ist rot: $short" \
-                --body "Tests oder Produkt-Build sind auf main rot seit $short („$title“, @$author). Die Live-Demo bleibt auf $demo. Lauf: ${{ github.server_url }}/$REPO/actions/runs/${RUN_ID:-}"
-              gh issue comment "$board" -R "$REPO" --body "[CI · Wächter] @all main ist rot seit $short („$title“, @$author). Die Demo bleibt auf $demo. Bitte nichts weiter mergen, bis der Verursacher fixt oder revertet."
+              gh issue create -R "$REPO" --label main-rot --label blocker --title "main is red: $short" \
+                --body "Tests or product build on main have failed since $short (“$title”, @$author). The live demo stays at $demo. Run: ${{ github.server_url }}/$REPO/actions/runs/${RUN_ID:-}"
+              gh issue comment "$board" -R "$REPO" --body "[CI · Watcher] @all main is red since $short (“$title”, @$author). The demo stays at $demo. Do not merge until the author fixes or reverts it."
             fi
           fi

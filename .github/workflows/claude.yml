@@ -1,9 +1,9 @@
 name: Claude-Agent
-# Startet Claude Code in GitHub Actions, wenn jemand mit Schreibrecht
-#   - in einem Issue oder Pull Request @claude schreibt oder
-#   - einem Issue das Label "claude" gibt.
-# Einmalig einrichten (siehe docs/agenten.md): Repository-Secret CLAUDE_CODE_OAUTH_TOKEN
-# (aus `claude setup-token`) oder ANTHROPIC_API_KEY. Ohne Secret wird der Lauf übersprungen.
+# Starts Claude Code in GitHub Actions when someone with write access
+#   - writes @claude in an issue or pull request, or
+#   - adds the "claude" label to an issue.
+# One-time setup (see docs/agenten.md): repository secret CLAUDE_CODE_OAUTH_TOKEN
+# (from `claude setup-token`) or ANTHROPIC_API_KEY. Without a secret, the run is skipped.
 on:
   issue_comment:
     types: [created]
@@ -36,9 +36,9 @@ jobs:
     env:
       HAS_CREDENTIALS: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
     steps:
-      - name: Zugang prüfen
+      - name: Check credentials
         if: env.HAS_CREDENTIALS != 'true'
-        run: echo "::notice::Kein CLAUDE_CODE_OAUTH_TOKEN oder ANTHROPIC_API_KEY hinterlegt, Claude-Agent übersprungen. Einrichtung in docs/agenten.md."
+        run: echo "::notice::No CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY configured; Claude agent skipped. Setup in docs/agenten.md."
       - uses: actions/checkout@v7
         if: env.HAS_CREDENTIALS == 'true'
         with:

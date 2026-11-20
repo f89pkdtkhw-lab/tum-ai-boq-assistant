@@ -3,7 +3,7 @@ name: prototype
 description: Build a throwaway prototype to answer a design question. Use when the user wants to sanity-check whether a state model or logic feels right, or explore what a UI should look like.
 ---
 
-<!-- Generiert aus .agents/skills/prototype/SKILL.md mit python tools/agents_sync.py. Hier nicht bearbeiten. -->
+<!-- Generated from .agents/skills/prototype/SKILL.md using python tools/agents_sync.py. Do not edit here. -->
 
 # Prototype
 

@@ -1,9 +1,9 @@
-"""Startet das Produkt lokal: FastAPI-Backend auf :8000 und Next.js-Oberfläche auf :3000.
+"""Start the product locally: FastAPI backend on :8000 and Next.js UI on :3000.
 
-    python tools/dev.py            # beide starten, Strg+C beendet beide
-    python tools/dev.py --install  # vorher Abhängigkeiten installieren (pip in .venv, npm in web/)
+    python tools/dev.py            # Start both, Ctrl+C stops both
+    python tools/dev.py --install  # Install dependencies first (pip in .venv, npm in web/)
 
-Schlüssel kommen aus .env.local im Repo-Wurzelordner; ohne Schlüssel läuft das Modell im Mock.
+Keys come from .env.local in the repository root; without keys the model uses a mock.
 """
 import argparse
 import os
@@ -25,8 +25,8 @@ def install():
         made = subprocess.run([sys.executable, "-m", "venv", str(VENV)], capture_output=True, text=True)
         if made.returncode or not PY.exists():
             shutil.rmtree(VENV, ignore_errors=True)
-            sys.exit("✗ Python kann keine virtuelle Umgebung anlegen. Unter Ubuntu/WSL einmal "
-                     "`sudo apt install -y python3-venv` ausführen, dann python3 tools/dev.py erneut starten.")
+            sys.exit("✗ Python cannot create a virtual environment. On Ubuntu/WSL run "
+                     "`sudo apt install -y python3-venv` once, then rerun python3 tools/dev.py.")
     subprocess.run([str(PY), "-m", "pip", "install", "-q", "-r", str(ROOT / "api" / "requirements.txt"),
                     "-r", str(ROOT / "api" / "requirements-dev.txt")], check=True)
     subprocess.run([NPM, "ci" if (ROOT / "web" / "package-lock.json").exists() else "install", "--no-audit", "--no-fund"],
@@ -40,10 +40,10 @@ def pump(name, process, color):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--install", action="store_true", help="Abhängigkeiten installieren")
+    parser.add_argument("--install", action="store_true", help="install dependencies")
     args = parser.parse_args()
     if args.install or not PY.exists() or not (ROOT / "web" / "node_modules").exists():
-        print("Installiere Abhängigkeiten …", flush=True)
+        print("Installing dependencies …", flush=True)
         install()
     processes = [
         ("api", subprocess.Popen([str(PY), "-m", "uvicorn", "app.main:app", "--reload", "--port", "8000"], cwd=ROOT / "api",
@@ -53,7 +53,7 @@ def main():
     ]
     for name, process, color in processes:
         threading.Thread(target=pump, args=(name, process, color), daemon=True).start()
-    print("Produkt startet: Oberfläche http://localhost:3000 · Backend http://localhost:8000/health · Strg+C beendet", flush=True)
+    print("Starting product: UI http://localhost:3000 · backend http://localhost:8000/health · Ctrl+C stops it", flush=True)
     try:
         while all(process.poll() is None for _, process, _ in processes):
             time.sleep(0.5)

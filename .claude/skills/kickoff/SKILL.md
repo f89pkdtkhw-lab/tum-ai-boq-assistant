@@ -1,60 +1,60 @@
 ---
 name: kickoff
-description: Startet die Produktarbeit für Challenge A (LV-Prüfassistent) in rund 30 Minuten - Datensatz sichten, Case-Brief schärfen, Datenmodell und Schnittstelle mit Beispieldaten auf main, Besitzer-Tabelle, parallele Issues mit agent-bereit und Board-Post, sodass alle fünf Personen sofort loslegen. Nutzen, sobald jemand "Kickoff" schreibt, optional mit zusätzlichem Kontext.
+description: Start Challenge A product work (LV review assistant) in about 30 minutes: inspect the dataset, refine the case brief, put data model and interface with examples on main, confirm owners, create parallel agent-bereit issues and announce them so all five people can start. Use when someone says "Kickoff", optionally with context.
 ---
 
-<!-- Generiert aus .agents/skills/kickoff/SKILL.md mit python tools/agents_sync.py. Hier nicht bearbeiten. -->
+<!-- Generated from .agents/skills/kickoff/SKILL.md using python tools/agents_sync.py. Do not edit here. -->
 
-Du bist die Integrations-Crew von @f89pkdtkhw-lab. Der Aufruf ist der Startauftrag: Führe den Kickoff bis zu den startbereiten Issues ohne weitere Freigabe aus. Ziel: Nach rund 30 Minuten arbeiten fünf Personen auf fünf Laptops parallel an Issues, die nicht kollidieren. Starte eine Uhr und nenne bei jedem Schritt die verstrichene Zeit. Schlüssel nie ausgeben oder committen.
+You are @f89pkdtkhw-lab's integration crew. Invocation is the start instruction: complete kickoff through ready-to-start issues without further approval. Goal: after about 30 minutes, five people on five laptops work on noncolliding issues. Start a timer and report elapsed time at each step. Never display or commit keys.
 
-**Abgabe Sonntag, 22.11.2026, 12:00 (München)**, internes Ziel 11:30, Funktionsstopp 09:00.
+**Submission Sunday, 22 November 2026, 12:00 (Munich)**, internal target 11:30, feature freeze 09:00.
 
-## 1. Case und Daten erfassen (5 Minuten)
+## 1. Capture case and data (5 minutes)
 
-Lies `docs/case.md`, `docs/domaene.md` und zusätzlichen Kontext aus dem Aufruf. Sichte `data/datensatz/`: welche Dateiformate (GAEB `.x83/.x84/.d83/.p83`, `.xlsx`, `.pdf`), wie viele Positionen, gibt es Preise. Demo-LV ist `data/testfaelle/rohbau_efh/lv_rohbau_efh.pdf` mit 25 bekannten echten Befunden in `erwartung.md` (Messlatte für Trefferquote). Wähle zusätzlich ein GAEB-LV aus dem Datensatz für die Format-Breite und trage beide im Case-Brief ein. Lies dort auch den Abschnitt „Was die Partner gesagt haben“. Fehlt der Datensatz, bitte den Lead auf dem Board, ihn nach `data/datensatz/` zu legen, und arbeite mit einer kleinen selbst gebauten Nachbildung in `data/beispiel_lv.json` weiter.
+Read `docs/case.md`, `docs/domaene.md` and invocation context. Inspect `data/datensatz/`: formats (GAEB `.x83/.x84/.d83/.p83`, `.xlsx`, `.pdf`), item counts, prices. Demo LV: `data/testfaelle/rohbau_efh/lv_rohbau_efh.pdf`, with 25 known real findings in `erwartung.md` (recall benchmark). Also choose a GAEB LV from the dataset for format coverage and record both in the case brief. Read its “What partners said at the pitch evening” section. If the dataset is missing, ask the lead on the board to put it in `data/datensatz/`, and continue with a small handmade approximation in `data/beispiel_lv.json`.
 
-## 2. Demo-Szene festlegen (5 Minuten)
+## 2. Define the demo scene (5 minutes)
 
-Ein Kernablauf, den die Jury in drei Minuten live sieht: LV hochladen → strukturierte Positionen → Prüfbericht mit Findings (Fehler / Risiko / Nachtrag), Schweregrad, €-Wirkung, Klick auf eine Position zeigt Begründung und Vorschlag für eine Bieterfrage. Der überzeugende Moment: ein echter Fehler im echten LV, den ein Mensch übersehen hätte. Alles andere (EP-Vorschläge, What-if, OCR) ist später.
+One core flow the jury sees live in three minutes: upload LV → structured items → report with findings (error / risk / Nachtrag), severity, euro impact; clicking an item shows an explanation and suggested bidder question. The compelling moment: a real error in a real LV that a person might have missed. Everything else (EP suggestions, what-if, OCR) comes later.
 
-## 3. Plan ohne Lücken (höchstens 10 Minuten)
+## 3. Close planning gaps (at most 10 minutes)
 
-Schärfe `docs/case.md`. Nutze `grilling` mit der Kickoff-Ausnahme: höchstens zwei Fragerunden auf dem Board, keine zusätzliche Planfreigabe. Jede Runde folgt diesem Format (Ja übernimmt die Empfehlung):
+Refine `docs/case.md`. Use `grilling` with the kickoff exception: at most two board question rounds, no extra plan approval. Each round follows this format (yes accepts the recommendation):
 
 ```text
-[Raban · Claude] @f89pkdtkhw-lab Kickoff · Runde 1
-Q1: <Entscheidung als Ja/Nein-Frage>
-Empfehlung: <konkrete Wahl und kurzer Grund>
-Ohne Antwort bis <HH:MM mit Zeitzone>: **Annahme** <Empfehlung>.
+[Raban · Claude] @f89pkdtkhw-lab Kickoff · Round 1
+Q1: <decision as yes/no question>
+Recommendation: <specific choice and short reason>
+Without a reply by <HH:MM with time zone>: **Assumption** <recommendation>.
 ```
 
-Die Frist liegt zehn Minuten nach Beginn von Schritt 3. Übernimm bei Fristablauf die unbeantworteten Empfehlungen, markiere sie im Case-Brief als **Annahme** und poste sie auf dem Board.
+The deadline is ten minutes after step 3 starts. At the deadline, adopt unanswered recommendations, mark them as **Assumption** in the case brief and post them on the board.
 
-## 4. Schnittstelle zuerst (10 Minuten, Branch `kickoff-schnittstelle`)
+## 4. Interface first (10 minutes, branch `kickoff-schnittstelle`)
 
-Lege fest, worauf alle bauen:
+Define what everyone builds on:
 
-- `api/app/modelle.py`: Pydantic-Modelle `Position` (oz, kurztext, langtext, menge, einheit, ep, gp, typ, titel_pfad), `LV` (name, quelle, positionen, summen), `Finding` (id, oz, kategorie `fehler|risiko|nachtrag`, schwere `kritisch|hoch|mittel|niedrig`, titel, begruendung, vorschlag, quelle `regel|modell`, regel_id, euro_wirkung optional), `Pruefbericht` (lv, findings, kennzahlen)
-- `api/app/main.py`: `POST /api/lv/import` (Datei-Upload → `LV`), `POST /api/lv/pruefen` (`LV` → `Pruefbericht`), `GET /api/beispiele` (Beispiel-LVs aus `data/`), `GET /health`
-- je ein Platzhalter-Modul pro Logik-Issue mit festem Vertrag und Beispieldaten: `api/app/lv/importer.py` (`importiere(dateiname, bytes) -> LV`), `api/app/pruefung/regeln.py` (`pruefe_regeln(lv) -> list[Finding]`), `api/app/pruefung/llm_pruefung.py` (`pruefe_mit_llm(lv) -> list[Finding]`, Mock ohne Schlüssel), `api/app/risiko/scoring.py` (`bewerte(lv, findings) -> list[Finding]`), optional `api/app/kalkulation/preise.py`; `main.py` ruft sie bereits auf
-- `web/lib/api.ts`: dieselben Typen und Aufrufe
-- `data/beispiel_lv.json`: realistisches kleines LV (ca. 30 Positionen, 3 Titel) mit 5 eingebauten Fehlern; erwartete Findings in `data/beispiel_erwartung.json`
-- je eine Testdatei pro Modul, z. B. `api/tests/test_import_gaeb.py`, `api/tests/test_pruefung_regeln.py`, `api/tests/test_risiko_scoring.py`, `api/tests/test_schnittstelle.py`
+- `api/app/modelle.py`: Pydantic models `Position` (oz, kurztext, langtext, menge, einheit, ep, gp, typ, titel_pfad), `LV` (name, quelle, positionen, summen), `Finding` (id, oz, kategorie `fehler|risiko|nachtrag`, schwere `kritisch|hoch|mittel|niedrig`, titel, begruendung, vorschlag, quelle `regel|modell`, regel_id, optional euro_wirkung), `Pruefbericht` (lv, findings, kennzahlen)
+- `api/app/main.py`: `POST /api/lv/import` (file upload → `LV`), `POST /api/lv/pruefen` (`LV` → `Pruefbericht`), `GET /api/beispiele` (example LVs from `data/`), `GET /health`
+- One placeholder module per logic issue with a fixed contract and example data: `api/app/lv/importer.py` (`importiere(dateiname, bytes) -> LV`), `api/app/pruefung/regeln.py` (`pruefe_regeln(lv) -> list[Finding]`), `api/app/pruefung/llm_pruefung.py` (`pruefe_mit_llm(lv) -> list[Finding]`, mock without keys), `api/app/risiko/scoring.py` (`bewerte(lv, findings) -> list[Finding]`), optional `api/app/kalkulation/preise.py`; `main.py` already calls them
+- `web/lib/api.ts`: matching types and calls
+- `data/beispiel_lv.json`: realistic small LV (about 30 items, 3 sections) with 5 introduced errors; expected findings in `data/beispiel_erwartung.json`
+- One test file per module, e.g. `api/tests/test_import_gaeb.py`, `api/tests/test_pruefung_regeln.py`, `api/tests/test_risiko_scoring.py`, `api/tests/test_schnittstelle.py`
 
-Für diesen einmaligen PR darf die Integrations-Crew Dateien in fremden Bereichen anlegen; kündige sie vorher mit `@all` an. `cd api && python -m pytest -q`, `cd web && npm run build` und `python -m unittest discover -s tests -v` müssen grün sein. PR öffnen, bei grünen Checks mergen, mit `@all` aufs Board. Erst danach starten die Folge-Issues.
+For this one-time PR, the integration crew may create files across owner areas; announce them with `@all` beforehand. `cd api && python -m pytest -q`, `cd web && npm run build` and `python -m unittest discover -s tests -v` must pass. Open a PR, merge after green checks, post with `@all`. Only then start follow-up issues.
 
-## 5. Besitzer und Issues (5 Minuten)
+## 5. Owners and issues (5 minutes)
 
-Bestätige die Tabelle in `AGENTS.md` Abschnitt 3. Schneide mit `auftrag-schneiden` acht bis zwölf Issues: senkrechte Scheiben, jede mit einem Hauptverantwortlichen, Abnahmetest, Zielbranch `main`, genau einem Modell-Label und Zuweisung. Plane mindestens:
+Confirm `AGENTS.md` section 3 ownership. Use `auftrag-schneiden` to create eight to twelve issues: vertical slices, each with one primary owner, acceptance test, target branch `main`, exactly one model label and an assignee. Include at least:
 
-- @Anatomik5: GAEB-XML-Import (X83/X84) für das gewählte echte LV; danach Excel-Import; danach PDF-Import (Text + Tabellen, OCR nur wenn nötig)
-- @Bartuan3600: feste Prüfregeln (Rechnung, Summen, OZ, fehlende Menge/Einheit, Kurztext ≠ Langtext, Maß-/Einheitenfehler, Tippfehler, Duplikate); danach Mengenverhältnis-Regeln zwischen verwandten Positionen („400 Stühle / 50 Tische“); danach LLM-Prüfung für vage Texte, Widersprüche und veraltete Normen in Batches mit strukturiertem JSON-Output
-- @Secret-Sebi: Risiko-/Nachtragsscoring mit Signalwortkatalog und Positionstypen (Bedarf, Pauschale, Stundenlohn, Spezialgewerk); Aggregation nach Stoff/Gewerk (Beton m³, Stahl kg) und **Top-100-Ranking** nach €-Wirkung × Unsicherheit; Bieterfragen-Generator; Pitch aus Kalkulatorsicht in `pitch/`
-- @Zukipany: Upload-Seite mit Fortschritt; Prüfbericht-Dashboard (Kennzahlen, Findings-Liste mit Filter, Positionsdetail); Export als PDF/Excel
-- @f89pkdtkhw-lab: LLM-Zugriff und Kostenbremse (Batching, Caching), Deploy und Demo-Skript in `docs/demo.md`, Messung gegen `data/testfaelle/rohbau_efh/erwartung.md` (Trefferquote, Fehlalarme) in `data/vergleich.md`
+- @Anatomik5: GAEB XML import (X83/X84) for the selected real LV; then Excel import; then PDF import (text + tables, OCR only if needed)
+- @Bartuan3600: fixed rules (arithmetic, totals, OZ, missing quantity/unit, short text ≠ long text, dimensional/unit errors, typos, duplicates); then quantity ratios between related items (“400 chairs / 50 tables”); then batched LLM checks for vague text, contradictions and outdated standards with structured JSON output
+- @Secret-Sebi: risk/Nachtrag scoring with signal-word catalogue and item types (provisional, lump sum, hourly, specialist trade); aggregation by material/trade (concrete m³, steel kg) and **top-100 ranking** by euro impact × uncertainty; bidder-question generator; estimator-perspective pitch in `pitch/`
+- @Zukipany: upload page with progress; report dashboard (metrics, filtered findings, item detail); PDF/Excel export
+- @f89pkdtkhw-lab: LLM access and cost controls (batching, caching), deployment and demo script in `docs/demo.md`, evaluation against `data/testfaelle/rohbau_efh/erwartung.md` (recall, false alarms) in `data/vergleich.md`
 
-Jeder Verweis auf eine erst entstehende Datei nennt das liefernde Issue als Blocker. Nur Issues ohne offene Blocker erhalten sofort `agent-bereit`.
+Every reference to a future file names its supplying issue as a blocker. Only issues with no open blockers receive `agent-bereit` immediately.
 
-## 6. Startschuss
+## 6. Start signal
 
-Poste auf dem Board mit `@all`: den Kernablauf in einem Satz, die Issue-Nummern pro Person, offene Blocker und: „Arbeitet alle euch zugewiesenen agent-bereit-Issues ab; gebt Folge-Issues nach dem Merge ihrer Blocker frei.“ Berichte dem Lead die verstrichene Zeit und die getroffenen Annahmen.
+Post with `@all`: the core flow in one sentence, issue numbers per person, open blockers, and: “Process all agent-bereit issues assigned to you; release follow-up issues after their blockers merge.” Report elapsed time and assumptions to the lead.

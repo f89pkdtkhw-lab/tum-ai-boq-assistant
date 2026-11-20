@@ -1,16 +1,16 @@
-"""Team-Board: ein angeheftetes GitHub-Issue, über das sich alle Agenten und Menschen Arbeit übergeben.
+"""Team board: a pinned GitHub issue for handovers between all agents and people.
 
-    tools/board post "[Raban · Claude] Login fertig. @leon1ce die Route POST /api/session steht."
-    tools/board unread                    # neue Posts seit dem letzten Blick, Erwähnungen markiert
-    tools/board read -n 20                # die letzten 20 Posts
-    tools/board wait                      # blockiert, bis jemand anderes postet
-    tools/board wait --nur-erwaehnungen   # blockiert, bis dich jemand erwähnt
+    tools/board post "[Raban · Claude] Login finished. @leon1ce route POST /api/session is ready."
+    tools/board unread                    # New posts since last check, mentions marked
+    tools/board read -n 20                # Last 20 posts
+    tools/board wait                      # Block until someone else posts
+    tools/board wait --nur-erwaehnungen   # Block until someone mentions you
     tools/board whoami
 
-Unter Windows in PowerShell `python tools/board.py ...` statt `tools/board ...`.
-Braucht nur Python und die angemeldete GitHub CLI (gh). Einstellungen: BOARD_ISSUE (sonst
-tools/board.json), BOARD_REPO (sonst aus git/gh), BOARD_WAIT=off schaltet die Warte-Schleife
-für Claude-Hooks ab.
+On Windows PowerShell use `python tools/board.py ...` instead of `tools/board ...`.
+Requires only Python and an authenticated GitHub CLI (gh). Settings: BOARD_ISSUE (fallback:
+tools/board.json), BOARD_REPO (fallback: git/gh), BOARD_WAIT=off disables the wait loop
+for Claude hooks.
 """
 import argparse
 import base64
@@ -39,12 +39,12 @@ def gh(*args, stdin=None):
         done = subprocess.run(["gh", *args], capture_output=True, text=True, encoding="utf-8",
                               errors="replace", input=stdin, timeout=60)
     except FileNotFoundError:
-        raise BoardError("gh nicht gefunden. https://cli.github.com installieren, dann gh auth login.") from None
+        raise BoardError("gh not found. Install https://cli.github.com, then run gh auth login.") from None
     except subprocess.TimeoutExpired:
-        raise BoardError("gh antwortet nicht (Zeitüberschreitung).") from None
+        raise BoardError("gh did not respond (timeout).") from None
     if done.returncode:
         lines = (done.stderr or done.stdout).strip().splitlines()
-        raise BoardError(lines[-1] if lines else f"gh {' '.join(args[:2])} schlug fehl")
+        raise BoardError(lines[-1] if lines else f"gh {' '.join(args[:2])} failed")
     return done.stdout
 
 
@@ -53,7 +53,7 @@ def issue_number():
     if not value and CONFIG.is_file():
         value = json.loads(CONFIG.read_text(encoding="utf-8")).get("issue")
     if not str(value or "").isdigit():
-        raise BoardError("Kein Board-Issue eingestellt: tools/board.json oder BOARD_ISSUE setzen.")
+        raise BoardError("No board issue configured: set tools/board.json or BOARD_ISSUE.")
     return int(value)
 
 
@@ -157,7 +157,7 @@ def unread_posts(repository, issue, login):
 def cmd_post(args):
     text = sys.stdin.read().strip() if not args.text or args.text == ["-"] else " ".join(args.text).strip()
     if not PREFIX.match(text):
-        raise BoardError("Jeder Post beginnt mit [<Name> · <Agent>], z. B. [Raban · Claude] ...")
+        raise BoardError("Every post starts with [<Name> · <Agent>], e.g. [Raban · Claude] ...")
     print(gh("issue", "comment", str(issue_number()), "--repo", repo(), "--body-file", "-", stdin=text).strip())
 
 
@@ -167,7 +167,7 @@ def cmd_unread(_args):
     if posts:
         print(render(posts, login))
     else:
-        print("Keine neuen Posts.")
+        print("No new posts.")
 
 
 def cmd_read(args):
@@ -183,7 +183,7 @@ def cmd_wait(args):
             failures = 0
         except BoardError as exc:
             failures += 1
-            print(f"board: {exc} (Versuch {failures}/{MAX_FAILURES})", file=sys.stderr)
+            print(f"board: {exc} (attempt {failures}/{MAX_FAILURES})", file=sys.stderr)
             if failures >= MAX_FAILURES:
                 return 1
             posts = []
@@ -192,13 +192,13 @@ def cmd_wait(args):
             if not args.nur_erwaehnungen or any(mentions(post["body"], login) for post in posts):
                 return 0
         if args.max and time.monotonic() - started >= args.max:
-            print("Keine neuen Posts.")
+            print("No new posts.")
             return 3
         time.sleep(interval)
 
 
 def cmd_whoami(_args):
-    print(f"{me()} auf {repo()}, Board-Issue #{issue_number()}")
+    print(f"{me()} on {repo()}, board issue #{issue_number()}")
 
 
 def quiet_wait():
@@ -212,19 +212,19 @@ def cmd_hook_start(_args):
         login = me()
         unread = render(unread_posts(repo(), issue, login), login)
     except BoardError as exc:
-        print(f"Team-Board nicht erreichbar ({exc}). Später tools/board unread ausführen.")
+        print(f"Team board unreachable ({exc}). Run tools/board unread later.")
         return 0
-    print(f"Team-Board: GitHub-Issue #{issue}. Regeln in AGENTS.md, Abschnitt 2. Du postest für @{login}.")
-    print(f"Ungelesene Posts:\n{unread}" if unread else "Keine ungelesenen Posts.")
+    print(f"Team board: GitHub issue #{issue}. Rules in AGENTS.md, section 2. You post for @{login}.")
+    print(f"Unread posts:\n{unread}" if unread else "No unread posts.")
     if quiet_wait():
-        print("Board-Schleife: Dein Supervisor beobachtet das Board. Starte kein tools/board wait, "
-              "führe aber tools/board unread vor jedem Commit und nach jedem Merge aus.")
+        print("Board loop: your supervisor monitors the board. Do not start tools/board wait, "
+              "but run tools/board unread before every commit and after every merge.")
     else:
-        print("Board-Schleife: Starte jetzt EINEN Bash-Befehl im Hintergrund (run_in_background): "
-              "`tools/board wait`. Wenn er endet, enthält seine Ausgabe neue Posts. Bei ** MENTION ** "
-              "handeln und auf dem Board antworten, sonst nur die eigene Arbeit prüfen, ob sie betroffen ist; "
-              "keine reinen Bestätigungen posten. Danach `tools/board wait` erneut im Hintergrund starten. "
-              "Nie zwei Waits gleichzeitig.")
+        print("Board loop: start ONE Bash command in the background now (run_in_background): "
+              "`tools/board wait`. When it exits, its output contains new posts. On ** MENTION ** "
+              "act and reply on the board; otherwise check whether your work is affected; "
+              "do not post mere acknowledgements. Then restart `tools/board wait` in the background. "
+              "Never run two waits simultaneously.")
     return 0
 
 
@@ -235,26 +235,26 @@ def cmd_hook_prompt(_args):
     except BoardError:
         return 0
     if unread:
-        print(f"Neue Posts auf dem Team-Board (Regeln: AGENTS.md, Abschnitt 2):\n{unread}")
+        print(f"New team board posts (rules: AGENTS.md, section 2):\n{unread}")
     return 0
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
-    post = commands.add_parser("post", help="Post schreiben (Text, '-' oder kein Text für stdin)")
+    post = commands.add_parser("post", help="write a post (text, '-' or no text for stdin)")
     post.add_argument("text", nargs="*")
     post.set_defaults(run=cmd_post)
-    commands.add_parser("unread", help="neue Posts seit dem letzten Blick").set_defaults(run=cmd_unread)
-    read = commands.add_parser("read", help="letzte Posts lesen")
+    commands.add_parser("unread", help="new posts since last check").set_defaults(run=cmd_unread)
+    read = commands.add_parser("read", help="read recent posts")
     read.add_argument("-n", type=int, default=20)
     read.set_defaults(run=cmd_read)
-    wait = commands.add_parser("wait", help="warten, bis jemand anderes postet")
-    wait.add_argument("--interval", type=int, default=30, help="Sekunden zwischen zwei Abfragen (mindestens 10)")
-    wait.add_argument("--nur-erwaehnungen", action="store_true", help="erst bei einer Erwähnung zurückkehren")
-    wait.add_argument("--max", type=int, default=0, help="nach so vielen Sekunden ohne Post aufgeben")
+    wait = commands.add_parser("wait", help="wait until someone else posts")
+    wait.add_argument("--interval", type=int, default=30, help="seconds between polls (minimum 10)")
+    wait.add_argument("--nur-erwaehnungen", action="store_true", help="return only on a mention")
+    wait.add_argument("--max", type=int, default=0, help="stop after this many seconds without a post")
     wait.set_defaults(run=cmd_wait)
-    commands.add_parser("whoami", help="eigenen Login, Repo und Board zeigen").set_defaults(run=cmd_whoami)
+    commands.add_parser("whoami", help="show your login, repository and board").set_defaults(run=cmd_whoami)
     commands.add_parser("hook-start", help=argparse.SUPPRESS).set_defaults(run=cmd_hook_start)
     commands.add_parser("hook-prompt", help=argparse.SUPPRESS).set_defaults(run=cmd_hook_prompt)
     args = parser.parse_args(argv)
