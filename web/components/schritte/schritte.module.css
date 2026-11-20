@@ -1,0 +1,34 @@
+/* Step reports page. Tokens from globals.css, same look as the export page. */
+.seite {
+  max-width: 880px; margin: 0 auto; display: grid; gap: 16px; color: var(--ink);
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(64px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.seite :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.kopf { display: grid; gap: 6px; }
+.kopf h1 { margin: 0; font-size: 34px; letter-spacing: -.025em; }
+.zurueck { color: var(--accent); text-decoration: none; font-size: 17px; min-height: 44px; display: inline-flex; align-items: center; }
+.muted { color: var(--muted); margin: 0; }
+.karte {
+  background: var(--card); border-radius: 20px; padding: 20px 24px; display: grid; gap: 10px; min-width: 0;
+  box-shadow: 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow);
+}
+.karte h2 { margin: 0; font-size: 20px; letter-spacing: -.01em; }
+.karte p { margin: 0; overflow-wrap: anywhere; }
+.liste { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.zeile { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.aktionen { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.knopf, .knopfZweit {
+  font: inherit; font-size: 15px; font-weight: 600; min-height: 44px; padding: 0 20px; border-radius: 999px; border: 0; cursor: pointer;
+}
+.knopf { background: var(--button); color: var(--button-ink); }
+.knopfZweit { background: var(--fill); color: var(--ink); }
+.knopf:disabled, .knopfZweit:disabled { opacity: .5; cursor: default; }
+.fehler { color: var(--bad); font-weight: 500; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.badge { font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid currentColor; color: var(--muted); }
+.mock { color: var(--warn); }
+.freigabe { color: var(--bad); }
+.schaetzung { font-size: 20px; }
+.details { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; font-size: 15px; }
+.details dt { color: var(--muted); }
+.details dd { margin: 0; overflow-wrap: anywhere; }
