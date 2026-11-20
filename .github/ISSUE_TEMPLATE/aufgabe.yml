@@ -1,0 +1,59 @@
+name: Teamaufgabe
+description: Eine übernehmbare Aufgabe mit prüfbarem Ergebnis, für Menschen und Coding-Agenten
+title: "Aufgabe · "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mit `python tools/aufgabe.py <Nr>` entsteht daraus ein eigener Branch, ein Worktree und ein Auftrag für Claude Code, Codex oder Antigravity. Sind Bereich, Abnahmetest und Zielbranch vollständig, setzt das Label `agent-bereit`.
+  - type: input
+    id: owner
+    attributes:
+      label: Verantwortliche Person
+      placeholder: GitHub-Name
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Ergebnis und Abnahmetest
+      description: Mit welcher Eingabe zeigt was welches überprüfbare Ergebnis?
+      placeholder: "Für 5 Personen im Offline-Modus zeigt die Oberfläche Isar mit 6 Plätzen."
+    validations:
+      required: true
+  - type: input
+    id: area
+    attributes:
+      label: Bereich
+      description: Dateien oder Ordner, die dieser Auftrag ändern darf. Zwei offene Aufträge teilen sich keine Datei.
+      placeholder: "api/app/pruefung/regeln.py, api/tests/test_regeln.py"
+    validations:
+      required: true
+  - type: dropdown
+    id: base
+    attributes:
+      label: Zielbranch
+      options:
+        - main
+    validations:
+      required: true
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Werkzeug
+      options:
+        - egal
+        - Claude Code
+        - Codex
+        - Antigravity
+        - Jules
+        - von Hand
+    validations:
+      required: false
+  - type: textarea
+    id: interface
+    attributes:
+      label: Schnittstellen und Abhängigkeiten
+      description: Geteilte Felder oder Formate, die sich ändern, und Issues, auf die dieser Auftrag wartet.
+    validations:
+      required: false

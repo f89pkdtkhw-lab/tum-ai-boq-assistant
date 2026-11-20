@@ -1,0 +1,13 @@
+# Gleiche Zeilenenden auf Windows, macOS und Linux, egal welcher Agent schreibt.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+
+# Originaldaten unverändert lassen (GAEB 90 braucht CRLF und CP850)
+data/datensatz/** -text

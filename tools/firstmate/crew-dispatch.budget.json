@@ -1,0 +1,59 @@
+{
+  "shared_quota": true,
+  "rules": [
+    {
+      "when": "The issue has the label modell:text, or the task writes docs, pitch scripts, or copy against an agreed plan. Unclear product decisions still use modell:schwer.",
+      "use": [
+        {
+          "harness": "claude",
+          "model": "haiku"
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "why": "Use a cheap model for specified writing tasks."
+    },
+    {
+      "when": "The issue has the label modell:klein, or the task is a small, fully specified change in one or two files with a direct pass/fail check.",
+      "use": [
+        {
+          "harness": "claude",
+          "model": "haiku"
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "why": "Pay-per-use budget: cheapest model for easy work."
+    },
+    {
+      "when": "The issue has the label modell:ui, or the task is user-facing UI that the judges see in the demo, or the shared API contract.",
+      "use": {
+        "harness": "claude",
+        "model": "sonnet"
+      },
+      "why": "Good quality at a fraction of the strongest model's price."
+    },
+    {
+      "when": "The issue has the label modell:schwer, or the task is hard or unclear: architecture, a risky multi-file change, or planning.",
+      "use": {
+        "harness": "claude",
+        "model": "opus"
+      },
+      "why": "Only the hardest work gets the most expensive model."
+    }
+  ],
+  "default": [
+    {
+      "harness": "claude",
+      "model": "sonnet"
+    },
+    {
+      "harness": "codex",
+      "model": "gpt-6.1-sol"
+    }
+  ]
+}

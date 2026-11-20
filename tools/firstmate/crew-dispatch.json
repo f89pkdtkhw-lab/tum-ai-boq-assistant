@@ -1,0 +1,88 @@
+{
+  "rules": [
+    {
+      "when": "The issue has the label modell:text, or the task writes docs, pitch scripts, or copy against an agreed plan. Unclear product decisions still use modell:schwer.",
+      "use": [
+        {
+          "harness": "claude",
+          "model": "haiku"
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "why": "Use a cheap model for specified writing tasks."
+    },
+    {
+      "when": "The issue has the label modell:klein, or the task is a small, fully specified change in one or two files with a direct pass/fail check.",
+      "use": [
+        {
+          "harness": "claude",
+          "model": "haiku"
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "why": "Cheapest fast model for easy work."
+    },
+    {
+      "when": "The issue has the label modell:ui, or the task is user-facing UI: screens, components, layout, styling, or animation that the judges see in the demo.",
+      "use": {
+        "harness": "claude",
+        "model": "opus"
+      },
+      "why": "The UI is what people see in the demo, so it gets the strongest model."
+    },
+    {
+      "when": "The issue has the label modell:schwer, or the task is hard or unclear: architecture, a risky multi-file change, the shared API contract, or planning.",
+      "use": [
+        {
+          "harness": "claude",
+          "model": "opus"
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol"
+        }
+      ],
+      "why": "Unclear work needs the most reasoning. The list lets firstmate use whichever plan has quota left."
+    },
+    {
+      "when": "The issue has the label modell:bugfix, or the task is a bug fix with a known cause, or code against an existing spec or failing test.",
+      "use": [
+        {
+          "harness": "claude",
+          "model": "sonnet"
+        },
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol"
+        }
+      ],
+      "why": "Once the problem is clear, a mid-tier model is enough."
+    },
+    {
+      "when": "The issue has the label modell:recherche, or the task is research or reading only: partner briefings, API or library docs, datasets, or past hackathon winners, with a written report as the result.",
+      "use": [
+        {
+          "harness": "codex",
+          "model": "gpt-6.1-sol"
+        }
+      ],
+      "why": "Reading-heavy scout work goes to Codex and keeps Claude quota for UI and hard code."
+    }
+  ],
+  "default": [
+    {
+      "harness": "claude",
+      "model": "sonnet"
+    },
+    {
+      "harness": "codex",
+      "model": "gpt-6.1-sol"
+    }
+  ]
+}

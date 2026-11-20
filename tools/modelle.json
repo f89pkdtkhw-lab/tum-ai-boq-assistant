@@ -1,0 +1,12 @@
+{
+  "hinweis": "Modellklasse pro Auftrag. Das Label modell:<klasse> am Issue wählt die Zeile; ohne Label gilt standard. Modellnamen vor dem Wettbewerb mit /model in Claude Code und Codex abgleichen.",
+  "klassen": {
+    "klein":     { "beschreibung": "Kleine, klar beschriebene Änderung in ein bis zwei Dateien", "claude": "haiku",  "codex": "gpt-6-luna" },
+    "ui":        { "beschreibung": "Oberfläche, die die Jury in der Demo sieht",                  "claude": "opus",   "codex": null },
+    "schwer":    { "beschreibung": "Schwer oder unklar: Architektur, Schnittstelle, Planung",     "claude": "opus",   "codex": "gpt-6.1-sol" },
+    "bugfix":    { "beschreibung": "Fehler mit bekannter Ursache oder Code gegen fertige Spezifikation", "claude": "sonnet", "codex": "gpt-6.1-sol" },
+    "recherche": { "beschreibung": "Nur lesen und berichten: Dokus, Daten, Partner-Material",     "claude": "sonnet", "codex": "gpt-6.1-sol" },
+    "text":      { "beschreibung": "Doku, Pitch, Texte nach geklärtem Plan",                       "claude": "haiku",  "codex": "gpt-6-luna" },
+    "standard":  { "beschreibung": "Alles andere",                                               "claude": "sonnet", "codex": "gpt-6.1-sol" }
+  }
+}

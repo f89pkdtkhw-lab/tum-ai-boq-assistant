@@ -1,0 +1,34 @@
+#!/bin/sh
+# Push-Check für alle im Team und alle Coding-Agenten.
+# Aktiviert durch: python tools/setup.py
+# Nur im Notfall überspringen: git push --no-verify
+
+# Direkte Pushes auf die gemeinsamen Branches verhindern, dort wird nur per Pull Request gemergt.
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/demo)
+      echo "✗ Kein direkter Push auf ${remote_ref#refs/heads/}. Bitte eigenen Branch pushen und einen Pull Request öffnen." >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Erstes Python 3.11+ finden. Unter Windows kann python3 ein Store-Platzhalter sein.
+PY=""
+for candidate in python3 python py; do
+  if command -v "$candidate" >/dev/null 2>&1 &&
+     "$candidate" -c "import sys; sys.exit(sys.version_info < (3, 11))" >/dev/null 2>&1; then
+    PY="$candidate"
+    break
+  fi
+done
+if [ -z "$PY" ]; then
+  echo "✗ Push-Check: kein Python 3.11 oder neuer gefunden." >&2
+  exit 1
+fi
+
+cd "$(git rev-parse --show-toplevel)" || exit 1
+if ! "$PY" -m unittest discover -s tests -q; then
+  echo "✗ Tests fehlgeschlagen, Push abgebrochen. Behebe die Fehler oben und pushe erneut." >&2
+  exit 1
+fi

@@ -1,0 +1,71 @@
+name: Demo-Stand
+# Die Jury-URL (Vercel-Produktion) folgt dem Branch demo. Dieser Workflow schiebt main nur dann nach demo,
+# wenn Tests und Produkt-Build auf main grün sind. Ist main rot, bleibt demo auf dem letzten grünen Stand,
+# und es gibt einen Alarm auf dem Team-Board mit @all. Wird main wieder grün, endet der Alarm.
+on:
+  workflow_run:
+    workflows: ["Team-Checks"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  actions: read
+
+concurrency:
+  group: demo-stand
+  cancel-in-progress: false
+
+jobs:
+  befoerdern:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Stand prüfen, befördern oder alarmieren
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          board=$(python3 -c "import json; print(json.load(open('tools/board.json'))['issue'])")
+          short=${SHA:0:7}
+          if [ -n "${RUN_ID:-}" ]; then
+            # Nur die Pflicht-Jobs zählen; Windows/macOS-Läufe dürfen die Demo nicht blockieren.
+            failed=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select(.name=="test" or .name=="produkt") | select(.conclusion!="success")] | length')
+            total=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select(.name=="test" or .name=="produkt")] | length')
+          else
+            failed=0; total=1
+          fi
+          alarm=$(gh issue list -R "$REPO" --label main-rot --state open --json number --jq '.[0].number // empty')
+          if [ "$total" -gt 0 ] && [ "$failed" -eq 0 ]; then
+            git fetch -q origin demo 2>/dev/null || true
+            if git rev-parse -q --verify origin/demo >/dev/null && ! git merge-base --is-ancestor origin/demo "$SHA"; then
+              echo "::warning::demo ist nicht Vorfahre von $short, keine Beförderung."; exit 0
+            fi
+            git push origin "$SHA:refs/heads/demo"
+            echo "✓ demo steht jetzt auf $short"
+            if [ -n "$alarm" ]; then
+              gh issue close "$alarm" -R "$REPO" --comment "main ist wieder grün ($short), demo ist nachgezogen."
+              gh issue comment "$board" -R "$REPO" --body "[CI · Wächter] main ist wieder grün. Die Demo zeigt jetzt $short."
+            fi
+          else
+            echo "✗ main ist rot auf $short, demo bleibt stehen."
+            if [ -z "$alarm" ]; then
+              author=$(gh api "repos/$REPO/commits/$SHA" --jq '.author.login // .commit.author.name')
+              title=$(gh api "repos/$REPO/commits/$SHA" --jq '.commit.message | split("\n")[0]')
+              demo=$(git rev-parse --short origin/demo 2>/dev/null || echo "–")
+              gh issue create -R "$REPO" --label main-rot --label blocker --title "main ist rot: $short" \
+                --body "Tests oder Produkt-Build sind auf main rot seit $short („$title“, @$author). Die Live-Demo bleibt auf $demo. Lauf: ${{ github.server_url }}/$REPO/actions/runs/${RUN_ID:-}"
+              gh issue comment "$board" -R "$REPO" --body "[CI · Wächter] @all main ist rot seit $short („$title“, @$author). Die Demo bleibt auf $demo. Bitte nichts weiter mergen, bis der Verursacher fixt oder revertet."
+            fi
+          fi
