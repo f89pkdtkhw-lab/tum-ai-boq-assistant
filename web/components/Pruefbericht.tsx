@@ -42,7 +42,8 @@ const euro = new Intl.NumberFormat("en-GB", { style: "currency", currency: "EUR"
 const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 3 });
 
 function istMock(finding: Finding) {
-  return finding.regel_id === MOCK_REGEL;
+  // Contract (api/app/pruefung/llm_pruefung.py): every model-mock rule ID starts with MOCK_.
+  return finding.regel_id.startsWith("MOCK_");
 }
 
 function kategorieName(wert: Kategorie) {
