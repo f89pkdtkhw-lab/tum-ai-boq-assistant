@@ -160,7 +160,7 @@ def prepare(number, base_override=None, here=False):
 
 def claim(number, branch, tool):
     login = run("gh", "api", "user", "--jq", ".login")
-    run("gh", "issue", "edit", str(number), "--add-assignee", "@me")
+    run("gh", "issue", "edit", str(number), "--add-assignee", "@me", "--add-label", "in-arbeit")
     run("gh", "issue", "comment", str(number), "--body",
         f"Übernommen von @{login} mit {tool} auf Branch `{branch}`.")
     board = subprocess.run([sys.executable, str(ROOT / "tools" / "board.py"), "post",
