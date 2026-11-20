@@ -168,3 +168,45 @@
 @media (prefers-reduced-motion: reduce) {
   .bericht * { scroll-behavior: auto; }
 }
+
+/* Liquid Glass surfaces (Apple HIG), matching the upload page. Tokens come from globals.css. */
+.kachel, .karte, .positionen, .detail {
+  background: var(--glass, var(--pb-card));
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-edge, var(--pb-line));
+  box-shadow: inset 0 1px 0 var(--glass-light, transparent), 0 0 0 .5px var(--glass-line, transparent), 0 8px 24px -14px var(--shadow, transparent);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .kachel, .karte, .positionen, .detail { background: var(--pb-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+.kachel { border-radius: 20px; padding: 16px; }
+.karte { border-radius: 18px; padding: 14px 16px; transition: transform .12s ease; }
+.karte:hover { border-color: var(--glass-edge, var(--pb-line)); background: var(--fill-strong, var(--pb-soft)); }
+.karte:active { transform: scale(.99); }
+.karteGewaehlt, .karteGewaehlt:hover { border-color: var(--pb-accent); box-shadow: 0 0 0 2px var(--pb-accent); }
+.positionen, .detail { border-radius: 22px; }
+.detail { padding: 20px; top: 84px; }
+.befund, .werte div { border: 0; background: var(--fill, var(--pb-soft)); border-radius: 14px; }
+.leer { border: 0; border-radius: 18px; background: var(--fill, transparent); }
+
+.knopf, .knopfZweit { border-radius: 999px; min-height: 44px; padding: 0 20px; border: 0; transition: transform .12s ease, opacity .12s ease; }
+.knopf { background: var(--button, var(--pb-accent)); color: var(--button-ink, #fff); }
+.knopfZweit { background: var(--fill, var(--pb-card)); }
+.knopf:hover { filter: none; opacity: .86; }
+.knopfZweit:hover { background: var(--fill-strong, var(--pb-card)); }
+.knopf:active, .knopfZweit:active { transform: scale(.97); }
+
+.chip { border: 0; background: var(--fill, var(--pb-card)); min-height: 36px; }
+.chip:hover { background: var(--fill-strong, var(--pb-card)); }
+.chipAktiv, .chipAktiv:hover { background: var(--button, var(--pb-accent)); color: var(--button-ink, #fff); }
+.chipAktiv .anzahl { color: inherit; opacity: .7; }
+.schliessen { border: 0; border-radius: 50%; background: var(--fill, transparent); width: 32px; height: 32px; font-size: 20px; }
+
+.schwere, .marke { border-color: transparent; }
+.marke { background: var(--fill, transparent); }
+.schwere_hoch { background: var(--pb-warn); color: var(--pb-warn); }
+.schwere_mittel { background: #ffcc00; color: #ffcc00; }
+.schwere.schwere_mittel { color: #000; }
+.schwere_niedrig { background: #8e8e93; color: #8e8e93; }
+.tabelle th, .tabelle td { border-bottom-width: .5px; }
