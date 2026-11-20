@@ -3,7 +3,7 @@
 import { type ChangeEvent, useEffect, useState } from "react";
 import type { Pruefbericht } from "@/lib/api";
 import { PRUEFBERICHT_SPEICHER_SCHLUESSEL } from "@/components/Pruefbericht";
-import { dateiname, istMock, leseBericht, xlsx } from "@/lib/export";
+import { dateiname, istMock, leseBericht, tabellen, xlsx } from "@/lib/export";
 import styles from "./export.module.css";
 
 const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 3 });
@@ -11,6 +11,25 @@ const euro = new Intl.NumberFormat("en-GB", { style: "currency", currency: "EUR"
 const KATEGORIE: Record<string, string> = { fehler: "Error", risiko: "Risk", nachtrag: "Change order" };
 
 const SEVERITY_LABELS: Record<string, string> = { kritisch: "Critical", hoch: "High", mittel: "Medium", niedrig: "Low" };
+
+/** Renders an export sheet (header row + rows) so print and XLSX show the same columns. */
+function Blatt({ zeilen, leer }: { zeilen: (string | number | null)[][]; leer: string }) {
+  const [kopf, ...rest] = zeilen;
+  if (rest.length === 0) return <p className={styles.quelle}>{leer}</p>;
+  const zahlen = kopf.map((_, c) => rest.some((z) => typeof z[c] === "number"));
+  return (
+    <div className={styles.rahmen}>
+      <table className={styles.tabelle}>
+        <thead><tr>{kopf.map((k, c) => <th key={c} className={zahlen[c] ? styles.rechts : undefined}>{k}</th>)}</tr></thead>
+        <tbody>
+          {rest.map((z, r) => (
+            <tr key={r}>{z.map((w, c) => <td key={c} className={zahlen[c] ? styles.rechts : c === 0 && kopf[0] === "OZ" ? styles.oz : undefined}>{typeof w === "number" ? zahl.format(w) : w}</td>)}</tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 type Zustand = { phase: "laedt" } | { phase: "leer"; fehler: string } | { phase: "bereit"; bericht: Pruefbericht; quelle: string };
 
@@ -67,6 +86,7 @@ export function Export() {
   const { bericht } = zustand;
   const { lv, findings, kennzahlen } = bericht;
   const mock = kennzahlen.modell_mock || findings.some(istMock);
+  const blaetter = Object.fromEntries(tabellen(bericht).map((b) => [b.name, b.zeilen]));
 
   return (
     <main className={styles.seite}>
@@ -118,6 +138,12 @@ export function Export() {
             </table>
           </div>
         )}
+
+        <h2>Quantity totals</h2>
+        <Blatt zeilen={blaetter["Quantities"]} leer="No quantities to total." />
+
+        <h2>Bidder questions</h2>
+        <Blatt zeilen={blaetter["Bidder questions"]} leer="No bidder questions." />
 
         <h2>Items</h2>
         <div className={styles.rahmen}>
