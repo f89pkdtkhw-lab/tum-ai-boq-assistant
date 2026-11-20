@@ -8,8 +8,12 @@ Auswahl über Umgebungsvariablen (siehe .env.example):
 Schlüssel verlassen nie den Server und tauchen in keiner Fehlermeldung auf.
 """
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
+import hashlib
+import json
 import os
 import time
+from threading import RLock
 
 import httpx
 
@@ -137,3 +141,184 @@ def _mock(prompt, system, chosen, max_tokens):
 def mock(prompt, system="", max_tokens=1024):
     """Expliziter Offline-Aufruf, unabhängig von Schlüsseln und Provider-Konfiguration."""
     return Answer(_mock(prompt, system, DEFAULT_MODELS["mock"], max_tokens), "mock", DEFAULT_MODELS["mock"], 0)
+
+
+@dataclass(frozen=True)
+class JsonRequest:
+    """One domain task with JSON input and an explicitly synthetic object fixture."""
+
+    task: str
+    input: dict
+    mock_response: dict
+
+
+@dataclass(frozen=True)
+class StructuredAnswer:
+    data: dict
+    source: str
+    input_hash: str
+    cached: bool
+
+
+class BudgetExceeded(LLMError):
+    """The run has insufficient budget; no simulator call was made."""
+
+
+def _json_object(value):
+    """Canonicalize a JSON object without coercing non-string object keys."""
+    def check(item):
+        if isinstance(item, dict):
+            if any(not isinstance(key, str) for key in item):
+                raise ValueError
+            for child in item.values():
+                check(child)
+        elif isinstance(item, list):
+            for child in item:
+                check(child)
+        elif item is not None and type(item) not in (str, int, float, bool):
+            raise ValueError
+
+    if not isinstance(value, dict):
+        raise ValueError
+    check(value)
+    return json.dumps(value, sort_keys=True, ensure_ascii=False,
+                      separators=(",", ":"), allow_nan=False)
+
+
+class StructuredRun:
+    """Offline JSON calls with a private, run-local cache.
+
+    The optional simulator accepts (payloads, max_output_tokens) and returns one
+    JSON object (or JSON object string) per payload. It is a synchronous test
+    seam, never a legacy live adapter. One run belongs to one analysis; reuse it
+    across steps to share cache and budget. Domain schema validation belongs to
+    the caller. No confidential inputs are persisted.
+    """
+
+    def __init__(self, *, max_tokens=None, max_cost=None, batch_size=None,
+                 simulator=None, cost_per_token=0):
+        self.max_tokens = self._integer(
+            max_tokens if max_tokens is not None else os.environ.get("LLM_RUN_MAX_TOKENS", "100000"),
+            "LLM_RUN_MAX_TOKENS", minimum=0,
+        )
+        self.batch_size = self._integer(
+            batch_size if batch_size is not None else os.environ.get("LLM_BATCH_SIZE", "20"),
+            "LLM_BATCH_SIZE", minimum=1,
+        )
+        self.max_cost = self._decimal(
+            max_cost if max_cost is not None else os.environ.get("LLM_RUN_MAX_COST", "0"),
+            "LLM_RUN_MAX_COST",
+        )
+        self.cost_per_token = self._decimal(cost_per_token, "cost_per_token")
+        self.simulator = simulator
+        self._cache = {}
+        self._reserved_tokens = 0
+        self._reserved_cost = Decimal(0)
+        self._lock = RLock()
+
+    @staticmethod
+    def _integer(value, name, *, minimum):
+        try:
+            if isinstance(value, bool) or not isinstance(value, (str, int)):
+                raise ValueError
+            parsed = int(value)
+            if parsed < minimum:
+                raise ValueError
+        except (ValueError, TypeError, OverflowError):
+            raise LLMError(f"Invalid {name}; expected an integer >= {minimum}.") from None
+        return parsed
+
+    @staticmethod
+    def _decimal(value, name):
+        try:
+            parsed = Decimal(str(value))
+            if not parsed.is_finite() or parsed < 0:
+                raise ValueError
+        except (InvalidOperation, ValueError, TypeError):
+            raise LLMError(f"Invalid {name}; expected a finite nonnegative amount.") from None
+        return parsed
+
+    @property
+    def reserved_tokens(self):
+        return self._reserved_tokens
+
+    @property
+    def reserved_cost(self):
+        return self._reserved_cost
+
+    def complete_batch(self, requests, max_output_tokens=1024):
+        """Return ordered answers, or raise LLMError on invalid input/output/budget.
+
+        Input UTF-8 bytes plus max_output_tokens per unique request are reserved
+        before each batch, including failed calls. Output is conservatively
+        limited to that many canonical JSON UTF-8 bytes. These are bounds for
+        offline simulation, not a provider tokenizer or a live billing quote.
+        Earlier successful batches stay cached if a later batch fails. Cache
+        hits are free. Calls on a shared run are serialized to protect its cap.
+        """
+        with self._lock:
+            return self._complete_batch(requests, max_output_tokens)
+
+    def _complete_batch(self, requests, max_output_tokens):
+        max_output_tokens = self._integer(max_output_tokens, "max_output_tokens", minimum=1)
+        prepared = []
+        pending = {}
+        try:
+            for request in requests:
+                if (not isinstance(request, JsonRequest) or not isinstance(request.task, str)
+                        or not request.task.strip()):
+                    raise ValueError
+                payload = _json_object({"task": request.task, "input": request.input})
+                if not isinstance(request.input, dict):
+                    raise ValueError
+                fixture = _json_object(request.mock_response)
+                identity = _json_object({"payload": json.loads(payload), "fixture": json.loads(fixture),
+                                         "max_output_tokens": max_output_tokens})
+                key = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+                prepared.append(key)
+                if key not in self._cache:
+                    pending[key] = (payload, fixture)
+        except (TypeError, ValueError, OverflowError, RecursionError):
+            raise LLMError("Invalid structured JSON request.") from None
+
+        fresh = set()
+        items = list(pending.items())
+        for start in range(0, len(items), self.batch_size):
+            batch = items[start:start + self.batch_size]
+            tokens = sum(len(payload.encode("utf-8")) + max_output_tokens
+                         for _, (payload, _) in batch)
+            cost = self.cost_per_token * tokens
+            if (self._reserved_tokens + tokens > self.max_tokens
+                    or self._reserved_cost + cost > self.max_cost):
+                raise BudgetExceeded("LLM run budget exhausted; reduce input or start an approved run.")
+            self._reserved_tokens += tokens
+            self._reserved_cost += cost
+            try:
+                payloads = [json.loads(payload) for _, (payload, _) in batch]
+                replies = (self.simulator(payloads, max_output_tokens) if self.simulator is not None
+                           else [json.loads(fixture) for _, (_, fixture) in batch])
+            except Exception:
+                raise LLMError("Offline simulator failed; no retry was attempted.") from None
+            try:
+                if not isinstance(replies, list) or len(replies) != len(batch):
+                    raise ValueError
+                validated = {}
+                for (key, _), reply in zip(batch, replies):
+                    if isinstance(reply, str):
+                        reply = json.loads(reply)
+                    encoded = _json_object(reply)
+                    if len(encoded.encode("utf-8")) > max_output_tokens:
+                        raise ValueError
+                    validated[key] = encoded
+            except (TypeError, ValueError, OverflowError, RecursionError):
+                raise LLMError("Invalid structured JSON response or output limit exceeded.") from None
+            self._cache.update(validated)
+            fresh.update(validated)
+
+        answers = []
+        for key in prepared:
+            answers.append(StructuredAnswer(
+                json.loads(self._cache[key]), "model_mock", key, key not in fresh,
+            ))
+            fresh.discard(key)
+        return answers
