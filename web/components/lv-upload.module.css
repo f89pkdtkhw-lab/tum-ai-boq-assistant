@@ -1,0 +1,104 @@
+.seite {
+  --up-ink: var(--ink, #11162a);
+  --up-muted: var(--muted, #5b6478);
+  --up-line: var(--line, #e1e5ef);
+  --up-card: var(--card, #ffffff);
+  --up-accent: var(--accent, #4f46e5);
+  --up-bad: var(--bad, #dc2626);
+  --up-warn: var(--warn, #d97706);
+  --up-good: var(--good, #059669);
+  max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; display: grid; gap: 20px; color: var(--up-ink);
+}
+.seite :focus-visible { outline: 3px solid var(--up-accent); outline-offset: 2px; }
+
+.kopf { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.marke { font-weight: 700; letter-spacing: .02em; }
+.status { font: 12px ui-monospace, Menlo, monospace; padding: 4px 10px; border-radius: 999px; border: 1px solid currentColor; }
+.statusWartet { color: var(--up-muted); }
+.statusLive { color: var(--up-good); }
+.statusMock { color: var(--up-warn); }
+.statusOffline { color: var(--up-bad); }
+
+.einleitung { padding: 24px 0 4px; }
+.kicker { margin: 0 0 8px; color: var(--up-accent); font-weight: 600; font-size: 14px; }
+.titel { margin: 0 0 12px; font-size: clamp(28px, 4.6vw, 46px); line-height: 1.08; letter-spacing: -.03em; max-width: 22ch; }
+.lead { margin: 0; color: var(--up-muted); font-size: 18px; max-width: 62ch; }
+
+.karte { background: var(--up-card); border: 1px solid var(--up-line); border-radius: 16px; padding: 20px; display: grid; gap: 12px; }
+.abschnitt { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+
+.ablage {
+  position: relative; display: grid; gap: 4px; justify-items: center; text-align: center; cursor: pointer;
+  padding: 28px 16px; border-radius: 14px; border: 2px dashed var(--up-line);
+  background: color-mix(in srgb, var(--up-accent) 4%, transparent); transition: border-color .15s, background .15s;
+}
+.ablage:hover, .ablageAktiv { border-color: var(--up-accent); background: color-mix(in srgb, var(--up-accent) 10%, transparent); }
+.ablage:focus-within { outline: 3px solid var(--up-accent); outline-offset: 2px; }
+.ablageGesperrt { cursor: wait; opacity: .7; }
+.dateiEingabe { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: inherit; }
+.dateiEingabe:focus-visible { outline: none; }
+.ablageTitel { font-weight: 700; font-size: 17px; overflow-wrap: anywhere; }
+.ablageText { color: var(--up-muted); font-size: 14px; }
+
+.regeln { margin: 0; color: var(--up-muted); font-size: 14px; }
+.dateiFehler { margin: 0; color: var(--up-bad); font-weight: 600; }
+
+.aktionen { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.knopf, .knopfZweit, .knopfLeise {
+  font: inherit; font-weight: 600; min-height: 44px; padding: 10px 18px; border-radius: 10px; cursor: pointer;
+}
+.knopf { border: 0; color: #fff; background: var(--up-accent); }
+.knopfZweit { border: 1px solid var(--up-line); color: inherit; background: var(--up-card); }
+.knopfLeise { border: 0; color: var(--up-muted); background: transparent; text-decoration: underline; padding-inline: 8px; }
+.knopf:hover:not(:disabled) { filter: brightness(1.08); }
+.knopfZweit:hover:not(:disabled) { border-color: var(--up-accent); }
+.knopf:disabled, .knopfZweit:disabled { opacity: .55; cursor: not-allowed; }
+
+.schritte { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.schritt {
+  display: grid; grid-template-columns: 24px 88px 150px 1fr; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--up-line);
+}
+.schrittName { font-weight: 700; }
+.schrittStatus { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.schrittText { color: var(--up-muted); overflow-wrap: anywhere; }
+.symbol { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--up-line); justify-self: center; }
+
+.schritt_wartet .schrittStatus { color: var(--up-muted); }
+.schritt_entfaellt .schrittStatus { color: var(--up-muted); }
+.schritt_entfaellt .symbol { border-style: dashed; }
+.schritt_laeuft { border-color: var(--up-accent); }
+.schritt_laeuft .schrittStatus { color: var(--up-accent); }
+.schritt_laeuft .symbol { border-top-color: var(--up-accent); animation: drehen .8s linear infinite; }
+.schritt_fertig .schrittStatus { color: var(--up-good); }
+.schritt_fertig .symbol { border-color: var(--up-good); background: var(--up-good); }
+.schritt_fehler { border-color: var(--up-bad); }
+.schritt_fehler .schrittStatus { color: var(--up-bad); }
+.schritt_fehler .symbol { border-color: var(--up-bad); background: var(--up-bad); }
+@keyframes drehen { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .schritt_laeuft .symbol { animation-duration: 2.4s; } }
+
+.ansage { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.fehler {
+  padding: 16px 18px; border-radius: 12px; border: 1px solid var(--up-bad);
+  background: color-mix(in srgb, var(--up-bad) 6%, transparent); display: grid; gap: 8px;
+}
+.fehler h3 { margin: 0; font-size: 17px; color: var(--up-bad); }
+.fehler p { margin: 0; overflow-wrap: anywhere; }
+.tipp { color: var(--up-muted); font-size: 14px; }
+.erfolg {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--up-good) 55%, transparent);
+  background: color-mix(in srgb, var(--up-good) 8%, transparent);
+}
+.erfolg p { margin: 0; }
+.fehler:focus, .erfolg:focus { outline: none; }
+.fehler:focus-visible, .erfolg:focus-visible { outline: 3px solid var(--up-accent); outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .karte { padding: 16px; }
+  .schritt { grid-template-columns: 24px 1fr auto; }
+  .schrittText { grid-column: 2 / -1; }
+  .aktionen > .knopf, .aktionen > .knopfZweit { flex: 1 1 100%; }
+}
