@@ -200,6 +200,18 @@ def get_latest_by_tag(
 
 
 # --- Endpoints (Database 2: Price) ---
+@app.get("/prices/all", response_model=List[PriceResponse])
+def get_all_prices():
+    """Return all rows from the prices table."""
+    rows = price_conn.execute(
+        """
+        SELECT id, name, unit, price_per_unit
+        FROM prices
+        ORDER BY id DESC
+        """
+    ).fetchall()
+    return format_price_rows(rows)
+
 
 @app.post("/prices", response_model=PriceResponse, status_code=201)
 def insert_price(item: PriceCreate):

@@ -23,6 +23,18 @@ from .pruefung.regelwerk import importiere_regelwerk  # B3 (#96)
 from .pruefung.normen import vorgaben_aus_regelwerk  # B3 (#96)
 from .risiko.scoring import bewerte
 
+from .ai import step_api
+import sys
+
+try:
+    from db.client import DB_PATH
+    from db.history_adapter import get_history_records
+
+    if "pytest" not in sys.modules and Path(DB_PATH).exists():
+        step_api.history_service = get_history_records
+except Exception:
+    pass
+
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
