@@ -13,6 +13,7 @@ from pydantic import Field
 
 from ..modelle import Vertrag
 from . import llm
+from .sprache import ohne_hinweis  # #196
 
 router = APIRouter()
 
@@ -30,11 +31,12 @@ def uebersetze(texte: list[str], ziel: str) -> list[str | None]:
     if not texte or llm.provider() == "mock":
         return [None] * len(texte)
     sprache = "English" if ziel == "en" else "German"
-    antwort = llm.complete(
-        f"Translate each construction bill-of-quantities text to {sprache}. Keep numbers, units, item numbers, standards "
-        "(DIN, EN, VOB) and product names unchanged. Use standard construction terminology. Answer only a JSON array of "
-        f"strings in the same order and length.\n\n{json.dumps(texte, ensure_ascii=False)}",
-        system="You are a precise technical translator for German construction documents.", max_tokens=4000)
+    with ohne_hinweis():  # #196: the target language is given explicitly
+        antwort = llm.complete(
+            f"Translate each construction bill-of-quantities text to {sprache}. Keep numbers, units, item numbers, "
+            "standards (DIN, EN, VOB) and product names unchanged. Use standard construction terminology. Answer only a "
+            f"JSON array of strings in the same order and length.\n\n{json.dumps(texte, ensure_ascii=False)}",
+            system="You are a precise technical translator for German construction documents.", max_tokens=4000)
     roh = antwort.text[antwort.text.find("["): antwort.text.rfind("]") + 1]
     daten = json.loads(roh) if roh else []
     if not isinstance(daten, list) or len(daten) != len(texte):

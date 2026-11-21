@@ -431,7 +431,8 @@ def _modell(client: Client | None) -> Client | None:
 
 def _frage(aufruf: Client, block: Block):
     try:
-        antwort = aufruf(prompt(block), system=SYSTEM, max_tokens=MAX_TOKENS)
+        with llm.sprache.ohne_hinweis():  # #196: copy the sheet texts, never translate them
+            antwort = aufruf(prompt(block), system=SYSTEM, max_tokens=MAX_TOKENS)
     except llm.LLMError as exc:
         raise ValueError(f"Excel import via the model failed: {exc}") from None
     text = antwort.text if isinstance(antwort, llm.Answer) else antwort

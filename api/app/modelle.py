@@ -25,6 +25,9 @@ class PositionQuelle(Vertrag):
     seite_groesse: tuple[float, float] | None = Field(default=None, exclude_if=_fehlt)
     blatt: str | None = Field(default=None, exclude_if=_fehlt)
     pfad: str | None = Field(default=None, exclude_if=_fehlt)
+    # #192, optional: True when the AI read (part of) this item from the page image because the text parser left a
+    # gap (api/app/lv/pdf_vision.py). Absent for every parser-only item, so existing payloads stay byte-identical.
+    ki: bool | None = Field(default=None, exclude_if=_fehlt)
 
 
 class Position(Vertrag):
