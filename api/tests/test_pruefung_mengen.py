@@ -168,3 +168,57 @@ def test_http_report_shows_rule_source_and_concrete_oz():
     hints = [f for f in body["findings"] if f["regel_id"] == "MENGE_SCHICHTEN_ABWEICHUNG"]
     assert {f["oz"] for f in hints} == {"01.01", "01.03"}
     assert all(f["quelle"] == "regel" and f["euro_wirkung"] is None for f in hints)
+
+
+def _small(*mengen, titel=SLAB, names=None):
+    names = names or ("Dämmung 120 mm", "Dämmung 80 mm", "Dämmung 100 mm", "Dämmung 60 mm")
+    return [_pos(f"05.{i + 1:02d}", n, m, titel=titel) for i, (n, m) in enumerate(zip(names, mengen))]
+
+
+def test_tiny_layer_without_component_is_flagged_against_sibling_median():
+    [finding] = pruefe_mengen(_lv(*_small(1, 35, 45, 120)))
+    assert finding.oz == "05.01" and finding.regel_id == "MENGE_SCHICHTEN_ABWEICHUNG"
+    assert finding.titel == "Implausibly small layer area" and finding.quelle == "regel"
+    assert "median 45 m²" in finding.begruendung
+    assert all(f"OZ 05.0{i}" in finding.begruendung for i in (2, 3, 4))
+    assert "tolerance factor 20; not a standard" in finding.begruendung
+
+
+def test_small_layer_needs_factor_20_and_layer_terms():
+    assert pruefe_mengen(_lv(*_small(10, 35, 45, 120))) == []
+    lv = _lv(*_small(35, 45, 120), _pos("05.09", "Fundament", 1))
+    assert pruefe_mengen(lv) == []
+
+
+def test_small_layer_needs_three_layers_and_is_not_reported_twice():
+    assert pruefe_mengen(_lv(*_small(1, 120, 130)[:2])) == []
+    lv = _lv(*_slab_layers(205, 150, 120, 1))  # component named: only the component grouping reports
+    findings = [f for f in pruefe_mengen(lv) if f.oz == "01.04"]
+    assert len(findings) == 1 and findings[0].titel.startswith("Unusual layer area")
+
+
+def _wlg(*groups, titel=SLAB):
+    return [_pos(f"06.{i + 1:02d}", f"Dämmung WLG {g}", 50, titel=titel) for i, g in enumerate(groups)]
+
+
+def test_minority_thermal_conductivity_group_is_flagged():
+    findings = [f for f in pruefe_mengen(_lv(*_wlg("035", "035", "035", "040")))
+                if f.regel_id == "BEZEICHNUNG_ABWEICHUNG"]
+    [finding] = findings
+    assert finding.oz == "06.04" and finding.kategorie == "risiko" and finding.schwere == "mittel"
+    assert finding.quelle == "regel" and "WLG 035" in finding.begruendung
+    assert all(f"OZ 06.0{i}" in finding.begruendung for i in (1, 2, 3))
+
+
+def test_thermal_conductivity_group_not_flagged_without_clear_minority():
+    for groups in (("035", "035", "040", "040"), ("035", "040"), ("035", "035", "040", "045")):
+        assert [f for f in pruefe_mengen(_lv(*_wlg(*groups))) if f.regel_id == "BEZEICHNUNG_ABWEICHUNG"] == []
+    split = _wlg("035", "035", titel=["Haus A"]) + _wlg("040", titel=["Haus B"])
+    assert [f for f in pruefe_mengen(_lv(*split)) if f.regel_id == "BEZEICHNUNG_ABWEICHUNG"] == []
+
+
+def test_thermal_conductivity_group_from_long_text_when_short_text_names_none():
+    lv = _lv(*[_pos(f"07.0{i}", "Dämmung XPS", 50, langtext=f"Wärmedämmung WLG {g}")
+               for i, g in enumerate(("032", "032", "032", "035"), start=1)])
+    [finding] = [f for f in pruefe_mengen(lv) if f.regel_id == "BEZEICHNUNG_ABWEICHUNG"]
+    assert finding.oz == "07.04" and "WLG 032" in finding.begruendung
