@@ -2,6 +2,7 @@
 
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { historyApi, isMockSource, MARK_STATUSES, type CaseUpdate, type HistoryCase, type Measurement } from "@/lib/history-api";
+import { Abschluss } from "./Abschluss";
 import styles from "./history.module.css";
 
 const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
@@ -92,6 +93,8 @@ export function HistoryView() {
         <h1>Find comparable cases, then record what really happened.</h1>
         <p className={styles.lead}>Filter by tag, check the description, and enter actual values, comments and marks. Estimates and actuals stay separate.</p>
       </section>
+
+      <Abschluss />
 
       {loadError && (
         <div className={styles.banner} role="alert">

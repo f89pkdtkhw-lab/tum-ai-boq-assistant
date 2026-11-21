@@ -3,7 +3,7 @@
 import { type ChangeEvent, useEffect, useState } from "react";
 import type { Pruefbericht } from "@/lib/api";
 import { PRUEFBERICHT_SPEICHER_SCHLUESSEL } from "@/components/Pruefbericht";
-import { dateiname, istMock, leseBericht, pdfDateiname, pdfInhalt, tabellen, xlsx } from "@/lib/export";
+import { dateiname, istMock, leseBericht, pdfDateiname, pdfInhalt, tabellen, xlsx, type Tabelle } from "@/lib/export";
 import { bewertungVon, ladeBewertungen, statusName, type Bewertungen } from "@/lib/bewertung";
 import styles from "./export.module.css";
 
@@ -14,7 +14,7 @@ const KATEGORIE: Record<string, string> = { fehler: "Error", risiko: "Risk", nac
 const SEVERITY_LABELS: Record<string, string> = { kritisch: "Critical", hoch: "High", mittel: "Medium", niedrig: "Low" };
 
 /** Renders an export sheet (header row + rows) so print and XLSX show the same columns. */
-function Blatt({ zeilen, leer }: { zeilen: (string | number | null)[][]; leer: string }) {
+function Blatt({ zeilen, leer, stile = [] }: { zeilen: (string | number | null)[][]; leer: string; stile?: Tabelle["stile"] }) {
   const [kopf, ...rest] = zeilen;
   if (rest.length === 0) return <p className={styles.quelle}>{leer}</p>;
   const zahlen = kopf.map((_, c) => rest.some((z) => typeof z[c] === "number"));
@@ -24,7 +24,7 @@ function Blatt({ zeilen, leer }: { zeilen: (string | number | null)[][]; leer: s
         <thead><tr>{kopf.map((k, c) => <th key={c} className={zahlen[c] ? styles.rechts : undefined}>{k}</th>)}</tr></thead>
         <tbody>
           {rest.map((z, r) => (
-            <tr key={r}>{z.map((w, c) => <td key={c} className={zahlen[c] ? styles.rechts : c === 0 && kopf[0] === "OZ" ? styles.oz : undefined}>{typeof w === "number" ? zahl.format(w) : w}</td>)}</tr>
+            <tr key={r} className={stile[r + 1] ? styles[`zeile_${stile[r + 1]}`] : undefined}>{z.map((w, c) => <td key={c} className={zahlen[c] ? styles.rechts : c === 0 && kopf[0] === "OZ" ? styles.oz : undefined}>{typeof w === "number" ? zahl.format(w) : w}</td>)}</tr>
           ))}
         </tbody>
       </table>
@@ -126,7 +126,9 @@ export function Export() {
   const { bericht, bewertungen } = zustand;
   const { lv, findings, kennzahlen } = bericht;
   const mock = kennzahlen.modell_mock || findings.some(istMock);
-  const blaetter = Object.fromEntries(tabellen(bericht, bewertungen).map((b) => [b.name, b.zeilen]));
+  const alleBlaetter = tabellen(bericht, bewertungen);
+  const blaetter = Object.fromEntries(alleBlaetter.map((b) => [b.name, b.zeilen]));
+  const preisBlaetter = alleBlaetter.filter((b) => b.name === "Priced bill" || b.name === "Estimated bill");
 
   return (
     <main className={styles.seite}>
@@ -184,6 +186,16 @@ export function Export() {
             </table>
           </div>
         )}
+
+        {preisBlaetter.map((b) => (
+          <section key={b.name}>
+            <h2>{b.name}</h2>
+            {b.name === "Estimated bill" && (
+              <p className={styles.quelle}>Green “+ new” = added · red, struck through “− removed” = removed · yellow “old → new” = updated.</p>
+            )}
+            <Blatt zeilen={b.zeilen} stile={b.stile} leer="No items." />
+          </section>
+        ))}
 
         <h2>Quantity totals</h2>
         <Blatt zeilen={blaetter["Quantities"]} leer="No quantities to total." />

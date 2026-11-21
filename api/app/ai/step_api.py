@@ -891,6 +891,8 @@ def complete(request: StepRequest, notes: list[Note], findings: list[Finding],
     ).model_dump()}}}},
 )
 def comparison_step(request: StepRequest) -> StepResponse:
+    from ..pruefung.normen import mit_register_quellen  # B4 #97; late import: normen builds on this module
+    request = mit_register_quellen(request)  # checked norm register key values as Note 2 sources
     if request.sources or request.estimates:
         adapter = specification_step if request.sources else estimate_step
         try:

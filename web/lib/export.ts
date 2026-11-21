@@ -3,6 +3,7 @@ import type { Finding, Pruefbericht } from "@/lib/api";
 import { bewertungVon, statusName, type Bewertungen } from "./bewertung";
 import { bieterfragen } from "./bieterfragen";
 import { mengenSummen } from "./mengen";
+import { statusInfo } from "./kalkulation";
 
 export const MOCK_REGEL = "MOCK_LLM";
 
@@ -26,8 +27,49 @@ const SEVERITY_LABELS = { kritisch: "Critical", hoch: "High", mittel: "Medium", 
 const ITEM_TYPE_LABELS = { normal: "Standard item", bedarf: "Optional item", alternativ: "Alternative item", zulage: "Supplement item", pauschal: "Lump sum item", stundenlohn: "Hourly rate item" };
 
 type Zelle = string | number | null;
+/** Row colour of the priced/estimated bill (#117); same meaning as in the report (#116). */
+export type ZeilenStil = "added" | "removed" | "updated" | "summe";
+export type Tabelle = { name: string; zeilen: Zelle[][]; stile?: (ZeilenStil | undefined)[] };
 
-export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}): { name: string; zeilen: Zelle[][] }[] {
+/** Priced and estimated bill sheets; only the ones whose fields exist (#117). */
+function kalkulationsTabellen(bericht: Pruefbericht): Tabelle[] {
+  const blaetter: Tabelle[] = [];
+  const k = bericht.kalkulation;
+  if (k) {
+    const kurztext = new Map(bericht.lv.positionen.map((p) => [p.oz, p.kurztext]));
+    const mwst = `${Math.round(k.mwst_satz * 1000) / 10} %`;
+    blaetter.push({
+      name: "Priced bill",
+      zeilen: [
+        ["OZ", "Short description", "Quantity", "Unit", "Unit price (EUR)", "Total (EUR)", "Price-list match", "BoQ unit price (EUR)", "BoQ total (EUR)"],
+        ...k.positionen.map((p) => [p.oz, p.kurztext || kurztext.get(p.oz) || "", p.menge, p.einheit, p.ep, p.gp,
+          p.treffer === "kein_treffer" ? "no price" : p.treffer, p.ep_lv, p.gp_lv]),
+        ["Net", "", null, "", null, k.summe_netto, "", null, null],
+        [`Gross (VAT ${mwst})`, "", null, "", null, k.summe_brutto, "", null, null],
+        ["Without price", "", k.ohne_preis, "items", null, null, "", null, null],
+      ],
+      stile: [undefined, ...k.positionen.map(() => undefined), "summe", "summe", "summe"],
+    });
+  }
+  const g = bericht.geschaetztes_lv;
+  if (g) {
+    blaetter.push({
+      name: "Estimated bill",
+      zeilen: [
+        ["Status", "OZ", "Short description", "Unit", "Quantity old", "Quantity new", "Unit price (EUR)", "Total old (EUR)", "Total new (EUR)", "Reason", "Approval required"],
+        ...g.positionen.map((p) => [statusInfo(p.status).marke, p.oz, p.kurztext, p.einheit, p.menge_alt, p.menge_neu, p.ep, p.gp_alt, p.gp_neu,
+          p.grund, p.freigabe_noetig ? "yes" : ""]),
+        ["Net", "", "", "", null, null, null, g.summe_netto - g.differenz_netto, g.summe_netto, "", ""],
+        ["Gross", "", "", "", null, null, null, null, g.summe_brutto, "", ""],
+        ["Difference net", "", `${g.differenz_prozent > 0 ? "+" : ""}${g.differenz_prozent} %`, "", null, null, null, null, g.differenz_netto, "", ""],
+      ],
+      stile: [undefined, ...g.positionen.map((p) => (p.status === "unchanged" ? undefined : p.status)), "summe", "summe", "summe"],
+    });
+  }
+  return blaetter;
+}
+
+export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}): Tabelle[] {
   const positionen: Zelle[][] = [
     ["OZ", "Short description", "Detailed description", "Quantity", "Unit", "Unit price (EUR)", "Total price (EUR)", "Type", "Title"],
     ...bericht.lv.positionen.map((p) => [p.oz, p.kurztext, p.langtext, p.menge, p.einheit, p.ep, p.gp, ITEM_TYPE_LABELS[p.typ], p.titel_pfad.join(" › ")]),
@@ -55,6 +97,7 @@ export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}): 
   return [
     { name: "Findings", zeilen: befunde }, { name: "Items", zeilen: positionen },
     { name: "Quantities", zeilen: mengen }, { name: "Bidder questions", zeilen: fragen },
+    ...kalkulationsTabellen(bericht),
   ];
 }
 
@@ -70,14 +113,19 @@ function spalte(i: number) {
   return s;
 }
 
-function blatt(zeilen: Zelle[][]) {
+/** cellXfs ids in styles.xml: [text, number] per row colour. Removed rows also strike the font through. */
+export const STIL_IDS: Record<ZeilenStil, [number, number]> = { added: [3, 4], removed: [5, 6], updated: [7, 8], summe: [2, 9] };
+
+function blatt(zeilen: Zelle[][], stile: (ZeilenStil | undefined)[] = []) {
   const rows = zeilen.map((zeile, r) => {
+    const stil = stile[r] ? STIL_IDS[stile[r]!] : null;
     const cells = zeile.map((wert, c) => {
       const ref = `${spalte(c)}${r + 1}`;
-      if (wert === null || wert === "") return "";
-      if (typeof wert === "number") return `<c r="${ref}"><v>${wert}</v></c>`;
+      // Coloured rows fill empty cells too, so the whole row shows its status.
+      if (wert === null || wert === "") return stil ? `<c r="${ref}" s="${stil[1]}"/>` : "";
+      if (typeof wert === "number") return `<c r="${ref}"${stil ? ` s="${stil[1]}"` : ""}><v>${wert}</v></c>`;
       // Inline strings are never evaluated as formulas; quotePrefix style (s="1") keeps "=…" text as text when edited.
-      return `<c r="${ref}" t="inlineStr" s="${r === 0 ? 2 : 1}"><is><t xml:space="preserve">${xml(wert)}</t></is></c>`;
+      return `<c r="${ref}" t="inlineStr" s="${stil ? stil[0] : r === 0 ? 2 : 1}"><is><t xml:space="preserve">${xml(wert)}</t></is></c>`;
     }).join("");
     return `<row r="${r + 1}">${cells}</row>`;
   }).join("");
@@ -97,9 +145,9 @@ export function xlsxDateien(bericht: Pruefbericht, bewertungen: Bewertungen = {}
     "xl/_rels/workbook.xml.rels": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${blaetter.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("")}<Relationship Id="rId${blaetter.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
     "xl/styles.xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="3"><xf/><xf quotePrefix="1" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf><xf fontId="1" applyFont="1" quotePrefix="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><strike/><sz val="11"/><color rgb="FF9B1C1C"/><name val="Calibri"/></font></fonts><fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD1FAE5"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFEE2E2"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFEF3C7"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="10"><xf/><xf quotePrefix="1" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf><xf fontId="1" applyFont="1" quotePrefix="1"/><xf fillId="2" applyFill="1" quotePrefix="1"/><xf fillId="2" applyFill="1"/><xf fillId="3" fontId="2" applyFill="1" applyFont="1" quotePrefix="1"/><xf fillId="3" fontId="2" applyFill="1" applyFont="1"/><xf fillId="4" applyFill="1" quotePrefix="1"/><xf fillId="4" applyFill="1"/><xf fontId="1" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
   };
-  blaetter.forEach((b, i) => { dateien[`xl/worksheets/sheet${i + 1}.xml`] = blatt(b.zeilen); });
+  blaetter.forEach((b, i) => { dateien[`xl/worksheets/sheet${i + 1}.xml`] = blatt(b.zeilen, b.stile); });
   return dateien;
 }
 

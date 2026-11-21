@@ -1,0 +1,37 @@
+/* Uses the --pb-* tokens of the surrounding review report. */
+.berichte { display: grid; gap: 8px; min-width: 0; }
+.titel { margin: 0; font-size: 16px; font-weight: 700; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--pb-line); padding-bottom: 6px; }
+.tab {
+  font: inherit; font-size: 14px; padding: 7px 12px; border-radius: 10px; cursor: pointer; min-height: 38px;
+  border: 1px solid var(--pb-line); background: var(--pb-card); color: inherit; display: inline-flex; gap: 6px; align-items: center;
+}
+.tab:hover { border-color: var(--pb-accent); }
+.tabAktiv { border-color: var(--pb-accent); background: var(--pb-soft); color: var(--pb-accent); font-weight: 600; }
+.status { font-size: 11.5px; font-weight: 600; color: var(--pb-muted); border: 1px solid var(--pb-line); border-radius: 999px; padding: 0 6px; }
+.panel { min-width: 0; }
+.inhalt { display: grid; gap: 8px; min-width: 0; }
+.liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.zeile {
+  width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center;
+  padding: 8px 12px; border-radius: 10px; border: 1px solid var(--pb-line); background: var(--pb-card);
+}
+.zeile:hover { border-color: var(--pb-accent); }
+.karte { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--pb-line); background: var(--pb-card); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.karte p { margin: 0; flex-basis: 100%; }
+.marke { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--pb-line); margin-right: 4px; white-space: nowrap; }
+.hoch { color: var(--pb-bad); border-color: currentColor; }
+.text { overflow-wrap: anywhere; min-width: 0; flex: 1 1 12em; }
+.oz { font-family: ui-monospace, Menlo, monospace; color: var(--pb-muted); font-size: 13px; }
+.hinweis { margin: 0; color: var(--pb-muted); font-size: 13.5px; }
+.leer { margin: 0; color: var(--pb-muted); font-style: italic; }
+.rahmen { overflow-x: auto; border: 1px solid var(--pb-line); border-radius: 10px; }
+.tabelle { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabelle th, .tabelle td { padding: 7px 10px; border-bottom: 1px solid var(--pb-line); text-align: left; vertical-align: top; }
+.tabelle th { color: var(--pb-muted); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.rechts { text-align: right !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.zuGross { background: color-mix(in srgb, var(--pb-bad) 8%, transparent); }
+.link { font: inherit; color: var(--pb-accent); background: none; border: 0; padding: 0; cursor: pointer; font-family: ui-monospace, Menlo, monospace; }
+.endScore { margin: 0; font-size: 22px; font-weight: 700; }
+.abzuege { margin: 0; padding-left: 18px; color: var(--pb-muted); font-size: 13.5px; }
+.unter { margin: 6px 0 0; font-size: 14.5px; }
