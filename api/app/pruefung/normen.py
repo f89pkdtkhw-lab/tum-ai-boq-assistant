@@ -770,7 +770,9 @@ def pruefe_normen(lv: LV, register: Register | None = None) -> list[Finding]:
     """N1 extraction + curated register + `pruefe_status` (N2), followed by the N3 key-value
     findings of `pruefe_kennwerte`, in position order (stable: N2 before N3 on the same OZ)."""
     register = register or lade_register()
-    findings = pruefe_status(extrahiere_normverweise(lv), register, lv) + pruefe_kennwerte(lv, register)
+    from .normen_listen import pruefe_listen  # late import: normen_listen builds on this module
+    findings = (pruefe_status(extrahiere_normverweise(lv), register, lv) + pruefe_kennwerte(lv, register)
+                + pruefe_listen(lv))
     reihenfolge = {oz: i for i, oz in enumerate(dict.fromkeys(p.oz for p in lv.positionen))}
     return sorted(findings, key=lambda f: reihenfolge.get(f.oz, len(reihenfolge)))
 
