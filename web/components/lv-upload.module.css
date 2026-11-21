@@ -131,3 +131,10 @@
   .schrittText { grid-column: 2 / -1; }
   .aktionen > .knopf, .aktionen > .knopfZweit { flex: 1 1 100%; }
 }
+
+/* Optional attachments next to the bill (#102 regulation document, #115 price list). */
+.beilagen { display: grid; gap: 12px; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; min-width: 0; }
+.beilagen legend { padding: 0 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.beilage { display: grid; gap: 4px; min-width: 0; }
+.beilage input { font: inherit; font-size: 14px; max-width: 100%; }
+.beilageName { font-weight: 600; font-size: 14.5px; }
