@@ -14,6 +14,8 @@ Entry points:
                                            with the mock and sets ``Answer.reason``
     config() / status()                    what the app runs on; status() also says whether the app
                                            effectively runs on the mock and why, and never raises
+    research(prompt, system, max_tokens,   answer backed by Claude's web search: text + citations (url,
+             max_searches=5, timeout)      title, cited_text); other providers answer without citations
     parse_json(text)                       robust JSON object extraction (code fences, prose around it)
     load_env_file(path)                    reads .env.local at app start (environment variables win)
 """
@@ -520,3 +522,129 @@ class StructuredRun:
             ))
             fresh.discard(key)
         return answers
+
+
+# --- Research with web search (#166, package A; reused by #169 E) ------------------------------
+# Claude's server tool `web_search` runs the searches on Anthropic's side; the answer carries
+# citations (`web_search_result_location`: url, title, cited_text) on its text blocks. A long turn
+# may stop with `stop_reason: pause_turn`; the paused answer is then sent back as-is to continue.
+# Other providers have no server web search here: research() answers with complete() and no
+# citations (`web_search=False`), so callers work the same on every provider and on the mock.
+
+WEB_SEARCH_TOOL = "web_search_20250305"  # basic version, works on all Claude models
+MAX_PAUSE_TURNS = 8  # continuations after pause_turn before the research gives up
+
+
+@dataclass(frozen=True)
+class Citation:
+    """One web source: ``cited_text`` is the quoted passage (empty for a search hit Claude did not quote)."""
+    url: str
+    title: str
+    cited_text: str = ""
+
+
+@dataclass
+class ResearchAnswer:
+    """Text plus its web evidence. ``citations``: passages Claude quoted, in answer order, deduplicated.
+    ``sources``: every search result Claude saw (url + title), a superset of the cited URLs.
+    ``searches``: web searches the provider ran; ``web_search``: False when the provider has no web search."""
+    text: str
+    provider: str
+    model: str
+    ms: int
+    citations: list = None
+    sources: list = None
+    searches: int = 0
+    web_search: bool = False
+
+    def __post_init__(self):
+        self.citations = list(self.citations or [])
+        self.sources = list(self.sources or [])
+
+
+def research(prompt, system="", max_tokens=8000, *, max_searches=5, timeout=None, effort=None):
+    """One model answer backed by web search, as a ResearchAnswer. Raises LLMError with a UI-safe message.
+
+    ``max_searches`` caps the web searches of this call (tool ``max_uses``); ``timeout`` (seconds,
+    default LLM_TIMEOUT) bounds the whole call including every pause_turn continuation. Claude only:
+    other providers and the mock answer through complete() without citations.
+    """
+    name = provider()
+    if name != "anthropic":
+        answer = complete(prompt, system, max_tokens, timeout=timeout, effort=effort)
+        return ResearchAnswer(answer.text, answer.provider, answer.model, answer.ms)
+    chosen = model(name)
+    if not env(KEY_FOR[name]):
+        raise LLMError(f"Missing {KEY_FOR[name]} for {name}. Without a key, set LLM_PROVIDER=mock.")
+    limit = timeout if timeout and timeout > 0 else seconds()
+    started = time.perf_counter()
+    try:
+        return _anthropic_research(prompt, system, chosen, max_tokens, max(1, int(max_searches)), limit, effort,
+                                   started)
+    except LLMError:
+        raise
+    except httpx.TimeoutException:
+        raise LLMError(f"{name} did not finish the web research within {limit:g} s.") from None
+    except httpx.HTTPStatusError as exc:
+        code = exc.response.status_code
+        hint = ("Rate limit or free quota reached; wait a minute." if code == 429
+                else "Check the key, model and credit, and that web search is enabled for the organisation.")
+        raise LLMError(f"{name} returned HTTP {code}. {hint}") from None
+    except httpx.HTTPError:
+        raise LLMError(f"{name} is unreachable. Check the network or set LLM_PROVIDER=mock.") from None
+    except (KeyError, IndexError, TypeError, ValueError, AttributeError):
+        raise LLMError(f"{name} returned an unexpected response.") from None
+
+
+def _anthropic_research(prompt, system, chosen, max_tokens, max_searches, limit, effort, started):
+    tool = {"type": WEB_SEARCH_TOOL, "name": "web_search", "max_uses": max_searches}
+    messages = [{"role": "user", "content": prompt}]
+    payload = {"model": chosen, "max_tokens": max_tokens, "messages": messages, "tools": [tool]}
+    if system:
+        payload["system"] = system
+    effort = (effort or env("ANTHROPIC_EFFORT")).lower()
+    if effort in EFFORTS:
+        payload["output_config"] = {"effort": effort}
+    headers = {"x-api-key": env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01",
+               "content-type": "application/json"}
+    url = env("ANTHROPIC_BASE_URL") or "https://api.anthropic.com/v1/messages"
+    texts, citations, sources, searches = [], {}, {}, 0
+    for _ in range(MAX_PAUSE_TURNS + 1):
+        remaining = limit - (time.perf_counter() - started)
+        if remaining <= 0:
+            raise LLMError(f"anthropic did not finish the web research within {limit:g} s.")
+        data = _post(url, headers, payload, remaining)
+        content = data["content"]
+        searches += int(((data.get("usage") or {}).get("server_tool_use") or {}).get("web_search_requests") or 0)
+        _collect_research(content, texts, citations, sources)
+        stop = data.get("stop_reason")
+        if stop == "pause_turn":  # the server paused a long turn: send it back unchanged to continue
+            messages.append({"role": "assistant", "content": content})
+            continue
+        if stop == "refusal":
+            category = (data.get("stop_details") or {}).get("category")
+            raise LLMError(f"anthropic declined the request (refusal{': ' + category if category else ''}).")
+        if stop == "max_tokens":
+            raise LLMError(f"anthropic stopped at max_tokens ({max_tokens}); the research answer is incomplete.")
+        text = "".join(texts).strip()
+        if not text:
+            raise LLMError(f"anthropic returned no text ({stop or 'empty answer'}).")
+        return ResearchAnswer(text, "anthropic", chosen, round((time.perf_counter() - started) * 1000),
+                              list(citations.values()), list(sources.values()), searches, True)
+    raise LLMError(f"anthropic paused the research more than {MAX_PAUSE_TURNS} times; no final answer.")
+
+
+def _collect_research(content, texts, citations, sources):
+    """Text, quoted passages and search hits of one answer chunk (accumulated across pause_turn)."""
+    for block in content:
+        kind = block.get("type")
+        if kind == "text":
+            texts.append(block.get("text", ""))
+            for cite in block.get("citations") or []:
+                if cite.get("type") == "web_search_result_location" and cite.get("url"):
+                    entry = Citation(cite["url"], cite.get("title") or "", (cite.get("cited_text") or "").strip())
+                    citations.setdefault((entry.url, entry.cited_text), entry)
+        elif kind == "web_search_tool_result" and isinstance(block.get("content"), list):
+            for hit in block["content"]:  # an error result is an object, not a list, and is skipped
+                if hit.get("type") == "web_search_result" and hit.get("url"):
+                    sources.setdefault(hit["url"], Citation(hit["url"], hit.get("title") or ""))
