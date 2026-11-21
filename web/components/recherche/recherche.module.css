@@ -1,0 +1,17 @@
+/* E #169: reuses the review report variables (pruefbericht.module.css) and the glass radius tokens. */
+.hinweis {
+  margin: 0; padding: 12px 14px; border-radius: var(--r-md); font-size: 13.5px;
+  border: 1px solid var(--pb-line, var(--line));
+  background: var(--fill, var(--pb-soft));
+}
+.ok { border-color: color-mix(in srgb, var(--pb-good, #059669) 45%, transparent); }
+.aus { color: var(--pb-muted, var(--muted)); }
+.liste { display: grid; gap: 6px; }
+.eintrag { display: grid; gap: 2px; }
+.quellen { font-size: 13px; color: var(--pb-muted, var(--muted)); }
+.quellen a { color: var(--pb-accent, var(--accent)); overflow-wrap: anywhere; }
+.marke {
+  display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: var(--pb-soft); color: var(--pb-accent, var(--accent));
+}
+.absatz { display: grid; gap: 4px; margin: 0 0 8px; }

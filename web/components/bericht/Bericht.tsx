@@ -16,6 +16,7 @@ import { Fundstelle } from "../fundstelle/Fundstelle";
 import { Icon } from "../icon/Icon";
 import { Info } from "../info/Info";
 import { KiHinweis } from "../kihinweis/KiHinweis"; // D #168
+import { RechercheAbsatz, RechercheHinweis } from "../recherche/Recherche"; // E #169
 import { kiHinweise } from "@/lib/kischritte";
 import { Ring } from "../ring/Ring";
 import styles from "./bericht.module.css";
@@ -144,6 +145,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
         <a className={styles.knopfLeise} href="/export" onClick={zumExport}><Icon name="download" /> {t("Export report")}</a>
       </header>
       <KiHinweis hinweise={kiHinweise(bericht, bewertung.ki)} />
+      {bericht.recherche && <RechercheHinweis recherche={bericht.recherche} />}
 
       {/* Level 1: the summary from the sketch – was, score, estimated; issues, warnings, recommendations. */}
       <div className={styles.stufe1}>
@@ -222,6 +224,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
                       ))}
                       {x.text && <p><b>{t("Why")}:</b> {x.text}</p>}
                       {x.vorschlag && <p><b>{t("Suggestion")}:</b> {x.vorschlag}</p>}
+                      {x.finding && <RechercheAbsatz ergebnisse={(bericht.recherche?.ergebnisse ?? []).filter((r) => r.finding_id === x.finding!.id)} />}
                       {x.finding && <Bewertung key={x.finding.id} bewertung={bewertungVon(bewertungen, x.finding.id)} onAendern={(a) => bewerte(x.finding!.id, a)} speicherFehler={false} />}
                     </div>
                   )}

@@ -62,6 +62,17 @@ export type Pruefbericht = {
   kalkulation?: Kalkulation | null; anpassungen?: Anpassung[] | null; geschaetztes_lv?: GeschaetztesLv | null;
   berichte?: Bericht[] | null; was_wenn?: WasWenn[] | null; schlussbericht?: Schlussbericht | null;
   ki_schritte?: KiSchritt[] | null; // D #168
+  recherche?: Recherche | null; // E #169: absent without a Claude key
+};
+// Deep web research (E #169): what ran, its cost, and sourced results per finding/item/report problem.
+export type RechercheQuelle = { url: string; titel: string };
+export type RechercheErgebnis = {
+  schritt: "positionen" | "preise" | "berichte"; gruppe: string; oz: string | null; finding_id: string | null;
+  einschaetzung: "bestaetigt" | "abgeschwaecht" | "unklar" | "plausibel" | "zu_hoch" | "zu_niedrig";
+  text: string; quellen: RechercheQuelle[]; marktpreis_von: number | null; marktpreis_bis: number | null;
+};
+export type Recherche = {
+  status: "ok" | "teilweise" | "fehler" | "aus"; meldung: string; aufrufe: number; suchen: number; ergebnisse: RechercheErgebnis[];
 };
 // Final report (epic #93 B5, shown and exported since #167): one row per bill item, none dropped.
 export type ProblemVerweis = {

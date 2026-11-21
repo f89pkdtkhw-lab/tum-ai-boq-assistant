@@ -30,6 +30,8 @@ import { Preisspiegel } from "./preise/Preisspiegel";
 import { liesJetzt, useEinstellungen, useT } from "@/lib/einstellungen";
 import { befundAnzeige } from "@/lib/befundtext";
 import { Fundstelle } from "./fundstelle/Fundstelle";
+import { RechercheHinweis, RechercheQuellen } from "./recherche/Recherche"; // E #169
+import type { RechercheErgebnis } from "@/lib/api";
 import styles from "./pruefbericht.module.css";
 
 /**
@@ -370,6 +372,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
         </p>
       )}
       <KiHinweis hinweise={kiHinweise(bericht, bewertung.ki)} />
+      {bericht.recherche && <RechercheHinweis recherche={bericht.recherche} />}
 
       {/* Team spec: score out of 10, estimated amount ±, then how many recommendations, warnings and big problems. */}
       <div className={styles.kopfzahlen}>
@@ -615,6 +618,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
               findings={findingsNachOz.get(auswahl.oz) ?? []}
               onWaehle={(id) => waehle(auswahl.oz, id)}
               onSchliessen={() => setAuswahl(null)}
+              recherche={bericht.recherche?.ergebnisse ?? []}
               bewertungen={bewertungen}
               onBewerte={bewerte}
               speicherFehler={speicherFehler}
@@ -667,11 +671,12 @@ function FindingKarte({ finding, gewaehlt, ozBekannt, onWaehle }: {
   );
 }
 
-function Detail({ oz, findingId, positionen, datei, originalUrl, findings, onWaehle, onSchliessen, bewertungen, onBewerte, speicherFehler, schritt }: {
+function Detail({ oz, findingId, positionen, datei, originalUrl, findings, onWaehle, onSchliessen, bewertungen, onBewerte, speicherFehler, schritt, recherche = [] }: {
   oz: string; findingId: string | null; positionen: Position[]; datei: string; originalUrl: string | null; findings: Finding[];
   onWaehle: (id: string) => void; onSchliessen: () => void;
   bewertungen: Bewertungen; onBewerte: (id: string, a: Partial<BewertungDaten>) => void; speicherFehler: boolean;
   schritt: { index: number; gesamt: number; onSchritt: (d: number) => void } | null;
+  recherche?: RechercheErgebnis[];
 }) {
   const d = useDok();
   const t = useT();
@@ -702,6 +707,7 @@ function Detail({ oz, findingId, positionen, datei, originalUrl, findings, onWae
             <dt>{t("Suggestion")}</dt><dd>{gewaehlt.vorschlag || <Unbekannt />}</dd>
             <dt>{t("Euro impact")}</dt><dd><Euro wert={gewaehlt.euro_wirkung} /></dd>
             <dt>{t("Source")}</dt><dd>{t(gewaehlt.quelle === "regel" ? "Fixed review rule" : "Model")} ({gewaehlt.regel_id})</dd>
+            <RechercheQuellen ergebnisse={recherche.filter((r) => r.finding_id === gewaehlt.id)} />
           </dl>
           <Bewertung key={gewaehlt.id} bewertung={bewertungVon(bewertungen, gewaehlt.id)}
             onAendern={(a) => onBewerte(gewaehlt.id, a)} speicherFehler={speicherFehler} />
