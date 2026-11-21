@@ -8,7 +8,8 @@ import styles from "./key-settings.module.css";
 
 type Message = { kind: "ok" | "error" | "info"; text: string } | null;
 
-export function KeySettings() {
+/** `compact`: small key button for the navy top bar of the redesign; the panel opens as a popover below it. */
+export function KeySettings({ compact = false }: { compact?: boolean } = {}) {
   const [state, setState] = useState<KeyState | null | "offline">(null);
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState("");
@@ -82,13 +83,23 @@ export function KeySettings() {
 
   return (
     <div className={styles.wrapper} ref={wrapper}>
-      <button type="button" className={`${styles.chip} ${chip.cls}`} aria-expanded={open} aria-controls={panelId}
-        onClick={() => { setOpen(!open); if (!open) refresh(); }} title="Model and Claude API key">
-        <span className={styles.dot} aria-hidden="true" />
-        {chip.text}
-      </button>
+      {compact ? (
+        <button type="button" className={`${styles.keyButton} ${chip.cls}`} aria-expanded={open} aria-controls={panelId}
+          onClick={() => { setOpen(!open); if (!open) refresh(); }} title={`Claude API key · ${chip.text}`} aria-label={`Claude API key (${chip.text})`}>
+          <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M14.5 4a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM10.6 13.4L4 20M7 17l2 2M5 19l1.5 1.5M16 8.5h.01" />
+          </svg>
+          <span className={styles.keyDot} aria-hidden="true" />
+        </button>
+      ) : (
+        <button type="button" className={`${styles.chip} ${chip.cls}`} aria-expanded={open} aria-controls={panelId}
+          onClick={() => { setOpen(!open); if (!open) refresh(); }} title="Model and Claude API key">
+          <span className={styles.dot} aria-hidden="true" />
+          {chip.text}
+        </button>
+      )}
       {open && (
-        <div className={styles.panel} id={panelId} role="dialog" aria-label="Claude API key">
+        <div className={`${styles.panel} ${compact ? styles.compactPanel : ""}`} id={panelId} role="dialog" aria-label="Claude API key">
           {state === "offline" || state === null ? (
             <p className={styles.note}>The backend is not reachable. Start it with <code>python tools/dev.py</code>.</p>
           ) : (

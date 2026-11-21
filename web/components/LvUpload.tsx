@@ -1,10 +1,12 @@
 "use client";
 
 import { type ChangeEvent, type DragEvent, type FormEvent, useEffect, useRef, useState } from "react";
-import { api, type Health, type LV, type Preisliste, type Pruefbericht as PruefberichtDaten, type Regelwerk } from "@/lib/api";
-import { analyseAnfrage, beilageFehler, importFehlerText, REGELWERK_FORMATE, regelwerkText, routeFehlt } from "@/lib/regelwerk";
-import { PREISLISTE_FORMATE, preislisteText } from "@/lib/preisliste";
-import { Pruefbericht } from "@/components/Pruefbericht";
+import { api, type Example, type Health, type LV, type Preisliste, type Pruefbericht as PruefberichtDaten, type Regelwerk } from "@/lib/api";
+import { analyseAnfrage, importFehlerText, regelwerkText, routeFehlt } from "@/lib/regelwerk";
+import { useT } from "@/lib/einstellungen";
+import { lesePreisliste, preislisteText, speicherePreisliste } from "@/lib/preisliste";
+import { Icon } from "./icon/Icon";
+import { Bericht } from "@/components/bericht/Bericht";
 import { bietetOffline, ladeOfflineBericht } from "@/lib/offline";
 import styles from "./lv-upload.module.css";
 
@@ -24,22 +26,25 @@ const FORMATS: { endung: string; name: string }[] = [
 ];
 const ACCEPT = FORMATS.map((f) => f.endung).join(",");
 
-type SchrittId = "datei" | "import" | "beilagen" | "pruefung";
+type SchrittId = "datei" | "import" | "pruefung";
 type SchrittStatus = "wartet" | "laeuft" | "fertig" | "fehler" | "entfaellt";
 type Schritt = { status: SchrittStatus; text: string };
 type Schritte = Record<SchrittId, Schritt>;
-type Beilagen = { regelwerk: File | null; preisliste: File | null };
-type Lauf = ({ art: "datei"; datei: File } | { art: "beispiel" }) & Beilagen;
+type Lauf =
+  // Optional attachments go to the backend with the bill (POST /api/lv/analyse: regulation document B3, price list D4/#158).
+  | { art: "datei"; datei: File; regelwerk?: File | null; preisliste?: File | null }
+  | { art: "beispiel"; id: string | null; titel: string }
+  // A report restored after switching pages; "Review again" re-runs the review on its LV.
+  | { art: "lv"; titel: string; lv: LV };
 type Ergebnis =
   | { phase: "leer" }
   | { phase: "laeuft"; lauf: Lauf; schritte: Schritte }
-  | { phase: "fertig"; lauf: Lauf; schritte: Schritte; lv: LV; bericht: PruefberichtDaten; nummer: number; offline: boolean; hinweise: string[] }
+  | { phase: "fertig"; lauf: Lauf; schritte: Schritte; lv: LV; bericht: PruefberichtDaten; nummer: number; offline: boolean; hinweise?: string[] }
   | { phase: "fehler"; lauf: Lauf; schritte: Schritte; titel: string; meldung: string; tipp: string | null; offline: boolean };
 
 const SCHRITT_NAMEN: Record<SchrittId, string> = {
   datei: "Upload",
   import: "Import",
-  beilagen: "Attachments",
   pruefung: "Review",
 };
 const STATUS_NAMEN: Record<SchrittStatus, string> = {
@@ -80,16 +85,9 @@ function lokalerFehler(datei: File): string | null {
 }
 
 function startSchritte(lauf: Lauf): Schritte {
-  const beilagen: Schritt = lauf.regelwerk || lauf.preisliste
-    ? { status: "wartet", text: "Imported after the bill." }
-    : { status: "entfaellt", text: "No regulation document or price list." };
-  return { ...startOhneBeilagen(lauf), beilagen };
-}
-
-function startOhneBeilagen(lauf: Lauf): Omit<Schritte, "beilagen"> {
-  if (lauf.art === "beispiel") {
+  if (lauf.art !== "datei") {
     return {
-      datei: { status: "entfaellt", text: "No upload: the synthetic example is already on the server." },
+      datei: { status: "entfaellt", text: `No upload: “${lauf.titel}” is already on the server.` },
       import: { status: "laeuft", text: "Loading the example BoQ from the server …" },
       pruefung: { status: "wartet", text: "Starts after import." },
     };
@@ -106,6 +104,34 @@ function fehlerText(fehler: unknown) {
   return fehler instanceof Error && fehler.message ? fehler.message : "Unknown error.";
 }
 
+// The open report survives page switches within this tab (sessionStorage, never sent anywhere).
+const AKTUELL = "lv-aktuell-v1";
+type Aktuell = { titel: string; beispielId: string | null; bericht: PruefberichtDaten };
+function speichereAktuell(titel: string, beispielId: string | null, bericht: PruefberichtDaten) {
+  try { window.sessionStorage.setItem(AKTUELL, JSON.stringify({ titel, beispielId, bericht })); } catch { /* too large or blocked: start screen next time */ }
+}
+function ladeAktuell(): Aktuell | null {
+  try {
+    const roh = JSON.parse(window.sessionStorage.getItem(AKTUELL) ?? "null");
+    return roh && typeof roh.titel === "string" && roh.bericht?.lv ? roh : null;
+  } catch {
+    return null;
+  }
+}
+function vergiss() {
+  try { window.sessionStorage.removeItem(AKTUELL); } catch { /* nothing stored */ }
+}
+
+type Rolle = "lv" | "regel" | "preise";
+/** Guesses a file's role from its name and type; the user can change it in the list. */
+function rolleRaten(datei: File, hatLv: boolean): Rolle {
+  const n = datei.name.toLowerCase();
+  if (/preis|price|kosten|tarif/.test(n) || n.endsWith(".csv")) return "preise";
+  if (/\.(x8[1-6]|d8[1-6]|xlsx|xls)$/.test(n)) return "lv";
+  if (/\.(docx|txt)$/.test(n) || /norm|regel|spezif|spec|anforder|vorgabe|din/.test(n)) return "regel";
+  return hatLv ? "regel" : "lv";
+}
+
 async function backendErreichbar() {
   try {
     await api.health();
@@ -118,17 +144,38 @@ async function backendErreichbar() {
 export function LvUpload() {
   const [health, setHealth] = useState<Health | null | "offline">(null);
   const [datei, setDatei] = useState<File | null>(null);
+  // Optional regulation/specification document (team spec, UI step 1). Not analysed yet: no backend service reads it.
+  const [regelwerk, setRegelwerk] = useState<File | null>(null);
+  const [dateien, setDateien] = useState<{ datei: File; rolle: Rolle }[]>([]);
   const [dateiFehler, setDateiFehler] = useState("");
   const [ziehen, setZiehen] = useState(false);
-  const [beilagen, setBeilagen] = useState<Beilagen>({ regelwerk: null, preisliste: null });
-  const [beilagenFehler, setBeilagenFehler] = useState<Record<keyof Beilagen, string>>({ regelwerk: "", preisliste: "" });
   const [ergebnis, setErgebnis] = useState<Ergebnis>({ phase: "leer" });
   const laufNummer = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const meldungRef = useRef<HTMLDivElement>(null);
 
+  const [beispiele, setBeispiele] = useState<Example[]>([]);
+  const t = useT();
+
   useEffect(() => {
     api.health().then(setHealth).catch(() => setHealth("offline"));
+    // Coming back from another page: show the report that was open instead of the empty start screen.
+    const offen = new URLSearchParams(window.location.search).get("beispiel") ? null : ladeAktuell();
+    if (offen) {
+      const lauf: Lauf = offen.beispielId ? { art: "beispiel", id: offen.beispielId, titel: offen.titel } : { art: "lv", titel: offen.titel, lv: offen.bericht.lv };
+      const fertig: Schritt = { status: "fertig", text: "Restored from this browser session." };
+      setErgebnis({ phase: "fertig", lauf, lv: offen.bericht.lv, bericht: offen.bericht, nummer: ++laufNummer.current, offline: false,
+        schritte: { datei: fertig, import: fertig, pruefung: fertig } });
+    }
+    api.examples().then((liste) => {
+      setBeispiele(liste);
+      // The dashboard opens a past example again with /?beispiel=<id>.
+      const id = new URLSearchParams(window.location.search).get("beispiel");
+      const treffer = liste.find((b) => b.id === id);
+      if (treffer) void starte({ art: "beispiel", id: treffer.id, titel: treffer.titel });
+    }).catch(() => {});
+    // starte is stable enough here: it only runs once, after the example list arrived.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -146,18 +193,28 @@ export function LvUpload() {
     setDateiFehler(neu ? lokalerFehler(neu) ?? "" : "");
   }
 
-  function aufAuswahl(event: ChangeEvent<HTMLInputElement>) {
-    waehleDatei(event.target.files?.[0] ?? null);
+  // Current files with their role; the bill drives the review, the others are attached (see Rolle).
+  function setzeDateien(liste: { datei: File; rolle: Rolle }[]) {
+    setDateien(liste);
+    waehleDatei(liste.find((d) => d.rolle === "lv")?.datei ?? null);
+    setRegelwerk(liste.find((d) => d.rolle === "regel")?.datei ?? null);
+  }
+  function hinzufuegen(neu: File[]) {
+    const liste = [...dateien];
+    for (const f of neu) liste.push({ datei: f, rolle: rolleRaten(f, liste.some((d) => d.rolle === "lv")) });
+    setzeDateien(liste);
   }
 
-  function aufAblegen(event: DragEvent<HTMLLabelElement>) {
+  function aufAuswahl(event: ChangeEvent<HTMLInputElement>) {
+    hinzufuegen([...(event.target.files ?? [])]);
+    event.target.value = "";
+  }
+
+  function aufAblegen(event: DragEvent<HTMLElement>) {
     event.preventDefault();
     setZiehen(false);
     if (busy) return;
-    const neu = event.dataTransfer.files?.[0];
-    if (!neu) return;
-    if (inputRef.current) inputRef.current.value = "";
-    waehleDatei(neu);
+    hinzufuegen([...(event.dataTransfer.files ?? [])]);
   }
 
   async function starte(lauf: Lauf) {
@@ -188,10 +245,13 @@ export function LvUpload() {
     try {
       if (lauf.art === "datei") {
         lv = await api.importiere(lauf.datei);
+      } else if (lauf.art === "lv") {
+        lv = lauf.lv;
       } else {
-        const beispiele = await api.examples();
-        if (beispiele.length === 0) throw new Error("The backend returned no example BoQ.");
-        lv = beispiele[0].lv;
+        const liste = await api.examples();
+        const beispiel = liste.find((b) => b.id === lauf.id) ?? liste[0];
+        if (!beispiel) throw new Error("The backend returned no example BoQ.");
+        lv = beispiel.lv;
       }
     } catch (fehler) {
       let tipp: string | null = null;
@@ -207,50 +267,44 @@ export function LvUpload() {
     if (!aktuell()) return;
 
     const quelle = lv.quelle ? ` from ${lv.quelle}` : "";
-    const mitBeilagen = Boolean(lauf.regelwerk || lauf.preisliste);
     schritte = {
       datei: lauf.art === "datei"
         ? { status: "fertig", text: `${lauf.datei.name} (${groesse(lauf.datei.size)}) uploaded.` }
         : schritte.datei,
       import: { status: "fertig", text: `${anzahl(lv.positionen.length, "Item", "Items")} detected${quelle}.` },
-      beilagen: mitBeilagen ? { status: "laeuft", text: "Importing the attachments …" } : schritte.beilagen,
-      pruefung: mitBeilagen ? { status: "wartet", text: "Starts after the attachments." } : { status: "laeuft", text: "Running review rules …" },
+      pruefung: { status: "laeuft", text: "Running review rules …" },
     };
     setErgebnis({ phase: "laeuft", lauf, schritte });
 
+    // Attachments (main: #102 regulation document, #115/#158 price list): imported by the backend, then one combined analysis.
+    // An attachment the backend cannot read never blocks the review; it is named in the result bar instead.
     const hinweise: string[] = [];
-    let regelwerk: Regelwerk | null = null;
-    let preisliste: Preisliste | null = null;
-    if (mitBeilagen) {
+    let regelwerkDaten: Regelwerk | null = null;
+    let preislisteDaten: Preisliste | null = null;
+    if (lauf.art === "datei" && (lauf.regelwerk || lauf.preisliste)) {
+      schritte = { ...schritte, pruefung: { status: "laeuft", text: "Importing the attachments …" } };
+      setErgebnis({ phase: "laeuft", lauf, schritte });
       const texte: string[] = [];
-      for (const [art, datei, laden] of [
-        ["Regulation document", lauf.regelwerk, async (d: File) => { regelwerk = await api.importiereRegelwerk(d); texte.push(regelwerkText(regelwerk)); }],
-        ["Price list", lauf.preisliste, async (d: File) => { preisliste = await api.importierePreisliste(d); texte.push(preislisteText(preisliste)); }],
+      for (const [art, anhang, laden] of [
+        ["Regulation document", lauf.regelwerk, async (d: File) => { regelwerkDaten = await api.importiereRegelwerk(d); texte.push(regelwerkText(regelwerkDaten)); }],
+        ["Price list", lauf.preisliste, async (d: File) => { preislisteDaten = await api.importierePreisliste(d); texte.push(preislisteText(preislisteDaten)); }],
       ] as const) {
-        if (!datei) continue;
+        if (!anhang) continue;
         try {
-          await laden(datei);
+          await laden(anhang);
         } catch (fehler) {
-          if (routeFehlt(fehler)) {
-            hinweise.push(`${art}: this backend cannot import it yet, so the review continues without it.`);
-            continue;
-          }
-          await scheitern("beilagen", `${art} import failed`, new Error(importFehlerText(art, datei.name, fehler)), null);
-          return;
+          hinweise.push(routeFehlt(fehler) ? `${art}: this backend cannot import it yet, so the review continues without it.` : importFehlerText(art, anhang.name, fehler));
         }
         if (!aktuell()) return;
       }
-      schritte = {
-        ...schritte,
-        beilagen: { status: "fertig", text: texte.length > 0 ? texte.join(" · ") : "Skipped: this backend cannot import attachments yet." },
-        pruefung: { status: "laeuft", text: "Analysing the bill with its attachments …" },
-      };
+      if (texte.length > 0) hinweise.unshift(texte.join(" · "));
+      schritte = { ...schritte, pruefung: { status: "laeuft", text: "Analysing the bill with its attachments …" } };
       setErgebnis({ phase: "laeuft", lauf, schritte });
     }
 
     let bericht: PruefberichtDaten;
     try {
-      const anfrage = analyseAnfrage(lv, regelwerk, preisliste);
+      const anfrage = analyseAnfrage(lv, regelwerkDaten, preislisteDaten);
       bericht = anfrage === null ? await api.pruefen(lv) : await api.analyse(anfrage).catch((fehler) => {
         if (!routeFehlt(fehler)) throw fehler;
         hinweise.push("This backend has no combined analysis yet: the bill was reviewed without its attachments.");
@@ -266,6 +320,7 @@ export function LvUpload() {
       pruefung: { status: "fertig", text: `${anzahl(bericht.findings.length, "Entry", "Entries")} in the report.` },
     };
     setErgebnis({ phase: "fertig", lauf, schritte, lv, bericht, nummer, offline: false, hinweise });
+    speichereAktuell(lauf.art === "datei" ? lauf.datei.name : lauf.titel, lauf.art === "beispiel" ? lauf.id : null, bericht);
     if (health === "offline") api.health().then(setHealth).catch(() => {});
   }
 
@@ -283,112 +338,89 @@ export function LvUpload() {
     if (nummer !== laufNummer.current) return;
     const text = "Offline example: saved report, not a live analysis.";
     setErgebnis({
-      phase: "fertig", lauf, lv: bericht.lv, bericht, nummer, offline: true, hinweise: [],
+      phase: "fertig", lauf, lv: bericht.lv, bericht, nummer, offline: true,
       schritte: { ...schritte, pruefung: { status: "fertig", text } },
     });
   }
 
-  function absenden(event: FormEvent) {
+  async function absenden(event: FormEvent) {
     event.preventDefault();
-    if (!datei || dateiFehler || beilageGesperrt || busy) return;
-    void starte({ art: "datei", datei, ...beilagen });
+    if (!datei || dateiFehler || busy) return;
+    // A price list goes into the (browser) price database first, so the price report can use it.
+    const preisDatei = dateien.find((d) => d.rolle === "preise")?.datei;
+    if (preisDatei) { try { speicherePreisliste(lesePreisliste(await preisDatei.text())); } catch { /* not readable: review runs without it */ } }
+    void starte({ art: "datei", datei, regelwerk, preisliste: preisDatei ?? null });
   }
-
-  function waehleBeilage(feld: keyof Beilagen, neu: File | null) {
-    setBeilagen((alt) => ({ ...alt, [feld]: neu }));
-    const fehler = neu ? beilageFehler(neu, feld === "regelwerk" ? REGELWERK_FORMATE : PREISLISTE_FORMATE,
-      feld === "regelwerk" ? "Regulation document" : "Price list") : null;
-    setBeilagenFehler((alt) => ({ ...alt, [feld]: fehler ?? "" }));
-  }
-  const beilageGesperrt = Boolean(beilagenFehler.regelwerk || beilagenFehler.preisliste);
 
   function zuruecksetzen() {
+    vergiss();
+    setDateien([]);
+    setRegelwerk(null);
     if (inputRef.current) inputRef.current.value = "";
     waehleDatei(null);
     inputRef.current?.focus();
   }
 
   const status = health === null
-    ? { klasse: styles.statusWartet, text: "Checking backend …" }
+    ? { klasse: styles.statusWartet, text: t("Checking backend …") }
     : health === "offline"
-      ? { klasse: styles.statusOffline, text: "Backend offline" }
+      ? { klasse: styles.statusOffline, text: t("Backend offline") }
       : { klasse: health.mock ? styles.statusMock : styles.statusLive, text: `${health.provider} · ${health.model}` };
 
   return (
     <main className={styles.seite}>
       <header className={styles.kopf}>
-        <span className={styles.marke}>◆ BoQ Review Assistant</span>
+        <span className={styles.marke}>{t("Upload & report")}</span>
         <span className={`${styles.status} ${status.klasse}`}>{status.text}</span>
       </header>
 
-      <section className={styles.einleitung} aria-labelledby="upload-titel">
-        <p className={styles.kicker}>Review a bill of quantities</p>
-        <h1 id="upload-titel" className={styles.titel}>Find errors, risks and potential change orders in your BoQ before submitting a bid.</h1>
-        <p className={styles.lead}>
-          Upload a BoQ file. The assistant imports and checks its items, then shows each finding with its item number and source.
-        </p>
-      </section>
-
-      <form className={styles.karte} onSubmit={absenden} aria-describedby="upload-regeln">
-        <label
-          className={`${styles.ablage} ${ziehen ? styles.ablageAktiv : ""} ${busy ? styles.ablageGesperrt : ""}`}
-          onDragOver={(event) => { event.preventDefault(); if (!busy) setZiehen(true); }}
-          onDragLeave={() => setZiehen(false)}
-          onDrop={aufAblegen}
-        >
-          <input
-            ref={inputRef}
-            className={styles.dateiEingabe}
-            type="file"
-            name="datei"
-            accept={ACCEPT}
-            onChange={aufAuswahl}
-            disabled={busy}
-          />
-          <span className={styles.ablageTitel}>{datei ? datei.name : "Choose a BoQ file"}</span>
-          <span className={styles.ablageText}>
-            {datei ? `${groesse(datei.size)} · choose another file or drag it here` : "Click, press Enter or drag a file here"}
-          </span>
+      {ergebnis.phase === "leer" && (<>
+      {/* Start screen from the team sketch: one upload button, the list of current files, Evaluate. */}
+      <form className={styles.start} onSubmit={absenden} aria-describedby="upload-regeln"
+        onDragOver={(e) => { e.preventDefault(); setZiehen(true); }} onDragLeave={() => setZiehen(false)} onDrop={aufAblegen}>
+        <h1 className={styles.startTitel}>{t("New evaluation")}</h1>
+        <label className={`${styles.hochladen} ${ziehen ? styles.ablageAktiv : ""}`}>
+          <input ref={inputRef} className={styles.dateiEingabe} type="file" multiple accept={`${ACCEPT},.csv,.docx,.txt,.md,.x86,.d84`} onChange={aufAuswahl} disabled={busy} />
+          <Icon name="upload" size={22} /> {t("Upload files")}
         </label>
-        <p id="upload-regeln" className={styles.regeln}>
-          Formats: {FORMATS.map((f) => `${f.name} (${f.endung})`).join(", ")}. Maximum 10 MiB. The file is read only for this review and is not stored.
-        </p>
-        {dateiFehler && <p className={styles.dateiFehler} role="alert">{dateiFehler}</p>}
-        <fieldset className={styles.beilagen} disabled={busy}>
-          <legend>Optional attachments</legend>
-          {([
-            ["regelwerk", "Regulation / specification document", REGELWERK_FORMATE, "PDF, TXT or MD: its norm references and key values are checked against the bill."],
-            ["preisliste", "Price list", PREISLISTE_FORMATE, "CSV, XLSX, GAEB X84/D84/X86/D86 or JSON: prices every item and shows the estimated bill."],
-          ] as const).map(([feld, name, formate, text]) => (
-            <div key={feld} className={styles.beilage}>
-              <label htmlFor={`beilage-${feld}`} className={styles.beilageName}>{name}</label>
-              <input id={`beilage-${feld}`} type="file" accept={formate.join(",")} aria-describedby={`beilage-${feld}-text`}
-                onChange={(event) => waehleBeilage(feld, event.target.files?.[0] ?? null)} />
-              <span id={`beilage-${feld}-text`} className={styles.regeln}>
-                {beilagen[feld] ? `${beilagen[feld]!.name} (${groesse(beilagen[feld]!.size)})` : text} Maximum 10 MiB.
-              </span>
-              {beilagenFehler[feld] && <p className={styles.dateiFehler} role="alert">{beilagenFehler[feld]}</p>}
+        <p id="upload-regeln" className={styles.regeln}>{t("Bill (GAEB, Excel, PDF, JSON), optionally a regulation document and a price list. Drag files here or click.")}</p>
+
+        <div className={styles.dateiListe} aria-live="polite">
+          {dateien.length === 0 ? <p className={styles.leerListe}>{t("No files yet")}</p> : dateien.map((d, i) => (
+            <div key={`${d.datei.name}-${i}`} className={styles.dateiZeile}>
+              <Icon name={d.rolle === "lv" ? "report" : d.rolle === "preise" ? "price" : "folder"} />
+              <span className={styles.dateiName}>{d.datei.name} <small>{groesse(d.datei.size)}</small></span>
+              <select value={d.rolle} aria-label={t("Role of {name}", { name: d.datei.name })}
+                onChange={(e) => setzeDateien(dateien.map((x, k) => (k === i ? { ...x, rolle: e.target.value as Rolle } : x)))}>
+                <option value="lv">{t("Bill of quantities")}</option>
+                <option value="regel">{t("Regulation document")}</option>
+                <option value="preise">{t("Price list")}</option>
+              </select>
+              <button type="button" className={styles.entfernen} aria-label={t("Remove")} onClick={() => setzeDateien(dateien.filter((_, k) => k !== i))}>×</button>
             </div>
           ))}
-        </fieldset>
-        <div className={styles.aktionen}>
-          <button type="submit" className={styles.knopf} disabled={!datei || !!dateiFehler || beilageGesperrt || busy}>
-            {busy && ergebnis.lauf.art === "datei" ? "Reviewing …" : "Review file"}
-          </button>
-          <button type="button" className={styles.knopfZweit} disabled={busy || beilageGesperrt} onClick={() => { waehleDatei(null); if (inputRef.current) inputRef.current.value = ""; if (!beilageGesperrt) void starte({ art: "beispiel", ...beilagen }); }}>
-            {busy && ergebnis.lauf.art === "beispiel" ? "Reviewing example …" : "Review synthetic example"}
-          </button>
-          {datei && !busy && (
-            <button type="button" className={styles.knopfLeise} onClick={zuruecksetzen}>Clear selection</button>
-          )}
         </div>
-        <p className={styles.regeln}>The example is a synthetic structural works BoQ without partner data and requires no upload.</p>
-      </form>
+        {dateiFehler && <p className={styles.dateiFehler} role="alert">{dateiFehler}</p>}
+        {dateien.length > 0 && !datei && <p className={styles.dateiFehler} role="alert">{t("Mark one file as the bill of quantities.")}</p>}
 
-      {ergebnis.phase !== "leer" && (
+        <button type="submit" className={`${styles.knopf} ${styles.auswerten}`} disabled={!datei || !!dateiFehler || busy}>
+          <Icon name="sparkles" /> {t("Evaluate")}
+        </button>
+        <p className={styles.beispielZeile}>{t("No file at hand?")}{" "}
+          {beispiele.map((b) => (
+            <button key={b.id} type="button" className={styles.beispielChip} disabled={busy}
+              onClick={() => { setzeDateien([]); void starte({ art: "beispiel", id: b.id, titel: b.titel }); }}>
+              {t(b.titel)} · {anzahl(b.lv.positionen.length, t("item"), t("items"))}
+            </button>
+          ))}
+        </p>
+      </form>
+      </>)}
+
+      {(ergebnis.phase === "laeuft" || ergebnis.phase === "fehler") && (
         <section className={styles.karte} aria-labelledby="ablauf-titel" aria-busy={busy}>
           <h2 id="ablauf-titel" className={styles.abschnitt}>
-            {ergebnis.lauf.art === "datei" ? `Progress for ${ergebnis.lauf.datei.name}` : "Progress for the synthetic example"}
+            {t("Progress for")} {ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei.name : t(ergebnis.lauf.titel)}
           </h2>
           <ol className={styles.schritte}>
             {(Object.keys(SCHRITT_NAMEN) as SchrittId[]).map((id) => {
@@ -396,50 +428,57 @@ export function LvUpload() {
               return (
                 <li key={id} className={`${styles.schritt} ${styles[`schritt_${schritt.status}`]}`}>
                   <span className={styles.symbol} aria-hidden="true" />
-                  <span className={styles.schrittName}>{SCHRITT_NAMEN[id]}</span>
-                  <span className={styles.schrittStatus}>{STATUS_NAMEN[schritt.status]}</span>
-                  <span className={styles.schrittText}>{schritt.text}</span>
+                  <span className={styles.schrittName}>{t(SCHRITT_NAMEN[id])}</span>
+                  <span className={styles.schrittStatus}>{t(STATUS_NAMEN[schritt.status])}</span>
+                  <span className={styles.schrittText}>{t(schritt.text)}</span>
                 </li>
               );
             })}
           </ol>
           <div aria-live="polite" className={styles.ansage}>
-            {busy && `${SCHRITT_NAMEN[ergebnis.schritte.pruefung.status === "laeuft" ? "pruefung" : "import"]} is running.`}
+            {busy && t("{step} is running.", { step: t(SCHRITT_NAMEN[ergebnis.schritte.pruefung.status === "laeuft" ? "pruefung" : "import"]) })}
           </div>
           {ergebnis.phase === "fehler" && (
             <div ref={meldungRef} tabIndex={-1} className={styles.fehler} role="alert">
-              <h3>{ergebnis.titel}</h3>
-              <p>{ergebnis.meldung}</p>
-              {ergebnis.tipp && <p className={styles.tipp}>{ergebnis.tipp}</p>}
+              <h3>{t(ergebnis.titel)}</h3>
+              <p>{t(ergebnis.meldung)}</p>
+              {ergebnis.tipp && <p className={styles.tipp}>{t(ergebnis.tipp)}</p>}
               <div className={styles.aktionen}>
-                <button type="button" className={styles.knopf} onClick={() => void starte(ergebnis.lauf)}>Try again</button>
+                <button type="button" className={styles.knopf} onClick={() => void starte(ergebnis.lauf)}>{t("Try again")}</button>
                 {ergebnis.offline && (
                   <button type="button" className={styles.knopfZweit} onClick={() => void zeigeOffline(ergebnis.lauf, ergebnis.schritte)}>
-                    Show offline example report
+                    {t("Show offline example report")}
                   </button>
                 )}
                 {ergebnis.lauf.art === "datei" && (
-                  <button type="button" className={styles.knopfZweit} onClick={zuruecksetzen}>Choose another file</button>
+                  <button type="button" className={styles.knopfZweit} onClick={zuruecksetzen}>{t("Choose another file")}</button>
                 )}
               </div>
-            </div>
-          )}
-          {ergebnis.phase === "fertig" && (
-            <div ref={meldungRef} tabIndex={-1} className={styles.erfolg}>
-              <p>
-                {ergebnis.offline
-                  ? <>The backend is unreachable. Below is the saved report for the synthetic example, not an analysis of your file.</>
-                  : <><strong>{anzahl(ergebnis.lv.positionen.length, "Item", "Items")}</strong> imported and reviewed. The review report is below.</>}
-              </p>
-              {ergebnis.hinweise.map((h) => <p key={h} className={styles.tipp} role="note">{h}</p>)}
-              <button type="button" className={styles.knopfZweit} onClick={() => void starte(ergebnis.lauf)}>Review again</button>
             </div>
           )}
         </section>
       )}
 
       {ergebnis.phase === "fertig" && (
-        <Pruefbericht key={ergebnis.nummer} bericht={ergebnis.bericht} offline={ergebnis.offline} />
+        <div ref={meldungRef} tabIndex={-1} className={`${styles.karte} ${styles.geladen}`}>
+          <p>
+            <span className={styles.haken} aria-hidden="true">✓</span>{" "}
+            {ergebnis.offline
+              ? <>{t("The backend is unreachable. Below is the saved report for the synthetic example, not an analysis of your file.")}</>
+              : <><strong>{ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei.name : t(ergebnis.lauf.titel)}</strong> · {t("{n} items imported and reviewed.", { n: zahl.format(ergebnis.lv.positionen.length) })}
+                {regelwerk && <> · {t("Regulation document")}: {regelwerk.name}</>}</>}
+          </p>
+          {ergebnis.hinweise?.map((h) => <p key={h} className={styles.tipp} role="note">{h}</p>)}
+          <div className={styles.aktionen}>
+            <button type="button" className={styles.knopfZweit} onClick={() => void starte(ergebnis.lauf)}>{t("Review again")}</button>
+            <button type="button" className={styles.knopf} onClick={zuruecksetzen}>{t("Load another file")}</button>
+          </div>
+        </div>
+      )}
+
+      {ergebnis.phase === "fertig" && (
+        <Bericht key={ergebnis.nummer} bericht={ergebnis.bericht} offline={ergebnis.offline}
+          anzeigeName={ergebnis.lauf.art === "datei" ? undefined : t(ergebnis.lauf.titel)} />
       )}
     </main>
   );

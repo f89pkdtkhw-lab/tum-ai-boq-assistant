@@ -102,3 +102,57 @@ export const FIXTURE_SOURCES: SourceRecord[] = [
     requirement: { parameter: "thickness", comparator: "eq", value: 12, unit: "cm" }, verified: false,
   },
 ];
+
+// ---------- automation: fields the editor fills in by itself (the person still confirms the source) ----------
+
+const KOMPARATOR: [RegExp, Requirement["comparator"]][] = [
+  [/(\bmin(?:imum|\.)?|\bmindestens\b|\bat least\b|≥|>=)/i, "min"],
+  [/(\bmax(?:imum|\.)?|\bhöchstens\b|\bat most\b|≤|<=)/i, "max"],
+];
+const PARAMETER: [RegExp, string][] = [
+  [/dick|stärke|staerke|thick/i, "thickness"], [/breit|width/i, "width"], [/höhe|hoehe|height/i, "height"],
+  [/länge|laenge|length/i, "length"], [/tiefe|depth/i, "depth"], [/druckfestigkeit|strength/i, "strength"],
+  [/überdeckung|ueberdeckung|cover/i, "concrete_cover"], [/gefälle|gefaelle|slope/i, "slope"],
+];
+
+/** Reads "min. 12,5 cm Dicke" as { parameter: "thickness", comparator: "min", value: 12.5, unit: "cm" }; null without a number. */
+export function leseAnforderung(text: string): Requirement | null {
+  const m = text.match(/(-?\d+(?:[.,]\d+)?)\s*([A-Za-zµ°%²³/]+[²³]?)?/);
+  if (!m) return null;
+  const value = Number(m[1].replace(",", "."));
+  if (!Number.isFinite(value)) return null;
+  const comparator = KOMPARATOR.find(([re]) => re.test(text))?.[1] ?? "eq";
+  const parameter = PARAMETER.find(([re]) => re.test(text))?.[1] ?? "";
+  return { parameter, comparator, value, unit: m[2] ?? "" };
+}
+
+const NORM = /\b(DIN|EN|ISO|VOB|ATV|DIN\s?EN)\b/;
+export const hatNorm = (r: Pick<SourceRecord, "title" | "document_ref" | "source_url">) =>
+  NORM.test(`${r.title} ${r.document_ref ?? ""} ${r.source_url ?? ""}`);
+export const scopeText = (oz: string[]) => (oz.length ? `OZ ${oz.join(", ")}` : "");
+
+/** Fields derived from an edit. Only fields the person has not set by hand are filled; `verified` is never touched. */
+export function autoFelder(record: SourceRecord, patch: Partial<SourceRecord>): Partial<SourceRecord> {
+  const neu = { ...record, ...patch };
+  const auto: Partial<SourceRecord> = {};
+  if ("text" in patch && !("requirement" in patch)) {
+    const vorher = leseAnforderung(record.text);
+    if (record.requirement === null || JSON.stringify(record.requirement) === JSON.stringify(vorher)) {
+      auto.requirement = leseAnforderung(neu.text);
+    }
+  }
+  if (("title" in patch || "document_ref" in patch || "source_url" in patch) && !("category" in patch) && hatNorm(neu)) {
+    auto.category = "german_standard";
+  } else if ("source_type" in patch && !("category" in patch) && !hatNorm(neu)) {
+    auto.category = neu.source_type === "internet" ? "external_other" : "user_requirement";
+  }
+  if (patch.scope && JSON.stringify(patch.scope.oz) !== JSON.stringify(record.scope.oz)
+    && (record.scope.description.trim() === "" || record.scope.description === scopeText(record.scope.oz))) {
+    auto.scope = { ...patch.scope, description: scopeText(patch.scope.oz) };
+  }
+  return auto;
+}
+
+/** "thickness ≥ 12.5 cm" for the collapsed summary. */
+export const anforderungText = (r: Requirement | null) =>
+  r && r.value !== null ? `${r.parameter || "value"} ${{ eq: "=", min: "≥", max: "≤" }[r.comparator]} ${r.value} ${r.unit}`.trim() : "";

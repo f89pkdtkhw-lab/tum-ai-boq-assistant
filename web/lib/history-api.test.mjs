@@ -49,3 +49,30 @@ test("filter by tag, newest first", () => {
   assert.deepEqual(filterCases(cases, "bridge").map((c) => c.case_id), ["B", "A"]);
   assert.deepEqual(filterCases(cases, null).map((c) => c.case_id), ["C", "B", "A"]);
 });
+
+test("similar positions match on the work type, newest first, with their own values", async () => {
+  const { similarPositions } = await import("./history-api.ts");
+  const old = { ...h1(), case_id: "A", date: "2025-01-01", lv: { name: "a", quelle: "s", positionen: [{ oz: "01.001", kurztext: "Erdarbeiten Baugrube" }, { oz: "01.002", kurztext: "Betonarbeiten" }] },
+    real_values: [actual(120)], marks: [{ oz: "01.001", title_path: [], status: "deviation" }] };
+  const neu = { ...h1(), case_id: "B", date: "2026-01-01", lv: { name: "b", quelle: "s", positionen: [{ oz: "9", kurztext: "erdarbeiten, Teilfläche" }] } };
+  const hits = similarPositions([old, neu], "Erdarbeiten Teilfläche 3");
+  assert.deepEqual(hits.map((h) => h.case.case_id), ["B", "A"]);
+  assert.equal(hits[1].real[0].value, 120);
+  assert.equal(hits[1].mark.status, "deviation");
+  assert.deepEqual(similarPositions([old], ""), []);
+  assert.deepEqual(similarPositions([old], "Mauerarbeiten"), []);
+});
+
+test("deviation by trade averages actual vs estimate per work type, worst first", async () => {
+  const { deviationByTrade } = await import("./history-api.ts");
+  const m = (oz, value) => ({ oz, metric: "hours", value, unit: "h" });
+  const c = (id, est, real) => ({ ...h1(), case_id: id,
+    lv: { name: id, quelle: "s", positionen: [{ oz: "1", kurztext: "Erdarbeiten X" }, { oz: "2", kurztext: "Betonarbeiten Y" }] },
+    estimated_values: [m("1", 100), m("2", 100)], real_values: [m("1", est), ...(real === null ? [] : [m("2", real)])] });
+  const stats = deviationByTrade([c("A", 110, 150), c("B", 130, null)]);
+  assert.deepEqual(stats.map((s) => s.trade), ["Betonarbeiten", "Erdarbeiten"]);
+  assert.equal(stats[0].avgDeviation, 50);
+  assert.equal(stats[1].avgDeviation, 20);
+  assert.equal(stats[1].projects, 2);
+  assert.equal(stats[0].withActual, 1);
+});

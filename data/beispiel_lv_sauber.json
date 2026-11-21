@@ -1,0 +1,4249 @@
+{
+ "name": "Synthetisches Bürogebäude – sauberes LV",
+ "quelle": "synthetisch: tools/beispiel_gross.py, keine Partnerdaten",
+ "positionen": [
+  {
+   "oz": "01.01.0001",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 1, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 102.93,
+   "einheit": "m³",
+   "ep": 27.89,
+   "gp": 2870.72,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0002",
+   "kurztext": "Erdarbeiten Baugrubenaushub",
+   "langtext": "Baugrubenaushub im Bereich Bürogebäude, Abschnitt 2, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 482.62,
+   "einheit": "m³",
+   "ep": 29.71,
+   "gp": 14338.64,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0003",
+   "kurztext": "Erdarbeiten Baugrubenaushub",
+   "langtext": "Baugrubenaushub im Bereich Bürogebäude, Abschnitt 3, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 596.63,
+   "einheit": "m³",
+   "ep": 26.43,
+   "gp": 15768.93,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0004",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 4, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 186.03,
+   "einheit": "m³",
+   "ep": 29.03,
+   "gp": 5400.45,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0005",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 5, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 308.7,
+   "einheit": "m³",
+   "ep": 26.82,
+   "gp": 8279.33,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0006",
+   "kurztext": "Erdarbeiten Bodenaustausch",
+   "langtext": "Bodenaustausch im Bereich Bürogebäude, Abschnitt 6, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 190.88,
+   "einheit": "m³",
+   "ep": 26.89,
+   "gp": 5132.76,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0007",
+   "kurztext": "Erdarbeiten Baugrubenaushub",
+   "langtext": "Baugrubenaushub im Bereich Bürogebäude, Abschnitt 7, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 755.14,
+   "einheit": "m³",
+   "ep": 27.68,
+   "gp": 20902.28,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0008",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 8, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 29.27,
+   "einheit": "m³",
+   "ep": 29.84,
+   "gp": 873.42,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0009",
+   "kurztext": "Erdarbeiten Bodenaustausch",
+   "langtext": "Bodenaustausch im Bereich Bürogebäude, Abschnitt 9, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 188.55,
+   "einheit": "m³",
+   "ep": 28.11,
+   "gp": 5300.14,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0010",
+   "kurztext": "Erdarbeiten Bodenaustausch",
+   "langtext": "Bodenaustausch im Bereich Bürogebäude, Abschnitt 10, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 434.92,
+   "einheit": "m³",
+   "ep": 27.15,
+   "gp": 11808.08,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0011",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 11, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 582.79,
+   "einheit": "m³",
+   "ep": 30.42,
+   "gp": 17728.47,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0012",
+   "kurztext": "Erdarbeiten Baugrubenaushub",
+   "langtext": "Baugrubenaushub im Bereich Bürogebäude, Abschnitt 12, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 711.28,
+   "einheit": "m³",
+   "ep": 27.4,
+   "gp": 19489.07,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0013",
+   "kurztext": "Erdarbeiten Grabenaushub",
+   "langtext": "Grabenaushub im Bereich Bürogebäude, Abschnitt 13, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 754.8,
+   "einheit": "m³",
+   "ep": 27.33,
+   "gp": 20628.68,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0014",
+   "kurztext": "Erdarbeiten Grabenaushub",
+   "langtext": "Grabenaushub im Bereich Bürogebäude, Abschnitt 14, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 338.51,
+   "einheit": "m³",
+   "ep": 31.11,
+   "gp": 10531.05,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0015",
+   "kurztext": "Erdarbeiten Verfüllung",
+   "langtext": "Verfüllung im Bereich Bürogebäude, Abschnitt 15, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 585.1,
+   "einheit": "m³",
+   "ep": 31.3,
+   "gp": 18313.63,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0016",
+   "kurztext": "Erdarbeiten Verfüllung",
+   "langtext": "Verfüllung im Bereich Bürogebäude, Abschnitt 16, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 401.32,
+   "einheit": "m³",
+   "ep": 30.15,
+   "gp": 12099.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0017",
+   "kurztext": "Erdarbeiten Baugrubenaushub",
+   "langtext": "Baugrubenaushub im Bereich Bürogebäude, Abschnitt 17, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 786.05,
+   "einheit": "m³",
+   "ep": 29.28,
+   "gp": 23015.54,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0018",
+   "kurztext": "Erdarbeiten Bodenaustausch",
+   "langtext": "Bodenaustausch im Bereich Bürogebäude, Abschnitt 18, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 642.69,
+   "einheit": "m³",
+   "ep": 30.52,
+   "gp": 19614.9,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0019",
+   "kurztext": "Erdarbeiten Grabenaushub",
+   "langtext": "Grabenaushub im Bereich Bürogebäude, Abschnitt 19, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 251.65,
+   "einheit": "m³",
+   "ep": 27.77,
+   "gp": 6988.32,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0020",
+   "kurztext": "Erdarbeiten Baugrubenaushub",
+   "langtext": "Baugrubenaushub im Bereich Bürogebäude, Abschnitt 20, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 769.39,
+   "einheit": "m³",
+   "ep": 28.42,
+   "gp": 21866.06,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0021",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 21, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 875.89,
+   "einheit": "m³",
+   "ep": 30.02,
+   "gp": 26294.22,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0022",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 22, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 315.13,
+   "einheit": "m³",
+   "ep": 25.71,
+   "gp": 8101.99,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0023",
+   "kurztext": "Erdarbeiten Bodenaustausch",
+   "langtext": "Bodenaustausch im Bereich Bürogebäude, Abschnitt 23, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 893.84,
+   "einheit": "m³",
+   "ep": 26.4,
+   "gp": 23597.38,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0024",
+   "kurztext": "Erdarbeiten Grabenaushub",
+   "langtext": "Grabenaushub im Bereich Bürogebäude, Abschnitt 24, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 798.4,
+   "einheit": "m³",
+   "ep": 30.15,
+   "gp": 24071.76,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0025",
+   "kurztext": "Erdarbeiten Bodenaustausch",
+   "langtext": "Bodenaustausch im Bereich Bürogebäude, Abschnitt 25, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 499.93,
+   "einheit": "m³",
+   "ep": 28.83,
+   "gp": 14412.98,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0026",
+   "kurztext": "Erdarbeiten Grabenaushub",
+   "langtext": "Grabenaushub im Bereich Bürogebäude, Abschnitt 26, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 362.46,
+   "einheit": "m³",
+   "ep": 28.64,
+   "gp": 10380.85,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0027",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 27, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 294.71,
+   "einheit": "m³",
+   "ep": 27.77,
+   "gp": 8184.1,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0028",
+   "kurztext": "Erdarbeiten Bodenaustausch",
+   "langtext": "Bodenaustausch im Bereich Bürogebäude, Abschnitt 28, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 848.59,
+   "einheit": "m³",
+   "ep": 29.58,
+   "gp": 25101.29,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0029",
+   "kurztext": "Erdarbeiten Baugrubenaushub",
+   "langtext": "Baugrubenaushub im Bereich Bürogebäude, Abschnitt 29, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 659.9,
+   "einheit": "m³",
+   "ep": 26.83,
+   "gp": 17705.12,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0030",
+   "kurztext": "Erdarbeiten Bodenaustausch",
+   "langtext": "Bodenaustausch im Bereich Bürogebäude, Abschnitt 30, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 384.11,
+   "einheit": "m³",
+   "ep": 29.7,
+   "gp": 11408.07,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0031",
+   "kurztext": "Erdarbeiten Verfüllung",
+   "langtext": "Verfüllung im Bereich Bürogebäude, Abschnitt 31, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 662.13,
+   "einheit": "m³",
+   "ep": 30.37,
+   "gp": 20108.89,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0032",
+   "kurztext": "Erdarbeiten Verfüllung",
+   "langtext": "Verfüllung im Bereich Bürogebäude, Abschnitt 32, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 234.43,
+   "einheit": "m³",
+   "ep": 26.8,
+   "gp": 6282.72,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0033",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 33, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 31.98,
+   "einheit": "m³",
+   "ep": 28.18,
+   "gp": 901.2,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0034",
+   "kurztext": "Erdarbeiten Verfüllung",
+   "langtext": "Verfüllung im Bereich Bürogebäude, Abschnitt 34, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 312.36,
+   "einheit": "m³",
+   "ep": 29.63,
+   "gp": 9255.23,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0035",
+   "kurztext": "Erdarbeiten Baugrubenaushub",
+   "langtext": "Baugrubenaushub im Bereich Bürogebäude, Abschnitt 35, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 872.26,
+   "einheit": "m³",
+   "ep": 30.69,
+   "gp": 26769.66,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0036",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 36, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 842.01,
+   "einheit": "m³",
+   "ep": 27.23,
+   "gp": 22927.93,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0037",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 37, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 140.3,
+   "einheit": "m³",
+   "ep": 30.26,
+   "gp": 4245.48,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0038",
+   "kurztext": "Erdarbeiten Verfüllung",
+   "langtext": "Verfüllung im Bereich Bürogebäude, Abschnitt 38, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 342.95,
+   "einheit": "m³",
+   "ep": 29.97,
+   "gp": 10278.21,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0039",
+   "kurztext": "Erdarbeiten Grabenaushub",
+   "langtext": "Grabenaushub im Bereich Bürogebäude, Abschnitt 39, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 278.1,
+   "einheit": "m³",
+   "ep": 30.74,
+   "gp": 8548.79,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0040",
+   "kurztext": "Erdarbeiten Bodenaustausch",
+   "langtext": "Bodenaustausch im Bereich Bürogebäude, Abschnitt 40, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 762.17,
+   "einheit": "m³",
+   "ep": 28.73,
+   "gp": 21897.14,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0041",
+   "kurztext": "Erdarbeiten Grabenaushub",
+   "langtext": "Grabenaushub im Bereich Bürogebäude, Abschnitt 41, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 637.63,
+   "einheit": "m³",
+   "ep": 25.77,
+   "gp": 16431.73,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0042",
+   "kurztext": "Erdarbeiten Verfüllung",
+   "langtext": "Verfüllung im Bereich Bürogebäude, Abschnitt 42, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 606.69,
+   "einheit": "m³",
+   "ep": 28.61,
+   "gp": 17357.4,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0043",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 43, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 359.41,
+   "einheit": "m³",
+   "ep": 26.87,
+   "gp": 9657.35,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0044",
+   "kurztext": "Erdarbeiten Baugrubenaushub",
+   "langtext": "Baugrubenaushub im Bereich Bürogebäude, Abschnitt 44, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 741.49,
+   "einheit": "m³",
+   "ep": 27.03,
+   "gp": 20042.47,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.01.0045",
+   "kurztext": "Erdarbeiten Oberboden abtragen",
+   "langtext": "Oberboden abtragen im Bereich Bürogebäude, Abschnitt 45, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 616.3,
+   "einheit": "m³",
+   "ep": 27.5,
+   "gp": 16948.25,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "01 Erdarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0001",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 1, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 224.96,
+   "einheit": "m³",
+   "ep": 239.6,
+   "gp": 53900.42,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0002",
+   "kurztext": "Betonarbeiten Bodenplatte C25/30",
+   "langtext": "Bodenplatte C25/30 im Bereich Bürogebäude, Abschnitt 2, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 279.52,
+   "einheit": "m³",
+   "ep": 254.34,
+   "gp": 71093.12,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0003",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 3, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 492.34,
+   "einheit": "m³",
+   "ep": 219.68,
+   "gp": 108157.25,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0004",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 4, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 433.08,
+   "einheit": "m³",
+   "ep": 238.95,
+   "gp": 103484.47,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0005",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 5, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 213.16,
+   "einheit": "m³",
+   "ep": 263.67,
+   "gp": 56203.9,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0006",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 6, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 353.98,
+   "einheit": "m³",
+   "ep": 257.74,
+   "gp": 91234.81,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0007",
+   "kurztext": "Betonarbeiten Streifenfundament",
+   "langtext": "Streifenfundament im Bereich Bürogebäude, Abschnitt 7, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 850.12,
+   "einheit": "m³",
+   "ep": 248.84,
+   "gp": 211543.86,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0008",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 8, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 406.97,
+   "einheit": "m³",
+   "ep": 235.27,
+   "gp": 95747.83,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0009",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 9, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 819.19,
+   "einheit": "m³",
+   "ep": 236.55,
+   "gp": 193779.39,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0010",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 10, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 52.14,
+   "einheit": "m³",
+   "ep": 257.81,
+   "gp": 13442.21,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0011",
+   "kurztext": "Betonarbeiten Streifenfundament",
+   "langtext": "Streifenfundament im Bereich Bürogebäude, Abschnitt 11, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 114.4,
+   "einheit": "m³",
+   "ep": 234.29,
+   "gp": 26802.78,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0012",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 12, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 697.78,
+   "einheit": "m³",
+   "ep": 256.04,
+   "gp": 178659.59,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0013",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 13, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 309.61,
+   "einheit": "m³",
+   "ep": 224.94,
+   "gp": 69643.67,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0014",
+   "kurztext": "Betonarbeiten Streifenfundament",
+   "langtext": "Streifenfundament im Bereich Bürogebäude, Abschnitt 14, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 106.5,
+   "einheit": "m³",
+   "ep": 256.87,
+   "gp": 27356.65,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0015",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 15, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 390.03,
+   "einheit": "m³",
+   "ep": 219.75,
+   "gp": 85709.09,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0016",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 16, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 783.52,
+   "einheit": "m³",
+   "ep": 238.89,
+   "gp": 187175.09,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0017",
+   "kurztext": "Betonarbeiten Streifenfundament",
+   "langtext": "Streifenfundament im Bereich Bürogebäude, Abschnitt 17, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 57.69,
+   "einheit": "m³",
+   "ep": 244.85,
+   "gp": 14125.4,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0018",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 18, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 55.07,
+   "einheit": "m³",
+   "ep": 231.59,
+   "gp": 12753.66,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0019",
+   "kurztext": "Betonarbeiten Streifenfundament",
+   "langtext": "Streifenfundament im Bereich Bürogebäude, Abschnitt 19, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 497.2,
+   "einheit": "m³",
+   "ep": 244.42,
+   "gp": 121525.62,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0020",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 20, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 275.16,
+   "einheit": "m³",
+   "ep": 234.67,
+   "gp": 64571.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0021",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 21, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 877.82,
+   "einheit": "m³",
+   "ep": 228.43,
+   "gp": 200520.42,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0022",
+   "kurztext": "Betonarbeiten Streifenfundament",
+   "langtext": "Streifenfundament im Bereich Bürogebäude, Abschnitt 22, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 619.81,
+   "einheit": "m³",
+   "ep": 222.86,
+   "gp": 138130.86,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0023",
+   "kurztext": "Betonarbeiten Streifenfundament",
+   "langtext": "Streifenfundament im Bereich Bürogebäude, Abschnitt 23, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 384.44,
+   "einheit": "m³",
+   "ep": 262.4,
+   "gp": 100877.06,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0024",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 24, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 321.43,
+   "einheit": "m³",
+   "ep": 234.68,
+   "gp": 75433.19,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0025",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 25, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 13.79,
+   "einheit": "m³",
+   "ep": 233.85,
+   "gp": 3224.79,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0026",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 26, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 772.0,
+   "einheit": "m³",
+   "ep": 223.78,
+   "gp": 172758.16,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0027",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 27, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 447.98,
+   "einheit": "m³",
+   "ep": 261.23,
+   "gp": 117025.82,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0028",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 28, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 261.83,
+   "einheit": "m³",
+   "ep": 224.09,
+   "gp": 58673.48,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0029",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 29, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 510.92,
+   "einheit": "m³",
+   "ep": 227.42,
+   "gp": 116193.43,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0030",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 30, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 48.65,
+   "einheit": "m³",
+   "ep": 230.29,
+   "gp": 11203.61,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0031",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 31, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 148.93,
+   "einheit": "m³",
+   "ep": 230.12,
+   "gp": 34271.77,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0032",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 32, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 131.15,
+   "einheit": "m³",
+   "ep": 262.77,
+   "gp": 34462.29,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0033",
+   "kurztext": "Betonarbeiten Bodenplatte C25/30",
+   "langtext": "Bodenplatte C25/30 im Bereich Bürogebäude, Abschnitt 33, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 294.23,
+   "einheit": "m³",
+   "ep": 227.97,
+   "gp": 67075.61,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0034",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 34, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 470.45,
+   "einheit": "m³",
+   "ep": 236.52,
+   "gp": 111270.83,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0035",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 35, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 640.65,
+   "einheit": "m³",
+   "ep": 246.32,
+   "gp": 157804.91,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0036",
+   "kurztext": "Betonarbeiten Bodenplatte C25/30",
+   "langtext": "Bodenplatte C25/30 im Bereich Bürogebäude, Abschnitt 36, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 135.47,
+   "einheit": "m³",
+   "ep": 249.18,
+   "gp": 33756.41,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0037",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 37, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 594.63,
+   "einheit": "m³",
+   "ep": 239.55,
+   "gp": 142443.62,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0038",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 38, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 629.7,
+   "einheit": "m³",
+   "ep": 261.07,
+   "gp": 164395.78,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0039",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 39, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 871.69,
+   "einheit": "m³",
+   "ep": 238.37,
+   "gp": 207784.75,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0040",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 40, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 374.67,
+   "einheit": "m³",
+   "ep": 241.88,
+   "gp": 90625.18,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0041",
+   "kurztext": "Betonarbeiten Stütze",
+   "langtext": "Stütze im Bereich Bürogebäude, Abschnitt 41, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 304.1,
+   "einheit": "m³",
+   "ep": 254.63,
+   "gp": 77432.98,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0042",
+   "kurztext": "Betonarbeiten Bodenplatte C25/30",
+   "langtext": "Bodenplatte C25/30 im Bereich Bürogebäude, Abschnitt 42, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 460.6,
+   "einheit": "m³",
+   "ep": 249.66,
+   "gp": 114993.4,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0042",
+   "kurztext": "Betonarbeiten Stahlbetondecke",
+   "langtext": "Stahlbetondecke im Bereich Bürogebäude, Abschnitt 43, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 443.08,
+   "einheit": "m³",
+   "ep": 241.2,
+   "gp": 106870.9,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0044",
+   "kurztext": "Betonarbeiten Bodenplatte C25/30",
+   "langtext": "Bodenplatte C25/30 im Bereich Bürogebäude, Abschnitt 44, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 879.92,
+   "einheit": "m³",
+   "ep": 261.28,
+   "gp": 229905.5,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0045",
+   "kurztext": "Betonarbeiten Stahlbetonwand",
+   "langtext": "Stahlbetonwand im Bereich Bürogebäude, Abschnitt 45, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 80.49,
+   "einheit": "m³",
+   "ep": 227.77,
+   "gp": 18333.21,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.02.0046",
+   "kurztext": "Betonarbeiten Streifenfundament",
+   "langtext": "Streifenfundament im Bereich Bürogebäude, Abschnitt 46, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 617.2,
+   "einheit": "m³",
+   "ep": 261.94,
+   "gp": 161669.37,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "02 Betonarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0001",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 1, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 33.62,
+   "einheit": "m²",
+   "ep": 84.3,
+   "gp": 2834.17,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0002",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 2, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 24.96,
+   "einheit": "m²",
+   "ep": 75.89,
+   "gp": 1894.21,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0003",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 3, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 402.52,
+   "einheit": "m²",
+   "ep": 84.53,
+   "gp": 34025.02,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0004",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 4, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 839.73,
+   "einheit": "m²",
+   "ep": 72.39,
+   "gp": 60788.05,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0005",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 5, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 336.59,
+   "einheit": "m²",
+   "ep": 83.41,
+   "gp": 28074.97,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0006",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 6, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 63.28,
+   "einheit": "m²",
+   "ep": 73.1,
+   "gp": 4625.77,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0007",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 7, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 229.45,
+   "einheit": "m²",
+   "ep": 80.74,
+   "gp": 18525.79,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0008",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 8, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 42.18,
+   "einheit": "m²",
+   "ep": 78.52,
+   "gp": 3311.97,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0009",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 9, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 80.11,
+   "einheit": "m²",
+   "ep": 70.9,
+   "gp": 5679.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0010",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 10, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 294.77,
+   "einheit": "m²",
+   "ep": 82.48,
+   "gp": 24312.63,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0011",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 11, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 782.22,
+   "einheit": "m²",
+   "ep": 83.35,
+   "gp": 65198.04,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0012",
+   "kurztext": "Mauerarbeiten Trennwand 11,5 cm",
+   "langtext": "Trennwand 11,5 cm im Bereich Bürogebäude, Abschnitt 12, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 203.35,
+   "einheit": "m²",
+   "ep": 77.05,
+   "gp": 15668.12,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0013",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 13, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 734.45,
+   "einheit": "m²",
+   "ep": 80.55,
+   "gp": 59159.95,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0014",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 14, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 562.19,
+   "einheit": "m²",
+   "ep": 72.05,
+   "gp": 40505.79,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0015",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 15, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 622.35,
+   "einheit": "m²",
+   "ep": 75.83,
+   "gp": 47192.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0016",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 16, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 434.74,
+   "einheit": "m²",
+   "ep": 77.94,
+   "gp": 33883.64,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0017",
+   "kurztext": "Mauerarbeiten Trennwand 11,5 cm",
+   "langtext": "Trennwand 11,5 cm im Bereich Bürogebäude, Abschnitt 17, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 456.19,
+   "einheit": "m²",
+   "ep": 71.25,
+   "gp": 32503.54,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0018",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 18, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 818.57,
+   "einheit": "m²",
+   "ep": 82.38,
+   "gp": 67433.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0019",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 19, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 610.99,
+   "einheit": "m²",
+   "ep": 82.78,
+   "gp": 50577.75,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0020",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 20, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 19.03,
+   "einheit": "m²",
+   "ep": 83.41,
+   "gp": 1587.29,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0021",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 21, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 729.38,
+   "einheit": "m²",
+   "ep": 77.84,
+   "gp": 56774.94,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0022",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 22, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 85.62,
+   "einheit": "m²",
+   "ep": 79.49,
+   "gp": 6805.93,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0023",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 23, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 490.25,
+   "einheit": "m²",
+   "ep": 84.31,
+   "gp": 41332.98,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0024",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 24, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 503.66,
+   "einheit": "m²",
+   "ep": 80.87,
+   "gp": 40730.98,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0025",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 25, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 769.97,
+   "einheit": "m²",
+   "ep": 80.59,
+   "gp": 62051.88,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0026",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 26, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 233.15,
+   "einheit": "m²",
+   "ep": 84.42,
+   "gp": 19682.52,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0027",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 27, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 896.49,
+   "einheit": "m²",
+   "ep": 84.09,
+   "gp": 75385.84,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0028",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 28, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 794.83,
+   "einheit": "m²",
+   "ep": 74.81,
+   "gp": 59461.23,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0029",
+   "kurztext": "Mauerarbeiten Trennwand 11,5 cm",
+   "langtext": "Trennwand 11,5 cm im Bereich Bürogebäude, Abschnitt 29, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 30.7,
+   "einheit": "m²",
+   "ep": 79.49,
+   "gp": 2440.34,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0030",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 30, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 198.17,
+   "einheit": "m²",
+   "ep": 76.34,
+   "gp": 15128.3,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0031",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 31, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 668.26,
+   "einheit": "m²",
+   "ep": 82.7,
+   "gp": 55265.1,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0032",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 32, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 205.97,
+   "einheit": "m²",
+   "ep": 71.05,
+   "gp": 14634.17,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0033",
+   "kurztext": "Mauerarbeiten Trennwand 11,5 cm",
+   "langtext": "Trennwand 11,5 cm im Bereich Bürogebäude, Abschnitt 33, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 610.62,
+   "einheit": "m²",
+   "ep": 78.01,
+   "gp": 47634.47,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0034",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 34, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 387.15,
+   "einheit": "m²",
+   "ep": 75.31,
+   "gp": 29156.27,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0035",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 35, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 229.79,
+   "einheit": "m²",
+   "ep": 72.64,
+   "gp": 16691.95,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0036",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 36, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 520.43,
+   "einheit": "m²",
+   "ep": 71.26,
+   "gp": 37085.84,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0037",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 37, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 579.02,
+   "einheit": "m²",
+   "ep": 75.38,
+   "gp": 43646.53,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0038",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 38, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 581.0,
+   "einheit": "m²",
+   "ep": 76.32,
+   "gp": 44341.92,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0039",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 39, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 504.11,
+   "einheit": "m²",
+   "ep": 82.96,
+   "gp": 41820.97,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0040",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 40, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 184.31,
+   "einheit": "m²",
+   "ep": 70.95,
+   "gp": 13076.79,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0041",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 41, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 822.52,
+   "einheit": "m²",
+   "ep": 72.57,
+   "gp": 59690.28,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0042",
+   "kurztext": "Mauerarbeiten Außenwand KS 24 cm",
+   "langtext": "Außenwand KS 24 cm im Bereich Bürogebäude, Abschnitt 42, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 840.83,
+   "einheit": "m²",
+   "ep": 74.77,
+   "gp": 62868.86,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0043",
+   "kurztext": "Mauerarbeiten Trennwand 11,5 cm",
+   "langtext": "Trennwand 11,5 cm im Bereich Bürogebäude, Abschnitt 43, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 5.79,
+   "einheit": "m²",
+   "ep": 75.54,
+   "gp": 437.38,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0044",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 44, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 258.34,
+   "einheit": "m²",
+   "ep": 71.92,
+   "gp": 18579.81,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0045",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 45, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 22.8,
+   "einheit": "m²",
+   "ep": 77.08,
+   "gp": 1757.42,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0046",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 46, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 748.97,
+   "einheit": "m²",
+   "ep": 84.51,
+   "gp": 63295.45,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0047",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 47, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 445.76,
+   "einheit": "m²",
+   "ep": 71.85,
+   "gp": 32027.86,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0048",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 48, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 222.66,
+   "einheit": "m²",
+   "ep": 80.88,
+   "gp": 18008.74,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0049",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 49, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 715.6,
+   "einheit": "m²",
+   "ep": 80.78,
+   "gp": 57806.17,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0050",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 50, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 479.25,
+   "einheit": "m²",
+   "ep": 70.56,
+   "gp": 33815.88,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0051",
+   "kurztext": "Mauerarbeiten Innenwand KS 17,5 cm",
+   "langtext": "Innenwand KS 17,5 cm im Bereich Bürogebäude, Abschnitt 51, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 186.22,
+   "einheit": "m²",
+   "ep": 81.9,
+   "gp": 15251.42,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0052",
+   "kurztext": "Mauerarbeiten Trennwand 11,5 cm",
+   "langtext": "Trennwand 11,5 cm im Bereich Bürogebäude, Abschnitt 52, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 670.48,
+   "einheit": "m²",
+   "ep": 71.45,
+   "gp": 47905.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.03.0053",
+   "kurztext": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+   "langtext": "Ziegelmauerwerk 36,5 cm im Bereich Bürogebäude, Abschnitt 53, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 883.04,
+   "einheit": "m²",
+   "ep": 76.51,
+   "gp": 67561.39,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "03 Mauerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.04.0001",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 1, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 425.0,
+   "einheit": "St",
+   "ep": 1049.75,
+   "gp": 446143.75,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0002",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 2, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 127.0,
+   "einheit": "St",
+   "ep": 954.1,
+   "gp": 121170.7,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0003",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 3, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 838.0,
+   "einheit": "St",
+   "ep": 1125.64,
+   "gp": 943286.32,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0004",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 4, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 11.0,
+   "einheit": "St",
+   "ep": 1120.09,
+   "gp": 12320.99,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0005",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 5, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 510.0,
+   "einheit": "St",
+   "ep": 941.13,
+   "gp": 479976.3,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0006",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 6, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 421.0,
+   "einheit": "St",
+   "ep": 1106.47,
+   "gp": 465823.87,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0007",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 7, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 274.0,
+   "einheit": "St",
+   "ep": 1097.86,
+   "gp": 300813.64,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0008",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 8, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 368.0,
+   "einheit": "St",
+   "ep": 1063.15,
+   "gp": 391239.2,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0009",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 9, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 728.0,
+   "einheit": "St",
+   "ep": 1118.27,
+   "gp": 814100.56,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0010",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 10, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 867.0,
+   "einheit": "St",
+   "ep": 1053.76,
+   "gp": 913609.92,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0011",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 11, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 885.0,
+   "einheit": "St",
+   "ep": 1008.73,
+   "gp": 892726.05,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0012",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 12, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 799.0,
+   "einheit": "St",
+   "ep": 1085.92,
+   "gp": 867650.08,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0013",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 13, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 675.0,
+   "einheit": "St",
+   "ep": 959.79,
+   "gp": 647858.25,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0014",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 14, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 123.0,
+   "einheit": "St",
+   "ep": 960.92,
+   "gp": 118193.16,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0015",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 15, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 20.0,
+   "einheit": "St",
+   "ep": 978.45,
+   "gp": 19569.0,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0016",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 16, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 488.0,
+   "einheit": "St",
+   "ep": 1107.11,
+   "gp": 540269.68,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0017",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 17, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 675.0,
+   "einheit": "St",
+   "ep": 1085.11,
+   "gp": 732449.25,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0018",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 18, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 530.0,
+   "einheit": "St",
+   "ep": 1117.07,
+   "gp": 592047.1,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0019",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 19, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 480.0,
+   "einheit": "St",
+   "ep": 1033.08,
+   "gp": 495878.4,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0020",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 20, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 68.0,
+   "einheit": "St",
+   "ep": 1122.22,
+   "gp": 76310.96,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0021",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 21, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 74.0,
+   "einheit": "St",
+   "ep": 1104.98,
+   "gp": 81768.52,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0022",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 22, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 347.0,
+   "einheit": "St",
+   "ep": 1066.66,
+   "gp": 370131.02,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0023",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 23, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 86.0,
+   "einheit": "St",
+   "ep": 1029.17,
+   "gp": 88508.62,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0024",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 24, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 620.0,
+   "einheit": "St",
+   "ep": 928.24,
+   "gp": 575508.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0025",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 25, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 848.0,
+   "einheit": "St",
+   "ep": 950.77,
+   "gp": 806252.96,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0026",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 26, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 766.0,
+   "einheit": "St",
+   "ep": 974.31,
+   "gp": 746321.46,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0027",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 27, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 21.0,
+   "einheit": "St",
+   "ep": 1035.41,
+   "gp": 21743.61,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0028",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 28, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 760.0,
+   "einheit": "St",
+   "ep": 933.33,
+   "gp": 709330.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0029",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 29, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 893.0,
+   "einheit": "St",
+   "ep": 924.05,
+   "gp": 825176.65,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0030",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 30, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 767.0,
+   "einheit": "St",
+   "ep": 1011.47,
+   "gp": 775797.49,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0031",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 31, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 260.0,
+   "einheit": "St",
+   "ep": 950.21,
+   "gp": 247054.6,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0032",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 32, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 376.0,
+   "einheit": "St",
+   "ep": 1119.02,
+   "gp": 420751.52,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0033",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 33, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 745.0,
+   "einheit": "St",
+   "ep": 1014.92,
+   "gp": 756115.4,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0034",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 34, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 343.0,
+   "einheit": "St",
+   "ep": 1065.63,
+   "gp": 365511.09,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0035",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 35, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 113.0,
+   "einheit": "St",
+   "ep": 1035.72,
+   "gp": 117036.36,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0036",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 36, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 599.0,
+   "einheit": "St",
+   "ep": 1017.62,
+   "gp": 609554.38,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0037",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 37, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 416.0,
+   "einheit": "St",
+   "ep": 1116.36,
+   "gp": 464405.76,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0038",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 38, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 138.0,
+   "einheit": "St",
+   "ep": 964.75,
+   "gp": 133135.5,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0039",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 39, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 397.0,
+   "einheit": "St",
+   "ep": 926.05,
+   "gp": 367641.85,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0040",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 40, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 426.0,
+   "einheit": "St",
+   "ep": 1116.98,
+   "gp": 475833.48,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0041",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 41, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 589.0,
+   "einheit": "St",
+   "ep": 971.96,
+   "gp": 572484.44,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0042",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 42, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 109.0,
+   "einheit": "St",
+   "ep": 964.75,
+   "gp": 105157.75,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0043",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 43, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 704.0,
+   "einheit": "St",
+   "ep": 1071.85,
+   "gp": 754582.4,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0044",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 44, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 15.0,
+   "einheit": "St",
+   "ep": 1125.04,
+   "gp": 16875.6,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0045",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 45, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 166.0,
+   "einheit": "St",
+   "ep": 1126.89,
+   "gp": 187063.74,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0046",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 46, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 597.0,
+   "einheit": "St",
+   "ep": 949.08,
+   "gp": 566600.76,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0047",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 47, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 299.0,
+   "einheit": "St",
+   "ep": 1106.69,
+   "gp": 330900.31,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0048",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 48, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 679.0,
+   "einheit": "St",
+   "ep": 1027.01,
+   "gp": 697339.79,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0049",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 49, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 833.0,
+   "einheit": "St",
+   "ep": 927.19,
+   "gp": 772349.27,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0050",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 50, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 434.0,
+   "einheit": "St",
+   "ep": 975.34,
+   "gp": 423297.56,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0051",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 51, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 218.0,
+   "einheit": "St",
+   "ep": 1056.33,
+   "gp": 230279.94,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0052",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 52, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 591.0,
+   "einheit": "St",
+   "ep": 1053.5,
+   "gp": 622618.5,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0053",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 53, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 11.0,
+   "einheit": "St",
+   "ep": 1029.48,
+   "gp": 11324.28,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0054",
+   "kurztext": "Fenster Kunststoff 2-flg.",
+   "langtext": "Kunststoff 2-flg. im Bereich Bürogebäude, Abschnitt 54, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 13.0,
+   "einheit": "St",
+   "ep": 1018.24,
+   "gp": 13237.12,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0055",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 55, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 116.0,
+   "einheit": "St",
+   "ep": 971.71,
+   "gp": 112718.36,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0056",
+   "kurztext": "Fenster Dachflächenfenster",
+   "langtext": "Dachflächenfenster im Bereich Bürogebäude, Abschnitt 56, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 211.0,
+   "einheit": "St",
+   "ep": 990.35,
+   "gp": 208963.85,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.04.0057",
+   "kurztext": "Fenster Holz-Alu 1-flg.",
+   "langtext": "Holz-Alu 1-flg. im Bereich Bürogebäude, Abschnitt 57, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 57.0,
+   "einheit": "St",
+   "ep": 928.22,
+   "gp": 52908.54,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "04 Fenster"
+   ]
+  },
+  {
+   "oz": "01.05.0001",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 1, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 635.68,
+   "einheit": "m²",
+   "ep": 12.53,
+   "gp": 7965.07,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0002",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 2, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 255.56,
+   "einheit": "m²",
+   "ep": 13.02,
+   "gp": 3327.39,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0003",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 3, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 827.21,
+   "einheit": "m²",
+   "ep": 11.96,
+   "gp": 9893.43,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0004",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 4, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 427.17,
+   "einheit": "m²",
+   "ep": 11.8,
+   "gp": 5040.61,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0005",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 5, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 856.13,
+   "einheit": "m²",
+   "ep": 10.84,
+   "gp": 9280.45,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0006",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 6, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 429.11,
+   "einheit": "m²",
+   "ep": 12.94,
+   "gp": 5552.68,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0007",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 7, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 122.39,
+   "einheit": "m²",
+   "ep": 11.07,
+   "gp": 1354.86,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0008",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 8, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 574.83,
+   "einheit": "m²",
+   "ep": 11.85,
+   "gp": 6811.74,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0009",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 9, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 487.27,
+   "einheit": "m²",
+   "ep": 12.59,
+   "gp": 6134.73,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0010",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 10, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 840.45,
+   "einheit": "m²",
+   "ep": 12.78,
+   "gp": 10740.95,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0011",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 11, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 301.66,
+   "einheit": "m²",
+   "ep": 11.58,
+   "gp": 3493.22,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0012",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 12, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 419.54,
+   "einheit": "m²",
+   "ep": 12.57,
+   "gp": 5273.62,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0013",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 13, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 132.06,
+   "einheit": "m²",
+   "ep": 11.14,
+   "gp": 1471.15,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0014",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 14, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 709.57,
+   "einheit": "m²",
+   "ep": 11.53,
+   "gp": 8181.34,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0015",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 15, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 626.4,
+   "einheit": "m²",
+   "ep": 13.08,
+   "gp": 8193.31,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0016",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 16, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 673.41,
+   "einheit": "m²",
+   "ep": 12.5,
+   "gp": 8417.62,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0017",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 17, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 445.91,
+   "einheit": "m²",
+   "ep": 11.82,
+   "gp": 5270.66,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0018",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 18, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 761.35,
+   "einheit": "m²",
+   "ep": 12.4,
+   "gp": 9440.74,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0019",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 19, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 480.71,
+   "einheit": "m²",
+   "ep": 12.14,
+   "gp": 5835.82,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0020",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 20, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 447.08,
+   "einheit": "m²",
+   "ep": 11.58,
+   "gp": 5177.19,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0021",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 21, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 704.24,
+   "einheit": "m²",
+   "ep": 12.72,
+   "gp": 8957.93,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0022",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 22, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 562.56,
+   "einheit": "m²",
+   "ep": 12.87,
+   "gp": 7240.15,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0023",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 23, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 619.31,
+   "einheit": "m²",
+   "ep": 11.77,
+   "gp": 7289.28,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0024",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 24, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 544.0,
+   "einheit": "m²",
+   "ep": 12.31,
+   "gp": 6696.64,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0025",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 25, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 69.76,
+   "einheit": "m²",
+   "ep": 12.0,
+   "gp": 837.12,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0026",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 26, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 850.95,
+   "einheit": "m²",
+   "ep": 12.49,
+   "gp": 10628.37,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0027",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 27, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 844.53,
+   "einheit": "m²",
+   "ep": 10.86,
+   "gp": 9171.6,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0028",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 28, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 630.06,
+   "einheit": "m²",
+   "ep": 11.18,
+   "gp": 7044.07,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0029",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 29, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 424.79,
+   "einheit": "m²",
+   "ep": 10.95,
+   "gp": 4651.45,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0030",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 30, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 300.19,
+   "einheit": "m²",
+   "ep": 11.86,
+   "gp": 3560.25,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0031",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 31, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 56.85,
+   "einheit": "m²",
+   "ep": 11.07,
+   "gp": 629.33,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0032",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 32, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 268.55,
+   "einheit": "m²",
+   "ep": 11.37,
+   "gp": 3053.41,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0033",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 33, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 135.23,
+   "einheit": "m²",
+   "ep": 11.15,
+   "gp": 1507.81,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0034",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 34, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 383.24,
+   "einheit": "m²",
+   "ep": 12.08,
+   "gp": 4629.54,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0035",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 35, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 344.79,
+   "einheit": "m²",
+   "ep": 11.6,
+   "gp": 3999.56,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0036",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 36, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 484.95,
+   "einheit": "m²",
+   "ep": 10.91,
+   "gp": 5290.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0037",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 37, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 876.17,
+   "einheit": "m²",
+   "ep": 11.01,
+   "gp": 9646.63,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0038",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 38, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 186.41,
+   "einheit": "m²",
+   "ep": 12.34,
+   "gp": 2300.3,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0039",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 39, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 533.03,
+   "einheit": "m²",
+   "ep": 11.24,
+   "gp": 5991.26,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0040",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 40, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 311.78,
+   "einheit": "m²",
+   "ep": 12.47,
+   "gp": 3887.9,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0041",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 41, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 519.3,
+   "einheit": "m²",
+   "ep": 11.14,
+   "gp": 5785.0,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0042",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 42, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 587.19,
+   "einheit": "m²",
+   "ep": 12.14,
+   "gp": 7128.49,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0043",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 43, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 264.56,
+   "einheit": "m²",
+   "ep": 11.8,
+   "gp": 3121.81,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0044",
+   "kurztext": "Malerarbeiten Dispersionsanstrich",
+   "langtext": "Dispersionsanstrich im Bereich Bürogebäude, Abschnitt 44, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 635.77,
+   "einheit": "m²",
+   "ep": 12.56,
+   "gp": 7985.27,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0045",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 45, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 106.56,
+   "einheit": "m²",
+   "ep": 13.02,
+   "gp": 1387.41,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0046",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 46, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 435.95,
+   "einheit": "m²",
+   "ep": 12.14,
+   "gp": 5292.43,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0047",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 47, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 537.43,
+   "einheit": "m²",
+   "ep": 12.44,
+   "gp": 6685.63,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0048",
+   "kurztext": "Malerarbeiten Tapezierarbeiten Vlies",
+   "langtext": "Tapezierarbeiten Vlies im Bereich Bürogebäude, Abschnitt 48, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 496.85,
+   "einheit": "m²",
+   "ep": 12.49,
+   "gp": 6205.66,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.05.0049",
+   "kurztext": "Malerarbeiten Grundierung",
+   "langtext": "Grundierung im Bereich Bürogebäude, Abschnitt 49, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 777.36,
+   "einheit": "m²",
+   "ep": 11.91,
+   "gp": 9258.36,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "05 Malerarbeiten"
+   ]
+  },
+  {
+   "oz": "01.06.0001",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 1, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 742.0,
+   "einheit": "St",
+   "ep": 523.29,
+   "gp": 388281.18,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0002",
+   "kurztext": "Sanitär Duschrinne",
+   "langtext": "Duschrinne im Bereich Bürogebäude, Abschnitt 2, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 823.0,
+   "einheit": "St",
+   "ep": 610.54,
+   "gp": 502474.42,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0003",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 3, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 46.0,
+   "einheit": "St",
+   "ep": 567.45,
+   "gp": 26102.7,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0004",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 4, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 613.0,
+   "einheit": "St",
+   "ep": 578.09,
+   "gp": 354369.17,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0005",
+   "kurztext": "Sanitär Duschrinne",
+   "langtext": "Duschrinne im Bereich Bürogebäude, Abschnitt 5, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 168.0,
+   "einheit": "St",
+   "ep": 515.18,
+   "gp": 86550.24,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0006",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 6, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 806.0,
+   "einheit": "St",
+   "ep": 533.92,
+   "gp": 430339.52,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0007",
+   "kurztext": "Sanitär Duschrinne",
+   "langtext": "Duschrinne im Bereich Bürogebäude, Abschnitt 7, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 865.0,
+   "einheit": "St",
+   "ep": 545.81,
+   "gp": 472125.65,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0008",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 8, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 223.0,
+   "einheit": "St",
+   "ep": 536.97,
+   "gp": 119744.31,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0009",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 9, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 409.0,
+   "einheit": "St",
+   "ep": 516.99,
+   "gp": 211448.91,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0010",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 10, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 240.0,
+   "einheit": "St",
+   "ep": 589.77,
+   "gp": 141544.8,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0011",
+   "kurztext": "Sanitär Duschrinne",
+   "langtext": "Duschrinne im Bereich Bürogebäude, Abschnitt 11, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 406.0,
+   "einheit": "St",
+   "ep": 599.34,
+   "gp": 243332.04,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0012",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 12, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 785.0,
+   "einheit": "St",
+   "ep": 509.65,
+   "gp": 400075.25,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0013",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 13, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 29.0,
+   "einheit": "St",
+   "ep": 589.07,
+   "gp": 17083.03,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0014",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 14, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 384.0,
+   "einheit": "St",
+   "ep": 525.71,
+   "gp": 201872.64,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0015",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 15, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 485.0,
+   "einheit": "St",
+   "ep": 611.9,
+   "gp": 296771.5,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0016",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 16, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 3.0,
+   "einheit": "St",
+   "ep": 557.26,
+   "gp": 1671.78,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0017",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 17, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 678.0,
+   "einheit": "St",
+   "ep": 521.47,
+   "gp": 353556.66,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0018",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 18, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 115.0,
+   "einheit": "St",
+   "ep": 587.82,
+   "gp": 67599.3,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0019",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 19, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 268.0,
+   "einheit": "St",
+   "ep": 601.46,
+   "gp": 161191.28,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0020",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 20, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 236.0,
+   "einheit": "St",
+   "ep": 564.1,
+   "gp": 133127.6,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0021",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 21, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 331.0,
+   "einheit": "St",
+   "ep": 514.18,
+   "gp": 170193.58,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0022",
+   "kurztext": "Sanitär Duschrinne",
+   "langtext": "Duschrinne im Bereich Bürogebäude, Abschnitt 22, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 569.0,
+   "einheit": "St",
+   "ep": 611.27,
+   "gp": 347812.63,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0023",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 23, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 674.0,
+   "einheit": "St",
+   "ep": 563.29,
+   "gp": 379657.46,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0024",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 24, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 285.0,
+   "einheit": "St",
+   "ep": 530.87,
+   "gp": 151297.95,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0025",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 25, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 288.0,
+   "einheit": "St",
+   "ep": 572.84,
+   "gp": 164977.92,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0026",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 26, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 804.0,
+   "einheit": "St",
+   "ep": 606.69,
+   "gp": 487778.76,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0027",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 27, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 594.0,
+   "einheit": "St",
+   "ep": 565.91,
+   "gp": 336150.54,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0028",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 28, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 263.0,
+   "einheit": "St",
+   "ep": 518.3,
+   "gp": 136312.9,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0029",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 29, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 739.0,
+   "einheit": "St",
+   "ep": 590.58,
+   "gp": 436438.62,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0030",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 30, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 587.0,
+   "einheit": "St",
+   "ep": 614.46,
+   "gp": 360688.02,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0031",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 31, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 127.0,
+   "einheit": "St",
+   "ep": 609.74,
+   "gp": 77436.98,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0032",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 32, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 416.0,
+   "einheit": "St",
+   "ep": 555.19,
+   "gp": 230959.04,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0033",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 33, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 889.0,
+   "einheit": "St",
+   "ep": 536.31,
+   "gp": 476779.59,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0034",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 34, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 504.0,
+   "einheit": "St",
+   "ep": 590.25,
+   "gp": 297486.0,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0035",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 35, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 810.0,
+   "einheit": "St",
+   "ep": 586.56,
+   "gp": 475113.6,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0036",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 36, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 246.0,
+   "einheit": "St",
+   "ep": 538.97,
+   "gp": 132586.62,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0037",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 37, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 360.0,
+   "einheit": "St",
+   "ep": 515.62,
+   "gp": 185623.2,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0038",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 38, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 547.0,
+   "einheit": "St",
+   "ep": 547.72,
+   "gp": 299602.84,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0039",
+   "kurztext": "Sanitär Duschrinne",
+   "langtext": "Duschrinne im Bereich Bürogebäude, Abschnitt 39, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 514.0,
+   "einheit": "St",
+   "ep": 566.11,
+   "gp": 290980.54,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0040",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 40, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 691.0,
+   "einheit": "St",
+   "ep": 518.44,
+   "gp": 358242.04,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0041",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 41, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 465.0,
+   "einheit": "St",
+   "ep": 575.02,
+   "gp": 267384.3,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0042",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 42, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 318.0,
+   "einheit": "St",
+   "ep": 581.86,
+   "gp": 185031.48,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0043",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 43, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 453.0,
+   "einheit": "St",
+   "ep": 539.06,
+   "gp": 244194.18,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0044",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 44, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 809.0,
+   "einheit": "St",
+   "ep": 599.71,
+   "gp": 485165.39,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0045",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 45, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 892.0,
+   "einheit": "St",
+   "ep": 589.93,
+   "gp": 526217.56,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0046",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 46, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 887.0,
+   "einheit": "St",
+   "ep": 549.6,
+   "gp": 487495.2,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0047",
+   "kurztext": "Sanitär Duschrinne",
+   "langtext": "Duschrinne im Bereich Bürogebäude, Abschnitt 47, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 520.0,
+   "einheit": "St",
+   "ep": 539.23,
+   "gp": 280399.6,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0048",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 48, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 64.0,
+   "einheit": "St",
+   "ep": 598.77,
+   "gp": 38321.28,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0049",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 49, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 859.0,
+   "einheit": "St",
+   "ep": 619.02,
+   "gp": 531738.18,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0050",
+   "kurztext": "Sanitär WC-Anlage komplett",
+   "langtext": "WC-Anlage komplett im Bereich Bürogebäude, Abschnitt 50, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 316.0,
+   "einheit": "St",
+   "ep": 612.73,
+   "gp": 193622.68,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0051",
+   "kurztext": "Sanitär Duschrinne",
+   "langtext": "Duschrinne im Bereich Bürogebäude, Abschnitt 51, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 848.0,
+   "einheit": "St",
+   "ep": 564.42,
+   "gp": 478628.16,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0052",
+   "kurztext": "Sanitär Waschtisch",
+   "langtext": "Waschtisch im Bereich Bürogebäude, Abschnitt 52, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 630.0,
+   "einheit": "St",
+   "ep": 547.12,
+   "gp": 344685.6,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  },
+  {
+   "oz": "01.06.0053",
+   "kurztext": "Sanitär Abwasserleitung DN 100",
+   "langtext": "Abwasserleitung DN 100 im Bereich Bürogebäude, Abschnitt 53, nach Plan herstellen, inkl. aller Nebenleistungen.",
+   "menge": 554.0,
+   "einheit": "St",
+   "ep": 547.19,
+   "gp": 303143.26,
+   "typ": "normal",
+   "titel_pfad": [
+    "Bürogebäude",
+    "06 Sanitär"
+   ]
+  }
+ ],
+ "summen": {}
+}

@@ -1,11 +1,11 @@
 /* Uses the --pb-* tokens of the surrounding review report. */
 .top { display: grid; gap: 8px; min-width: 0; }
 .kopf { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
-.titel { margin: 0; font-size: 16px; font-weight: 700; }
+.titel { margin: 0; font-size: 14px; font-weight: 700; }
 .anzahl { color: var(--pb-muted); font-weight: 500; font-size: .85em; font-variant-numeric: tabular-nums; }
 .umschalter { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
-  font: inherit; font-size: 13.5px; padding: 6px 12px; border-radius: 999px; cursor: pointer; min-height: 36px;
+  font: inherit; font-size: 13.5px; padding: 6px 12px; border-radius: var(--r-sm); cursor: pointer; min-height: 32px;
   border: 1px solid var(--pb-line); color: inherit; background: var(--pb-card);
 }
 .chip:hover { border-color: var(--pb-accent); }
@@ -15,16 +15,40 @@
 .zeile {
   width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; min-width: 0;
   display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: 4px 12px;
-  padding: 10px 14px; border-radius: 12px; border: 1px solid var(--pb-line); background: var(--pb-card);
+  padding: 10px 14px; border-radius: var(--r-md); border: 1px solid var(--pb-line); background: var(--pb-card);
 }
 .zeile:hover, .zeile:focus-visible { border-color: var(--pb-accent); }
 .mock { border-style: dashed; }
 .rang { color: var(--pb-muted); font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }
-.oz { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
+.oz { font-family: var(--font-iso); font-weight: 600; }
 .text { overflow-wrap: anywhere; min-width: 0; }
 .merkmale { grid-column: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; color: var(--pb-muted); }
-.marke, .markeMock { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--pb-line); line-height: 1.5; }
+.marke, .markeMock { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: var(--r-sm); border: 1px solid var(--pb-line); line-height: 1.5; }
 .markeMock { color: var(--pb-warn); border-color: currentColor; text-transform: uppercase; letter-spacing: .04em; }
 .euro { font-variant-numeric: tabular-nums; color: var(--pb-ink); }
 .unbekannt { color: var(--pb-muted); font-style: italic; }
 @media (max-width: 600px) { .merkmale { grid-column: 1 / -1; } }
+
+/* Danger scale from globals.css; --sev is set per row. */
+.zeile { border-left: 6px solid var(--sev, var(--pb-line)); }
+.schwere { background: var(--sev); border-color: transparent; color: #000; }
+
+/* Dense one-line rows (data-table style): rank · OZ · short text · severity · findings · euro. */
+.liste { gap: 0; border: 1px solid var(--pb-line); border-radius: var(--r-lg); overflow: hidden; background: var(--pb-card); }
+.liste li + li .zeile { border-top: 1px solid var(--pb-line); }
+.zeile { grid-template-columns: 3ch 11ch minmax(0, 1fr) auto; padding: 7px 12px; border-radius: 0; border: 0; border-left: 4px solid var(--sev, var(--pb-line)); }
+.zeile:hover, .zeile:focus-visible { border-color: var(--sev, var(--pb-line)); background: var(--fill, var(--pb-soft)); }
+.text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.merkmale { grid-column: auto; flex-wrap: nowrap; justify-content: flex-end; }
+.euro { min-width: 10ch; text-align: right; }
+@media (max-width: 700px) { .zeile { grid-template-columns: 3ch minmax(0, 1fr); } .oz { grid-column: 2; } .text, .merkmale { grid-column: 2; justify-content: flex-start; } }
+.blaettern { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.stand { color: var(--pb-muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; align-self: center; }
+.chip:disabled { opacity: .45; cursor: default; }
+/* Fixed columns so severity, count and euro line up row by row (HIG: align to make content easy to scan). */
+.merkmale > .marke { min-width: 84px; text-align: center; }
+.merkmale > .schwere { min-width: 70px; }
+.euro { min-width: 13ch; }
+
+/* Larger page-size and paging buttons (team feedback). */
+.chip { font-size: 14px; min-height: 38px; padding: 0 14px; }

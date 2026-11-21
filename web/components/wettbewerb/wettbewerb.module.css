@@ -1,0 +1,75 @@
+.seite { max-width: 1040px; margin: 0 auto; padding: 20px 20px 48px; display: grid; gap: 14px; }
+.titel { margin: 0; font-size: 22px; }
+.kacheln { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.kacheln > div { display: grid; gap: 2px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); }
+.kacheln > div[data-warn="true"] strong { color: var(--sev-kritisch); }
+.kacheln span { font-size: 12.5px; color: var(--muted); }
+.kacheln strong { font-size: 26px; font-variant-numeric: tabular-nums; }
+.kacheln small { color: var(--sev-kritisch); font-size: 12.5px; }
+.karte { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); }
+.karte p { margin: 0; }
+.abschnitt { margin: 0; display: flex; align-items: center; font-size: 16px; }
+.diagramm { position: relative; }
+.diagramm svg { width: 100%; height: auto; display: block; }
+.name { font-size: 13px; fill: var(--ink); font-weight: 600; }
+.achse { font-size: 11px; fill: var(--muted); }
+.zone { font-size: 11px; fill: var(--sev-kritisch); }
+.diagramm circle { cursor: pointer; }
+.tipp { position: absolute; transform: translate(-50%, calc(-100% - 12px)); pointer-events: none; white-space: pre; font-size: 12.5px; line-height: 1.4;
+  padding: 6px 10px; background: var(--ink); color: var(--bg); border-radius: var(--r-md); z-index: 5; }
+.legende { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.legende i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--accent-2); }
+.voll { background: var(--accent-2); }
+.leer { background: var(--card); }
+.legende b { width: 2.5px; height: 14px; background: var(--ink); margin-left: 8px; }
+.rahmen { overflow: auto; border: 1px solid var(--line); border-radius: var(--r-md); }
+.tabelle { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tabelle th { background: var(--fill); text-align: left; font-size: 12px; color: var(--muted); padding: 8px 10px; white-space: nowrap; }
+.tabelle td { padding: 8px 10px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.rechts { text-align: right !important; }
+.rat { padding: 10px 12px; border-left: 3px solid var(--sev-kritisch); background: color-mix(in srgb, var(--sev-kritisch) 6%, var(--card)); }
+.formular { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.formular label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.formular .breit { grid-column: 1 / -1; }
+.formular input, .formular textarea { font: inherit; font-size: 14px; color: var(--ink); min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); }
+.knopf { justify-self: start; min-height: 40px; padding: 0 16px; font: inherit; font-weight: 600; color: var(--button-ink); background: var(--button); border: 0; border-radius: var(--r-md); cursor: pointer; }
+.leise { justify-self: start; min-height: 34px; padding: 0 12px; font: inherit; font-size: 13px; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer; }
+.liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.liste li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; background: var(--fill); }
+.weg { font: inherit; font-size: 16px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+.weg:hover { color: var(--bad); }
+.fehler { color: var(--bad); }
+@media (max-width: 700px) { .kacheln, .formular { grid-template-columns: 1fr; } }
+
+.ablage { position: relative; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 1px dashed var(--line); background: var(--fill); cursor: pointer; font-weight: 600; }
+.ablage:hover { border-color: var(--accent); }
+.ablage input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ablage small { color: var(--muted); font-weight: 400; }
+.rat2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; align-items: start; }
+.empfehlung { display: grid; gap: 4px; padding: 14px; border: 2px solid var(--sev-ok); }
+.empfehlung > span { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.empfehlung strong { font-size: 28px; font-variant-numeric: tabular-nums; }
+.empfehlung small { color: var(--muted); font-size: 13px; }
+.empfehlung dl { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 6px 0 0; }
+.empfehlung dt { font-size: 12px; color: var(--muted); }
+.empfehlung dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ignoriert td { color: var(--muted); }
+.leiseText { color: var(--muted); font-size: 12.5px; }
+.knopf:disabled { opacity: .5; cursor: default; }
+@media (max-width: 760px) { .rat2 { grid-template-columns: 1fr; } }
+
+.zeilen { display: grid; gap: 6px; }
+.zeileEingabe { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 32px; gap: 8px; align-items: center; }
+.zeileEingabe input { font: inherit; font-size: 14px; color: var(--ink); min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); }
+.zeileEingabe input:last-of-type { text-align: right; font-variant-numeric: tabular-nums; }
+
+.jobs { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; min-height: 34px; padding: 0 12px; cursor: pointer; color: var(--ink); }
+.chip small { color: var(--muted); }
+.preisText { font-size: 12px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.unser { font-size: 12.5px; font-weight: 700; fill: var(--brand); }
+.leerRot { background: var(--card); border-color: var(--sev-kritisch) !important; }
+.raute { width: 10px !important; height: 10px !important; border-radius: 0 !important; border: 0 !important; background: var(--brand); transform: rotate(45deg); }
+.schalter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.schalter select { font: inherit; font-size: 14px; min-height: 36px; padding: 0 12px; min-width: 260px; max-width: 100%; cursor: pointer; }
+.schalter button { min-width: 36px; font-size: 18px; }
