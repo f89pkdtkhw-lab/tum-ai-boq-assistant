@@ -59,6 +59,9 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run build
+      - name: UI unit tests
+        working-directory: web
+        run: npm test
 
   # Windows and macOS cost 2x and 10x as many minutes in a private repository.
   # Run them only after merging to shared branches or on manual request.
