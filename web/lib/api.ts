@@ -46,6 +46,20 @@ export type GeschaetztesLv = {
 export type Pruefbericht = {
   lv: LV; findings: Finding[]; kennzahlen: Kennzahlen; zusammenfassung?: Zusammenfassung;
   kalkulation?: Kalkulation | null; anpassungen?: Anpassung[] | null; geschaetztes_lv?: GeschaetztesLv | null;
+  berichte?: Bericht[] | null; was_wenn?: WasWenn[] | null;
+};
+// Three reports, final report and what-if list (epic #93 B5): optional, absent on older backends.
+export type BerichtId = "regelwerk" | "vergleich" | "was_wenn";
+export type WasWenn = { oz: string | null; problem: string; chance: "hoch" | "niedrig"; empfehlung: string; case_ids: string[]; begruendung?: string };
+export type Naeherung = {
+  oz: string; kurztext: string; einheit: string; menge: number; geschaetzt: number; abweichung: number; abweichung_prozent: number;
+  abweichung_eur: number | null; zu_gross: boolean; faktor: number; case_ids: string[]; note_id: string; warum: string;
+};
+export type BerichtZaehler = { grosse_probleme: number; warnungen: number; hinweise: number; empfehlungen: number; zu_grosse_naeherungen: number };
+export type Bericht = {
+  id: BerichtId; titel: string; status: "ok" | "nicht_verbunden" | "fehler"; meldung: string; finding_ids: string[];
+  notes: { id?: string; oz?: string; text?: string; approval_required?: boolean }[]; neue_tags: string[];
+  tags?: string[]; zaehler?: BerichtZaehler; naeherungen?: Naeherung[]; probleme?: WasWenn[];
 };
 export type Health = { ok: boolean; provider: string; model: string; mock: boolean };
 export type Answer = { answer: string; provider: string; model: string; ms: number };
