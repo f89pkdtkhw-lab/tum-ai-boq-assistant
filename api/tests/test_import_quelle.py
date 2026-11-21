@@ -63,6 +63,23 @@ def test_excel_items_carry_sheet_and_the_row_that_holds_their_oz():
         assert position.oz in zeilen[(position.quelle.blatt, position.quelle.zeile)]
 
 
+def test_excel_model_path_also_carries_the_location():
+    """With a key the model reads the sheet (stubbed here, no network); the location still comes from the sheet row."""
+    from app.ai import llm
+    from app.lv import excel
+    gerufen = []
+
+    def modell(prompt, system="", max_tokens=1024):
+        gerufen.append(prompt)
+        return llm.Answer(json.dumps(excel.mock_antwort(bloecke.pop(0))), "fake", "fake", 0)
+
+    inhalt = excel_synthetic.beispiel_lv()
+    bloecke = [block for blatt in excel.lese_blaetter(inhalt) for block in excel._bloecke(blatt)]
+    lv = excel.importiere("angebot.xlsx", inhalt, client=modell)
+    assert gerufen and all(p.quelle.blatt and p.quelle.zeile for p in lv.positionen)
+    assert [p.quelle for p in lv.positionen] == [p.quelle for p in importiere("angebot.xlsx", inhalt).positionen]
+
+
 def test_gaeb_xml_items_carry_the_element_path_of_their_item():
     inhalt = (FIXTURES / "gaeb/offer.x84").read_bytes()
     lv = importiere("offer.x84", inhalt)
