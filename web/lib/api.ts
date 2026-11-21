@@ -61,7 +61,16 @@ export type Bericht = {
   notes: { id?: string; oz?: string; text?: string; approval_required?: boolean }[]; neue_tags: string[];
   tags?: string[]; zaehler?: BerichtZaehler; naeherungen?: Naeherung[]; probleme?: WasWenn[];
 };
-export type Health = { ok: boolean; provider: string; model: string; mock: boolean };
+export type Health = {
+  ok: boolean; provider: string; model: string; mock: boolean;
+  key_set?: boolean; key_source?: "ui" | "env" | null; reason?: string | null;
+};
+// #156: Claude API key entered in the UI. Answers never contain the key, only whether one is set.
+export type KeyState = {
+  provider: string; model: string; mock: boolean; key_set: boolean; key_source: "ui" | "env" | null;
+  reason: string | null; ui_enabled: boolean; persisted?: boolean;
+};
+export type KeyProbe = { ok: boolean; provider: string; model: string; ms?: number; error?: string };
 export type Answer = { answer: string; provider: string; model: string; ms: number };
 export type Example = { id: string; titel: string; beschreibung: string; lv: LV };
 // Optional inputs of POST /api/lv/analyse (epic #93): regulation document (B3) and price list (D4).
@@ -116,6 +125,12 @@ export const api = {
   pruefen: (lv: LV) => call<Pruefbericht>("/api/lv/pruefen", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(lv),
   }),
+  keyState: () => call<KeyState>("/api/ai/key"),
+  setKey: (body: { key: string; model?: string; persist?: boolean }) => call<KeyState>("/api/ai/key", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  }),
+  clearKey: () => call<KeyState>("/api/ai/key", { method: "DELETE" }),
+  testKey: () => call<KeyProbe>("/api/ai/key/test", { method: "POST" }),
   ask: (question: string) => call<Answer>("/api/ask", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }),
   }),
