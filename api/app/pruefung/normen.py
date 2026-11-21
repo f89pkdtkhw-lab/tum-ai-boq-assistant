@@ -1,8 +1,9 @@
 """Norm check, part 1 (N1): collect German standard references and look them up.
 
-Bonus feature "norm check" (Normpruefung), purely additive. This module only
-collects references and builds a norm list; it creates **no** `Finding` and is
-not wired into `pruefen()` (that is part 2, N2).
+Bonus feature "norm check" (Normpruefung), purely additive. The N1 part only
+collects references and builds a norm list; it creates **no** `Finding`. The N2
+part at the end of this module turns register hits into hint findings and offers
+the guarded hook `pruefe_normen_sicher()` for `pruefen()`.
 
 1. `extrahiere_normverweise(lv)` finds references such as "ATV DIN 18300 (2012-09)",
    "DIN EN1092-1" or "DIN 1045 Teil 2" in the short and long text of each position
@@ -28,6 +29,7 @@ The switch `NORMPRUEFUNG` (default on; `0`, `off`, `false`, `no` = off) is read 
 `normpruefung_aktiv()`; callers decide what "off" skips.
 """
 import json
+import logging
 import os
 import re
 from dataclasses import dataclass, field
@@ -35,7 +37,7 @@ from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from ..modelle import LV
+from ..modelle import LV, Finding
 
 ROOT = Path(__file__).resolve().parents[3]
 REGISTER_PFAD = ROOT / "data" / "normen" / "register.json"
@@ -515,3 +517,266 @@ def pruefe_kennwerte_sicher(lv: LV, register: Register | None = None,
     except Exception:
         logging.getLogger(__name__).exception("Norm check N3 (key values) failed; check skipped.")
         return [], []
+
+
+# ---------------------------------------------------------------------------
+# Norm check, part 2 (N2): status findings and the guarded hook for pruefen().
+#
+# Deterministic, no model, no internet. Only register entries with an assessed
+# status (gueltig, zurueckgezogen, teilweise_ersetzt) create findings; entries
+# with status `unklar` and norms missing from the register never do. Every
+# finding is a hint with a ready-to-copy bidder question, cites its source and
+# carries the HINWEIS note. `euro_wirkung` always stays None.
+#
+# Transparent assumptions of this part:
+# - A reference without part and edition (e.g. "DIN 1045", "DIN 4094") is unclear
+#   when the register holds at least one assessed part entry of that family
+#   (NORM_AUSGABE_UNKLAR); the family-level entry itself is `unklar`, so it never
+#   yields NORM_ZURUECKGEZOGEN.
+# - The Bodenklassen -> Homogenbereiche switch is a VOB/C fact; its source is the
+#   register entry of ATV DIN 18300, also for ATV DIN 18301 and ATV DIN 18319.
+# - A replacement counts as present when the LV cites it exactly or cites a part
+#   of a replacement family ("DIN EN 1996-1-1" for "DIN EN 1996").
+# - Blanket references are grouped per LV section (title path, else the OZ
+#   prefix), one finding per section.
+# ---------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
+
+HINWEIS = ("Hint, not a standards expert opinion (kein Normgutachten); contractual validity is decided "
+           "by a person (VOB/B § 1 (2)).")
+BEWERTET = ("gueltig", "zurueckgezogen", "teilweise_ersetzt")  # register status values that may create findings
+STATUS_TEXT = {"gueltig": "valid", "zurueckgezogen": "withdrawn", "teilweise_ersetzt": "partly replaced"}
+BODEN_ATVS = ("ATV DIN 18300", "ATV DIN 18301", "ATV DIN 18319")
+BODEN_QUELLE = "ATV DIN 18300"
+_BODENKLASSE = re.compile(r"bodenklasse", re.IGNORECASE)
+_HOMOGENBEREICH = re.compile(r"homogenbereich", re.IGNORECASE)
+
+
+class _Ids:
+    """Finding ids `CODE:oz`, with `:2`, `:3`, … when a code repeats on the same OZ."""
+
+    def __init__(self):
+        self._gesehen: dict[str, int] = {}
+
+    def __call__(self, code: str, oz: str) -> str:
+        basis = f"{code}:{oz}"
+        anzahl = self._gesehen[basis] = self._gesehen.get(basis, 0) + 1
+        return basis if anzahl == 1 else f"{basis}:{anzahl}"
+
+
+def _bewerteter_eintrag(register: Register, norm_id: str, familie: str | None) -> RegisterEintrag | None:
+    eintrag = register.suche(norm_id, familie)
+    return eintrag if eintrag and eintrag.status in BEWERTET else None
+
+
+def _ausgabe_tupel(ausgabe: str) -> tuple[int, int | None]:
+    jahr, _, monat = ausgabe.partition("-")
+    return int(jahr), int(monat) if monat else None
+
+
+def _aelter(zitiert: str, aktuell: str) -> bool:
+    """True when the cited edition is clearly older ("2012" vs "2019-09"; same year without month is not)."""
+    (j1, m1), (j2, m2) = _ausgabe_tupel(zitiert), _ausgabe_tupel(aktuell)
+    if j1 != j2:
+        return j1 < j2
+    return m1 is not None and m2 is not None and m1 < m2
+
+
+def _quelle(eintrag: RegisterEintrag) -> str:
+    return (f"Source: norm register entry {eintrag.norm_id}, {eintrag.quelle['url']} "
+            f"(retrieved {eintrag.quelle['abgerufen']}).")
+
+
+def _begruendung(text: str, *eintraege: RegisterEintrag) -> str:
+    teile = [text]
+    for eintrag in eintraege:
+        if eintrag.ersetzt_durch:
+            teile.append(f"Register: {eintrag.norm_id} is replaced by {', '.join(eintrag.ersetzt_durch)}.")
+        if eintrag.hinweis:
+            teile.append(f"Register note: {eintrag.hinweis.rstrip('.')}.")
+        teile.append(_quelle(eintrag))
+    teile.append(HINWEIS)
+    return " ".join(teile)
+
+
+def _finding(id_: str, oz: str, kategorie: str, schwere: str, titel: str, begruendung: str, vorschlag: str,
+             regel_id: str) -> Finding:
+    return Finding(id=id_, oz=oz, kategorie=kategorie, schwere=schwere, titel=titel, begruendung=begruendung,
+                   vorschlag=vorschlag, quelle="regel", regel_id=regel_id, euro_wirkung=None)
+
+
+def _abschnitt(oz: str, positionen: dict) -> str:
+    position = positionen.get(oz)
+    if position is not None and position.titel_pfad:
+        return " / ".join(position.titel_pfad)
+    return oz.rpartition(".")[0] or oz
+
+
+def _status_findings(gruppen: dict, register: Register, ids: _Ids) -> list[Finding]:
+    """NORM_ZURUECKGEZOGEN, NORM_AUSGABE_VERALTET and NORM_AUSGABE_UNKLAR, once per OZ and norm."""
+    findings = []
+    for (oz, norm_id), verweise in gruppen.items():
+        familie = verweise[0].familie
+        ausgaben = sorted({v.ausgabe for v in verweise if v.ausgabe}, key=_ausgabe_tupel)
+        eintrag = _bewerteter_eintrag(register, norm_id, familie)
+        if eintrag and eintrag.status == "zurueckgezogen":
+            ersatz = " / ".join(eintrag.ersetzt_durch)
+            frage = f"Does {ersatz} apply instead?" if ersatz else "Which standard applies instead?"
+            findings.append(_finding(
+                ids("NORM_ZURUECKGEZOGEN", oz), oz, "risiko", "hoch" if eintrag.kalkulationsrelevant else "mittel",
+                f"Withdrawn standard referenced: {norm_id}",
+                _begruendung(f"The item refers to {norm_id}; the norm register lists it as withdrawn.", eintrag),
+                f"OZ {oz}: The item refers to {norm_id} (withdrawn). {frage} Please confirm.",
+                "NORM_ZURUECKGEZOGEN",
+            ))
+        elif eintrag and eintrag.aktuelle_ausgabe and ausgaben and _aelter(ausgaben[0], eintrag.aktuelle_ausgabe):
+            findings.append(_finding(
+                ids("NORM_AUSGABE_VERALTET", oz), oz, "risiko", "mittel",
+                f"Outdated edition referenced: {norm_id} ({ausgaben[0]})",
+                _begruendung(
+                    f"The item refers to {norm_id} edition {ausgaben[0]}; the norm register lists edition "
+                    f"{eintrag.aktuelle_ausgabe} as current.", eintrag,
+                ),
+                f"OZ {oz}: The item refers to {norm_id} edition {ausgaben[0]}; the current edition is "
+                f"{eintrag.aktuelle_ausgabe}. Which edition applies? Please confirm.",
+                "NORM_AUSGABE_VERALTET",
+            ))
+        elif eintrag is None and verweise[0].teil is None and not ausgaben:
+            teile = [e for e in register.eintraege
+                     if e.familie == familie and e.norm_id != norm_id and e.status in BEWERTET]
+            if not teile:
+                continue
+            liste = ", ".join(f"{e.norm_id} ({STATUS_TEXT[e.status]})" for e in teile)
+            findings.append(_finding(
+                ids("NORM_AUSGABE_UNKLAR", oz), oz, "risiko", "niedrig",
+                f"Standard referenced without part or edition: {norm_id}",
+                _begruendung(
+                    f"The item refers to {norm_id} without part or edition; the norm register lists these "
+                    f"parts of the family: {liste}.", *teile,
+                ),
+                f"OZ {oz}: The item refers to {norm_id} without part or edition. Which part and edition apply "
+                f"(register: {liste})? Please confirm.",
+                "NORM_AUSGABE_UNKLAR",
+            ))
+    return findings
+
+
+def _bodenklassen_findings(verweise: list[NormVerweis], register: Register, lv: LV, ids: _Ids) -> list[Finding]:
+    quelle = _bewerteter_eintrag(register, BODEN_QUELLE, BODEN_QUELLE)
+    if quelle is None:
+        return []
+    findings = []
+    for position in lv.positionen:
+        atvs = list(dict.fromkeys(v.familie for v in verweise if v.oz == position.oz and v.familie in BODEN_ATVS))
+        text = f"{position.kurztext}\n{position.langtext}"
+        if not atvs or not _BODENKLASSE.search(text) or _HOMOGENBEREICH.search(text):
+            continue
+        kennwerte = " ".join(k.rstrip(".") + "." for k in quelle.kennwerte)
+        findings.append(_finding(
+            ids("NORM_BODENKLASSEN", position.oz), position.oz, "nachtrag", "hoch",
+            f"Bodenklassen without Homogenbereiche ({', '.join(atvs)})",
+            _begruendung(
+                f"The item describes the soil in Bodenklassen together with {', '.join(atvs)} and names no "
+                f"Homogenbereich. {kennwerte} Nachtrag potential is possible if the classification does not "
+                f"match the current VOB/C; this does not establish an entitlement to additional payment.", quelle,
+            ),
+            f"OZ {position.oz}: The item describes the soil in Bodenklassen ({', '.join(atvs)}). Please provide "
+            f"the Homogenbereich description per current VOB/C, or confirm which edition and classification apply.",
+            "NORM_BODENKLASSEN",
+        ))
+    return findings
+
+
+def _passt_zu_ersatz(verweis: NormVerweis, ersatz: str) -> bool:
+    return verweis.norm_id == ersatz or verweis.familie == ersatz
+
+
+def _doppelt_findings(gruppen: dict, register: Register, ids: _Ids) -> list[Finding]:
+    """NORM_DOPPELT_ALT_NEU once per withdrawn norm whose replacement is also cited in the LV."""
+    alle = [v for verweise in gruppen.values() for v in verweise]
+    findings, gesehen = [], set()
+    for (oz, norm_id), verweise in gruppen.items():
+        eintrag = _bewerteter_eintrag(register, norm_id, verweise[0].familie)
+        if norm_id in gesehen or not eintrag or eintrag.status != "zurueckgezogen":
+            continue
+        gesehen.add(norm_id)
+        neu = [(e, v) for e in eintrag.ersetzt_durch for v in alle if _passt_zu_ersatz(v, e)]
+        if not neu:
+            continue
+        zitiert = ", ".join(dict.fromkeys(f"{v.norm_id} (OZ {v.oz})" for _, v in neu))
+        alt_oz = ", ".join(dict.fromkeys(v.oz for v in alle if v.norm_id == norm_id))
+        findings.append(_finding(
+            ids("NORM_DOPPELT_ALT_NEU", oz), oz, "risiko", "mittel",
+            f"Withdrawn standard and its replacement both referenced: {norm_id}",
+            _begruendung(
+                f"The LV refers to the withdrawn {norm_id} (OZ {alt_oz}) and to its replacement {zitiert}.", eintrag,
+            ),
+            f"OZ {alt_oz}: The LV refers to {norm_id} (withdrawn) and elsewhere to {zitiert}. Which standard "
+            f"applies to these items? Please confirm.",
+            "NORM_DOPPELT_ALT_NEU",
+        ))
+    return findings
+
+
+def _ohne_referenz_findings(verweise: list[NormVerweis], positionen: dict, ids: _Ids) -> list[Finding]:
+    """NORM_OHNE_REFERENZ: one grouped finding per LV section, not one per line."""
+    abschnitte: dict[str, list[str]] = {}
+    for verweis in verweise:
+        if verweis.pauschal:
+            oz_liste = abschnitte.setdefault(_abschnitt(verweis.oz, positionen), [])
+            if verweis.oz not in oz_liste:
+                oz_liste.append(verweis.oz)
+    findings = []
+    for abschnitt, oz_liste in abschnitte.items():
+        oz_text = ", ".join(oz_liste)
+        findings.append(_finding(
+            ids("NORM_OHNE_REFERENZ", oz_liste[0]), oz_liste[0], "risiko", "niedrig",
+            f"Blanket standard reference without number in section {abschnitt} ({len(oz_liste)} items)",
+            f"OZ {oz_text} refer to standards in general terms (e.g. \"nach DIN\") without naming a number or "
+            f"edition, so the agreed standard cannot be determined from the LV. Source: LV text of these items "
+            f"(no register entry applies; cf. VOB/A § 7 (1): clear and exhaustive description). {HINWEIS}",
+            f"OZ {oz_text}: The items refer to standards without a number (e.g. \"nach DIN\"). Which standards "
+            f"and editions apply? Please name them.",
+            "NORM_OHNE_REFERENZ",
+        ))
+    return findings
+
+
+def pruefe_status(verweise: list[NormVerweis], register: Register, lv: LV | None = None) -> list[Finding]:
+    """Deterministic status findings for the collected references, in position order.
+
+    `lv` is optional: with it, NORM_BODENKLASSEN reads the position texts and blanket references are
+    grouped by title path; without it, NORM_BODENKLASSEN is skipped and grouping uses the OZ prefix.
+    """
+    ids = _Ids()
+    positionen = {p.oz: p for p in lv.positionen} if lv else {}
+    gruppen: dict[tuple[str, str], list[NormVerweis]] = {}
+    for verweis in verweise:
+        if not verweis.pauschal:
+            gruppen.setdefault((verweis.oz, verweis.norm_id), []).append(verweis)
+    findings = _status_findings(gruppen, register, ids)
+    if lv is not None:
+        findings += _bodenklassen_findings(verweise, register, lv, ids)
+    findings += _doppelt_findings(gruppen, register, ids)
+    findings += _ohne_referenz_findings(verweise, positionen, ids)
+    reihenfolge = {oz: i for i, oz in enumerate(dict.fromkeys(
+        [p.oz for p in lv.positionen] if lv else [v.oz for v in verweise]
+    ))}
+    return sorted(findings, key=lambda f: reihenfolge.get(f.oz, len(reihenfolge)))  # stable: rule order per OZ
+
+
+def pruefe_normen(lv: LV, register: Register | None = None) -> list[Finding]:
+    """N1 extraction + curated register + `pruefe_status`."""
+    return pruefe_status(extrahiere_normverweise(lv), register or lade_register(), lv)
+
+
+def pruefe_normen_sicher(lv: LV) -> list[Finding]:
+    """Hook for `pruefen()`: [] when NORMPRUEFUNG is off or the norm check fails (the error is logged)."""
+    if not normpruefung_aktiv():
+        return []
+    try:
+        return pruefe_normen(lv)
+    except Exception:
+        logger.exception("Norm check failed; the report is returned without norm findings.")
+        return []

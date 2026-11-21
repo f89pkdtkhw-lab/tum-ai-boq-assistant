@@ -422,3 +422,172 @@ def test_unverified_register_source_stays_priority_4_and_manual_review():
     assert [(e.priority, e.verification, e.unverified_reasons) for e in item.sources] == [
         (4, "unverified", ["not_confirmed"])]
     assert standards_note(item).text.startswith("Manual review: no verified applicable German source for OZ 03.01")
+
+
+# ---------------------------------------------------------------------------
+# N2 (issue #81): status findings, wording and the guarded hook.
+# ---------------------------------------------------------------------------
+from app.pruefung.normen import HINWEIS, pruefe_normen, pruefe_normen_sicher, pruefe_status  # noqa: E402
+
+
+def codes(lv: LV) -> list[tuple[str, str]]:
+    return [(f.regel_id, f.oz) for f in pruefe_normen(lv)]
+
+
+def test_withdrawn_part_yields_finding_with_replacement_and_source():
+    # The register only assesses the parts of DIN 4094; the bare family entry is `unklar`.
+    findings = pruefe_normen(lv_mit(("Rammsondierung", "Sondierung gemäß DIN 4094 Teil 3 bis 6 m.")))
+    assert [(f.regel_id, f.oz, f.kategorie, f.schwere) for f in findings] == [
+        ("NORM_ZURUECKGEZOGEN", "01.01", "risiko", "mittel"),
+    ]
+    f = findings[0]
+    assert f.id == "NORM_ZURUECKGEZOGEN:01.01" and f.quelle == "regel" and f.euro_wirkung is None
+    assert "DIN EN ISO 22476-2" in f.vorschlag and f.vorschlag.startswith("OZ 01.01:")
+    assert f.vorschlag.endswith("Please confirm.")
+    assert "https://www.dinmedia.de/en/standard/din-4094-3/" in f.begruendung and "retrieved 2026-11-21" in f.begruendung
+
+
+def test_withdrawn_costing_relevant_norm_is_high(tmp_path):
+    pfad = tmp_path / "register.json"
+    daten = json.loads(REGISTER_PFAD.read_text(encoding="utf-8"))
+    for e in daten["eintraege"]:
+        if e["norm_id"] == "DIN 4094-3":
+            e["kalkulationsrelevant"] = True
+    pfad.write_text(json.dumps(daten), encoding="utf-8")
+    findings = pruefe_normen(lv_mit(("Sondierung", "DIN 4094-3")), lade_register(pfad))
+    assert [(f.regel_id, f.schwere) for f in findings] == [("NORM_ZURUECKGEZOGEN", "hoch")]
+
+
+def test_bare_family_with_assessed_parts_is_unclear_not_withdrawn():
+    findings = pruefe_normen(lv_mit(("Rammsondierung", "Sondierung gemäß DIN 4094."), ("Beton", "nach DIN 1045")))
+    assert [(f.regel_id, f.oz, f.schwere) for f in findings] == [
+        ("NORM_AUSGABE_UNKLAR", "01.01", "niedrig"), ("NORM_AUSGABE_UNKLAR", "01.02", "niedrig"),
+    ]
+    assert "DIN 4094-3 (withdrawn)" in findings[0].vorschlag and "DIN 1045-2 (valid)" in findings[1].vorschlag
+
+
+def test_family_known_only_through_its_parts_is_unclear():
+    assert codes(lv_mit(("Trinkwasser", "Leitungen nach DIN 1988 verlegen."))) == [("NORM_AUSGABE_UNKLAR", "01.01")]
+
+
+def test_edition_or_part_given_is_not_unclear():
+    assert codes(lv_mit(("Beton", "DIN 1045-2 (2023-08)"), ("Beton", "DIN 1045:2023"))) == []
+
+
+def test_atv_18300_2012_with_bodenklassen_yields_outdated_edition_and_bodenklassen():
+    lv = lv_mit(("Bodenaushub", "Boden lösen nach ATV DIN 18300 (2012-09), Bodenklasse 3–5, laden."))
+    findings = pruefe_normen(lv)
+    assert [(f.regel_id, f.kategorie, f.schwere) for f in findings] == [
+        ("NORM_AUSGABE_VERALTET", "risiko", "mittel"), ("NORM_BODENKLASSEN", "nachtrag", "hoch"),
+    ]
+    veraltet, boden = findings
+    assert "2012-09" in veraltet.vorschlag and "2019-09" in veraltet.vorschlag
+    assert "Nachtrag potential is possible" in boden.begruendung
+    assert "this does not establish an entitlement to additional payment" in boden.begruendung
+    assert "Homogenbereich" in boden.vorschlag and boden.euro_wirkung is None
+
+
+def test_bodenklassen_with_homogenbereich_is_quiet():
+    lv = lv_mit(("Bodenaushub", "ATV DIN 18300 (2012-09), Bodenklasse 3–5, Homogenbereich B1."))
+    assert codes(lv) == [("NORM_AUSGABE_VERALTET", "01.01")]
+
+
+@pytest.mark.parametrize("text", ["DIN 18301 Bohrarbeiten, Bodenklasse 6", "ATV DIN 18319 Bodenklassen LBM 2"])
+def test_bodenklassen_also_for_drilling_and_pipe_jacking(text):
+    assert codes(lv_mit(("Arbeiten", text))) == [("NORM_BODENKLASSEN", "01.01")]
+
+
+def test_bodenklassen_needs_the_atv_in_the_same_position():
+    assert codes(lv_mit(("Aushub", "nach ATV DIN 18300"), ("Boden", "Bodenklasse 3"))) == []
+
+
+def test_withdrawn_norm_and_replacement_in_the_same_lv():
+    lv = lv_mit(("Sondierung alt", "DIN 4094-3"), ("Sondierung neu", "nach DIN EN ISO 22476-2"))
+    findings = pruefe_normen(lv)
+    assert [(f.regel_id, f.oz) for f in findings] == [
+        ("NORM_ZURUECKGEZOGEN", "01.01"), ("NORM_DOPPELT_ALT_NEU", "01.01"),
+    ]
+    assert "OZ 01.02" in findings[1].begruendung and findings[1].schwere == "mittel"
+
+
+def test_replacement_family_counts_as_present():
+    lv = lv_mit(("Mauerwerk alt", "DIN 1053-1"), ("Mauerwerk neu", "DIN EN 1996-1-1/NA"))
+    assert ("NORM_DOPPELT_ALT_NEU", "01.01") in codes(lv)
+
+
+def test_unclear_and_unknown_norms_never_create_findings():
+    lv = lv_mit(("Baugrund", "Untersuchung nach DIN 4020"), ("Lasten", "DIN 1055-5"), ("Sonstiges", "DIN 99999-1"))
+    assert pruefe_normen(lv) == []
+
+
+def test_blanket_references_are_grouped_per_section():
+    lv = LV(name="Synthetic", quelle="test", positionen=[
+        Position(oz="01.01", kurztext="A", langtext="Ausführung nach DIN.", titel_pfad=["Erdarbeiten"]),
+        Position(oz="01.02", kurztext="B", langtext="gemäß einschlägigen Normen", titel_pfad=["Erdarbeiten"]),
+        Position(oz="01.03", kurztext="C", langtext="nach DIN", titel_pfad=["Erdarbeiten"]),
+        Position(oz="02.01", kurztext="D", langtext="lt. DIN", titel_pfad=["Beton"]),
+    ])
+    findings = pruefe_normen(lv)
+    assert [(f.regel_id, f.oz, f.schwere) for f in findings] == [
+        ("NORM_OHNE_REFERENZ", "01.01", "niedrig"), ("NORM_OHNE_REFERENZ", "02.01", "niedrig"),
+    ]
+    assert "01.01, 01.02, 01.03" in findings[0].vorschlag and "(3 items)" in findings[0].titel
+
+
+def test_ids_are_unique_and_indexed_per_code_and_oz():
+    findings = pruefe_normen(lv_mit(("Zwei alte Normen", "DIN 4094-1 und DIN 4094-2, nochmals DIN 4094-1")))
+    assert [f.id for f in findings] == ["NORM_ZURUECKGEZOGEN:01.01", "NORM_ZURUECKGEZOGEN:01.01:2"]
+
+
+def test_pruefe_status_without_lv_skips_bodenklassen():
+    lv = lv_mit(("Aushub", "ATV DIN 18300 (2012-09), Bodenklasse 3"), ("X", "nach DIN"))
+    findings = pruefe_status(extrahiere_normverweise(lv), lade_register())
+    assert [(f.regel_id, f.oz) for f in findings] == [("NORM_AUSGABE_VERALTET", "01.01"), ("NORM_OHNE_REFERENZ", "01.02")]
+
+
+ALLE_LV = lv_mit(
+    ("Rammsondierung", "Sondierung gemäß DIN 4094 Teil 3."),
+    ("Aushub", "ATV DIN 18300 (2012-09), Bodenklasse 3–5"),
+    ("Sondierung", "DIN EN ISO 22476-2"),
+    ("Beton", "Beton nach DIN 1045"),
+    ("Sonstiges", "nach DIN"),
+    ("Mauerwerk", "DIN 1053-1"),
+    ("Abdichtung", "DIN 18195 (2000-08)"),
+)
+
+
+def test_every_code_is_covered_and_wording_rules_hold():
+    findings = pruefe_normen(ALLE_LV)
+    assert {f.regel_id for f in findings} == {
+        "NORM_ZURUECKGEZOGEN", "NORM_AUSGABE_VERALTET", "NORM_BODENKLASSEN", "NORM_DOPPELT_ALT_NEU",
+        "NORM_AUSGABE_UNKLAR", "NORM_OHNE_REFERENZ",
+    }
+    assert len({f.id for f in findings}) == len(findings)
+    for f in findings:
+        text = " ".join((f.titel, f.begruendung, f.vorschlag))
+        assert not CLAIM_WORDS.search(text), f.id
+        assert "not a standards expert opinion" in f.begruendung and f.begruendung.endswith(HINWEIS)
+        assert "Source:" in f.begruendung and f.quelle == "regel" and f.euro_wirkung is None
+        assert f.vorschlag.startswith(f"OZ {f.oz}") and f.vorschlag.rstrip().endswith((".", "?"))
+        if f.regel_id != "NORM_OHNE_REFERENZ":
+            assert re.search(r"https?://\S+ \(retrieved \d{4}-\d{2}-\d{2}\)", f.begruendung), f.id
+
+
+def test_register_texts_contain_no_claim_words():
+    for e in lade_register().eintraege:
+        assert not CLAIM_WORDS.search(" ".join([e.hinweis, *e.kennwerte])), e.norm_id
+
+
+def test_sicher_respects_the_switch_and_swallows_errors(monkeypatch, caplog):
+    monkeypatch.setenv("NORMPRUEFUNG", "off")
+    assert pruefe_normen_sicher(ALLE_LV) == []
+    monkeypatch.delenv("NORMPRUEFUNG")
+    assert pruefe_normen_sicher(ALLE_LV) == pruefe_normen(ALLE_LV)
+
+    def kaputt(lv):
+        raise RuntimeError("register broken")
+
+    monkeypatch.setattr(normen, "pruefe_normen", kaputt)
+    with caplog.at_level("ERROR", logger=normen.__name__):
+        assert pruefe_normen_sicher(ALLE_LV) == []
+    assert "Norm check failed" in caplog.text and "register broken" in caplog.text
