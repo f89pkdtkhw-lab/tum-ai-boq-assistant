@@ -7,11 +7,17 @@ building standards. Positions are only compared within the same title
 1. Layer build-up (MENGE_SCHICHTEN_ABWEICHUNG): layers of the same component
    (e.g. primer, welded membrane, insulation, PE foil under the floor slab)
    usually cover the same area. A layer deviating from the group median by
-   more than LAYER_TOLERANCE yields a hint.
+   more than LAYER_TOLERANCE yields a hint. The component is taken from the
+   short text first and from the long text as a fallback; long-text mentions
+   that only reference the component ("Anschluss an Bodenplatte") are ignored.
+   Trade sections ("Abdichtungsarbeiten", "Dämmarbeiten") split one building
+   part across titles, so they are ignored when grouping; all other title
+   levels (objects, building parts) still separate the groups.
 2. Ratio rules (MENGE_VERHAELTNIS): explicitly configured pairs with a
    plausibility range, e.g. reinforcement per m³ concrete. Custom rules (such as
    a synthetic chairs/tables ratio) are passed in via `ratio_rules`.
 """
+import re
 from dataclasses import dataclass
 from statistics import median
 
@@ -24,6 +30,16 @@ LAYER_TERMS = (
     "dämmung", "daemmung", "pe-folie", "folie", "trennlage", "sauberkeitsschicht",
 )
 COMPONENT_TERMS = ("bodenplatte", "kellerwand", "decke", "dach", "terrasse", "balkon")
+
+# Long text is wordier than the short text: a component term only counts there at the start or
+# end of a word ("Stahlbetonbodenplatte", "Deckenabdichtung", but not "volldeckend"), and not
+# when the text merely names it as a connection point.
+_LONGTEXT_COMPONENT = {
+    term: re.compile(rf"\b{term}|{term}\b") for term in COMPONENT_TERMS
+}
+_REFERENCE_BEFORE = re.compile(r"anschlu(?:ss|ß)\s+(?:an|zur|zum)\s+(?:die\s+|der\s+|den\s+)?$")
+# A title naming a trade ("Abdichtungsarbeiten", "Dämmarbeiten") is a trade section, not an object.
+_TRADE_TITLE = re.compile(r"arbeiten\b")
 
 # unit -> (base unit, factor). Unknown units are never compared.
 UNITS = {
@@ -100,16 +116,41 @@ def _hint(id_: str, oz: str, title: str, reason: str, proposal: str, rule_id: st
                    regel_id=rule_id, euro_wirkung=None)
 
 
+def _longtext_component(pos: Position) -> str | None:
+    """First component named in the long text, skipping mere connection references."""
+    text = pos.langtext.casefold()
+    hits = []
+    for term, pattern in _LONGTEXT_COMPONENT.items():
+        for match in pattern.finditer(text):
+            if not _REFERENCE_BEFORE.search(text[max(0, match.start() - 30):match.start()]):
+                hits.append((match.start(), term))
+                break
+    return min(hits)[1] if hits else None
+
+
+def _component(pos: Position) -> str | None:
+    """Component from the short text first, the long text as fallback."""
+    short = next((c for c in COMPONENT_TERMS if c in _text(pos)), None)
+    return short or _longtext_component(pos)
+
+
+def _layer_scope(pos: Position) -> tuple[str, ...]:
+    """Title path without trade sections, so one building part split by trade stays one group."""
+    return tuple(t for t in pos.titel_pfad if not _TRADE_TITLE.search(t.casefold()))
+
+
 def _check_layers(lv: LV) -> list[Finding]:
     groups: dict[tuple[tuple[str, ...], str], list[tuple[Position, float]]] = {}
     for pos in lv.positionen:
         if not _contains(pos, LAYER_TERMS):
             continue
-        component = next((c for c in COMPONENT_TERMS if c in _text(pos)), None)
         quantity = _base_quantity(pos)
-        if component is None or quantity is None or quantity[0] != "m²":
+        if quantity is None or quantity[0] != "m²":
             continue
-        groups.setdefault((tuple(pos.titel_pfad), component), []).append((pos, quantity[1]))
+        component = _component(pos)
+        if component is None:
+            continue
+        groups.setdefault((_layer_scope(pos), component), []).append((pos, quantity[1]))
 
     findings = []
     for (_, component), members in groups.items():
@@ -119,6 +160,8 @@ def _check_layers(lv: LV) -> list[Finding]:
         name = {"bodenplatte": "floor slab", "kellerwand": "basement wall", "decke": "ceiling",
                 "dach": "roof", "terrasse": "terrace", "balkon": "balcony"}[component]
         overview = "; ".join(f"OZ {p.oz} {p.kurztext.strip()} {_num(q)} m²" for p, q in members)
+        titles = list(dict.fromkeys(_title(p) for p, _ in members))
+        sections = ("section " if len(titles) == 1 else "sections ") + ", ".join(f"“{t}”" for t in titles)
         for pos, quantity in members:
             deviation = (quantity - mid) / mid
             if abs(deviation) <= LAYER_TOLERANCE:
@@ -127,7 +170,7 @@ def _check_layers(lv: LV) -> list[Finding]:
                 f"MENGE_SCHICHTEN_ABWEICHUNG:{pos.oz}", pos.oz,
                 f"Unusual layer area for {name}",
                 (f"{_num(quantity)} m² deviates {deviation:+.0%} from the median {_num(mid)} m² "
-                 f"of the {name} layers in section “{_title(pos)}” ({overview}). "
+                 f"of the {name} layers in {sections} ({overview}). "
                  f"Assumption: layers of the same component cover approximately the same area, "
                  f"tolerance ±{LAYER_TOLERANCE:.0%}; not a standard."),
                 "Check the area against measurements or plans; explain overhangs or partial areas in the detailed description.",
