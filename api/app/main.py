@@ -1,4 +1,4 @@
-"""Offline kickoff API: import → fixed rules → model mock → report."""
+"""BoQ review API: import → fixed rules → model review (configured provider, else offline mock) → report."""
 import json
 import os
 from pathlib import Path
@@ -14,7 +14,7 @@ from .modelle import Preisliste  # B6 #112
 from .pruefung.preise import kalkuliere_mit_preis_db  # B6 #112, B9 #133
 from .pruefung.regeln import pruefe_regeln
 from .pruefung.mengen import pruefe_mengen
-from .pruefung.llm_pruefung import pruefe_mit_llm
+from .pruefung.llm_pruefung import pruefe_mit_llm, pruefe_mit_llm_status  # noqa: F401 (pruefe_mit_llm: golden tests)
 from .pruefung.normen import ergaenze_annahmen, pruefe_normen_sicher  # B4 #97: ergaenze_annahmen
 from .pruefung.bewertung import zusammenfassen
 from .pruefung.berichte import ergaenze_berichte  # B5 (#98)
@@ -32,6 +32,9 @@ import sys
 _REPO_ROOT = str(Path(__file__).resolve().parents[2])
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
+
+if "pytest" not in sys.modules:  # #147: keys come from .env.local (never in tests; environment variables win)
+    llm.load_env_file(Path(_REPO_ROOT) / ".env.local")
 
 try:
     from db.client import DB_PATH
@@ -68,15 +71,15 @@ class Question(BaseModel):
 
 def load_examples():
     return [Beispiel(id="synthetisch-rohbau", titel="Synthetic structural works BoQ",
-                     beschreibung="30 items, 3 sections, 5 seeded errors; domain rules follow. The model is a mock.",
+                     beschreibung="30 items, 3 sections, 5 seeded errors; domain rules follow. "
+                                 "The model review uses the configured provider, otherwise the offline mock.",
                      lv=LV.model_validate_json((DATA / "beispiel_lv.json").read_bytes()))]
 
 
 @app.get("/health")
 def health():
-    # The BoQ pipeline always uses a mock, regardless of any available API keys.
-    return {"ok": True, "provider": "mock", "model": "offline-lv-mock", "mock": True,
-            "keys": {name: False for name in ("anthropic", "openai", "azure", "gemini")}}
+    """Provider and model the BoQ pipeline uses; `mock: true` without a usable key (`reason` says why)."""
+    return {"ok": True, **llm.status()}
 
 
 @app.get("/api/beispiele", response_model=Beispiele)
@@ -110,11 +113,13 @@ def pruefen(lv: LV):
 
 def _pruefbericht(lv: LV, vorgaben=None):
     """`vorgaben`: requirements of the uploaded regulation document (B3 #96) for check 1; None = as before."""
-    findings = (bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + pruefe_mit_llm(lv))
+    modell = pruefe_mit_llm_status(lv)  # #147: never raises; falls back to the mock with a reason
+    findings = (bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + modell.findings)
                 + (pruefe_normen_sicher(lv) if vorgaben is None else pruefe_normen_sicher(lv, vorgaben=vorgaben)))
     return ergaenze_annahmen(ergaenze_berichte(Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
         positionen=len(lv.positionen), findings=len(findings),
-        kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=True,
+        kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=modell.mock,
+        modell_reason=modell.reason, modell=None if modell.mock else f"{modell.provider}/{modell.model}",
     ), zusammenfassung=zusammenfassen(findings))))
 
 
@@ -156,8 +161,9 @@ def analyse(anfrage: AnalyseAnfrage):
 
 @app.post("/api/ask")
 def ask(body: Question):
-    """The existing starter route remains compatible and also uses only the mock."""
+    """Starter route: the configured model answers; on a missing key, error or timeout the mock (with `reason`)."""
     context = json.dumps([e.model_dump() for e in load_examples()], ensure_ascii=False)[:6000] if body.use_data else ""
     prompt = body.question if not context else f"Data:\n{context}\n\nQuestion: {body.question}"
-    answer = llm.mock(prompt)
-    return {"answer": answer.text, "provider": answer.provider, "model": answer.model, "ms": answer.ms}
+    answer = llm.complete_with_fallback(prompt, timeout=llm.seconds("LLM_REVIEW_TIMEOUT", 60))
+    return {"answer": answer.text, "provider": answer.provider, "model": answer.model, "ms": answer.ms,
+            "mock": answer.provider == "mock", "reason": answer.reason}

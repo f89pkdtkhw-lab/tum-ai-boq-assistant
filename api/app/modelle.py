@@ -45,6 +45,10 @@ class Kennzahlen(Vertrag):
     findings: int = Field(ge=0)
     kritisch: int = Field(ge=0)
     modell_mock: bool = True
+    # #147, optional: why the configured model was not used (fallback to the mock), and which model reviewed.
+    # Both are absent when the mock runs by configuration, so mock-mode reports stay byte-identical.
+    modell_reason: str | None = Field(default=None, exclude_if=lambda wert: wert is None)
+    modell: str | None = Field(default=None, exclude_if=lambda wert: wert is None)  # e.g. "gemini/gemini-2.5-flash"
 
 
 class ScoreAbzug(Vertrag):
