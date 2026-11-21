@@ -14,9 +14,14 @@ export type Finding = {
   quelle: "regel" | "modell"; regel_id: string; euro_wirkung: number | null;
 };
 export type Kennzahlen = { positionen: number; findings: number; kritisch: number; modell_mock: boolean };
+export type ScoreAbzug = { grund: string; punkte: number; bericht: "regelwerk" | "vergleich" | "was_wenn" };
+export type Zusammenfassung = {
+  score: number; score_abzuege: ScoreAbzug[]; schaetzung_abweichung_eur: number | null;
+  grosse_probleme: number; warnungen: number; hinweise: number; empfehlungen: number;
+};
 // Price calculation (epic #93, B6/B7/B8): optional, absent until the backend prices the bill.
 export type KalkulationPosition = {
-  oz: string; menge: number | null; einheit: string | null; ep: number | null; gp: number | null;
+  oz: string; kurztext?: string; menge: number | null; einheit: string | null; ep: number | null; gp: number | null;
   ep_lv: number | null; gp_lv: number | null; treffer: "oz" | "text" | "aehnlich" | "kein_treffer";
   preis_eintrag: string | null; aehnlichkeit: number | null; in_summe: boolean;
 };
@@ -39,7 +44,7 @@ export type GeschaetztesLv = {
   differenz_netto: number; differenz_prozent: number; anzahl: Record<AenderungsStatus, number>;
 };
 export type Pruefbericht = {
-  lv: LV; findings: Finding[]; kennzahlen: Kennzahlen;
+  lv: LV; findings: Finding[]; kennzahlen: Kennzahlen; zusammenfassung?: Zusammenfassung;
   kalkulation?: Kalkulation | null; anpassungen?: Anpassung[] | null; geschaetztes_lv?: GeschaetztesLv | null;
 };
 export type Health = { ok: boolean; provider: string; model: string; mock: boolean };

@@ -47,10 +47,81 @@ class Kennzahlen(Vertrag):
     modell_mock: bool = True
 
 
+class ScoreAbzug(Vertrag):
+    grund: str
+    punkte: float
+    bericht: Literal["regelwerk", "vergleich", "was_wenn"]
+
+
+class Zusammenfassung(Vertrag):
+    score: float = Field(ge=0, le=10)
+    score_abzuege: list[ScoreAbzug] = Field(default_factory=list)
+    schaetzung_abweichung_eur: float | None = None
+    grosse_probleme: int = Field(ge=0)
+    warnungen: int = Field(ge=0)
+    hinweise: int = Field(ge=0)
+    empfehlungen: int = Field(ge=0)
+
+
+# --- Price calculation (B6 #112, epic #93): optional, absent unless a price list is supplied ---
+
+def _ohne_null(wert) -> bool:
+    return wert is None
+
+
+class PreislistenEintrag(Vertrag):
+    """One price-list row; mirrors the D4 (#111) contract from epic #93."""
+    id: str = Field(min_length=1)
+    oz: str | None = None
+    kurztext: str = ""
+    einheit: str = Field(min_length=1)
+    ep: float
+    quelle: str = ""
+
+
+class Preisliste(Vertrag):
+    id: str = Field(min_length=1)
+    dateiname: str = ""
+    waehrung: str = "EUR"
+    eintraege: list[PreislistenEintrag] = Field(default_factory=list)
+    warnungen: list[str] = Field(default_factory=list)
+
+
+class KalkulationsPosition(Vertrag):
+    oz: str
+    kurztext: str = ""
+    menge: float | None = None
+    einheit: str | None = None
+    ep: float | None = None            # unit price from the price list
+    gp: float | None = None            # menge × ep, rounded to cents; null without match or quantity
+    ep_lv: float | None = None         # the bill's own prices, kept unchanged
+    gp_lv: float | None = None
+    ep_differenz: float | None = None  # ep - ep_lv, only when both exist
+    gp_differenz: float | None = None  # gp - gp_lv, only when both exist
+    treffer: Literal["oz", "text", "aehnlich", "kein_treffer"]
+    preis_eintrag: str | None = None   # PreislistenEintrag.id
+    aehnlichkeit: float | None = None  # short-text token similarity 0–1
+    in_summe: bool
+
+
+class Kalkulation(Vertrag):
+    preisliste_id: str | None = None
+    waehrung: str = "EUR"
+    mwst_satz: float
+    positionen: list[KalkulationsPosition] = Field(default_factory=list)
+    summe_netto: float
+    summe_brutto: float
+    ohne_preis: int = Field(ge=0)      # positions without a price-list match
+    ohne_menge: int = Field(ge=0)      # matched positions whose quantity is unknown (gp null)
+    vollstaendig: bool                 # every summed position has a gp
+
+
 class Pruefbericht(Vertrag):
     lv: LV
     findings: list[Finding]
     kennzahlen: Kennzahlen
+    zusammenfassung: Zusammenfassung | None = None
+    kalkulation: Kalkulation | None = Field(default=None, exclude_if=_ohne_null)  # B6 #112
 
 
 class Beispiel(Vertrag):

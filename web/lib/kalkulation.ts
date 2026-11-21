@@ -48,7 +48,7 @@ export function kalkulationsZeilen(bericht: Pick<Pruefbericht, "lv" | "kalkulati
   const kurztexte = new Map<string, string>();
   for (const p of bericht.lv.positionen) if (!kurztexte.has(p.oz)) kurztexte.set(p.oz, p.kurztext);
   return k.positionen.map((p) => ({
-    oz: p.oz, kurztext: kurztexte.get(p.oz) ?? "", einheit: p.einheit, status: "unchanged",
+    oz: p.oz, kurztext: p.kurztext || kurztexte.get(p.oz) || "", einheit: p.einheit, status: "unchanged",
     mengeAlt: p.menge, mengeNeu: p.menge, ep: p.ep, gpAlt: p.gp, gpNeu: p.gp,
     grund: "", findingId: null, freigabe: false, ohnePreis: p.ep === null || p.treffer === "kein_treffer",
   }));

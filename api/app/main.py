@@ -10,10 +10,13 @@ from .ai.step_api import router as comparison_router
 from .ai.history_metadata import router as metadata_router
 from .lv.importer import importiere
 from .modelle import Beispiel, Beispiele, Kennzahlen, LV, Pruefbericht
+from .modelle import Preisliste  # B6 #112
+from .pruefung.preise import kalkuliere  # B6 #112
 from .pruefung.regeln import pruefe_regeln
 from .pruefung.mengen import pruefe_mengen
 from .pruefung.llm_pruefung import pruefe_mit_llm
 from .pruefung.normen import pruefe_normen_sicher
+from .pruefung.bewertung import zusammenfassen
 from .risiko.scoring import bewerte
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -77,7 +80,22 @@ def pruefen(lv: LV):
     return Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
         positionen=len(lv.positionen), findings=len(findings),
         kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=True,
-    ))
+    ), zusammenfassung=zusammenfassen(findings))
+
+
+class AnalyseAnfrage(BaseModel):
+    """Body of POST /api/lv/analyse (epic #93). B3 (#96) types and evaluates `regelwerk`."""
+    lv: LV
+    regelwerk: dict | None = None
+    preisliste: Preisliste | None = None  # B6 #112
+
+
+@app.post("/api/lv/analyse", response_model=Pruefbericht)
+def analyse(anfrage: AnalyseAnfrage):
+    bericht = pruefen(anfrage.lv)
+    if anfrage.preisliste is not None:  # B6 #112: no price list → no `kalkulation` field
+        bericht.kalkulation = kalkuliere(anfrage.lv, anfrage.preisliste)
+    return bericht
 
 
 @app.post("/api/ask")
