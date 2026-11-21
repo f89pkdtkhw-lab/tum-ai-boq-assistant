@@ -25,7 +25,13 @@ from .pruefung.normen import vorgaben_aus_regelwerk  # B3 (#96)
 from .risiko.scoring import bewerte
 
 from .ai import step_api
+import logging
 import sys
+
+# db/ lives in the repository root; uvicorn runs from api/, so make it importable.
+_REPO_ROOT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 try:
     from db.client import DB_PATH
@@ -49,8 +55,11 @@ app.add_middleware(
     allow_origins=[s.strip() for s in os.environ.get("WEB_ORIGINS", "http://localhost:3000").split(",") if s.strip()],
     allow_methods=["GET", "POST"], allow_headers=["Content-Type"],
 )
-from db.client import router as db_router
-app.include_router(db_router)
+try:
+    from db.client import router as db_router
+    app.include_router(db_router)
+except Exception as exc:  # the optional DB service must not stop the API from starting
+    logging.getLogger(__name__).warning("DB router not mounted: %s", exc)
 
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
