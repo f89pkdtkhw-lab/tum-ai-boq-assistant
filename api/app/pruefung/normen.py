@@ -298,8 +298,8 @@ def normenliste(lv: LV, register: Register) -> list[dict]:
 import logging
 from collections.abc import Iterable
 
-from ..ai.step_api import Evidence, Note, Requirement, SourceRecord, SourceScope, UnitPrice
-from ..modelle import Finding, Position
+from ..ai.step_api import Evidence, Note, Requirement, SourceRecord, SourceScope, StepRequest, UnitPrice
+from ..modelle import Finding, Position, Pruefbericht
 from .regeln import BEZEICHNUNG_MUSTER, _bezeichnung_beton, _bezeichnung_exposition
 
 NORM_KENNWERT_ABWEICHUNG = "NORM_KENNWERT_ABWEICHUNG"
@@ -542,6 +542,26 @@ def register_als_quellen(verweise: Iterable[NormVerweis], register: Register,
     return quellen
 
 
+def mit_register_quellen(request: StepRequest, register: Register | None = None) -> StepRequest:
+    """B4 (#97): hook for the comparison step API. A "standards" (Note 2) request with `checked_on`
+    gets the key values of person-checked (`geprueft: true`) register entries cited in its LV as
+    extra sources, so Note 2 cites the register. Unchecked entries are not used, spec ids the caller
+    already sent win, and with NORMPRUEFUNG off, fixture requests or any error the request is
+    returned unchanged (the error is logged)."""
+    if (request.step != "standards" or request.checked_on is None or request.specifications
+            or not normpruefung_aktiv()):
+        return request
+    try:
+        register = register or lade_register()
+        vorhanden = {s.spec_id for s in request.sources}
+        neu = [q for q in register_als_quellen(extrahiere_normverweise(request.lv), register, request.lv)
+               if q.verified and q.spec_id not in vorhanden]
+        return request.model_copy(update={"sources": [*request.sources, *neu]}) if neu else request
+    except Exception:
+        logging.getLogger(__name__).exception("Norm register sources for Note 2 failed; request unchanged.")
+        return request
+
+
 def pruefe_kennwerte_sicher(lv: LV, register: Register | None = None,
                             preise: dict[str, UnitPrice] | None = None) -> tuple[list[Finding], list[Note]]:
     """Guarded N3 entry point: nothing runs with NORMPRUEFUNG off; any error is logged and the
@@ -558,6 +578,50 @@ def pruefe_kennwerte_sicher(lv: LV, register: Register | None = None,
     except Exception:
         logging.getLogger(__name__).exception("Norm check N3 (key values) failed; check skipped.")
         return [], []
+
+
+def ergaenze_annahmen(bericht: Pruefbericht, register: Register | None = None) -> Pruefbericht:
+    """B4 (#97): hook for `pruefen()` after the B5 reports. The approval-required assumption notes
+    of `pruefe_kennwerte_sicher` go into Report 1 (`regelwerk`) `notes`; each counts as a
+    recommendation (epic #93: never a score penalty) and its assumption is listed as a
+    recommendation of its item in the final report. Findings stay unchanged (N3 findings already
+    come from `pruefe_normen_sicher`). The report is returned unchanged with NORMPRUEFUNG off,
+    without assumption notes, without B5 reports or on any error (logged)."""
+    if not normpruefung_aktiv():
+        return bericht
+    try:
+        _, notes = pruefe_kennwerte_sicher(bericht.lv, register)
+        berichte = getattr(bericht, "berichte", None)
+        if not notes or not berichte or berichte[0].id != "regelwerk":
+            return bericht
+        regelwerk = berichte[0]
+        n = len(notes)
+        regelwerk = regelwerk.model_copy(update={
+            "notes": [*regelwerk.notes, *(note.model_dump(mode="json") for note in notes)],
+            "zaehler": regelwerk.zaehler.model_copy(update={"empfehlungen": regelwerk.zaehler.empfehlungen + n}),
+            "meldung": f"{regelwerk.meldung} {n} assumption(s) requiring approval ({ANNAHME_PRAEFIX}).".strip(),
+        })
+        update = {"berichte": [regelwerk, *berichte[1:]]}
+        if bericht.zusammenfassung is not None:
+            update["zusammenfassung"] = bericht.zusammenfassung.model_copy(
+                update={"empfehlungen": bericht.zusammenfassung.empfehlungen + n})
+        schluss = getattr(bericht, "schlussbericht", None)
+        if schluss is not None:
+            annahmen: dict[str, list[str]] = {}
+            for note in notes:
+                annahmen.setdefault(note.oz, []).append(note.assumption)
+            zeilen, gesehen = [], set()
+            for zeile in schluss.positionen:  # first row per OZ, like the B5 recommendations
+                neu = [a for a in annahmen.get(zeile.oz, []) if a not in zeile.empfehlungen]
+                if neu and zeile.oz not in gesehen:
+                    zeile = zeile.model_copy(update={"empfehlungen": [*zeile.empfehlungen, *neu]})
+                gesehen.add(zeile.oz)
+                zeilen.append(zeile)
+            update["schlussbericht"] = schluss.model_copy(update={"positionen": zeilen})
+        return bericht.model_copy(update=update)
+    except Exception:
+        logging.getLogger(__name__).exception("Assumption notes for the report failed; report unchanged.")
+        return bericht
 
 
 # ---------------------------------------------------------------------------
