@@ -31,6 +31,7 @@ from .risiko.scoring import bewerte
 from . import analyse_job  # #165: background analysis jobs
 from .fortschritt import OHNE_FORTSCHRITT, Fortschritt  # #165: progress API
 from .fortschritt import teilschritt  # #166: N5 research rounds report under step 5
+from .pruefung.recherche import vertiefe_recherche  # E #169: deep web research (Claude key only)
 
 from .ai import step_api
 from .ai import ki_status  # D #168
@@ -144,7 +145,7 @@ async def import_lv(datei: UploadFile):
 
 @app.post("/api/lv/pruefen", response_model=Pruefbericht)
 def pruefen(lv: LV):
-    return _pruefbericht(lv)
+    return vertiefe_recherche(_pruefbericht(lv))  # E #169: unchanged without a Claude key
 
 
 PRUEF_SCHRITTE = 7  # #165: steps of `_pruefbericht`; `_analyse` adds the price calculation as step 8
@@ -251,7 +252,7 @@ def _analyse(anfrage: AnalyseAnfrage, fortschritt: Fortschritt | None = None):
         bericht = ergaenze_geschaetztes_lv(bericht, anfrage.preisliste)
     melde(gesamt, gesamt, "Price calculation: no price source." if bericht.kalkulation is None
           else "Price calculation and estimated bill done.", 1.0)
-    return bericht
+    return vertiefe_recherche(bericht)  # E #169: unchanged without a Claude key
 
 
 # --- Background analysis job with progress (#165, package F) ---------------------------------------

@@ -299,6 +299,33 @@ class KiSchritt(Vertrag):
 # --- end D ---------------------------------------------------------------------------------------------
 
 
+# --- E (#169): deep research with web search; absent without a Claude key (mock reports unchanged) ---
+class RechercheQuelle(Vertrag):
+    url: str = Field(min_length=1)  # only URLs returned by web search in that call
+    titel: str = ""
+
+
+class RechercheErgebnis(Vertrag):
+    schritt: Literal["positionen", "preise", "berichte"]
+    gruppe: str = ""                   # trade (first section) or "Reports 2/3"
+    oz: str | None = None
+    finding_id: str | None = None      # finding the result extends or created (price findings)
+    einschaetzung: Literal["bestaetigt", "abgeschwaecht", "unklar", "plausibel", "zu_hoch", "zu_niedrig"]
+    text: str
+    quellen: list[RechercheQuelle] = Field(min_length=1)
+    marktpreis_von: float | None = None  # "preise" only, as stated by the sources (EUR net per unit)
+    marktpreis_bis: float | None = None
+
+
+class Recherche(Vertrag):
+    status: Literal["ok", "teilweise", "fehler", "aus"]
+    meldung: str = ""
+    aufrufe: int = Field(default=0, ge=0)  # research calls made
+    suchen: int = Field(default=0, ge=0)   # web searches used (budget DEEP_RESEARCH_BUDGET)
+    ergebnisse: list[RechercheErgebnis] = Field(default_factory=list)
+# --- end E ----------------------------------------------------------------------------------------
+
+
 class Pruefbericht(Vertrag):
     lv: LV
     findings: list[Finding]
@@ -312,6 +339,7 @@ class Pruefbericht(Vertrag):
     anpassungen: list[Anpassung] | None = Field(default=None, exclude_if=_ohne_null)  # B7 #113
     geschaetztes_lv: GeschaetztesLv | None = Field(default=None, exclude_if=_ohne_null)  # B8 #114
     ki_schritte: list[KiSchritt] | None = Field(default=None, exclude_if=_ohne_null)  # D #168
+    recherche: Recherche | None = Field(default=None, exclude_if=_ohne_null)  # E #169: deep web research
 
 
 class Beispiel(Vertrag):

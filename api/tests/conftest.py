@@ -11,6 +11,8 @@ MODEL_ENV = (
     "LLM_PARALLEL", "ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL", "ANTHROPIC_EFFORT", "OPENAI_API_KEY", "OPENAI_BASE_URL", "OPENAI_MODEL",
     "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_DEPLOYMENT", "AZURE_OPENAI_API_VERSION",
     "GEMINI_API_KEY", "GEMINI_BASE_URL", "GEMINI_THINKING_BUDGET",
+    "DEEP_RESEARCH_MAX_USES", "DEEP_RESEARCH_MAX_CALLS", "DEEP_RESEARCH_BUDGET",  # E #169
+    "DEEP_RESEARCH_MAX_ITEMS", "DEEP_RESEARCH_TIMEOUT", "DEEP_RESEARCH_PARALLEL",
 )
 
 
@@ -18,3 +20,5 @@ MODEL_ENV = (
 def offline_model_env(monkeypatch):
     for name in MODEL_ENV:
         monkeypatch.delenv(name, raising=False)
+    # E #169: deep web research stays off in tests even with a fake key; its tests switch it on.
+    monkeypatch.setenv("DEEP_RESEARCH", "off")
