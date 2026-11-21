@@ -1,17 +1,5 @@
 // Project-close upload on /history (issue #106, epic #93 D3): our report/estimate + the real final bill → DB record.
-// shortcut: these three checks mirror web/lib/regelwerk.ts (PR #125); merge them once both are on main.
-const MAX_BYTES = 10 * 1024 * 1024; // same limit as MAX_UPLOAD_BYTES in api/app/main.py
-const endung = (name: string) => (name.lastIndexOf(".") < 0 ? "" : name.slice(name.lastIndexOf(".")).toLowerCase());
-function beilageFehler(datei: File, formate: readonly string[], art: string): string | null {
-  if (!formate.includes(endung(datei.name))) return `${art} “${datei.name}” has an unsupported format. Allowed: ${formate.map((f) => f.slice(1).toUpperCase()).join(", ")}.`;
-  if (datei.size === 0) return `${art} “${datei.name}” is empty.`;
-  return datei.size > MAX_BYTES ? `${art} “${datei.name}” is larger than 10 MiB and was not uploaded.` : null;
-}
-const routeFehlt = (fehler: unknown) => typeof fehler === "object" && fehler !== null && (fehler as { status?: number }).status === 404;
-function importFehlerText(art: string, dateiname: string, fehler: unknown) {
-  const grund = fehler instanceof TypeError ? "Cannot connect to the backend." : fehler instanceof Error && fehler.message ? fehler.message : "Unknown error.";
-  return `${art} “${dateiname}” could not be imported: ${grund}`;
-}
+import { beilageFehler, importFehlerText, routeFehlt } from "./regelwerk";
 
 export const BERICHT_FORMATE = [".json", ".xlsx", ".x83", ".x84", ".pdf"];
 export const ABRECHNUNG_FORMATE = [".x84", ".x86", ".xlsx", ".pdf", ".json"];
