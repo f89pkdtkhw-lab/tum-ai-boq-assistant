@@ -14,6 +14,7 @@ from .pruefung.regeln import pruefe_regeln
 from .pruefung.mengen import pruefe_mengen
 from .pruefung.llm_pruefung import pruefe_mit_llm
 from .pruefung.normen import pruefe_normen_sicher
+from .pruefung.bewertung import zusammenfassen
 from .risiko.scoring import bewerte
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -77,7 +78,7 @@ def pruefen(lv: LV):
     return Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
         positionen=len(lv.positionen), findings=len(findings),
         kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=True,
-    ))
+    ), zusammenfassung=zusammenfassen(findings))
 
 
 @app.post("/api/ask")

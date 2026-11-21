@@ -14,7 +14,12 @@ export type Finding = {
   quelle: "regel" | "modell"; regel_id: string; euro_wirkung: number | null;
 };
 export type Kennzahlen = { positionen: number; findings: number; kritisch: number; modell_mock: boolean };
-export type Pruefbericht = { lv: LV; findings: Finding[]; kennzahlen: Kennzahlen };
+export type ScoreAbzug = { grund: string; punkte: number; bericht: "regelwerk" | "vergleich" | "was_wenn" };
+export type Zusammenfassung = {
+  score: number; score_abzuege: ScoreAbzug[]; schaetzung_abweichung_eur: number | null;
+  grosse_probleme: number; warnungen: number; hinweise: number; empfehlungen: number;
+};
+export type Pruefbericht = { lv: LV; findings: Finding[]; kennzahlen: Kennzahlen; zusammenfassung?: Zusammenfassung };
 export type Health = { ok: boolean; provider: string; model: string; mock: boolean };
 export type Answer = { answer: string; provider: string; model: string; ms: number };
 export type Example = { id: string; titel: string; beschreibung: string; lv: LV };
