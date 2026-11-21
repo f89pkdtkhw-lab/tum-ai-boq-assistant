@@ -7,6 +7,26 @@ class Vertrag(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
 
+def _fehlt(wert) -> bool:
+    return wert is None
+
+
+class PositionQuelle(Vertrag):
+    """#170, optional: where the item stands in the uploaded original, so a finding can jump there.
+
+    PDF: ``seite`` (1-based), ``zeile`` (1-based text line on that page) and ``bbox`` ``(x0, top, x1, bottom)`` in
+    PDF points with the origin at the top left, plus ``seite_groesse`` ``(width, height)``. Excel: ``blatt`` (sheet
+    name) and ``zeile`` (spreadsheet row). GAEB XML: ``pfad`` (element path of the item); GAEB 90: ``zeile`` (record
+    line). Fields that do not apply are absent; the OZ itself stays the locator for every format.
+    """
+    seite: int | None = Field(default=None, ge=1, exclude_if=_fehlt)
+    zeile: int | None = Field(default=None, ge=1, exclude_if=_fehlt)
+    bbox: tuple[float, float, float, float] | None = Field(default=None, exclude_if=_fehlt)
+    seite_groesse: tuple[float, float] | None = Field(default=None, exclude_if=_fehlt)
+    blatt: str | None = Field(default=None, exclude_if=_fehlt)
+    pfad: str | None = Field(default=None, exclude_if=_fehlt)
+
+
 class Position(Vertrag):
     oz: str = Field(min_length=1)
     kurztext: str = ""
@@ -17,6 +37,8 @@ class Position(Vertrag):
     gp: float | None = None
     typ: Literal["normal", "bedarf", "alternativ", "zulage", "pauschal", "stundenlohn"] = "normal"
     titel_pfad: list[str] = Field(default_factory=list)
+    # #170, optional: location in the original file. Absent for JSON and older payloads, so their output is unchanged.
+    quelle: PositionQuelle | None = Field(default=None, exclude_if=_fehlt)
 
 
 class LV(Vertrag):
