@@ -73,6 +73,9 @@ app.include_router(abschluss_router)
 from .preis_api import einbinden as preis_api_einbinden  # noqa: E402
 preis_api_einbinden(app)
 
+from .db_seams import verbinde_history_db  # #155: Reports 2/3 ← history DB
+verbinde_history_db()
+
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     use_data: bool = True
