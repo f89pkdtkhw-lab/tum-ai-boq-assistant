@@ -113,13 +113,13 @@ export function KeySettings() {
                       autoComplete="off" spellCheck={false} required minLength={20} className={styles.input} />
                   </label>
                   <label className={styles.label}>
-                    Model <span className={styles.optional}>(optional)</span>
+                    <span>Model <span className={styles.optional}>(optional)</span></span>
                     <input type="text" value={model} onChange={(e) => setModel(e.target.value)} placeholder="claude-sonnet-5-5"
                       autoComplete="off" spellCheck={false} className={styles.input} />
                   </label>
                   <label className={styles.check}>
                     <input type="checkbox" checked={persist} onChange={(e) => setPersist(e.target.checked)} />
-                    Also save in <code>.env.local</code> on the server (kept after a restart, never committed)
+                    <span>Also save in <code>.env.local</code> on the server (kept after a restart, never committed)</span>
                   </label>
                   <div className={styles.actions}>
                     <button type="submit" className={styles.primary} disabled={busy !== null || key.trim().length < 20}>
