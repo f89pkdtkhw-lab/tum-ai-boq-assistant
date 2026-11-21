@@ -21,6 +21,8 @@ building standards. Positions are only compared within the same title
 3. Ratio rules (MENGE_VERHAELTNIS): explicitly configured pairs with a
    plausibility range, e.g. reinforcement per m³ concrete. Custom rules (such as
    a synthetic chairs/tables ratio) are passed in via `ratio_rules`.
+4. Text plausibility (textplausibilitaet.py): dimension unit error and dangling
+   manufacturer name, called once at the end of `pruefe_mengen`.
 """
 import re
 from dataclasses import dataclass
@@ -28,6 +30,7 @@ from statistics import median
 
 from ..modelle import Finding, LV, Position
 from .regeln import _bezeichnungen
+from .textplausibilitaet import pruefe_textplausibilitaet
 
 LAYER_TOLERANCE = 0.10  # assumption: ±10 % from the group median is unremarkable
 # Plausibility assumptions (not standards) for a layer without a named component.
@@ -327,4 +330,5 @@ def pruefe_mengen(lv: LV, ratio_rules: tuple[RatioRule, ...] | None = None) -> l
     findings.extend(_check_wlg(lv))
     for rule in rules:
         findings.extend(_check_ratio(lv, rule))
+    findings.extend(pruefe_textplausibilitaet(lv))
     return findings
