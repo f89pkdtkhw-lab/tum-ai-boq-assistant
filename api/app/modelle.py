@@ -203,6 +203,23 @@ class Schlussbericht(Vertrag):
     warnungen: list[str] = Field(default_factory=list)
 
 
+# --- B7 (#113): structured adjustments from the reports (epic #93, "Price calculation") ---------
+class Anpassung(Vertrag):
+    """One machine-readable change for the estimated bill (B8). Never carries a price."""
+    id: str = Field(min_length=1)
+    # Item concerned; for "hinzufuegen" the new item's OZ (also `position.oz`).
+    oz: str = Field(min_length=1)
+    art: Literal["menge", "hinzufuegen", "entfernen"]
+    menge_alt: float | None = None
+    menge_neu: float | None = None
+    position: Position | None = None  # only for "hinzufuegen": kurztext, einheit, menge, titel_pfad
+    grund: str = Field(min_length=1)
+    bericht: Literal["regelwerk", "vergleich", "was_wenn"]
+    finding_id: str | None = None  # finding or note id the adjustment comes from
+    freigabe_noetig: bool = False  # an estimator must approve it before it counts
+# --- end B7 ---------------------------------------------------------------------------------------
+
+
 class Pruefbericht(Vertrag):
     lv: LV
     findings: list[Finding]
@@ -213,6 +230,7 @@ class Pruefbericht(Vertrag):
     berichte: list[Bericht] | None = None
     was_wenn: list[WasWenn] | None = None
     schlussbericht: Schlussbericht | None = None
+    anpassungen: list[Anpassung] | None = Field(default=None, exclude_if=_ohne_null)  # B7 #113
 
 
 class Beispiel(Vertrag):

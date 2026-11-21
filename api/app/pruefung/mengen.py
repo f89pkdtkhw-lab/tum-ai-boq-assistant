@@ -150,7 +150,8 @@ def _layer_scope(pos: Position) -> tuple[str, ...]:
     return tuple(t for t in pos.titel_pfad if not _TRADE_TITLE.search(t.casefold()))
 
 
-def _check_layers(lv: LV) -> list[Finding]:
+def _layer_groups(lv: LV) -> dict[tuple[tuple[str, ...], str], list[tuple[Position, float]]]:
+    """Layer items (m², known quantity) grouped by scope and named component."""
     groups: dict[tuple[tuple[str, ...], str], list[tuple[Position, float]]] = {}
     for pos in lv.positionen:
         if not _contains(pos, LAYER_TERMS):
@@ -162,7 +163,29 @@ def _check_layers(lv: LV) -> list[Finding]:
         if component is None:
             continue
         groups.setdefault((_layer_scope(pos), component), []).append((pos, quantity[1]))
+    return groups
 
+
+def erwartete_schichtmengen(lv: LV) -> dict[str, float]:
+    """Expected area (group median, m²) per MENGE_SCHICHTEN_ABWEICHUNG finding id of the layer check.
+
+    Exposes the number `_check_layers` already computes, for structured adjustments (#113). The
+    small-layer check is not included: its median only marks an implausible area, it does not
+    evidence the intended one (the item may be a partial area).
+    """
+    expected = {}
+    for members in _layer_groups(lv).values():
+        if len(members) < 2:
+            continue
+        mid = median(q for _, q in members)
+        for pos, quantity in members:
+            if abs((quantity - mid) / mid) > LAYER_TOLERANCE:
+                expected[f"MENGE_SCHICHTEN_ABWEICHUNG:{pos.oz}"] = mid
+    return expected
+
+
+def _check_layers(lv: LV) -> list[Finding]:
+    groups = _layer_groups(lv)
     findings = []
     for (_, component), members in groups.items():
         if len(members) < 2:
