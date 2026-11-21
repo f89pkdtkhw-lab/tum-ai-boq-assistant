@@ -1,9 +1,9 @@
 /* Clean, Apple-style look: system font (SF Pro on Apple devices), near-black text, one blue accent,
    rounded buttons and cards, white page. Components read these tokens; --glass* are flat-surface aliases. */
 :root {
-  --bg: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --line: #d2d2d7; --card: #ffffff;
+  --bg: #f5f5f7; --ink: #1d1d1f; --muted: #6e6e73; --line: #d2d2d7; --card: #ffffff;
   --accent: #0071e3; --accent-2: #424245; --brand: #0071e3; --good: #12a150; --warn: #d97706; --bad: #d92d20;
-  --fill: #f5f5f7; --fill-strong: #e8e8ed;
+  --fill: #f0f0f2; --fill-strong: #e5e5ea;
   --button: #0071e3; --button-ink: #ffffff;
   --glass: var(--card); --glass-edge: var(--line); --glass-light: transparent;
   --glass-line: transparent; --shadow: rgba(16, 24, 40, .06);
@@ -13,19 +13,19 @@
   --font-iso: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-head: var(--font-iso);
   /* Danger scale, red (critical) → green (no findings). */
-  --sev-kritisch: #d92d20; --sev-hoch: #f08c00; --sev-mittel: #f5c518; --sev-niedrig: #8cc63f; --sev-ok: #22a356;
+  --sev-kritisch: #c0362c; --sev-hoch: #d9822b; --sev-mittel: #d4a72c; --sev-niedrig: #8a9a5b; --sev-ok: #2f855a;
   --sev-mittel-text: #9a6b00; /* yellow readable as text on light backgrounds */
   --logo-tile: #ffffff;
   color-scheme: light;
 }
 /* Dark: chosen in settings, or automatically from 19:00 to 07:00 (see lib/einstellungen.tsx). */
 :root[data-theme="dark"] {
-  --bg: #000000; --ink: #f5f5f7; --muted: #a1a1a6; --line: #38383a; --card: #1c1c1e;
+  --bg: #101114; --ink: #ececef; --muted: #9a9aa2; --line: #2a2c31; --card: #17181c;
   --accent: #2997ff; --accent-2: #a1a1a6; --brand: #2997ff; --good: #3ccf7a; --warn: #f5a524; --bad: #f04438;
-  --fill: #2c2c2e; --fill-strong: #3a3a3c;
+  --fill: #1e2025; --fill-strong: #2a2c32;
   --button: #0a84ff; --button-ink: #ffffff;
   --shadow: rgba(0, 0, 0, .4);
-  --sev-kritisch: #f04438; --sev-hoch: #f79009; --sev-mittel: #f5c518; --sev-niedrig: #9ad04f; --sev-ok: #32c26d;
+  --sev-kritisch: #e5534b; --sev-hoch: #e0913f; --sev-mittel: #d9b44a; --sev-niedrig: #9aab6b; --sev-ok: #3fa06c;
   --sev-mittel-text: #f5c518;
   --logo-tile: #0f0f0f;
   color-scheme: dark;
@@ -46,7 +46,7 @@ body {
 .app > main { align-content: start; }
 .shell { max-width: 1040px; margin: 0 auto; padding: 24px 20px 64px; }
 .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.brand { font-weight: 700; letter-spacing: 0; }
+.brand { font-weight: 600; letter-spacing: -.01em; }
 .status { font: 12px var(--font-iso); padding: 4px 10px; border-radius: var(--r-md); border: 1px solid var(--line); }
 .status.live { color: var(--good); border-color: currentColor; }
 .status.mock { color: var(--warn); border-color: currentColor; }
@@ -55,7 +55,8 @@ body {
 .kicker { color: var(--accent); font-weight: 600; margin: 0 0 8px; }
 .hero h1 { font-size: clamp(30px, 5vw, 52px); line-height: 1.08; letter-spacing: -.03em; margin: 0 0 14px; max-width: 18ch; }
 .lead { color: var(--muted); font-size: 18px; max-width: 60ch; margin: 0; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px;
+  box-shadow: 0 1px 2px var(--shadow); }
 .ask label { display: block; font-weight: 600; margin-bottom: 8px; }
 .row { display: flex; gap: 10px; }
 .row input { flex: 1; min-width: 0; font: inherit; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: transparent; color: inherit; }
@@ -85,7 +86,7 @@ html[data-dichte="kompakt"] body { zoom: .88; }
 
 /* Headings: semibold, slightly tight tracking, sentence case. */
 h1, h2, h3 { font-family: var(--font-head); color: var(--ink); letter-spacing: -.015em; font-weight: 600; }
-main h1 { font-weight: 700; letter-spacing: -.02em; }
+main h1 { font-weight: 600; letter-spacing: -.02em; }
 /* Blue is the one signal colour: focus rings and the active state. */
 :focus-visible { outline-color: var(--brand); }
 a { color: var(--accent); }

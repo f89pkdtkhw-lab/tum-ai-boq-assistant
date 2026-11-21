@@ -16,7 +16,7 @@
 
 .urteilSpalte { display: grid; gap: 12px; min-width: 0; }
 .kicker { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
-.urteil { margin: 0; font-size: clamp(24px, 3vw, 34px); line-height: 1.15; letter-spacing: -.02em; }
+.urteil { margin: 0; font-size: clamp(22px, 2.6vw, 30px); line-height: 1.15; letter-spacing: -.02em; font-weight: 600; color: var(--ink) !important; }
 .faktoren { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .faktoren li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); background: var(--fill); font-size: 13.5px; }
 .faktoren strong { margin-left: auto; font-variant-numeric: tabular-nums; }
@@ -27,14 +27,14 @@
 .balkenListe li { display: grid; grid-template-columns: minmax(150px, 280px) minmax(0, 1fr) minmax(90px, auto); gap: 12px; align-items: center; }
 .balkenName { font-size: 14.5px; }
 .quelle { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0; color: var(--muted); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 6px; margin-left: 4px; }
-.balkenSpur { height: 14px; border-radius: var(--r-sm); background: var(--fill); overflow: hidden; }
+.balkenSpur { height: 8px; border-radius: 4px; background: var(--fill); overflow: hidden; }
 .balkenWert { display: block; height: 100%; border-radius: var(--r-sm); }
 .q_extracted { background: var(--accent); }
-.q_rules { background: var(--sev-mittel); }
-.q_history { background: var(--sev-hoch); }
+.q_rules { background: color-mix(in srgb, var(--accent) 55%, var(--fill-strong)); }
+.q_history { background: var(--muted); }
 .betrag { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; font-size: 13.5px; }
 .leer .betrag { font-weight: 400; font-size: 13px; color: var(--muted); text-align: left; }
-.leer .balkenSpur { background: repeating-linear-gradient(45deg, var(--fill), var(--fill) 6px, transparent 6px, transparent 12px); }
+.leer .balkenSpur { background: var(--fill); }
 
 .empfehlungen { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: schritt; }
 .empfehlungen li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; line-height: 1.45; }
@@ -45,4 +45,4 @@
   .balkenListe li { grid-template-columns: 1fr auto; }
   .balkenSpur { grid-column: 1 / -1; grid-row: 2; }
 }
-.q_model { background: var(--accent-2); }
+.q_model { background: color-mix(in srgb, var(--muted) 55%, var(--fill-strong)); }

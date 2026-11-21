@@ -9,7 +9,7 @@
 .hinweis { margin: 0; color: var(--muted); }
 .fehler { margin: 0; color: var(--bad); }
 .urteil { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; }
-.entscheidung { color: #fff; font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: var(--r-md); white-space: nowrap; }
+.entscheidung { color: #fff; font-weight: 600; font-size: 13px; padding: 6px 12px; border-radius: var(--r-md); white-space: nowrap; }
 .headline { margin: 0 0 4px; font-size: 14px; font-weight: 700; }
 .summary { margin: 0; color: var(--muted); }
 .unter { margin: 6px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
@@ -17,7 +17,7 @@
 .vorhersagen li { display: grid; gap: 4px; padding: 12px; border-radius: var(--r-md); background: var(--card); border: 1px solid var(--line); align-content: start; }
 .vTitel { font-size: 13px; color: var(--muted); }
 .vWert { font-size: 19px; font-variant-numeric: tabular-nums; }
-.sicherheit { font-size: 11px; font-weight: 600; justify-self: start; padding: 1px 6px; border-radius: var(--r-sm); background: var(--fill); }
+.sicherheit { font-size: 11px; font-weight: 500; justify-self: start; padding: 1px 6px; border-radius: var(--r-sm); background: var(--fill); color: var(--muted) !important; }
 .s_high { color: var(--sev-ok); }
 .s_medium { color: var(--sev-mittel-text); }
 .s_low { color: var(--sev-hoch); }
