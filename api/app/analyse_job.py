@@ -8,6 +8,7 @@ are dropped after `ANALYSE_JOB_AUFBEWAHRUNG` seconds (default 3600).
 """
 from __future__ import annotations
 
+import contextvars
 import logging
 import threading
 import time
@@ -192,7 +193,9 @@ def starte(arbeit: Callable[[Fortschritt], Pruefbericht], gesamt: int) -> str:
             log.exception("Analysis job %s failed", job.id)
             job.scheitern(f"The analysis failed: {type(exc).__name__}: {str(exc)[:300]}")
 
-    threading.Thread(target=lauf, name=f"analyse-{job.id[:8]}", daemon=True).start()
+    # copy_context: the job thread keeps the request's answer language (#196)
+    threading.Thread(target=contextvars.copy_context().run, args=(lauf,), name=f"analyse-{job.id[:8]}",
+                     daemon=True).start()
     return job.id
 
 

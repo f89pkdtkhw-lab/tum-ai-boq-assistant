@@ -38,10 +38,12 @@ import threading
 import time
 from collections import OrderedDict
 from collections.abc import Callable
+import contextvars
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from concurrent.futures import TimeoutError as FutureTimeout
 
 from ..ai import ki_status, llm  # ki_status: D #168
+from ..ai import sprache  # #196
 from ..modelle import LV, Finding
 from .normen import (
     AUS_WERTE, KEIN_NORMGUTACHTEN, NORM_MUSTER, Register, RegisterEintrag, _Ids, _normalisiere, _quelle,
@@ -395,7 +397,8 @@ def _recherche(lv: LV, register: Register | None, client: Client | None,
 
     ausfuehrer = ThreadPoolExecutor(max_workers=PARALLEL, thread_name_prefix="norm-ki")
     try:
-        auftraege = [ausfuehrer.submit(runde_ausfuehren, nummer, runde) for nummer, runde in enumerate(runden, 1)]
+        auftraege = [ausfuehrer.submit(contextvars.copy_context().run, runde_ausfuehren, nummer, runde)  # #196
+                     for nummer, runde in enumerate(runden, 1)]
         wait(auftraege, timeout=limit)
     finally:
         ausfuehrer.shutdown(wait=False, cancel_futures=True)
@@ -442,9 +445,10 @@ _LETZTE: dict[str, tuple] = {}  # last progress message of a running research, r
 
 
 def _schluessel(lv: LV) -> str:
-    """LV content plus everything that changes the research (model, search budget, rounds)."""
+    """LV content plus everything that changes the research (model, search budget, rounds, answer language)."""
     konfiguration = llm.config()
-    kennung = json.dumps([konfiguration["provider"], konfiguration["model"], _max_suchen(), _max_runden()])
+    kennung = json.dumps([konfiguration["provider"], konfiguration["model"], _max_suchen(), _max_runden(),
+                      sprache.aktuell() or ""])  # #196: German and English results are cached separately
     return hashlib.sha256((kennung + lv.model_dump_json()).encode("utf-8")).hexdigest()
 
 
@@ -484,7 +488,8 @@ def _auftrag(lv: LV) -> tuple[list[Finding] | None, Future | None]:
             _CACHE.move_to_end(schluessel)
             return [f.model_copy() for f in _CACHE[schluessel]], None
         if schluessel not in _LAUFEND:
-            _LAUFEND[schluessel] = _HINTERGRUND.submit(_lauf, lv.model_copy(deep=True), schluessel)
+            _LAUFEND[schluessel] = _HINTERGRUND.submit(contextvars.copy_context().run, _lauf,  # #196
+                                                       lv.model_copy(deep=True), schluessel)
         return None, _LAUFEND[schluessel]
 
 

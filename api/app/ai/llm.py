@@ -20,6 +20,7 @@ Entry points:
     load_env_file(path)                    reads .env.local at app start (environment variables win)
 """
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+import contextvars
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 import hashlib
@@ -31,6 +32,8 @@ from pathlib import Path
 from threading import RLock
 
 import httpx
+
+from . import sprache  # #196: German answers when the UI is German
 
 DEFAULT_MODELS = {
     "anthropic": "claude-sonnet-5-5",
@@ -159,6 +162,7 @@ def complete(prompt, system="", max_tokens=1024, *, timeout=None, json_mode=Fals
     that support it (Gemini) for a JSON-only answer; ``effort`` (low|medium|high|xhigh|max) sets the
     Claude effort level (default: ANTHROPIC_EFFORT, else the model default). Raises LLMError with a
     UI-safe message."""
+    system = sprache.mit_hinweis(system)
     name = provider()
     chosen = model(name)
     started = time.perf_counter()
@@ -207,7 +211,9 @@ def complete_with_fallback(prompt, system="", max_tokens=1024, *, timeout=None, 
         return fallback(state["reason"])
     pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="llm-call")
     try:
-        return pool.submit(complete, prompt, system, max_tokens, timeout=limit, json_mode=json_mode,
+        # copy_context: the pool thread keeps the request's answer language (#196)
+        return pool.submit(contextvars.copy_context().run, complete, prompt, system, max_tokens, timeout=limit,
+                           json_mode=json_mode,
                            effort=effort).result(
             timeout=limit + 1)
     except FutureTimeout:
@@ -577,6 +583,7 @@ def research(prompt, system="", max_tokens=8000, *, max_searches=5, timeout=None
     chosen = model(name)
     if not env(KEY_FOR[name]):
         raise LLMError(f"Missing {KEY_FOR[name]} for {name}. Without a key, set LLM_PROVIDER=mock.")
+    system = sprache.mit_hinweis(system)  # #196; the non-Claude path above gets it inside complete()
     limit = timeout if timeout and timeout > 0 else seconds()
     started = time.perf_counter()
     try:
