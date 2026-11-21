@@ -24,6 +24,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+      # tests/test_pdf.py imports api.app.lv.pdf, which needs the api packages.
+      - name: Install api requirements
+        run: pip install -q -r api/requirements.txt
       - name: Run tests
         run: python -m unittest discover -s tests -v
 
@@ -40,6 +43,9 @@ jobs:
           cache-dependency-path: api/requirements*.txt
       - name: Backend tests
         working-directory: api
+        env:
+          # api/app/main.py imports the top-level db package from the repo root.
+          PYTHONPATH: ..
         run: |
           pip install -q -r requirements.txt -r requirements-dev.txt
           python -m pytest -q
