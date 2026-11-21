@@ -241,6 +241,17 @@ export function LvUpload() {
     setzeDateien(liste);
   }
 
+  // #115: the first synthetic example plus its demo price list (copy of data/preisliste_beispiel.csv), ready to evaluate.
+  async function beispielMitPreisen() {
+    const b = beispiele[0];
+    if (!b) return;
+    const csv = await (await fetch("/preisliste_beispiel.csv")).blob();
+    setzeDateien([
+      { datei: new File([JSON.stringify(b.lv)], "beispiel_lv.json", { type: "application/json" }), rolle: "lv" },
+      { datei: new File([csv], "preisliste_beispiel.csv", { type: "text/csv" }), rolle: "preise" },
+    ]);
+  }
+
   function aufAuswahl(event: ChangeEvent<HTMLInputElement>) {
     hinzufuegen([...(event.target.files ?? [])]);
     event.target.value = "";
@@ -470,6 +481,11 @@ export function LvUpload() {
               {t(b.titel)} · {anzahl(b.lv.positionen.length, t("item"), t("items"))}
             </button>
           ))}
+          {beispiele.length > 0 && (
+            <button type="button" className={styles.beispielChip} disabled={busy} onClick={() => void beispielMitPreisen()}>
+              {t("{name} with demo price list", { name: t(beispiele[0].titel) })}
+            </button>
+          )}
         </p>
       </form>
       </>)}
