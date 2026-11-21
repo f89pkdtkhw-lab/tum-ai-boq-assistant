@@ -130,3 +130,7 @@ button.preisKachel:hover .oeffnen { color: inherit; }
 .preisDetail dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
 /* Phones: was and estimated each take a full row so the euro amounts are not cut off. */
 @media (max-width: 520px) { .stufe1 { grid-template-areas: "score score" "war war" "schaetz schaetz" "z1 z2" "z3 z3"; } }
+/* #103: score deductions under the verdict */
+.abzuege { font-size: 13px; color: var(--muted); text-align: center; }
+.abzuege ul { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 3px; text-align: left; color: var(--ink); }
+.abzuege li span { display: inline-block; min-width: 3ch; font-weight: 600; font-variant-numeric: tabular-nums; }

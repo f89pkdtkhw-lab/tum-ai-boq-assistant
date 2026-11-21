@@ -523,6 +523,7 @@ export const DE: Record<string, string> = {
   "Estimates too far off (±): {n} items": "Schätzung zu weit daneben (±): {n} Positionen",
   "Warnings and what-if cases (no penalty)": "Warnungen und Was-wäre-wenn-Fälle (kein Abzug)",
   "Score": "Bewertung",
+  "Why this score": "Warum diese Bewertung",
   "from file, history and options": "aus Datei, Historie und Bedarfspositionen",
   "no prices in the file": "keine Preise in der Datei",
   "no penalty, for awareness": "ohne Abzug, zur Info",

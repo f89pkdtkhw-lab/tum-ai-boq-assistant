@@ -160,6 +160,11 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
           <Ring teile={[{ wert: zaehler("issue"), farbe: AMPEL.rot }, { wert: zaehler("warning"), farbe: AMPEL.gelb }, { wert: zaehler("rec"), farbe: AMPEL.gruen }]}
             mitte={e.score.toFixed(1)} unter="/ 10" farbe={TEXT[e.ampel]} beschriftung={`${t("Score")} ${e.score} / 10`} max={260} />
           <strong style={{ color: TEXT[e.ampel] }}>{t(e.urteil)}</strong>
+          {/* #103: the deductions behind the score, one click away. */}
+          <details className={styles.abzuege}>
+            <summary>{t("Why this score")}</summary>
+            <ul>{e.faktoren.map((f, i) => <li key={i}><span style={{ color: TEXT[f.ampel] }}>{f.wert}</span> {t(f.name, f.werte)}</li>)}</ul>
+          </details>
         </div>
         <button type="button" className={`${styles.preisKachel} ${styles.geschaetzt}`} onClick={zeigePreise} title={t("Show full estimated price report")}>
           <span className={styles.label}><Icon name="sparkles" /> {t("Estimated")} <Info text={t("Item by item from the price list, past projects of the same trade and the AI evaluation. Open the full price report for every reason.")} /></span>
