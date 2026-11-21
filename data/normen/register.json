@@ -449,6 +449,176 @@
       "hinweis": "Only outdated as waterproofing execution standard: the former parts DIN 18195-1 to -10 were replaced in 2017-07 by DIN 18531 to DIN 18535 (see docs/domaene.md). DIN 18195 itself still exists as terminology standard (2017-07, now 2025-12)."
     },
     {
+      "norm_id": "DIN 18195-1",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 1 (waterproofing of structures, part 1, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
+      "norm_id": "DIN 18195-2",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 2 (waterproofing of structures, part 2, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
+      "norm_id": "DIN 18195-3",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 3 (waterproofing of structures, part 3, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
+      "norm_id": "DIN 18195-4",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 4 (waterproofing of structures, part 4, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
+      "norm_id": "DIN 18195-5",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 5 (waterproofing of structures, part 5, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
+      "norm_id": "DIN 18195-6",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 6 (waterproofing of structures, part 6, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
+      "norm_id": "DIN 18195-7",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 7 (waterproofing of structures, part 7, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
+      "norm_id": "DIN 18195-8",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 8 (waterproofing of structures, part 8, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
+      "norm_id": "DIN 18195-9",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 9 (waterproofing of structures, part 9, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
+      "norm_id": "DIN 18195-10",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Teil 10 (waterproofing of structures, part 10, withdrawn)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": ["DIN 18531", "DIN 18532", "DIN 18533", "DIN 18534", "DIN 18535"],
+      "gewerke": ["Abdichtung"],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Former part of DIN 18195, withdrawn in 2017-07; the family list DIN 18531 to DIN 18535 is given as fallback, the per-part replacement is not checked yet."
+    },
+    {
       "norm_id": "DIN 4020",
       "familie": "DIN 4020",
       "titel": "Geotechnische Untersuchungen für bautechnische Zwecke",
