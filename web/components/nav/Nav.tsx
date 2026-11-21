@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./nav.module.css";
+import { KeySettings } from "@/components/schluessel/KeySettings";
 
 const LINKS = [
   { href: "/", label: "Upload & report" },
@@ -28,6 +29,7 @@ export function Nav() {
           );
         })}
       </ul>
+      <KeySettings />
     </nav>
   );
 }

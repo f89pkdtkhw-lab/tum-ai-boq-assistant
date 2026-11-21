@@ -76,6 +76,9 @@ preis_api_einbinden(app)
 from .db_seams import verbinde_history_db  # #155: Reports 2/3 ← history DB
 verbinde_history_db()
 
+from .ai.schluessel import router as key_router  # #156: enter the Claude API key in the UI
+app.include_router(key_router)
+
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     use_data: bool = True

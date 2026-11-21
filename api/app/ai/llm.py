@@ -65,8 +65,13 @@ def seconds(name="LLM_TIMEOUT", default=DEFAULT_TIMEOUT):
     return value if value > 0 else float(default)
 
 
+# #156: values set at runtime by the UI key route (app/ai/schluessel.py), held in memory only. They win
+# over the environment so a key entered in the UI is used at once, without a restart. Never logged.
+RUNTIME = {}
+
+
 def env(name):
-    return os.environ.get(name, "").strip()
+    return (RUNTIME.get(name) or os.environ.get(name, "")).strip()
 
 
 _ENV_LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
@@ -134,9 +139,12 @@ def status():
         name = provider()
     except LLMError as exc:
         return {"provider": "mock", "model": DEFAULT_MODELS["mock"], "mock": True, "keys": _keys(),
-                "reason": str(exc)}
+                "reason": str(exc), "key_set": False, "key_source": None}
     chosen = model(name)
-    result = {"provider": name, "model": chosen, "mock": name == "mock", "keys": _keys(), "reason": None}
+    key_name = KEY_FOR.get(name, KEY_FOR["anthropic"])  # #156: "key set" for the provider in use (Claude on mock)
+    result = {"provider": name, "model": chosen, "mock": name == "mock", "keys": _keys(), "reason": None,
+              "key_set": bool(env(key_name)),
+              "key_source": "ui" if RUNTIME.get(key_name) else "env" if env(key_name) else None}
     if name != "mock" and not env(KEY_FOR[name]):
         result.update(mock=True, reason=f"Missing {KEY_FOR[name]} for {name}; the offline mock answers instead.")
     elif name != "mock" and not chosen:

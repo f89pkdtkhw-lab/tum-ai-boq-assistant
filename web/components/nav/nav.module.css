@@ -1,10 +1,11 @@
 /* Slim global nav in the Liquid Glass style of lv-upload.module.css. Not sticky: pages keep their own sticky headers. */
 .leiste {
   max-width: 1080px; margin: 0 auto;
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; /* #156: model chip */
   padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
 }
 .liste {
-  list-style: none; margin: 0 auto; padding: 4px; width: fit-content; max-width: 100%;
+  list-style: none; margin: 0; padding: 4px; width: fit-content; max-width: 100%;
   display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; border-radius: 22px;
   background: var(--glass);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
