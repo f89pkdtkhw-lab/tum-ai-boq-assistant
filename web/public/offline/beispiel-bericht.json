@@ -7,10 +7,10 @@
         "oz": "01.00.0001",
         "kurztext": "Erdarbeiten Teilfläche 1",
         "langtext": "Leistung Teilfläche 1 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 11,
+        "menge": 11.0,
         "einheit": "m³",
-        "ep": 20,
-        "gp": 999,
+        "ep": 20.0,
+        "gp": 999.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -20,10 +20,10 @@
         "oz": "01.00.0002",
         "kurztext": "Erdarbeiten Teilfläche 2",
         "langtext": "Leistung Teilfläche 2 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 12,
+        "menge": 12.0,
         "einheit": "m³",
-        "ep": 20,
-        "gp": 240,
+        "ep": 20.0,
+        "gp": 240.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -33,10 +33,10 @@
         "oz": "01.00.0003",
         "kurztext": "Erdarbeiten Teilfläche 3",
         "langtext": "Leistung Teilfläche 3 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 13,
+        "menge": 13.0,
         "einheit": "m³",
-        "ep": 20,
-        "gp": 260,
+        "ep": 20.0,
+        "gp": 260.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -46,10 +46,10 @@
         "oz": "01.00.0004",
         "kurztext": "Erdarbeiten Teilfläche 4",
         "langtext": "Leistung Teilfläche 4 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 14,
+        "menge": 14.0,
         "einheit": "m³",
-        "ep": 20,
-        "gp": 280,
+        "ep": 20.0,
+        "gp": 280.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -59,10 +59,10 @@
         "oz": "01.00.0005",
         "kurztext": "Erdarbeiten Teilfläche 5",
         "langtext": "Leistung Teilfläche 5 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 15,
+        "menge": 15.0,
         "einheit": null,
-        "ep": 20,
-        "gp": 300,
+        "ep": 20.0,
+        "gp": 300.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -72,10 +72,10 @@
         "oz": "01.00.0006",
         "kurztext": "Erdarbeiten Teilfläche 6",
         "langtext": "Leistung Teilfläche 6 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 16,
+        "menge": 16.0,
         "einheit": "m³",
-        "ep": 20,
-        "gp": 320,
+        "ep": 20.0,
+        "gp": 320.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -85,10 +85,10 @@
         "oz": "01.00.0007",
         "kurztext": "Erdarbeiten Teilfläche 7",
         "langtext": "Leistung Teilfläche 7 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 17,
+        "menge": 17.0,
         "einheit": "m³",
-        "ep": 20,
-        "gp": 340,
+        "ep": 20.0,
+        "gp": 340.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -98,10 +98,10 @@
         "oz": "01.00.0008",
         "kurztext": "Erdarbeiten Teilfläche 8",
         "langtext": "Leistung Teilfläche 8 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 18,
+        "menge": 18.0,
         "einheit": "m³",
-        "ep": 20,
-        "gp": 360,
+        "ep": 20.0,
+        "gp": 360.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -111,10 +111,10 @@
         "oz": "01.00.0009",
         "kurztext": "Erdarbeiten Teilfläche 9",
         "langtext": "Leistung Teilfläche 9 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 19,
+        "menge": 19.0,
         "einheit": "m³",
-        "ep": 20,
-        "gp": 380,
+        "ep": 20.0,
+        "gp": 380.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -124,10 +124,10 @@
         "oz": "01.00.0010",
         "kurztext": "Erdarbeiten Teilfläche 10",
         "langtext": "Leistung Teilfläche 10 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 20,
+        "menge": 20.0,
         "einheit": "m³",
-        "ep": 20,
-        "gp": 400,
+        "ep": 20.0,
+        "gp": 400.0,
         "typ": "normal",
         "titel_pfad": [
           "01 Erdarbeiten"
@@ -139,8 +139,8 @@
         "langtext": "Leistung Teilfläche 1 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
         "menge": null,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 440,
+        "ep": 40.0,
+        "gp": 440.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -150,10 +150,10 @@
         "oz": "02.00.0002",
         "kurztext": "Betonarbeiten Teilfläche 2",
         "langtext": "Leistung Teilfläche 2 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 12,
+        "menge": 12.0,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 480,
+        "ep": 40.0,
+        "gp": 480.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -163,10 +163,10 @@
         "oz": "02.00.0003",
         "kurztext": "Betonarbeiten Teilfläche 3",
         "langtext": "Leistung Teilfläche 3 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 13,
+        "menge": 13.0,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 520,
+        "ep": 40.0,
+        "gp": 520.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -176,10 +176,10 @@
         "oz": "02.00.0004",
         "kurztext": "Betonarbeiten Teilfläche 4",
         "langtext": "Leistung Teilfläche 4 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 14,
+        "menge": 14.0,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 560,
+        "ep": 40.0,
+        "gp": 560.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -189,10 +189,10 @@
         "oz": "02.00.0005",
         "kurztext": "Betonarbeiten Teilfläche 5",
         "langtext": "",
-        "menge": 15,
+        "menge": 15.0,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 600,
+        "ep": 40.0,
+        "gp": 600.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -202,10 +202,10 @@
         "oz": "02.00.0006",
         "kurztext": "Betonarbeiten Teilfläche 6",
         "langtext": "Leistung Teilfläche 6 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 16,
+        "menge": 16.0,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 640,
+        "ep": 40.0,
+        "gp": 640.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -215,10 +215,10 @@
         "oz": "02.00.0007",
         "kurztext": "Betonarbeiten Teilfläche 7",
         "langtext": "Leistung Teilfläche 7 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 17,
+        "menge": 17.0,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 680,
+        "ep": 40.0,
+        "gp": 680.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -228,10 +228,10 @@
         "oz": "02.00.0008",
         "kurztext": "Betonarbeiten Teilfläche 8",
         "langtext": "Leistung Teilfläche 8 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 18,
+        "menge": 18.0,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 720,
+        "ep": 40.0,
+        "gp": 720.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -241,10 +241,10 @@
         "oz": "02.00.0009",
         "kurztext": "Betonarbeiten Teilfläche 9",
         "langtext": "Leistung Teilfläche 9 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 19,
+        "menge": 19.0,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 760,
+        "ep": 40.0,
+        "gp": 760.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -254,10 +254,10 @@
         "oz": "02.00.0010",
         "kurztext": "Betonarbeiten Teilfläche 10",
         "langtext": "Leistung Teilfläche 10 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 20,
+        "menge": 20.0,
         "einheit": "m³",
-        "ep": 40,
-        "gp": 800,
+        "ep": 40.0,
+        "gp": 800.0,
         "typ": "normal",
         "titel_pfad": [
           "02 Betonarbeiten"
@@ -267,10 +267,10 @@
         "oz": "02.00.0010",
         "kurztext": "Mauerarbeiten Teilfläche 1",
         "langtext": "Leistung Teilfläche 1 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 11,
+        "menge": 11.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 660,
+        "ep": 60.0,
+        "gp": 660.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -280,10 +280,10 @@
         "oz": "03.00.0002",
         "kurztext": "Mauerarbeiten Teilfläche 2",
         "langtext": "Leistung Teilfläche 2 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 12,
+        "menge": 12.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 720,
+        "ep": 60.0,
+        "gp": 720.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -293,10 +293,10 @@
         "oz": "03.00.0003",
         "kurztext": "Mauerarbeiten Teilfläche 3",
         "langtext": "Leistung Teilfläche 3 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 13,
+        "menge": 13.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 780,
+        "ep": 60.0,
+        "gp": 780.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -306,10 +306,10 @@
         "oz": "03.00.0004",
         "kurztext": "Mauerarbeiten Teilfläche 4",
         "langtext": "Leistung Teilfläche 4 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 14,
+        "menge": 14.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 840,
+        "ep": 60.0,
+        "gp": 840.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -319,10 +319,10 @@
         "oz": "03.00.0005",
         "kurztext": "Mauerarbeiten Teilfläche 5",
         "langtext": "Leistung Teilfläche 5 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 15,
+        "menge": 15.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 900,
+        "ep": 60.0,
+        "gp": 900.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -332,10 +332,10 @@
         "oz": "03.00.0006",
         "kurztext": "Mauerarbeiten Teilfläche 6",
         "langtext": "Leistung Teilfläche 6 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 16,
+        "menge": 16.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 960,
+        "ep": 60.0,
+        "gp": 960.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -345,10 +345,10 @@
         "oz": "03.00.0007",
         "kurztext": "Mauerarbeiten Teilfläche 7",
         "langtext": "Leistung Teilfläche 7 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 17,
+        "menge": 17.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 1020,
+        "ep": 60.0,
+        "gp": 1020.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -358,10 +358,10 @@
         "oz": "03.00.0008",
         "kurztext": "Mauerarbeiten Teilfläche 8",
         "langtext": "Leistung Teilfläche 8 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 18,
+        "menge": 18.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 1080,
+        "ep": 60.0,
+        "gp": 1080.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -371,10 +371,10 @@
         "oz": "03.00.0009",
         "kurztext": "Mauerarbeiten Teilfläche 9",
         "langtext": "Leistung Teilfläche 9 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 19,
+        "menge": 19.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 1140,
+        "ep": 60.0,
+        "gp": 1140.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -384,10 +384,10 @@
         "oz": "03.00.0010",
         "kurztext": "Mauerarbeiten Teilfläche 10",
         "langtext": "Leistung Teilfläche 10 gemäß festgelegten Abmessungen herstellen und dokumentieren.",
-        "menge": 20,
+        "menge": 20.0,
         "einheit": "m²",
-        "ep": 60,
-        "gp": 1200,
+        "ep": 60.0,
+        "gp": 1200.0,
         "typ": "normal",
         "titel_pfad": [
           "03 Mauerarbeiten"
@@ -407,7 +407,7 @@
       "vorschlag": "Correct the total price to quantity × unit price.",
       "quelle": "regel",
       "regel_id": "RECHENFEHLER",
-      "euro_wirkung": 779
+      "euro_wirkung": 779.0
     },
     {
       "id": "EINHEIT_FEHLT:01.00.0005",
@@ -475,5 +475,733 @@
     "findings": 6,
     "kritisch": 0,
     "modell_mock": true
+  },
+  "zusammenfassung": {
+    "score": 6.5,
+    "score_abzuege": [
+      {
+        "grund": "Report 1: 3 big problems",
+        "punkte": -3.5,
+        "bericht": "regelwerk"
+      }
+    ],
+    "schaetzung_abweichung_eur": null,
+    "grosse_probleme": 3,
+    "warnungen": 2,
+    "hinweise": 1,
+    "empfehlungen": 0
+  },
+  "berichte": [
+    {
+      "id": "regelwerk",
+      "titel": "Report 1 – regulations",
+      "status": "ok",
+      "meldung": "6 finding(s) from rules, norm checks and the model: 3 big problem(s), 2 warning(s), 1 notice(s).",
+      "finding_ids": [
+        "RECHENFEHLER:01.00.0001",
+        "EINHEIT_FEHLT:01.00.0005",
+        "MENGE_FEHLT:02.00.0001",
+        "LANGTEXT_FEHLT:02.00.0005",
+        "OZ_DUPLIKAT:02.00.0010",
+        "mock-modell-01-00-0001-mock-llm"
+      ],
+      "notes": [],
+      "neue_tags": [],
+      "tags": [],
+      "zaehler": {
+        "grosse_probleme": 3,
+        "warnungen": 2,
+        "hinweise": 1,
+        "empfehlungen": 0,
+        "zu_grosse_naeherungen": 0
+      },
+      "naeherungen": [],
+      "probleme": []
+    },
+    {
+      "id": "vergleich",
+      "titel": "Report 2 – similar projects",
+      "status": "ok",
+      "meldung": "No comparable tag among 11 DB tag(s); no approximation. Proposed new tag(s): betonarbeiten, erdarbeiten, kickoff.",
+      "finding_ids": [],
+      "notes": [],
+      "neue_tags": [
+        "betonarbeiten",
+        "erdarbeiten",
+        "kickoff"
+      ],
+      "tags": [],
+      "zaehler": {
+        "grosse_probleme": 0,
+        "warnungen": 0,
+        "hinweise": 0,
+        "empfehlungen": 0,
+        "zu_grosse_naeherungen": 0
+      },
+      "naeherungen": [],
+      "probleme": []
+    },
+    {
+      "id": "was_wenn",
+      "titel": "Report 3 – what-if",
+      "status": "ok",
+      "meldung": "8 recent case(s); 8 problem(s) from notes/marks: 0 with high chance (recommendation), 8 for awareness. No score penalty.",
+      "finding_ids": [],
+      "notes": [],
+      "neue_tags": [],
+      "tags": [],
+      "zaehler": {
+        "grosse_probleme": 0,
+        "warnungen": 0,
+        "hinweise": 8,
+        "empfehlungen": 0,
+        "zu_grosse_naeherungen": 0
+      },
+      "naeherungen": [],
+      "probleme": [
+        {
+          "oz": null,
+          "problem": "groundwater pumping underestimated",
+          "chance": "niedrig",
+          "empfehlung": "",
+          "case_ids": [
+            "900001"
+          ],
+          "begruendung": "For awareness only: no item of this bill matches the problem."
+        },
+        {
+          "oz": null,
+          "problem": "night traffic diversion extended setup time",
+          "chance": "niedrig",
+          "empfehlung": "",
+          "case_ids": [
+            "900002"
+          ],
+          "begruendung": "For awareness only: no item of this bill matches the problem."
+        },
+        {
+          "oz": null,
+          "problem": "river level surge delayed cofferdam inspection",
+          "chance": "niedrig",
+          "empfehlung": "",
+          "case_ids": [
+            "900003"
+          ],
+          "begruendung": "For awareness only: no item of this bill matches the problem."
+        },
+        {
+          "oz": null,
+          "problem": "substrate moisture required extra drying cycle",
+          "chance": "niedrig",
+          "empfehlung": "",
+          "case_ids": [
+            "900004"
+          ],
+          "begruendung": "For awareness only: no item of this bill matches the problem."
+        },
+        {
+          "oz": null,
+          "problem": "unmapped utility trench discovered during grading",
+          "chance": "niedrig",
+          "empfehlung": "",
+          "case_ids": [
+            "900005"
+          ],
+          "begruendung": "For awareness only: no item of this bill matches the problem."
+        },
+        {
+          "oz": null,
+          "problem": "groundwater pumping underestimated in clay layer",
+          "chance": "niedrig",
+          "empfehlung": "",
+          "case_ids": [
+            "900006"
+          ],
+          "begruendung": "For awareness only: no item of this bill matches the problem."
+        },
+        {
+          "oz": null,
+          "problem": "crane access restricted by adjacent slope",
+          "chance": "niedrig",
+          "empfehlung": "",
+          "case_ids": [
+            "900007"
+          ],
+          "begruendung": "For awareness only: no item of this bill matches the problem."
+        },
+        {
+          "oz": null,
+          "problem": "cold weather curing blankets added labor hours",
+          "chance": "niedrig",
+          "empfehlung": "",
+          "case_ids": [
+            "900008"
+          ],
+          "begruendung": "For awareness only: no item of this bill matches the problem."
+        }
+      ]
+    }
+  ],
+  "was_wenn": [
+    {
+      "oz": null,
+      "problem": "groundwater pumping underestimated",
+      "chance": "niedrig",
+      "empfehlung": "",
+      "case_ids": [
+        "900001"
+      ],
+      "begruendung": "For awareness only: no item of this bill matches the problem."
+    },
+    {
+      "oz": null,
+      "problem": "night traffic diversion extended setup time",
+      "chance": "niedrig",
+      "empfehlung": "",
+      "case_ids": [
+        "900002"
+      ],
+      "begruendung": "For awareness only: no item of this bill matches the problem."
+    },
+    {
+      "oz": null,
+      "problem": "river level surge delayed cofferdam inspection",
+      "chance": "niedrig",
+      "empfehlung": "",
+      "case_ids": [
+        "900003"
+      ],
+      "begruendung": "For awareness only: no item of this bill matches the problem."
+    },
+    {
+      "oz": null,
+      "problem": "substrate moisture required extra drying cycle",
+      "chance": "niedrig",
+      "empfehlung": "",
+      "case_ids": [
+        "900004"
+      ],
+      "begruendung": "For awareness only: no item of this bill matches the problem."
+    },
+    {
+      "oz": null,
+      "problem": "unmapped utility trench discovered during grading",
+      "chance": "niedrig",
+      "empfehlung": "",
+      "case_ids": [
+        "900005"
+      ],
+      "begruendung": "For awareness only: no item of this bill matches the problem."
+    },
+    {
+      "oz": null,
+      "problem": "groundwater pumping underestimated in clay layer",
+      "chance": "niedrig",
+      "empfehlung": "",
+      "case_ids": [
+        "900006"
+      ],
+      "begruendung": "For awareness only: no item of this bill matches the problem."
+    },
+    {
+      "oz": null,
+      "problem": "crane access restricted by adjacent slope",
+      "chance": "niedrig",
+      "empfehlung": "",
+      "case_ids": [
+        "900007"
+      ],
+      "begruendung": "For awareness only: no item of this bill matches the problem."
+    },
+    {
+      "oz": null,
+      "problem": "cold weather curing blankets added labor hours",
+      "chance": "niedrig",
+      "empfehlung": "",
+      "case_ids": [
+        "900008"
+      ],
+      "begruendung": "For awareness only: no item of this bill matches the problem."
+    }
+  ],
+  "schlussbericht": {
+    "projektbeschreibung": "Synthetisches Rohbau-LV – Kickoff: 30 item(s) in 3 section(s); proposed new tags: betonarbeiten, erdarbeiten, kickoff.",
+    "positionen": [
+      {
+        "oz": "01.00.0001",
+        "kurztext": "Erdarbeiten Teilfläche 1",
+        "menge": 11.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [
+          {
+            "finding_id": "RECHENFEHLER:01.00.0001",
+            "schwere": "hoch",
+            "titel": "Arithmetic error in total price",
+            "quelle": "regel",
+            "regel_id": "RECHENFEHLER",
+            "bericht": "regelwerk"
+          },
+          {
+            "finding_id": "mock-modell-01-00-0001-mock-llm",
+            "schwere": "niedrig",
+            "titel": "Demonstration (Mock) – no domain review",
+            "quelle": "modell",
+            "regel_id": "MOCK_LLM",
+            "bericht": "regelwerk"
+          }
+        ],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "01.00.0002",
+        "kurztext": "Erdarbeiten Teilfläche 2",
+        "menge": 12.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "01.00.0003",
+        "kurztext": "Erdarbeiten Teilfläche 3",
+        "menge": 13.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "01.00.0004",
+        "kurztext": "Erdarbeiten Teilfläche 4",
+        "menge": 14.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "01.00.0005",
+        "kurztext": "Erdarbeiten Teilfläche 5",
+        "menge": 15.0,
+        "einheit": null,
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [
+          {
+            "finding_id": "EINHEIT_FEHLT:01.00.0005",
+            "schwere": "mittel",
+            "titel": "Missing unit",
+            "quelle": "regel",
+            "regel_id": "EINHEIT_FEHLT",
+            "bericht": "regelwerk"
+          }
+        ],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "01.00.0006",
+        "kurztext": "Erdarbeiten Teilfläche 6",
+        "menge": 16.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "01.00.0007",
+        "kurztext": "Erdarbeiten Teilfläche 7",
+        "menge": 17.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "01.00.0008",
+        "kurztext": "Erdarbeiten Teilfläche 8",
+        "menge": 18.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "01.00.0009",
+        "kurztext": "Erdarbeiten Teilfläche 9",
+        "menge": 19.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "01.00.0010",
+        "kurztext": "Erdarbeiten Teilfläche 10",
+        "menge": 20.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0001",
+        "kurztext": "Betonarbeiten Teilfläche 1",
+        "menge": null,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [
+          {
+            "finding_id": "MENGE_FEHLT:02.00.0001",
+            "schwere": "hoch",
+            "titel": "Missing quantity",
+            "quelle": "regel",
+            "regel_id": "MENGE_FEHLT",
+            "bericht": "regelwerk"
+          }
+        ],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0002",
+        "kurztext": "Betonarbeiten Teilfläche 2",
+        "menge": 12.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0003",
+        "kurztext": "Betonarbeiten Teilfläche 3",
+        "menge": 13.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0004",
+        "kurztext": "Betonarbeiten Teilfläche 4",
+        "menge": 14.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0005",
+        "kurztext": "Betonarbeiten Teilfläche 5",
+        "menge": 15.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [
+          {
+            "finding_id": "LANGTEXT_FEHLT:02.00.0005",
+            "schwere": "mittel",
+            "titel": "Missing detailed description",
+            "quelle": "regel",
+            "regel_id": "LANGTEXT_FEHLT",
+            "bericht": "regelwerk"
+          }
+        ],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0006",
+        "kurztext": "Betonarbeiten Teilfläche 6",
+        "menge": 16.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0007",
+        "kurztext": "Betonarbeiten Teilfläche 7",
+        "menge": 17.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0008",
+        "kurztext": "Betonarbeiten Teilfläche 8",
+        "menge": 18.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0009",
+        "kurztext": "Betonarbeiten Teilfläche 9",
+        "menge": 19.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0010",
+        "kurztext": "Betonarbeiten Teilfläche 10",
+        "menge": 20.0,
+        "einheit": "m³",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [
+          {
+            "finding_id": "OZ_DUPLIKAT:02.00.0010",
+            "schwere": "hoch",
+            "titel": "Duplicate item number",
+            "quelle": "regel",
+            "regel_id": "OZ_DUPLIKAT",
+            "bericht": "regelwerk"
+          }
+        ],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "02.00.0010",
+        "kurztext": "Mauerarbeiten Teilfläche 1",
+        "menge": 11.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "03.00.0002",
+        "kurztext": "Mauerarbeiten Teilfläche 2",
+        "menge": 12.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "03.00.0003",
+        "kurztext": "Mauerarbeiten Teilfläche 3",
+        "menge": 13.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "03.00.0004",
+        "kurztext": "Mauerarbeiten Teilfläche 4",
+        "menge": 14.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "03.00.0005",
+        "kurztext": "Mauerarbeiten Teilfläche 5",
+        "menge": 15.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "03.00.0006",
+        "kurztext": "Mauerarbeiten Teilfläche 6",
+        "menge": 16.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "03.00.0007",
+        "kurztext": "Mauerarbeiten Teilfläche 7",
+        "menge": 17.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "03.00.0008",
+        "kurztext": "Mauerarbeiten Teilfläche 8",
+        "menge": 18.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "03.00.0009",
+        "kurztext": "Mauerarbeiten Teilfläche 9",
+        "menge": 19.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      },
+      {
+        "oz": "03.00.0010",
+        "kurztext": "Mauerarbeiten Teilfläche 10",
+        "menge": 20.0,
+        "einheit": "m²",
+        "geschaetzt": null,
+        "abweichung": null,
+        "abweichung_eur": null,
+        "warum": "",
+        "nachtrag": [],
+        "probleme": [],
+        "warnungen": [],
+        "empfehlungen": []
+      }
+    ],
+    "allgemein": [],
+    "warnungen": []
   }
 }
