@@ -12,14 +12,14 @@ export type HistoryRecord = {
 };
 export type Evidence = { reference_id: string; oz: string; source: string; detail: string };
 export type Note = {
-  id: string; step: Step; oz: string; source: "model_mock"; placeholder: true; text: string; manual_review: boolean;
+  id: string; step: Step; oz: string; source: "model_mock" | "rule"; placeholder: boolean; text: string; manual_review: boolean;
   evidence: Evidence[]; case_ids: string[]; case_count: number; selection_reason: string | null;
   base_value: number | null; estimated_value: number | null; unit: string | null;
   assumption: string | null; uncertainty: string | null; approval_required: boolean;
 };
 export type StepError = { step: Step; code: string; message: string; retryable: boolean };
 export type StepResponse = {
-  step: Step; status: "placeholder" | "error"; notes: Note[]; findings: unknown[]; evidence: Evidence[]; errors: StepError[];
+  step: Step; status: "placeholder" | "complete" | "error"; notes: Note[]; findings: unknown[]; evidence: Evidence[]; errors: StepError[];
 };
 export type StepRequest = {
   step: Step;
