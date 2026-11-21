@@ -990,3 +990,16 @@ def test_b4_assumption_hook_returns_the_report_unchanged_without_notes_or_on_err
     with caplog.at_level(logging.ERROR, logger=normen.__name__):
         assert ergaenze_annahmen(bericht, register_mit(True)) is bericht
     assert "Assumption notes for the report failed" in caplog.text
+
+
+def test_b4_analyse_without_regelwerk_equals_pruefen_and_carries_the_assumption(monkeypatch):
+    for key in LLM_KEYS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    client = TestClient(main.app)
+    lv = ANNAHME_LV.model_dump(mode="json")
+    pruefen = client.post("/api/lv/pruefen", json=lv)
+    analyse = client.post("/api/lv/analyse", json={"lv": lv, "regelwerk": None})
+    assert pruefen.status_code == analyse.status_code == 200 and analyse.content == pruefen.content
+    assert "NormAssumption:02.01" in [n["id"] for n in analyse.json()["berichte"][0]["notes"]]
