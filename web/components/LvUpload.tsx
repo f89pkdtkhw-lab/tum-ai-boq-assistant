@@ -254,6 +254,8 @@ export function LvUpload() {
   }
 
   async function starte(lauf: Lauf) {
+    // #166: with a live model the review also researches standards on the web (N5), which takes longer.
+    const recherche = health !== null && health !== "offline" && !health.mock;
     const nummer = ++laufNummer.current;
     const aktuell = () => nummer === laufNummer.current;
     let schritte = startSchritte(lauf);
@@ -308,7 +310,7 @@ export function LvUpload() {
         ? { status: "fertig", text: `${lauf.datei.name} (${groesse(lauf.datei.size)}) uploaded.` }
         : schritte.datei,
       import: { status: "fertig", text: `${anzahl(lv.positionen.length, "Item", "Items")} detected${quelle}.` },
-      pruefung: { status: "laeuft", text: "Running review rules …" },
+      pruefung: { status: "laeuft", text: recherche ? "Running review rules; researching standards …" : "Running review rules …" },
     };
     setErgebnis({ phase: "laeuft", lauf, schritte });
 
@@ -334,7 +336,7 @@ export function LvUpload() {
         if (!aktuell()) return;
       }
       if (texte.length > 0) hinweise.unshift(texte.join(" · "));
-      schritte = { ...schritte, pruefung: { status: "laeuft", text: "Analysing the bill with its attachments …" } };
+      schritte = { ...schritte, pruefung: { status: "laeuft", text: recherche ? "Analysing the bill with its attachments; researching standards …" : "Analysing the bill with its attachments …" } };
       setErgebnis({ phase: "laeuft", lauf, schritte });
     }
 

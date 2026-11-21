@@ -20,6 +20,7 @@ from .pruefung.regeln import pruefe_regeln
 from .pruefung.mengen import pruefe_mengen
 from .pruefung.llm_pruefung import pruefe_mit_llm, pruefe_mit_llm_status  # noqa: F401 (pruefe_mit_llm: golden tests)
 from .pruefung.normen import ergaenze_annahmen, pruefe_normen_sicher  # B4 #97: ergaenze_annahmen
+from .pruefung.normen_ki import starte_recherche as starte_normrecherche  # #166
 from .pruefung.bewertung import zusammenfassen
 from .pruefung.berichte import ergaenze_berichte  # B5 (#98)
 from .pruefung.geschaetztes_lv import ergaenze_geschaetztes_lv  # B8 #114
@@ -29,6 +30,7 @@ from .pruefung.normen import vorgaben_aus_regelwerk  # B3 (#96)
 from .risiko.scoring import bewerte
 from . import analyse_job  # #165: background analysis jobs
 from .fortschritt import OHNE_FORTSCHRITT, Fortschritt  # #165: progress API
+from .fortschritt import teilschritt  # #166: N5 research rounds report under step 5
 
 from .ai import step_api
 from .ai import ki_status  # D #168
@@ -153,6 +155,7 @@ def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None,
     `fortschritt` (#165): progress callback of a background job (see fortschritt.py); None = no reports."""
     melde = fortschritt or OHNE_FORTSCHRITT
     n = len(lv.positionen)
+    starte_normrecherche(lv)  # #166: N5 web research runs in the background, parallel to the item review
     with ki_status.erfasse() as ki_schritte:  # D #168: every AI step reports how it ran (failures stay visible)
         melde(1, gesamt, f"Running fixed rules on {n} items …")
         regeln = pruefe_regeln(lv)
@@ -171,7 +174,7 @@ def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None,
         melde(4, gesamt, f"Risk scoring: {len(bewertet)} findings scored.", 1.0)
         melde(5, gesamt, "Checking standards and regulations …" if vorgaben is None
               else "Checking standards against the uploaded regulation document …")
-        normen = pruefe_normen_sicher(lv) if vorgaben is None else pruefe_normen_sicher(lv, vorgaben=vorgaben)
+        normen = pruefe_normen_sicher(lv, **_normen_optionen(vorgaben, fortschritt, gesamt))
         melde(5, gesamt, f"Standards check: {len(normen)} findings.", 1.0)
         findings = bewertet + normen
         melde(6, gesamt, "Building reports 1–3 (rules, comparison, what-if) …")
@@ -186,6 +189,15 @@ def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None,
         melde(7, gesamt, "Assumptions and final report added.", 1.0)
     bericht.ki_schritte = ki_status.ergebnis(ki_schritte)
     return bericht
+
+
+def _normen_optionen(vorgaben, fortschritt, gesamt) -> dict:
+    """Keyword arguments of `pruefe_normen_sicher`: the regulation document (B3) and, in a job, the progress of
+    the N5 research rounds (#166) under step 5; none when absent, so a plain `pruefe_normen_sicher(lv)` stays."""
+    optionen = {} if vorgaben is None else {"vorgaben": vorgaben}
+    if fortschritt is not None:
+        optionen["melde"] = teilschritt(fortschritt, 5, gesamt)
+    return optionen
 
 
 def _melde_positionspruefung(modell) -> None:

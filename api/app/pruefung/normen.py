@@ -885,10 +885,11 @@ def pruefe_normen(lv: LV, register: Register | None = None,
     return sorted(findings, key=lambda f: reihenfolge.get(f.oz, len(reihenfolge)))
 
 
-def pruefe_normen_sicher(lv: LV, vorgaben: "Regelwerksvorgaben | None" = None) -> list[Finding]:
+def pruefe_normen_sicher(lv: LV, vorgaben: "Regelwerksvorgaben | None" = None, melde=None) -> list[Finding]:
     """Hook for `pruefen()` (N2 + N3 findings, then the N5 AI hints): [] when NORMPRUEFUNG is off or
     the norm check fails (the error is logged). N5 has its own switch and guard in `normen_ki`.
-    `vorgaben`: optional requirements of the uploaded regulation document (B3), default none."""
+    `vorgaben`: optional requirements of the uploaded regulation document (B3), default none.
+    `melde(meldung, anteil)`: optional progress of the N5 research rounds (#166, a job's `teilschritt`)."""
     if not normpruefung_aktiv():
         return []
     try:
@@ -898,7 +899,7 @@ def pruefe_normen_sicher(lv: LV, vorgaben: "Regelwerksvorgaben | None" = None) -
         return []
     try:
         from .normen_ki import recherchiere_normen_sicher  # late import: normen_ki builds on this module
-        return findings + recherchiere_normen_sicher(lv)
+        return findings + (recherchiere_normen_sicher(lv) if melde is None else recherchiere_normen_sicher(lv, melde=melde))
     except Exception as exc:
         logger.exception("Norm check N5 failed; the report is returned without N5 hints.")
         from ..ai import ki_status  # D #168: the failure is visible in the report, not only in the log

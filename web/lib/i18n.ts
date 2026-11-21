@@ -70,6 +70,8 @@ export const DE: Record<string, string> = {
   "Starts after import.": "Startet nach dem Import.",
   "Not started.": "Nicht gestartet.",
   "Running review rules …": "Prüfregeln laufen …",
+  "Running review rules; researching standards …": "Prüfregeln laufen; Normen werden recherchiert …",
+  "Analysing the bill with its attachments; researching standards …": "LV wird mit Anhängen analysiert; Normen werden recherchiert …",
   "The server imports the file in the same request …": "Der Server importiert die Datei in derselben Anfrage …",
   "Loading the example BoQ from the server …": "Beispiel-LV wird vom Server geladen …",
   "Import failed": "Import fehlgeschlagen",
