@@ -19,6 +19,7 @@ import { Top } from "./top/Top";
 import { Seiten } from "./seiten/Seiten";
 import { Zusammenfassung } from "./zusammenfassung/Zusammenfassung";
 import { inGruppe, type Gruppe } from "@/lib/zusammenfassung";
+import { Kalkulation } from "./kalkulation/Kalkulation";
 import styles from "./pruefbericht.module.css";
 
 /**
@@ -323,6 +324,11 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
       }} />
 
       <Bieterfragen findings={findings} positionen={lv.positionen} />
+
+      <Kalkulation bericht={bericht} ozBekannt={(oz) => positionenNachOz.has(oz)} onWaehle={(oz, id) => {
+        waehle(oz, id);
+        requestAnimationFrame(() => { detailRef.current?.scrollIntoView({ block: "nearest" }); detailRef.current?.focus({ preventScroll: true }); });
+      }} />
 
       <Mengen positionen={lv.positionen} aktiv={einheit} onWaehle={waehleEinheit} />
 

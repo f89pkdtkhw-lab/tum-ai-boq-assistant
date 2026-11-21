@@ -68,3 +68,10 @@
   .tabelle tr { break-inside: avoid; }
   .rahmen { overflow: visible; }
 }
+
+/* Priced/estimated bill rows (#117): same colours as the report and the XLSX; kept when printing. */
+.zeile_added td { background: #d1fae5; }
+.zeile_removed td { background: #fee2e2; color: #9b1c1c; text-decoration: line-through; }
+.zeile_updated td { background: #fef3c7; }
+.zeile_summe td { font-weight: 700; }
+.zeile_added td, .zeile_removed td, .zeile_updated td { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
