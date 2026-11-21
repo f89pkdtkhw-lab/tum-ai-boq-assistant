@@ -10,6 +10,7 @@ import duckdb
 from fastapi import APIRouter, FastAPI, File, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 
+from api.app.lv.gaeb import importiere
 from api.app.lv.pdf import import_with_blocks
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -386,6 +387,62 @@ def get_prices(
             ).fetchall()
 
     return format_price_rows(rows)
+
+
+@price_router.post("/prices/import-gaeb", response_model=List[PriceResponse], status_code=201)
+async def import_prices_from_gaeb(
+    file: UploadFile = File(..., description="GAEB file (e.g., .d86)"),
+):
+    """Parse a GAEB file (.d86) and insert priced items into the price database."""
+    filename = file.filename or "upload.d86"
+    try:
+        content = await file.read()
+        lv = importiere(filename, content)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"GAEB parsing error: {str(e)}")
+
+    base_id = int(time.time() * 1000) * 10000
+    created_items: List[PriceResponse] = []
+    rows_to_insert: List[tuple] = []
+
+    for idx, pos in enumerate(lv.positionen):
+        if pos.ep is None or not pos.kurztext or not pos.einheit:
+            continue
+
+        item_id = base_id + idx
+        name = pos.kurztext.strip()
+        unit = pos.einheit.strip()
+        price_per_unit = float(pos.ep)
+
+        rows_to_insert.append((item_id, name, unit, price_per_unit))
+        created_items.append(
+            PriceResponse(
+                id=item_id,
+                name=name,
+                unit=unit,
+                price_per_unit=price_per_unit,
+            )
+        )
+
+    if not rows_to_insert:
+        raise HTTPException(
+            status_code=422,
+            detail="No valid positions with kurztext, einheit, and ep found in GAEB file.",
+        )
+
+    try:
+        with _connect_price(read_only=False) as price_conn:
+            price_conn.executemany(
+                """
+                INSERT INTO prices (id, name, unit, price_per_unit)
+                VALUES (?, ?, ?, ?)
+                """,
+                rows_to_insert,
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Price database insert error: {str(e)}")
+
+    return created_items
 
 
 app.include_router(router)
