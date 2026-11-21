@@ -20,26 +20,35 @@ export function RechercheHinweis({ recherche }: { recherche: Recherche }) {
   );
 }
 
+function Liste({ ergebnisse }: { ergebnisse: RechercheErgebnis[] }) {
+  const t = useT();
+  return (
+    <div className={styles.liste}>
+      {ergebnisse.map((r, i) => (
+        <div key={`${r.schritt}-${i}`} className={styles.eintrag}>
+          <span><span className={styles.marke}>{t(EINSCHAETZUNG[r.einschaetzung])}</span> {r.text}</span>
+          <span className={styles.quellen}>
+            {t("Sources")}:{" "}
+            {r.quellen.map((q, k) => (
+              <span key={q.url}>{k > 0 && " · "}<a href={q.url} target="_blank" rel="noopener noreferrer">{q.titel || q.url}</a></span>
+            ))}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Sources of one finding as a `<dt>/<dd>` pair inside a definition list (finding detail). */
 export function RechercheQuellen({ ergebnisse }: { ergebnisse: RechercheErgebnis[] }) {
   const t = useT();
   if (ergebnisse.length === 0) return null;
-  return (
-    <>
-      <dt>{t("Web research")}</dt>
-      <dd>
-        <ul className={styles.liste}>
-          {ergebnisse.map((r, i) => (
-            <li key={`${r.schritt}-${i}`}>
-              <span className={styles.marke}>{t(EINSCHAETZUNG[r.einschaetzung])}</span> {r.text}
-              <ul className={styles.quellen}>
-                {r.quellen.map((q) => (
-                  <li key={q.url}><a href={q.url} target="_blank" rel="noopener noreferrer">{q.titel || q.url}</a></li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
-      </dd>
-    </>
-  );
+  return (<><dt>{t("Web research")}</dt><dd><Liste ergebnisse={ergebnisse} /></dd></>);
+}
+
+/** Sources of one finding as a block (expanded row of the report list). */
+export function RechercheAbsatz({ ergebnisse }: { ergebnisse: RechercheErgebnis[] }) {
+  const t = useT();
+  if (ergebnisse.length === 0) return null;
+  return (<div className={styles.absatz}><b>{t("Web research")}:</b><Liste ergebnisse={ergebnisse} /></div>);
 }

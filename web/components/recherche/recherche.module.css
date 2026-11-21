@@ -6,10 +6,12 @@
 }
 .ok { border-color: color-mix(in srgb, var(--pb-good, #059669) 45%, transparent); }
 .aus { color: var(--pb-muted, var(--muted)); }
-.liste { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
-.quellen { margin: 2px 0 0; padding-left: 16px; font-size: 13px; }
+.liste { display: grid; gap: 6px; }
+.eintrag { display: grid; gap: 2px; }
+.quellen { font-size: 13px; color: var(--pb-muted, var(--muted)); }
 .quellen a { color: var(--pb-accent, var(--accent)); overflow-wrap: anywhere; }
 .marke {
   display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600;
   background: var(--pb-soft); color: var(--pb-accent, var(--accent));
 }
+.absatz { display: grid; gap: 4px; margin: 0 0 8px; }
