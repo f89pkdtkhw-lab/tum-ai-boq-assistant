@@ -160,3 +160,14 @@ Results:
 - Implement `build_specification_context` and the Note 1/2 validation in `api/app/pruefung/` (@Bartuan3600). Wire it into the step API with #23 (@f89pkdtkhw-lab).
 - Source entry and the confirmation action (`verified`) in the UI with #24 (@Zukipany).
 - Note 3/4 consume Notes 1/2 unchanged (#20, @Secret-Sebi).
+
+## 8. Demo regulation document
+
+File: [data/regelwerk_beispiel.md](../data/regelwerk_beispiel.md) (issue #141, owner @Bartuan3600).
+
+- **Synthetic.** The first line says: "Synthetic demo document, not a real standard or client document." It is a short client specification written for the demo, not a copy of a standard or of partner data.
+- **Content, only lines the reader understands** (`api/app/pruefung/regelwerk.py`): one norm reference line (DIN 1045-2 / DIN EN 206), `Expositionsklasse XF1: mindestens C30/37.` (stricter than DIN, as a client requirement), `Expositionsklasse XC1: mindestens C20/25.`, and `Betondeckung c_nom mindestens 40 mm.` (a key value that check 1 does not use).
+- **Expected check-1 findings on the demo LV** (measured with a scratch patch of #139, spaced strength classes): `NORM_KENNWERT_ABWEICHUNG` `hoch` on OZ 6...13, 6...14, 6...16, 6...18, 6...21 and 6...30 (LV strength below the required class); `NORM_KENNWERT_HOEHER` `mittel` on OZ 6...24, 6...29 and 6...35 (LV strength above the required class). Each finding cites `regelwerk_beispiel.md` and the line. Without the document, these findings do not appear.
+- **Upload in the UI:** on the home page, upload the document next to the bill. The UI calls `POST /api/regelwerk/import` and then `POST /api/lv/analyse` with the returned regulation.
+- **Limitation:** the document contributes key values only. "Item missing → big problem" cannot come from an uploaded document, because `Regelwerk` has no `pflichtpositionen` field.
+- Test: `api/tests/test_pruefung_regelwerk_beispiel.py`.
