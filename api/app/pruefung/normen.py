@@ -1092,12 +1092,8 @@ def _einheit(einheit: str | None) -> tuple[str, float] | None:
     return UNITS.get((einheit or "").strip().lower())
 
 
-def _fehlmenge(pflicht: Pflichtposition, gewerk: list[Position]) -> str:
-    """How much is missing, in words; never invented when the source states no quantity."""
-    if pflicht.menge is not None:
-        return f"{_zahl(pflicht.menge)} {pflicht.einheit} (quantity stated by the source)"
-    if pflicht.faktor is None:
-        return "quantity not stated by the source; to be determined"
+def _faktor_summe(pflicht: Pflichtposition, gewerk: list[Position]) -> tuple[float, list[str]]:
+    """Summed work-type quantity in the source unit and the OZs it comes from."""
     ziel = _einheit(pflicht.einheit)
     summe, oz_liste = 0.0, []
     for position in gewerk:
@@ -1105,6 +1101,26 @@ def _fehlmenge(pflicht: Pflichtposition, gewerk: list[Position]) -> str:
         if ziel and basis and basis[0] == ziel[0] and position.menge:
             summe += position.menge * basis[1] / ziel[1]
             oz_liste.append(position.oz)
+    return summe, oz_liste
+
+
+def _fehlmenge_zahl(pflicht: Pflichtposition, gewerk: list[Position]) -> float | None:
+    """How much is missing as a number; None when the source states no quantity."""
+    if pflicht.menge is not None:
+        return pflicht.menge
+    if pflicht.faktor is None:
+        return None
+    summe, oz_liste = _faktor_summe(pflicht, gewerk)
+    return round(pflicht.faktor * summe, 3) if oz_liste else None
+
+
+def _fehlmenge(pflicht: Pflichtposition, gewerk: list[Position]) -> str:
+    """How much is missing, in words; never invented when the source states no quantity."""
+    if pflicht.menge is not None:
+        return f"{_zahl(pflicht.menge)} {pflicht.einheit} (quantity stated by the source)"
+    if pflicht.faktor is None:
+        return "quantity not stated by the source; to be determined"
+    summe, oz_liste = _faktor_summe(pflicht, gewerk)
     if not oz_liste:
         return (f"{_zahl(pflicht.faktor)} × the work-type quantity in {pflicht.einheit}; no work-type item is "
                 f"measured in {pflicht.einheit}, so the quantity is to be determined")
@@ -1126,20 +1142,44 @@ def _pflicht_quellen(register: Register, vorgaben: Regelwerksvorgaben | None, li
                       f"{p.quelle['abgerufen']}); register entry {status}"), e.geprueft
 
 
+def _fehlende(lv: LV, register: Register, vorgaben: Regelwerksvorgaben | None):
+    """(finding id, Pflichtposition, work-type items, source text, belastbar) per missing required item."""
+    ids = _Ids()
+    for pflicht, quelle, belastbar in _pflicht_quellen(register, vorgaben, "pflichtpositionen"):
+        gewerk = [p for p in lv.positionen if _enthaelt(p, pflicht.gewerk_merkmale)]
+        if not gewerk or any(_enthaelt(p, pflicht.merkmale) for p in lv.positionen):
+            continue
+        yield ids(NORM_POSITION_FEHLT, gewerk[0].oz), pflicht, gewerk, quelle, belastbar
+
+
+def fehlende_positionen(lv: LV, register: Register | None = None,
+                        vorgaben: Regelwerksvorgaben | None = None) -> dict[str, dict]:
+    """What and how much is missing per NORM_POSITION_FEHLT finding id, as numbers (#113, B7).
+
+    Only entries whose source states a quantity and a unit; `kurztext` is the required item's name,
+    `titel_pfad` that of the first work-type item. No price."""
+    register = register or lade_register()
+    ergebnis = {}
+    for finding_id, pflicht, gewerk, _, _ in _fehlende(lv, register, vorgaben):
+        menge = _fehlmenge_zahl(pflicht, [p for p in gewerk if not _enthaelt(p, pflicht.merkmale)])
+        if menge is None or menge <= 0 or not pflicht.einheit:
+            continue
+        ergebnis[finding_id] = {"kurztext": pflicht.position, "einheit": pflicht.einheit, "menge": menge,
+                                "titel_pfad": tuple(gewerk[0].titel_pfad)}
+    return ergebnis
+
+
 def pruefe_pflichtpositionen(lv: LV, register: Register,
                              vorgaben: Regelwerksvorgaben | None = None) -> list[Finding]:
     """NORM_POSITION_FEHLT (`hoch` for a checked source, else `mittel`) once per required item that no
     LV item covers while its work type is in the LV; NORM_EXTRA (`niedrig`, notice) per LV item that a
     source lists as not required as a separate item for a work type found in the LV."""
     ids, findings = _Ids(), []
-    for pflicht, quelle, belastbar in _pflicht_quellen(register, vorgaben, "pflichtpositionen"):
-        gewerk = [p for p in lv.positionen if _enthaelt(p, pflicht.gewerk_merkmale)]
-        if not gewerk or any(_enthaelt(p, pflicht.merkmale) for p in lv.positionen):
-            continue
+    for finding_id, pflicht, gewerk, quelle, belastbar in _fehlende(lv, register, vorgaben):
         oz, gewerk_oz = gewerk[0].oz, ", ".join(p.oz for p in gewerk)
         fehlt = _fehlmenge(pflicht, [p for p in gewerk if not _enthaelt(p, pflicht.merkmale)])
         findings.append(_finding(
-            ids(NORM_POSITION_FEHLT, oz), oz, "nachtrag", "hoch" if belastbar else "mittel",
+            finding_id, oz, "nachtrag", "hoch" if belastbar else "mittel",
             f"Required item missing for {pflicht.gewerk}: {pflicht.position}",
             (f"The LV contains {pflicht.gewerk} (OZ {gewerk_oz}) but no item for {pflicht.position}; the source "
              f"lists it as a required item for this work type. Missing: {pflicht.position}, {fehlt}. Nachtrag "

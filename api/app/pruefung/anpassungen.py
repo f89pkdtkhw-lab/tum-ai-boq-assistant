@@ -10,8 +10,8 @@ Producers:
 * Report 1 (`regelwerk`)
   - layer area deviation (`MENGE_SCHICHTEN_ABWEICHUNG`, mengen.py) → `menge` to the group
     median; a plausibility assumption, so approval is required;
-  - missing required item (`NORM_POSITION_FEHLT`, B2 #95) → `hinzufuegen`, only when B2 supplies
-    what and how much (`fehlende`); a new OZ `NEU-<n>` marks the added item;
+  - missing required item (`NORM_POSITION_FEHLT`, B2 #95) → `hinzufuegen`, only when the source
+    states what and how much (`normen.fehlende_positionen`); a new OZ `NEU-<n>` marks the item;
   - duplicate content (`INHALT_DUPLIKAT`) → `entfernen` of the later item, only when it is
     certain: same section, same item type and a non-empty short text; the first item is kept;
   - `NORM_EXTRA` is a notice and never removes an item.
@@ -33,8 +33,8 @@ from typing import Any
 from ..modelle import Anpassung, Finding, LV, Position
 from .bewertung import approximation_zu_gross
 from .mengen import UNITS, erwartete_schichtmengen
+from .normen import NORM_POSITION_FEHLT, fehlende_positionen
 
-NORM_POSITION_FEHLT = "NORM_POSITION_FEHLT"  # B2 (#95); NORM_EXTRA is a notice and never removes
 NEU_PRAEFIX = "NEU-"
 MENGE_TOLERANZ = 1e-6
 NACHKOMMASTELLEN = 3
@@ -96,25 +96,39 @@ def _aus_mengen(lv: LV, findings: Sequence[Finding], eindeutig: Mapping[str, Pos
     return ergebnis
 
 
-def _aus_fehlenden(findings: Sequence[Finding], fehlende: Mapping[str, FehlendePosition]) -> list[Anpassung]:
+def _aus_fehlenden(findings: Sequence[Finding], fehlende: Mapping[str, Any]) -> list[Anpassung]:
     ergebnis = []
     for f in findings:
         spec = fehlende.get(f.id)
         if f.regel_id != NORM_POSITION_FEHLT or spec is None:
             continue
-        if not spec.kurztext.strip() or not spec.einheit.strip() or spec.menge is None or spec.menge <= 0:
+        kurztext, einheit, menge = (_feld(spec, "kurztext") or "", _feld(spec, "einheit") or "",
+                                    _feld(spec, "menge"))
+        if not kurztext.strip() or not einheit.strip() or menge is None or menge <= 0:
             continue  # "what" or "how much" unknown: stays a hint
+        if not f.titel.endswith(f": {kurztext}"):
+            continue  # the structured entry must describe exactly this finding
         oz = f"{NEU_PRAEFIX}{len(ergebnis) + 1}"
-        position = Position(oz=oz, kurztext=spec.kurztext, langtext=spec.langtext,
-                            menge=round(spec.menge, NACHKOMMASTELLEN), einheit=spec.einheit,
-                            titel_pfad=list(spec.titel_pfad))
+        position = Position(oz=oz, kurztext=kurztext, langtext=_feld(spec, "langtext") or "",
+                            menge=round(menge, NACHKOMMASTELLEN), einheit=einheit,
+                            titel_pfad=list(_feld(spec, "titel_pfad") or ()))
         ergebnis.append(Anpassung(
             id=f"ANPASSUNG:hinzufuegen:{f.id}", oz=oz, art="hinzufuegen", menge_alt=None,
             menge_neu=position.menge, position=position,
-            grund=f"Required item missing (near OZ {f.oz}): {spec.kurztext}, "
-                  f"{_num(position.menge)} {spec.einheit}. {f.titel}",
+            grund=f"Required item missing (near OZ {f.oz}): {kurztext}, {_num(position.menge)} {einheit}; "
+                  f"quantity as stated or derived by the source of {f.regel_id}.",
             bericht="regelwerk", finding_id=f.id, freigabe_noetig=False))
     return ergebnis
+
+
+def _register_fehlende(lv: LV, findings: Sequence[Finding]) -> Mapping[str, Any]:
+    """Default: B2's numbers from the curated register, only when B2 reported a missing item."""
+    if not any(f.regel_id == NORM_POSITION_FEHLT for f in findings):
+        return {}
+    try:
+        return fehlende_positionen(lv)
+    except (OSError, ValueError):  # register unreadable: the findings stay hints
+        return {}
 
 
 def _aus_duplikaten(lv: LV, findings: Sequence[Finding], eindeutig: Mapping[str, Position]) -> list[Anpassung]:
@@ -178,12 +192,13 @@ def _aus_notes(notes: Sequence[Any], was_wenn: Sequence[Any], eindeutig: Mapping
 
 def anpassungen_ableiten(lv: LV, findings: Sequence[Finding], notes: Iterable[Any] = (),
                          was_wenn: Iterable[Any] = (),
-                         fehlende: Mapping[str, FehlendePosition] | None = None) -> list[Anpassung]:
+                         fehlende: Mapping[str, Any] | None = None) -> list[Anpassung]:
     """Adjustments for the estimated bill, derived from findings, step notes and the what-if list.
 
     `notes`: step API notes (B5, `historical_adjustment` / `what_if`); `was_wenn`: what-if entries
-    with `oz` and `chance`; `fehlende`: B2's structured missing items keyed by finding id. All are
-    optional; with today's findings alone, only Report 1 adjustments are produced.
+    with `oz` and `chance`; `fehlende`: B2's structured missing items keyed by finding id
+    (`normen.fehlende_positionen`, or `FehlendePosition`); without it, the curated register is used.
+    All are optional; with today's findings alone, only Report 1 adjustments are produced.
     """
     notes, was_wenn = list(notes), list(was_wenn)
     anzahl = Counter(p.oz for p in lv.positionen)
@@ -200,4 +215,4 @@ def anpassungen_ableiten(lv: LV, findings: Sequence[Finding], notes: Iterable[An
             continue
         gesehen.add(a.oz)
         menge_je_oz.append(a)
-    return menge_je_oz + _aus_fehlenden(findings, fehlende or {}) + entfernen
+    return menge_je_oz + _aus_fehlenden(findings, _register_fehlende(lv, findings) if fehlende is None else fehlende) + entfernen
