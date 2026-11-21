@@ -12,31 +12,30 @@ The demo needs no API key and no internet. The review runs fixed rules, quantity
 | Start | `python3 tools/dev.py` | UI `http://localhost:3000`, backend `http://localhost:8000/health` |
 | Health | open `http://localhost:8000/health` | `"ok": true`, `"mock": true` |
 | UI badge | open `http://localhost:3000` | top right "mock · offline-lv-mock", not "Backend offline" |
-| Rehearse | run the flow below once with the benchmark PDF | import 100 items in about 9 s, 32 entries in the report |
+| Rehearse | run the flow below once with the benchmark PDF | import 100 items in about 3 s, score 9.0 / 10, Issues 3 |
 | Fallback | switch the backend off (Ctrl+C the `api` process) and try plan C below | "Show offline example report" appears |
 
 Use the laptop that presents. Start the product **before** the audience arrives. Keep `data/testfaelle/rohbau_efh/lv_rohbau_efh.pdf` in a visible folder so it can be dragged in. The file stays on the laptop (confidential benchmark LV; never upload it to a third-party service).
 
 ## 2. The three-minute flow (plan A: real PDF)
 
-Matches the scenes in the pitch. Times are guides.
+Matches the scenes in the pitch. Times are guides. Checked in the browser on `main` at `953fa5f` (21 November 2026).
 
 | Time | Action | What the audience sees | Say |
 | --- | --- | --- | --- |
-| 0:00 | Open `/`. Drag `lv_rohbau_efh.pdf` into the drop zone, press **Review file**. | Three steps turn green: Upload, Import ("100 Items detected"), Review ("32 Entries in the report"). About 9 s. | "A real 40-page PDF bill of quantities, no preparation." |
-| 0:30 | Scroll to the report header and the key figures. | 100 items, 32 entries, "Demo mode" banner, euro impact "unknown". | "The model part is a mock and says so. We show no euro value without a basis." |
-| 0:50 | **Look at these first** panel, then the **Findings** filter (category, severity). | The ten most important items first, not 100 rows. | "The partner's problem is finding the 100 items that matter." |
-| 1:20 | Open the detail of OZ `9...1` (no quantity, unit or long text) or `8...3` (quantity without unit). | OZ, reason, suggested action, source "rule" (`MENGE_FEHLT`, `EINHEIT_FEHLT`). | "Every finding names its item number and whether a rule or the model produced it." |
-| 1:50 | **Bidder questions** panel; use **Copy all**. | Questions derived from risk findings (e.g. hourly-wage items in title 7, contingency items). | "This becomes a question to the client before I submit my price." |
-| 2:15 | **Export report** (PDF print or XLSX), or **Step reports** in the navigation. | Printable report; step reports show their synthetic placeholders. | Optional, skip if short on time. |
-| 2:30 | Say the limits and the measurement. | Nothing to show; `data/vergleich.md` open in a tab. | "On our one benchmark LV the fixed rules find 14 of 25 documented findings; the rest needs the live model. 1 of the 31 non-mock findings matches none of the 25." (Numbers from `data/vergleich.md`; do not quote others.) |
+| 0:00 | Open `/` ("New evaluation"). Drag `lv_rohbau_efh.pdf` into the drop zone, press **Evaluate**. | "lv_rohbau_efh.pdf · 100 items imported and reviewed." About 3 s. | "A real 40-page PDF bill of quantities, no preparation." |
+| 0:30 | Report header. | Score **9.0 / 10** "Looks good – ready to price", price cards "–" (no prices in this file), counters Issues 3 / Warnings / Recommendations, "model · offline mock". | "Three issues to fix before I price it. The model part is a mock and says so." |
+| 0:50 | **Show details**; open the first **ISSUE** row, OZ `3...2`. | "Withdrawn standard referenced: DIN 18195-4" on 3...2, 3...4, 3...5; detail names DIN 18531 to 18535 and the register source. | "The most important items come first, not 100 rows." |
+| 1:20 | Open **Optional work**, OZ `5...3`. | Source "page 14 · line 11", **Open PDF at page 14**, **Suggestion**: the question to the client. | "This becomes a question to the client before I submit my price." |
+| 2:00 | Optional: **Export report** (PDF or Excel). | Printable report. | Skip if short on time. |
+| 2:15 | Say the limits and the measurement. | Nothing to show; `data/vergleich.md` open in a tab. | "On our one benchmark LV the fixed rules find 16 of 25 documented findings; 1 of the 34 non-mock findings matches none of the 25." (Numbers from `data/vergleich.md`; do not quote others.) |
 
-Do not claim: a hit rate on other LVs, a time saving versus manual work (not measured), euro savings (none computed), or Excel import (`.xlsx` answers "not implemented yet"). Supported on `main`: JSON, GAEB X83/X84, PDF.
+Do not claim: a hit rate on other LVs, a time saving versus manual work (not measured), or euro savings (none computed). Supported on `main`: JSON, GAEB X83/X84, GAEB 90 D83/D86, Excel, PDF.
 
 ## 3. Alternative plans
 
-- **Plan B: synthetic example, no upload.** Press **Review synthetic example**. The backend returns its 30-item example; 6 entries (5 rule findings plus 1 `MOCK_LLM`). This is the pitch scene "OZ 02.00.0001, quantity missing → high severity". Use it if the PDF import misbehaves or the file is not at hand.
-- **Plan C: backend unreachable, offline example report.** If the backend is down, **Review synthetic example** (or any upload) fails with "The backend is unreachable." and a **Show offline example report** button. It loads the saved snapshot `web/public/offline/beispiel-bericht.json` for the same synthetic example and labels it "Offline example: saved report, not a live analysis." Say that aloud. It also appears for 5xx errors. Refresh the snapshot after any rule change: start the backend, run `node web/scripts/offline-snapshot.mjs`, commit the changed JSON.
+- **Plan B: example, no upload.** Press **Synthetic structural works BoQ · 30 items** under "No file at hand?" on the start page. It runs offline. Use it if the PDF import misbehaves or the file is not at hand.
+- **Plan C: backend unreachable, offline example report.** If the backend is down, an example button (or any upload) fails with "The backend is unreachable." and a **Show offline example report** button. It loads the saved snapshot `web/public/offline/beispiel-bericht.json` for the same synthetic example and labels it "Offline example: saved report, not a live analysis." Say that aloud. It also appears for 5xx errors. Refresh the snapshot after any rule change: start the backend, run `node web/scripts/offline-snapshot.mjs`, commit the changed JSON.
 - **Plan D: nothing works.** Show `data/vergleich.md` and the screenshots or screen recording prepared during rehearsal. Do not improvise numbers.
 
 ## 4. Error paths (what the audience sees)
@@ -51,7 +50,6 @@ Backend messages were verified by posting each case to the running backend; the 
 | unreadable PDF | 422 "The file is not a readable PDF. Please check the file or upload GAEB or Excel." |
 | invalid JSON contract | 422 "Invalid BoQ JSON. Please use the documented BoQ contract." |
 | not a GAEB document | 422 "Invalid GAEB root. Expected a GAEB document." |
-| `.xlsx` | 501 "Excel XLSX import is not implemented yet. Please use the JSON example for the demo." |
 | backend stopped | "Backend offline" badge, "The backend is unreachable.", offline example button (plan C) |
 
 Backend does not start: check `python3 tools/dev.py` output of the `api` lines; most often missing dependencies (`--install`) or port 8000 in use. UI shows a blank page: check the `web` lines, port 3000 in use, Node below 20.
