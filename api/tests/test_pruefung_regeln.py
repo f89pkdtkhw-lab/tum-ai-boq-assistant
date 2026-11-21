@@ -238,6 +238,7 @@ def test_text_widerspruch_erkennt_festigkeitsklasse_mit_leerzeichen():
 def test_text_widerspruch_gleiche_festigkeitsklasse_mit_und_ohne_leerzeichen():
     assert _text_widersprueche("Beton C 25/30", "Beton C25/30") == []
 
+
 def _fehlende_werte(quelle):
     lv = LV(name="X", quelle=quelle, positionen=[Position(oz="01", kurztext="A", langtext="B")])
     return {f.regel_id: f for f in pruefe_regeln(lv) if f.regel_id in {"MENGE_FEHLT", "EINHEIT_FEHLT"}}
