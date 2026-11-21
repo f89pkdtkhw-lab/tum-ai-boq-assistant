@@ -19,7 +19,34 @@ export type Zusammenfassung = {
   score: number; score_abzuege: ScoreAbzug[]; schaetzung_abweichung_eur: number | null;
   grosse_probleme: number; warnungen: number; hinweise: number; empfehlungen: number;
 };
-export type Pruefbericht = { lv: LV; findings: Finding[]; kennzahlen: Kennzahlen; zusammenfassung?: Zusammenfassung };
+// Price calculation (epic #93, B6/B7/B8): optional, absent until the backend prices the bill.
+export type KalkulationPosition = {
+  oz: string; kurztext?: string; menge: number | null; einheit: string | null; ep: number | null; gp: number | null;
+  ep_lv: number | null; gp_lv: number | null; treffer: "oz" | "text" | "aehnlich" | "kein_treffer";
+  preis_eintrag: string | null; aehnlichkeit: number | null; in_summe: boolean;
+};
+export type Kalkulation = {
+  waehrung: string; mwst_satz: number; positionen: KalkulationPosition[];
+  summe_netto: number; summe_brutto: number; ohne_preis: number; vollstaendig: boolean;
+};
+export type Anpassung = {
+  id: string; oz: string; art: "menge" | "hinzufuegen" | "entfernen"; menge_alt: number | null; menge_neu: number | null;
+  position: Position | null; grund: string; bericht: "regelwerk" | "vergleich" | "was_wenn"; finding_id: string | null;
+};
+export type AenderungsStatus = "unchanged" | "updated" | "added" | "removed";
+export type GeschaetztePosition = {
+  oz: string; status: AenderungsStatus; kurztext: string; einheit: string | null;
+  menge_alt: number | null; menge_neu: number | null; ep: number | null; gp_alt: number | null; gp_neu: number | null;
+  anpassung_ids: string[]; grund: string; freigabe_noetig: boolean;
+};
+export type GeschaetztesLv = {
+  positionen: GeschaetztePosition[]; summe_netto: number; summe_brutto: number;
+  differenz_netto: number; differenz_prozent: number; anzahl: Record<AenderungsStatus, number>;
+};
+export type Pruefbericht = {
+  lv: LV; findings: Finding[]; kennzahlen: Kennzahlen; zusammenfassung?: Zusammenfassung;
+  kalkulation?: Kalkulation | null; anpassungen?: Anpassung[] | null; geschaetztes_lv?: GeschaetztesLv | null;
+};
 export type Health = { ok: boolean; provider: string; model: string; mock: boolean };
 export type Answer = { answer: string; provider: string; model: string; ms: number };
 export type Example = { id: string; titel: string; beschreibung: string; lv: LV };
