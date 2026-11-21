@@ -125,9 +125,17 @@ def test_search_error_result_is_skipped(monkeypatch):
     assert antwort.text == "No sources." and antwort.sources == []
 
 
+def test_max_tokens_with_text_returns_a_truncated_answer(monkeypatch):
+    claude(monkeypatch)
+    server(monkeypatch, nachricht([{"type": "text", "text": '{"ergebnisse": [{"oz": "01.01"},'}], "max_tokens", 1))
+    antwort = llm.research("Question")
+    assert antwort.truncated and antwort.web_search and '{"ergebnisse"' in antwort.text
+    assert antwort.searches == 1
+
+
 @pytest.mark.parametrize("data, muster", [
     ({"content": [], "stop_reason": "refusal", "stop_details": {"category": "cyber"}}, "refusal: cyber"),
-    (nachricht([{"type": "text", "text": "{\"cut"}], "max_tokens"), "max_tokens"),
+    (nachricht([], "max_tokens"), "max_tokens"),
     (nachricht([SUCHE, TREFFER]), "no text"),
     ({"unexpected": True}, "unexpected response"),
 ])

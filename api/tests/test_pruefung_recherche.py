@@ -201,7 +201,7 @@ def test_claude_call_sends_web_search_tool_and_continues_pause_turn(monkeypatch)
 
 @pytest.mark.parametrize("daten,meldung", [
     (_antwort([], stop="refusal"), "refusal"),
-    (_antwort([{"type": "text", "text": "x"}], stop="max_tokens"), "max_tokens"),
+    (_antwort([], stop="max_tokens"), "max_tokens"),
 ])
 def test_claude_call_raises_readable_errors(monkeypatch, daten, meldung):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "fake")
@@ -209,6 +209,27 @@ def test_claude_call_raises_readable_errors(monkeypatch, daten, meldung):
     monkeypatch.setenv("LLM_PROVIDER", "anthropic")
     with pytest.raises(llm.LLMError, match=meldung):
         recherche.claude_recherche("p", max_uses=1, timeout=5)
+
+
+def test_claude_keeps_complete_results_when_cut_off_at_max_tokens(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fake")
+    monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+    vollständig = {"finding_id": "f-01.01", "einschaetzung": "bestaetigt", "text": "Sources agree.",
+                   "quellen": [URL_A]}
+    text = json.dumps({"ergebnisse": [vollständig, {"finding_id": "f-01.03", "einschaetzung": "bestaetigt"}]})
+    text = text[:text.find('"f-01.03"') + 20]  # cut mid-object, as a max_tokens stop would
+    daten = _antwort([{"type": "text", "text": text, "citations": [
+        {"type": "web_search_result_location", "url": URL_A, "title": "Drywall guide", "cited_text": "x"}]}],
+                     stop="max_tokens")
+    monkeypatch.setattr(llm, "_post", lambda *a, **k: daten)
+    antwort = recherche.claude_recherche("p", max_uses=1, timeout=5)
+    assert antwort.unvollstaendig and URL_A in antwort.quellen
+    bericht = _bericht([_finding("01.01"), _finding("01.03")])
+    ergebnis = recherche.vertiefe_recherche(bericht, aufruf=lambda *a, **k: antwort, einstellungen=_cfg())
+    ids = {e.finding_id for e in ergebnis.recherche.ergebnisse}
+    assert ids == {"f-01.01"} and "max_tokens" in ergebnis.recherche.meldung
+    assert ergebnis.recherche.status == "teilweise"
+    assert URL_A in {f.id: f.begruendung for f in ergebnis.findings}["f-01.01"]
 
 
 def test_claude_http_error_is_ui_safe(monkeypatch):
@@ -259,3 +280,38 @@ def test_job_with_claude_counts_the_research_step(monkeypatch):
     assert stand["ergebnis"]["recherche"]["status"] == "ok" and stub.calls
     sync = client.post("/api/lv/pruefen", json=lv).json()
     assert sync["recherche"] == stand["ergebnis"]["recherche"]
+
+def test_plan_gives_every_step_a_call_even_with_many_trades():
+    # Many finding-trades must not use up a small call cap before prices and reports get a turn.
+    pos = [recherche.Gruppe("positionen", f"Trade {i}", [{"finding_id": f"f{i}"}], 1) for i in range(12)]
+    preise = [recherche.Gruppe("preise", "Concrete", [{"oz": "01.01"}], 1)]
+    berichte = [recherche.Gruppe("berichte", "Reports 2/3", [{"index": 0}], 2)]
+    plan = recherche.plane([pos, preise, berichte], 5)
+    schritte = [g.schritt for g in plan]
+    assert schritte[:3] == ["positionen", "preise", "berichte"]
+    assert schritte.count("positionen") == 3 and len(plan) == 5
+
+
+def test_medium_severity_findings_are_researched():
+    stub = Stub()
+    bericht = _bericht([_finding("01.01", schwere="mittel")])
+    ergebnis = recherche.vertiefe_recherche(bericht, aufruf=stub, einstellungen=_cfg())
+    assert stub.calls and ergebnis.recherche.ergebnisse[0].finding_id == "f-01.01"
+
+
+def test_truncated_json_keeps_complete_result_objects():
+    text = ('{"ergebnisse": [{"finding_id": "f-01.01", "einschaetzung": "bestaetigt", '
+            '"text": "Sources agree.", "quellen": ["' + URL_A + '"]}, {"finding_id": "f-01.03", '
+            '"einschaetzung": "best')
+    bericht = _bericht([_finding("01.01"), _finding("01.03")])
+    gruppe = recherche.gruppen_positionen(bericht, 8)[0]
+    paare = recherche.validiere(gruppe, Antwort(text, {URL_A: "Example source"}))
+    assert [e["finding_id"] for e, _ in paare] == ["f-01.01"]
+
+
+def test_default_limits_cover_all_steps_without_starving_the_budget():
+    cfg = recherche.Einstellungen.aus_env()
+    assert cfg.max_uses == 8 and cfg.max_calls == 24 and cfg.budget == 192
+    assert cfg.max_items == 12 and cfg.timeout == 420 and cfg.parallel == 6
+    assert recherche.MAX_TOKENS == 16000
+    assert cfg.budget >= cfg.max_calls * cfg.max_uses

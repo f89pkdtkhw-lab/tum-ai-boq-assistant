@@ -1,10 +1,10 @@
 """Background analysis jobs (#165, package F): POST /api/lv/analyse/start → job id, GET …/status/{job_id}.
 
 The analysis runs in a daemon thread, so no HTTP request waits for long research. Each job reports through
-the progress API in `fortschritt.py`. Its timeout (`ANALYSE_JOB_TIMEOUT`, default 900 s) is separate from
+the progress API in `fortschritt.py`. Its timeout (`ANALYSE_JOB_TIMEOUT`, default 2400 s) is separate from
 request timeouts: a job that passes it is reported as failed and stops at its next progress call. Jobs live
 in memory of this process (one uvicorn worker, as `tools/dev.py` and `render.yaml` start it); finished jobs
-are dropped after `ANALYSE_JOB_AUFBEWAHRUNG` seconds (default 1800).
+are dropped after `ANALYSE_JOB_AUFBEWAHRUNG` seconds (default 3600).
 """
 from __future__ import annotations
 
@@ -55,11 +55,11 @@ class ZuVieleJobs(RuntimeError):
 
 
 def job_timeout() -> float:
-    return llm.seconds("ANALYSE_JOB_TIMEOUT", 900)
+    return llm.seconds("ANALYSE_JOB_TIMEOUT", 2400)
 
 
 def aufbewahrung() -> float:
-    return llm.seconds("ANALYSE_JOB_AUFBEWAHRUNG", 1800)
+    return llm.seconds("ANALYSE_JOB_AUFBEWAHRUNG", 3600)
 
 
 class Job:

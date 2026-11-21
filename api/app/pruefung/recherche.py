@@ -3,7 +3,7 @@
 After the review report is built, Claude checks the **conspicuous** parts of it against current public
 sources found with the server-side ``web_search`` tool, and every result names its sources:
 
-- ``positionen``: findings of severity kritisch/hoch and all risk/Nachtrag findings (item review, risk
+- ``positionen``: findings of severity kritisch/hoch/mittel and all risk/Nachtrag findings (item review, risk
   scoring), grouped by trade (first section of the item's title path). One call per trade group.
 - ``preise``: price plausibility. Items whose own unit price (EP) deviates from the price list or price
   database by at least ``PREIS_SCHWELLE``, or that have an EP but no price match, grouped by trade; Claude
@@ -15,13 +15,14 @@ Every call goes through the shared research helper ``llm.research`` of package A
 
 Cost and time are bounded (never one call per item of a 2,500-item bill):
 
-    DEEP_RESEARCH            0/off/false/no switches it off (default on when Claude has a key)
-    DEEP_RESEARCH_MAX_USES   web searches per call (default 3)
-    DEEP_RESEARCH_MAX_CALLS  research calls per analysis (default 6)
-    DEEP_RESEARCH_BUDGET     web searches per analysis across all calls (default 15)
-    DEEP_RESEARCH_MAX_ITEMS  items or findings per group (default 8)
-    DEEP_RESEARCH_TIMEOUT    seconds for all research of one analysis (default 120)
-    DEEP_RESEARCH_PARALLEL   concurrent calls (default 3)
+    DEEP_RESEARCH              0/off/false/no switches it off (default on when Claude has a key)
+    DEEP_RESEARCH_MAX_USES     web searches per call (default 8)
+    DEEP_RESEARCH_MAX_CALLS    research calls per analysis (default 24)
+    DEEP_RESEARCH_BUDGET       web searches per analysis across all calls (default 192 = calls × uses,
+                               so the call cap is not starved)
+    DEEP_RESEARCH_MAX_ITEMS    items or findings per group (default 12)
+    DEEP_RESEARCH_TIMEOUT      seconds for all research of one analysis (default 420)
+    DEEP_RESEARCH_PARALLEL     concurrent calls (default 6)
 
 Without a key, with another provider or switched off, the report is returned unchanged (no
 ``recherche`` field, byte-identical to before). With a key, ``Pruefbericht.recherche`` always says what
@@ -114,6 +115,16 @@ def _zahl(name: str, standard: int) -> int:
     return wert if wert >= 0 else standard
 
 
+# Defaults sized so every step (findings, prices, reports) can actually run, not just the first groups.
+STANDARD_MAX_USES = 8
+STANDARD_MAX_CALLS = 24
+STANDARD_BUDGET = 192  # 24 calls × 8 searches; a lower budget would skip later groups
+STANDARD_MAX_ITEMS = 12
+STANDARD_TIMEOUT = 420.0
+STANDARD_PARALLEL = 6
+MAX_TOKENS = 16000  # output tokens per research call (hard cap for Claude; not an env setting)
+
+
 @dataclass(frozen=True)
 class Einstellungen:
     max_uses: int
@@ -125,11 +136,12 @@ class Einstellungen:
 
     @classmethod
     def aus_env(cls) -> "Einstellungen":
-        return cls(max_uses=max(1, _zahl("DEEP_RESEARCH_MAX_USES", 3)),
-                   max_calls=_zahl("DEEP_RESEARCH_MAX_CALLS", 6), budget=_zahl("DEEP_RESEARCH_BUDGET", 15),
-                   max_items=max(1, _zahl("DEEP_RESEARCH_MAX_ITEMS", 8)),
-                   timeout=llm.seconds("DEEP_RESEARCH_TIMEOUT", 120.0),
-                   parallel=max(1, _zahl("DEEP_RESEARCH_PARALLEL", 3)))
+        return cls(max_uses=max(1, _zahl("DEEP_RESEARCH_MAX_USES", STANDARD_MAX_USES)),
+                   max_calls=_zahl("DEEP_RESEARCH_MAX_CALLS", STANDARD_MAX_CALLS),
+                   budget=_zahl("DEEP_RESEARCH_BUDGET", STANDARD_BUDGET),
+                   max_items=max(1, _zahl("DEEP_RESEARCH_MAX_ITEMS", STANDARD_MAX_ITEMS)),
+                   timeout=llm.seconds("DEEP_RESEARCH_TIMEOUT", STANDARD_TIMEOUT),
+                   parallel=max(1, _zahl("DEEP_RESEARCH_PARALLEL", STANDARD_PARALLEL)))
 
 
 class Budget:
@@ -173,6 +185,7 @@ class Antwort:
     text: str
     quellen: dict[str, str] = field(default_factory=dict)  # url -> title, only URLs seen in this call
     suchen: int | None = None  # web searches used; None = not reported
+    unvollstaendig: bool = False  # True when the model hit max_tokens; complete objects may still be usable
 
 
 Aufruf = Callable[..., Antwort]  # (prompt, system=, max_uses=, max_tokens=, timeout=) -> Antwort
@@ -185,10 +198,12 @@ def _url(roh) -> str | None:
     return url.rstrip("/") if re.match(r"^https?://[^\s]+$", url) else None
 
 
-def claude_recherche(prompt: str, system: str = "", *, max_uses: int, max_tokens: int = 4000,
-                     timeout: float = 60.0) -> Antwort:
+def claude_recherche(prompt: str, system: str = "", *, max_uses: int,
+                     max_tokens: int = MAX_TOKENS, timeout: float = 60.0) -> Antwort:
     """One research call through the shared helper ``llm.research`` (package A, #166): Claude with the
-    server web_search tool, pause_turn handled there. Raises ``llm.LLMError`` (UI-safe)."""
+    server web_search tool, pause_turn handled there. Raises ``llm.LLMError`` (UI-safe). A call that
+    hits max_tokens still returns the partial text (``unvollstaendig``) so complete result objects can
+    be kept."""
     roh = llm.research(prompt, system, max_tokens, max_searches=max_uses, timeout=timeout)
     if not roh.web_search:
         raise llm.LLMError(f"{roh.provider} has no web search; deep research needs Claude.")
@@ -197,7 +212,7 @@ def claude_recherche(prompt: str, system: str = "", *, max_uses: int, max_tokens
         url = _url(eintrag.url)
         if url:
             quellen.setdefault(url, (eintrag.title or "")[:200])
-    return Antwort(roh.text, quellen, roh.searches)
+    return Antwort(roh.text, quellen, roh.searches, unvollstaendig=bool(getattr(roh, "truncated", False)))
 
 
 # ----------------------------------------------------------------------------------------------
@@ -224,10 +239,10 @@ def _kurz(text: str, laenge: int) -> str:
 
 
 def gruppen_positionen(bericht: Pruefbericht, max_items: int) -> list[Gruppe]:
-    """Conspicuous findings (kritisch/hoch or risk/Nachtrag), grouped by trade; mock findings excluded."""
+    """Conspicuous findings (kritisch/hoch/mittel or risk/Nachtrag), grouped by trade; mock findings excluded."""
     positionen = {p.oz: p for p in bericht.lv.positionen}
     auffaellig = [f for f in bericht.findings if not f.regel_id.startswith("MOCK_")
-                  and (f.schwere in ("kritisch", "hoch") or f.kategorie in ("risiko", "nachtrag"))]
+                  and (f.schwere in ("kritisch", "hoch", "mittel") or f.kategorie in ("risiko", "nachtrag"))]
     auffaellig.sort(key=lambda f: _RANG[f.schwere])
     gruppen: OrderedDict[str, list[Finding]] = OrderedDict()
     for f in auffaellig:
@@ -292,9 +307,17 @@ def gruppen_berichte(bericht: Pruefbericht, max_items: int) -> list[Gruppe]:
 
 
 def plane(gruppen: list[list[Gruppe]], max_calls: int) -> list[Gruppe]:
-    """Round-robin over the steps (each sorted by importance) so every step gets a share of the calls."""
-    reihen = [sorted(g, key=lambda x: x.rang) for g in gruppen]
+    """Fair share of the call budget across steps (findings, prices, reports).
+
+    One group from each non-empty step is taken first, then the rest are filled round-robin by
+    importance. That way a bill with many trade groups in one step cannot use up ``max_calls``
+    before the other steps get a turn.
+    """
+    reihen = [sorted(g, key=lambda x: x.rang) for g in gruppen if g]
     plan = []
+    for reihe in reihen:  # first pass: one group per step
+        if reihe and len(plan) < max_calls:
+            plan.append(reihe.pop(0))
     while len(plan) < max_calls and any(reihen):
         for reihe in reihen:
             if reihe and len(plan) < max_calls:
@@ -305,19 +328,49 @@ def plane(gruppen: list[list[Gruppe]], max_calls: int) -> list[Gruppe]:
 # ----------------------------------------------------------------------------------------------
 # Validating answers
 # ----------------------------------------------------------------------------------------------
+def _repariere_ergebnisse(text: str) -> dict | list | None:
+    """Recover complete result objects from JSON cut off at max_tokens."""
+    marker = text.find('"ergebnisse"')
+    start = text.find("[", marker) if marker >= 0 else text.find("[")
+    if start < 0:
+        return None
+    decoder = json.JSONDecoder()
+    items, i, n = [], start + 1, len(text)
+    while i < n:
+        while i < n and text[i] in " \t\r\n,":
+            i += 1
+        if i >= n or text[i] == "]":
+            break
+        if text[i] != "{":
+            break
+        try:
+            obj, ende = decoder.raw_decode(text, i)
+        except ValueError:
+            break  # the last object was truncated
+        if isinstance(obj, dict):
+            items.append(obj)
+        i = ende
+    return {"ergebnisse": items} if items else None
+
+
 def _ergebnisliste(text: str) -> list:
     try:
         daten = llm.parse_json(text)
     except ValueError:
-        # the JSON usually comes last, after the research prose
+        # the JSON usually comes last, after the research prose; it may also be cut off at max_tokens
         start = text.rfind('{"ergebnisse"')
         try:
             daten = llm.parse_json(text[start:]) if start >= 0 else None
         except ValueError:
-            daten = None
+            daten = _repariere_ergebnisse(text[start:] if start >= 0 else text)
     if isinstance(daten, dict) and isinstance(daten.get("ergebnisse"), list):
         return daten["ergebnisse"]
-    return daten if isinstance(daten, list) else []
+    if isinstance(daten, list):
+        return daten
+    repariert = _repariere_ergebnisse(text)
+    if isinstance(repariert, dict) and isinstance(repariert.get("ergebnisse"), list):
+        return repariert["ergebnisse"]
+    return []
 
 
 def _preis(roh) -> float | None:
@@ -482,7 +535,7 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
             status="fehler", meldung="Deep research could not select items; report shown without it."))
     if not plan:
         return _mit_recherche(bericht, Recherche(
-            status="ok", meldung="Nothing conspicuous to research (no high-severity, risk, Nachtrag, price or "
+            status="ok", meldung="Nothing conspicuous to research (no medium-or-higher, risk, Nachtrag, price or "
                                  "report items)."))
     aufruf = aufruf or claude_recherche
     melde = teilschritt(fortschritt, schritt, gesamt)
@@ -501,7 +554,8 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
             budget.abrechnen(reserviert, 0)
             return gruppe, None, "time"
         try:
-            antwort = aufruf(_prompt(gruppe), system=SYSTEM, max_uses=reserviert, max_tokens=4000, timeout=rest)
+            antwort = aufruf(_prompt(gruppe), system=SYSTEM, max_uses=reserviert,
+                             max_tokens=MAX_TOKENS, timeout=rest)
         except Exception:
             budget.abrechnen(reserviert, reserviert)
             raise
@@ -537,6 +591,11 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
                 continue
             aufrufe += 1
             paare.extend((gruppe.schritt, e, r) for e, r in validiere(gruppe, antwort))
+            if getattr(antwort, "unvollstaendig", False):
+                hinweis = (f"anthropic stopped at max_tokens ({MAX_TOKENS}) for {gruppe.schritt} · "
+                           f"{gruppe.name}; complete results from the cut-off answer were kept.")
+                if hinweis not in fehler:
+                    fehler.append(hinweis)
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
 

@@ -16,7 +16,7 @@ Anti-hallucination rules:
 
 Real research (#166, package A): with Claude the pass runs `llm.research()`, i.e. the server tool
 `web_search`, in several rounds (one per trade = top-level LV title, at most `NORM_KI_RUNDEN`, default
-6, up to 3 in parallel; `NORM_KI_MAX_SEARCHES` searches per round, default 5). Every hint names its web
+10, up to 6 in parallel; `NORM_KI_MAX_SEARCHES` searches per round, default 8). Every hint names its web
 sources (URL, title and the passage Claude quoted). A web source is only shown when the search really
 returned it: URLs the model names but never retrieved are dropped. Other providers answer without web
 search and therefore without web sources.
@@ -24,7 +24,7 @@ search and therefore without web sources.
 Switch `NORM_KI_RECHERCHE` (`0`/`off`/`false`/`no` = off). Otherwise the pass runs only when the
 existing client in `app.ai.llm` is a real provider with a key; in mock/offline mode it returns no
 findings and makes no call, so the report stays identical. The whole research is bounded by
-`NORM_KI_TIMEOUT` (seconds, default 180); rounds that fail or time out are logged and skipped, the
+`NORM_KI_TIMEOUT` (seconds, default 360); rounds that fail or time out are logged and skipped, the
 others still count. It runs in a background thread pool: `starte_recherche(lv)` starts it early
 (the review calls it before the item review, so both run at the same time) and the result is cached
 per LV hash, so a second review of the same LV makes no new call.
@@ -53,11 +53,11 @@ logger = logging.getLogger(__name__)
 NORM_KI_HINWEIS = "NORM_KI_HINWEIS"
 BESTAETIGT = "im Register bestätigt"
 UNBESTAETIGT = "KI-Hinweis, unbestätigt – bitte prüfen"
-STANDARD_TIMEOUT = 180.0  # whole research, all rounds (NORM_KI_TIMEOUT)
-STANDARD_SUCHEN = 5  # web searches per round (NORM_KI_MAX_SEARCHES)
-STANDARD_RUNDEN = 6  # research rounds, one per trade, small trades merged (NORM_KI_RUNDEN)
-PARALLEL = 3  # rounds running at the same time
-MAX_TOKENS = 12000
+STANDARD_TIMEOUT = 360.0  # whole research, all rounds (NORM_KI_TIMEOUT)
+STANDARD_SUCHEN = 8  # web searches per round (NORM_KI_MAX_SEARCHES)
+STANDARD_RUNDEN = 10  # research rounds, one per trade, small trades merged (NORM_KI_RUNDEN)
+PARALLEL = 6  # rounds running at the same time
+MAX_TOKENS = 16000
 MAX_VORSCHLAEGE = 15  # per round
 MAX_HINWEISE = 40  # per LV, all rounds
 MAX_QUELLEN = 3  # web sources shown per hint

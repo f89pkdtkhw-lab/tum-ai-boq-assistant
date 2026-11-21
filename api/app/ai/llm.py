@@ -556,6 +556,7 @@ class ResearchAnswer:
     sources: list = None
     searches: int = 0
     web_search: bool = False
+    truncated: bool = False  # True when the model stopped at max_tokens but returned some text
 
     def __post_init__(self):
         self.citations = list(self.citations or [])
@@ -625,7 +626,12 @@ def _anthropic_research(prompt, system, chosen, max_tokens, max_searches, limit,
             category = (data.get("stop_details") or {}).get("category")
             raise LLMError(f"anthropic declined the request (refusal{': ' + category if category else ''}).")
         if stop == "max_tokens":
-            raise LLMError(f"anthropic stopped at max_tokens ({max_tokens}); the research answer is incomplete.")
+            text = "".join(texts).strip()
+            if not text:
+                raise LLMError(f"anthropic stopped at max_tokens ({max_tokens}); the research answer is incomplete.")
+            return ResearchAnswer(text, "anthropic", chosen, round((time.perf_counter() - started) * 1000),
+                                  list(citations.values()), list(sources.values()), searches, True,
+                                  truncated=True)
         text = "".join(texts).strip()
         if not text:
             raise LLMError(f"anthropic returned no text ({stop or 'empty answer'}).")

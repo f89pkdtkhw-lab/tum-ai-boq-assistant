@@ -29,7 +29,7 @@ from ..fortschritt import AnalyseAbgebrochen
 from ..modelle import Finding, LV, Position
 
 DEFAULT_BATCH_SIZE = 20
-DEFAULT_REVIEW_TIMEOUT = 600.0  # seconds for the whole real-model review (#167: all batches of a large LV; < job's 900 s)
+DEFAULT_REVIEW_TIMEOUT = 600.0  # seconds for the whole real-model review (#167: all batches of a large LV; < job's 2400 s)
 DEFAULT_BATCH_TIMEOUT = 90.0    # seconds per batch call (#167: instead of one tight global deadline)
 DEFAULT_PARALLEL = 3           # concurrent batch calls (low enough for small rate limits)
 DEFAULT_EFFORT = "low"         # Claude effort for the item review: short, consistent answers, fast
