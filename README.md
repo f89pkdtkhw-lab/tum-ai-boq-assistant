@@ -26,10 +26,10 @@ Keep real keys in `.env.local` or environment variables and out of Git. Set `LLM
 ## Jury demo
 
 1. In **New evaluation**, choose **Upload files** and select [workshop-foundation.json](data/demo/workshop-foundation.json). This six-item LV is entirely synthetic and includes a deliberate total price error. Leave its role as **Bill of quantities** and click **Evaluate**.
-2. Open **Findings** and look up **OZ 01.0010**. The arithmetic rule shows that 75 m³ × €24/m³ gives €1,800, while the LV states €1,500. The same item cites ATV DIN 18300 (2012-09) and uses legacy soil classes. Check the register evidence and raise the soil classification with the client.
+2. Click **Show details** and open **OZ 01.0010** in the findings list. The arithmetic rule shows that 75 m³ × €24/m³ gives €1,800, while the LV states €1,500. The same item cites ATV DIN 18300 (2012-09) and uses legacy soil classes. Check the register evidence and raise the soil classification with the client.
 3. Open **OZ 02.0010**. The primer covers 180 m² while the three related slab layers each cover 120 m². Use the quantity finding to ask whether the primer covers an additional area.
 4. Open **OZ 01.0020**. The provisional dewatering is specified “as required.” Use the Nachtrag finding to ask who authorizes pumping, how its duration is measured, and how it will be paid.
-5. Return to **Overview** to see the review summarized, then choose **Export report**. When a price list or matching database prices are available, inspect the calculated estimate in **Prices** before using it in the bid.
+5. Scroll back to the score at the top, then choose **Export report**. When a price list or matching database prices are available, open **Price report ›** to inspect the calculated estimate before using it in the bid.
 
 ## Architecture
 
