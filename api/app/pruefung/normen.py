@@ -1059,11 +1059,12 @@ def vorgaben_aus_regelwerk(regelwerk) -> Regelwerksvorgaben | None:
 def pruefe_kennwerte_hoeher(lv: LV, register: Register,
                             vorgaben: Regelwerksvorgaben | None = None) -> list[Finding]:
     """NORM_KENNWERT_HOEHER (`mittel`, warning): the stated strength class is above the strictest key
-    value for its exposure class. Allowed, but the difference is worth noting for the price."""
+    value for its exposure class. Allowed, but the difference is worth noting for the price. Only the
+    uploaded document or a person-checked register entry reports it, never an unchecked entry."""
     findings = []
     for position in lv.positionen:
         treffer = _vergleich(position, register, vorgaben)
-        if treffer is None or treffer.richtung != "hoeher":
+        if treffer is None or treffer.richtung != "hoeher" or not _belastbar(treffer):
             continue
         k = treffer.kennwert
         titel_quelle = "register key value" if treffer.eintrag else "regulation document key value"

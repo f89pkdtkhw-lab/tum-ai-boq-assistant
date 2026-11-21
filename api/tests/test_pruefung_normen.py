@@ -672,6 +672,10 @@ def test_b2_lower_checked_is_hoch_and_unchecked_is_mittel():
 def test_b2_bigger_is_mittel_warning(geprueft):
     lv = beton_lv("Beton XC4, C35/45")
     assert pruefe_kennwerte(lv, register_mit(geprueft)) == []
+    if not geprueft:  # only checked sources may make the bigger case a finding
+        assert pruefe_kennwerte_hoeher(lv, register_mit(geprueft)) == []
+        assert pruefe_normen(lv, register_mit(geprueft)) == []
+        return
     [finding] = pruefe_kennwerte_hoeher(lv, register_mit(geprueft))
     assert (finding.id, finding.regel_id, finding.kategorie, finding.schwere, finding.quelle) == (
         f"{NORM_KENNWERT_HOEHER}:02.01", NORM_KENNWERT_HOEHER, "risiko", "mittel", "regel")
@@ -736,8 +740,8 @@ def test_b2_unchecked_register_entry_never_produces_hoch():
                ("Fundament XC4, C35/45", "Beton.", 10.0, "m³"),
                ("Schalung reinigen", "x", 1.0, "psch"))
     findings = pruefe_normen(lv, register)
-    assert {f.regel_id for f in findings} >= {NORM_KENNWERT_ABWEICHUNG, NORM_KENNWERT_HOEHER, NORM_POSITION_FEHLT,
-                                             NORM_EXTRA}
+    assert {f.regel_id for f in findings} >= {NORM_KENNWERT_ABWEICHUNG, NORM_POSITION_FEHLT, NORM_EXTRA}
+    assert NORM_KENNWERT_HOEHER not in {f.regel_id for f in findings}
     assert all(f.schwere != "hoch" for f in findings if f.regel_id.startswith("NORM_KENNWERT")
                or f.regel_id in (NORM_POSITION_FEHLT, NORM_EXTRA))
     assert [f.schwere for f in findings if f.regel_id == NORM_POSITION_FEHLT] == ["mittel"]
@@ -1003,3 +1007,20 @@ def test_b4_analyse_without_regelwerk_equals_pruefen_and_carries_the_assumption(
     analyse = client.post("/api/lv/analyse", json={"lv": lv, "regelwerk": None})
     assert pruefen.status_code == analyse.status_code == 200 and analyse.content == pruefen.content
     assert "NormAssumption:02.01" in [n["id"] for n in analyse.json()["berichte"][0]["notes"]]
+
+
+def test_139_spaced_strength_class_is_normalized_for_check_1():
+    lv = beton_lv("Beton C 20/25", "Expositionsklasse XC4")
+    [finding] = pruefe_kennwerte(lv, register_mit(True))
+    assert (finding.regel_id, finding.schwere) == (NORM_KENNWERT_ABWEICHUNG, "hoch")
+    assert "C20/25" in finding.titel and "C25/30" in finding.titel
+
+
+@pytest.mark.parametrize("quelle,erwartet", [("unchecked", 0), ("checked", 1), ("upload", 1)])
+def test_139_bigger_spaced_class_only_from_checked_sources(quelle, erwartet):
+    lv = beton_lv("Beton C 35/45", "Expositionsklasse XC4")
+    register = register_mit(quelle == "checked")
+    vorgaben = vorgaben_aus_regelwerk(SYNTH_REGELWERK) if quelle == "upload" else None
+    findings = pruefe_kennwerte_hoeher(lv, register, vorgaben)
+    assert len(findings) == erwartet
+    assert all(f.schwere == "mittel" for f in findings)
