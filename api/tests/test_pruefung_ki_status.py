@@ -1,6 +1,6 @@
 """#168 (package D): AI failures and mock fallbacks are visible per step in the report.
 
-Offline only: the model boundary `llm.complete` is replaced by fakes, `httpx.post` and sockets are blocked,
+Offline only: the model boundaries `llm.complete` and `llm.research` (N5 web research, #166) are replaced by fakes, `httpx.post` and sockets are blocked,
 keys are synthetic values. Synthetic LV only, no dataset text.
 """
 import json
@@ -33,8 +33,15 @@ def no_network(monkeypatch):
         raise AssertionError("network access in offline test")
     monkeypatch.setattr(socket, "create_connection", blocked)
     monkeypatch.setattr(httpx, "post", blocked)
-    for name in ("NORM_KI_RECHERCHE", "NORM_KI_TIMEOUT", "NORMPRUEFUNG"):
+    for name in ("NORM_KI_RECHERCHE", "NORM_KI_TIMEOUT", "NORM_KI_MAX_SEARCHES", "NORM_KI_RUNDEN", "NORMPRUEFUNG"):
         monkeypatch.delenv(name, raising=False)
+    normen_ki.cache_leeren()  # #166: N5 results are cached per LV hash
+
+
+def use_model(monkeypatch, fake):
+    """The same fake answers the item review (`llm.complete`) and the N5 web research (`llm.research`, #166)."""
+    monkeypatch.setattr(llm, "complete", fake)
+    monkeypatch.setattr(llm, "research", fake)
 
 
 @pytest.fixture
@@ -70,7 +77,7 @@ def test_mock_by_configuration_reports_no_step_and_the_report_is_unchanged():
 def test_failing_model_marks_position_review_and_norm_research(claude, monkeypatch):
     def failing(*args, **kwargs):
         raise llm.LLMError("anthropic: HTTP 529 (overloaded).")
-    monkeypatch.setattr(llm, "complete", failing)
+    use_model(monkeypatch, failing)
     body = report()
     schritte = steps(body)
     review = schritte["positionspruefung"]
@@ -89,7 +96,7 @@ def test_review_timeout_is_visible_with_its_reason(claude, monkeypatch):
     def slow(*args, **kwargs):
         time.sleep(2)
         return llm.Answer('{"findings": []}', "anthropic", "claude-test", 1)
-    monkeypatch.setattr(llm, "complete", slow)
+    use_model(monkeypatch, slow)
     schritte = steps(report())
     assert schritte["positionspruefung"]["status"] == "mock"
     assert "did not finish the review within 0.2 s" in schritte["positionspruefung"]["grund"]
@@ -103,7 +110,7 @@ def test_norm_research_timeout_is_visible(claude, monkeypatch):
         if system == normen_ki.SYSTEM:
             time.sleep(1)
         return llm.Answer('{"findings": []}', "anthropic", "claude-test", 1)
-    monkeypatch.setattr(llm, "complete", complete)
+    use_model(monkeypatch, complete)
     schritte = steps(report())
     assert schritte["positionspruefung"]["status"] == "ok"
     assert schritte["normrecherche"]["status"] == "fehler"
@@ -111,7 +118,7 @@ def test_norm_research_timeout_is_visible(claude, monkeypatch):
 
 
 def test_successful_steps_report_ok_with_model(claude, monkeypatch):
-    monkeypatch.setattr(llm, "complete", fake_complete('{"findings": []}', '{"vorschlaege": []}'))
+    use_model(monkeypatch, fake_complete('{"findings": []}', '{"vorschlaege": []}'))
     body = report()
     schritte = steps(body)
     assert [s["schritt"] for s in body["ki_schritte"]] == ["positionspruefung", "normrecherche"]
@@ -125,7 +132,7 @@ def test_successful_steps_report_ok_with_model(claude, monkeypatch):
 def test_analyse_route_carries_the_step_status(claude, monkeypatch):
     def failing(*args, **kwargs):
         raise llm.LLMError("anthropic: request timed out.")
-    monkeypatch.setattr(llm, "complete", failing)
+    use_model(monkeypatch, failing)
     response = client.post("/api/lv/analyse", json={"lv": LV_D.model_dump(), "regelwerk": None})
     assert response.status_code == 200
     assert steps(response.json())["positionspruefung"]["status"] == "mock"
