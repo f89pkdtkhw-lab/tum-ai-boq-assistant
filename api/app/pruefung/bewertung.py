@@ -11,8 +11,10 @@ from ..modelle import Finding, ScoreAbzug, Zusammenfassung
 # --- Tunable constants (one place) -------------------------------------------------------------
 SCORE_START = 10.0
 SCORE_MIN = 0.0
-ABZUG_BERICHT = 1.0            # at least one big problem in a report
-ABZUG_BERICHT_SCHWER = 2.0     # >= GROSSE_PROBLEME_SCHWER big problems or any `kritisch`
+# A real pricing blocker (including arithmetic and confirmed missing quantities)
+# must take a perfect score below 7. PDF parser gaps are low-severity notices.
+ABZUG_BERICHT = 3.5            # at least one high-severity finding in a report
+ABZUG_BERICHT_SCHWER = 4.0     # >= GROSSE_PROBLEME_SCHWER big problems or any `kritisch`
 GROSSE_PROBLEME_SCHWER = 5
 ABZUG_APPROX = 0.1             # per approximation flagged "too big"
 ABZUG_APPROX_MAX = 1.0

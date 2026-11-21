@@ -131,10 +131,8 @@ def test_synthetic_example_with_a_full_synthetic_price_list_prices_every_item():
 
 
 def test_synthetic_example_with_d4_demo_price_list():
-    """Acceptance 2: runs once D4 (#111) provides the demo CSV and its import route."""
+    """The bundled synthetic price list prices every item through the import route."""
     csv = DATA / "preisliste_beispiel.csv"
-    if not csv.exists() or not any(getattr(r, "path", "") == "/api/preisliste/import" for r in main.app.routes):
-        pytest.skip("D4 (#111) price list import not on this branch yet")
     antwort = client.post("/api/preisliste/import", files={"datei": (csv.name, csv.read_bytes(), "text/csv")})
     assert antwort.status_code == 200, antwort.text
     json_lv = (DATA / "beispiel_lv.json").read_text(encoding="utf-8")
