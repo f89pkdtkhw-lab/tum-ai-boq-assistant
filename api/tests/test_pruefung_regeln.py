@@ -148,10 +148,40 @@ def test_text_widerspruch_unterschiedliche_expositionsgruppen_widersprechen_nich
     assert len(_text_widersprueche("Beton XC2", "Beton XC4 herstellen.")) == 1
 
 
-def test_einheit_tippfehler_bekannte_schreibweise():
-    lv = LV(name="Test", quelle="synthetisch", positionen=[Position(oz="01", einheit="qm", langtext="x")])
-    befund = next(f for f in pruefe_regeln(lv) if f.regel_id == "EINHEIT_TIPPFEHLER")
-    assert befund.oz == "01"
+def _einheit_tippfehler(einheiten: list[str]) -> list:
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz=f"{i:02d}", einheit=e, langtext="x") for i, e in enumerate(einheiten, 1)])
+    return [f for f in pruefe_regeln(lv) if f.regel_id == "EINHEIT_TIPPFEHLER"]
+
+
+def test_einheit_tippfehler_einheitliche_variante_ist_konvention():
+    assert _einheit_tippfehler(["Stk", "Stk", "Stk"]) == []
+
+
+def test_einheit_tippfehler_gemischte_schreibweisen_melden_die_variante():
+    befunde = _einheit_tippfehler(["Stk", "Stk", "St"])
+    assert [f.oz for f in befunde] == ["01", "02"]
+    assert all(f.id == f"EINHEIT_TIPPFEHLER:{f.oz}" and f.quelle == "regel" for f in befunde)
+    assert "“St” (1 item)" in befunde[0].begruendung
+
+
+def test_einheit_tippfehler_qm_neben_m2():
+    befunde = _einheit_tippfehler(["qm", "m²", "m²"])
+    assert [f.oz for f in befunde] == ["01"]
+    assert "“m²” (2 items)" in befunde[0].begruendung
+
+
+def test_text_widerspruch_ignoriert_masse_in_fremder_einheit():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", einheit="m²", kurztext="Estrich 5 cm, Feldgröße bis 6 m",
+                 langtext="Estrich auf 70 m² herstellen, Randstreifen 2 m")])
+    assert all(f.regel_id != "TEXT_WIDERSPRUCH" for f in pruefe_regeln(lv))
+
+
+def test_text_widerspruch_menge_in_positionseinheit_widerspricht():
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", einheit="m³", kurztext="Beton 10 m³", langtext="Einbau von 15 m³ Beton")])
+    assert len([f for f in pruefe_regeln(lv) if f.regel_id == "TEXT_WIDERSPRUCH"]) == 1
 
 
 def test_einheit_tippfehler_sauberer_kontrollfall_bei_korrekter_einheit():
