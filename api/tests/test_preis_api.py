@@ -88,9 +88,45 @@ def test_get_preise_filters_by_item_unit_and_limit():
     assert len(client.get("/api/db/preise?limit=1").json()) == 1
 
 
-def test_post_preise_rejects_invalid_rows():
-    assert client.post("/api/db/preise", json=[{"item": "", "unit": "m", "price_per_unit": 1}]).status_code == 422
-    assert client.post("/api/db/preise", json=[{"item": "x", "unit": "m", "price_per_unit": -1}]).status_code == 422
+@pytest.mark.parametrize("field, value, message", [
+    ("item", "string", "placeholder"),
+    ("unit", " STRING ", "placeholder"),
+    ("item", "", "must not be blank"),
+    ("item", "  ", "must not be blank"),
+    ("unit", "  ", "must not be blank"),
+    ("price_per_unit", 0, "greater than 0"),
+    ("price_per_unit", -1, "greater than 0"),
+])
+def test_post_preise_rejects_invalid_rows(field, value, message):
+    valid = {"item": "Kies", "unit": "t", "price_per_unit": 25}
+    r = client.post("/api/db/preise", json=[valid, {**valid, field: value}])
+    assert r.status_code == 422, r.text
+    error = r.json()["detail"][0]
+    assert error["loc"] == ["body", 1, field] and message in error["msg"]
+    assert client.get("/api/db/preise").json() == []
+
+
+@pytest.mark.parametrize("row, field, message", [
+    ("string;t;25", "item", "placeholder"),
+    ("Kies; STRING ;25", "unit", "placeholder"),
+    (" ;t;25", "item", "must not be blank"),
+    ("Kies;t;0", "price_per_unit", "greater than 0"),
+    ("Kies;t;-1", "price_per_unit", "greater than 0"),
+])
+def test_csv_import_rejects_invalid_rows_before_storing_any_prices(row, field, message):
+    r = upload("preise.csv", f"item;unit;ep\nSand;t;12\n{row}\n".encode())
+    assert r.status_code == 422, r.text
+    detail = r.json()["detail"]
+    assert "preise.csv:3" in detail and field in detail and message in detail
+    assert client.get("/api/db/preise").json() == []
+
+
+def test_json_import_rejects_placeholder_unit():
+    data = {"id": "prices", "eintraege": [{"id": "1", "kurztext": "Kies", "einheit": "string", "ep": 25}]}
+    r = upload("preise.json", json.dumps(data).encode())
+    assert r.status_code == 422, r.text
+    assert "unit" in r.json()["detail"] and "placeholder" in r.json()["detail"]
+    assert client.get("/api/db/preise").json() == []
 
 
 @pytest.mark.parametrize("name, inhalt, status, text", [
