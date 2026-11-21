@@ -3,7 +3,7 @@
 import { type ChangeEvent, useEffect, useState } from "react";
 import type { Pruefbericht } from "@/lib/api";
 import { PRUEFBERICHT_SPEICHER_SCHLUESSEL } from "@/components/Pruefbericht";
-import { dateiname, istMock, leseBericht, tabellen, xlsx, type Tabelle } from "@/lib/export";
+import { dateiname, istMock, leseBericht, pdfDateiname, pdfInhalt, tabellen, xlsx, type Tabelle } from "@/lib/export";
 import { bewertungVon, ladeBewertungen, statusName, type Bewertungen } from "@/lib/bewertung";
 import styles from "./export.module.css";
 
@@ -36,6 +36,7 @@ type Zustand = { phase: "laedt" } | { phase: "leer"; fehler: string } | { phase:
 
 export function Export() {
   const [zustand, setZustand] = useState<Zustand>({ phase: "laedt" });
+  const [pdfZustand, setPdfZustand] = useState<"bereit" | "laeuft" | "fehler">("bereit");
 
   useEffect(() => {
     let text: string | null = null;
@@ -53,6 +54,44 @@ export function Export() {
     setZustand(bericht
       ? { phase: "bereit", bericht, quelle: `from ${datei.name}`, bewertungen: ladeBewertungen(bericht.lv.name, bericht.findings) }
       : { phase: "leer", fehler: `“${datei.name}” is not a review report. Please use the JSON file from “Download JSON”.` });
+  }
+
+  async function pdf(bericht: Pruefbericht, bewertungen: Bewertungen) {
+    setPdfZustand("laeuft");
+    try {
+      // Loaded on click only, so the export page stays small.
+      const [{ jsPDF }, { autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
+      const inhalt = pdfInhalt(bericht, bewertungen);
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      const rand = 36;
+      const breite = doc.internal.pageSize.getWidth() - 2 * rand;
+      const hoehe = doc.internal.pageSize.getHeight();
+      let y = rand + 8;
+      doc.setFontSize(16);
+      doc.text(inhalt.titel, rand, y);
+      doc.setFontSize(9);
+      y += 16;
+      for (const zeile of [`Source: ${inhalt.quelle}`, ...inhalt.zusammenfassung]) {
+        const teile = doc.splitTextToSize(zeile, breite) as string[];
+        doc.text(teile, rand, y);
+        y += 12 * teile.length;
+      }
+      for (const a of inhalt.abschnitte) {
+        if (y > hoehe - 80) { doc.addPage(); y = rand; }
+        doc.setFontSize(12);
+        doc.text(a.name, rand, y + 18);
+        autoTable(doc, {
+          startY: y + 26, margin: { left: rand, right: rand }, head: [a.kopf],
+          body: a.zeilen.length > 0 ? a.zeilen : [[`No rows.`, ...a.kopf.slice(1).map(() => "")]],
+          styles: { fontSize: 7, cellPadding: 3, overflow: "linebreak" }, headStyles: { fillColor: [79, 70, 229] },
+        });
+        y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+      }
+      doc.save(pdfDateiname(bericht.lv.name));
+      setPdfZustand("bereit");
+    } catch {
+      setPdfZustand("fehler");
+    }
   }
 
   function excel(bericht: Pruefbericht, bewertungen: Bewertungen) {
@@ -97,9 +136,13 @@ export function Export() {
         <a className={styles.zurueck} href="/">‹ Review</a>
         <div className={styles.aktionen}>
           <button type="button" className={styles.knopfZweit} onClick={() => window.print()}>Print as PDF</button>
+          <button type="button" className={styles.knopfZweit} disabled={pdfZustand === "laeuft"} onClick={() => void pdf(bericht, bewertungen)}>
+            {pdfZustand === "laeuft" ? "Creating PDF …" : "Download PDF"}
+          </button>
           <button type="button" className={styles.knopf} onClick={() => excel(bericht, bewertungen)}>Download Excel</button>
         </div>
       </nav>
+      {pdfZustand === "fehler" && <p className={styles.fehler} role="alert">Could not create the PDF. Please use “Print as PDF”.</p>}
 
       <article className={styles.blatt}>
         <header className={styles.kopf}>

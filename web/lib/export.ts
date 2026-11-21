@@ -199,3 +199,57 @@ export function dateiname(name: string, endung: string) {
   const basis = name.normalize("NFKD").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
   return `pruefbericht-${basis || "lv"}.${endung}`;
 }
+
+// ---------- PDF download (#105): content only; Export.tsx draws it with jsPDF ----------
+
+/** jsPDF's built-in fonts only cover WinAnsi: map the few symbols we use, drop what cannot be drawn. */
+export function pdfText(s: string): string {
+  return s.replace(/→/g, "->").replace(/[−‐‑]/g, "-").replace(/[⁠​]/g, "").replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF€–—‘’‚“”„†‡•…‰‹›ŠšŽžŒœŸƒˆ˜™]/g, "?");
+}
+
+export type PdfAbschnitt = { name: string; kopf: string[]; zeilen: string[][] };
+export type PdfInhalt = { titel: string; quelle: string; zusammenfassung: string[]; abschnitte: PdfAbschnitt[] };
+
+type MitBerichten = Pruefbericht & { berichte?: { titel: string; status: string; meldung: string; finding_ids: string[] }[] | null };
+
+const pdfZahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 3 });
+
+/** Same sheets and rows as the XLSX, plus the summary and the three report sections when present. */
+export function pdfInhalt(bericht: MitBerichten, bewertungen: Bewertungen = {}): PdfInhalt {
+  const k = bericht.kennzahlen;
+  const z = bericht.zusammenfassung;
+  const zusammenfassung = [
+    `Items: ${pdfZahl.format(bericht.lv.positionen.length)} · Entries: ${pdfZahl.format(bericht.findings.length)} · Critical: ${pdfZahl.format(k.kritisch)}`,
+    ...(k.modell_mock ? ["Demo mode: the model review ran as an offline mock; entries marked as demonstration are not domain findings."] : []),
+    ...(z ? [
+      `Score: ${z.score.toFixed(1)} / 10 · Big problems: ${z.grosse_probleme} · Warnings: ${z.warnungen} · Notices: ${z.hinweise} · Recommendations: ${z.empfehlungen}`,
+      `Estimate deviation: ${z.schaetzung_abweichung_eur === null ? "not connected" : `${pdfZahl.format(z.schaetzung_abweichung_eur)} EUR`}`,
+      ...z.score_abzuege.map((a) => `Deduction ${a.punkte.toFixed(1)}: ${a.grund}`),
+    ] : []),
+  ];
+  const zelle = (w: string | number | null) => (w === null ? "" : typeof w === "number" ? pdfZahl.format(w) : w);
+  const abschnitte: PdfAbschnitt[] = [];
+  if (bericht.berichte?.length) {
+    abschnitte.push({
+      name: "Reports",
+      kopf: ["Report", "Status", "Findings", "Message"],
+      zeilen: bericht.berichte.map((b) => [b.titel, b.status === "ok" ? "ok" : b.status === "nicht_verbunden" ? "not connected" : "failed", String(b.finding_ids.length), b.meldung]),
+    });
+  }
+  for (const t of tabellen(bericht, bewertungen)) {
+    const [kopf, ...zeilen] = t.zeilen;
+    abschnitte.push({ name: t.name, kopf: kopf.map(zelle), zeilen: zeilen.map((r) => r.map(zelle)) });
+  }
+  const text = (s: string) => pdfText(s);
+  return {
+    titel: text(bericht.lv.name || "Unnamed BoQ"), quelle: text(bericht.lv.quelle || ""),
+    zusammenfassung: zusammenfassung.map(text),
+    abschnitte: abschnitte.map((a) => ({ name: text(a.name), kopf: a.kopf.map(text), zeilen: a.zeilen.map((r) => r.map(text)) })),
+  };
+}
+
+/** review-report-<lv-name>-<YYYY-MM-DD>.pdf */
+export function pdfDateiname(name: string, heute: Date = new Date()): string {
+  const basis = name.normalize("NFKD").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
+  return `review-report-${basis || "lv"}-${heute.toISOString().slice(0, 10)}.pdf`;
+}
