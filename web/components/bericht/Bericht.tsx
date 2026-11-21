@@ -1,7 +1,7 @@
 "use client";
 
 import { useDok } from "@/components/dok/useDok";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { Finding, Pruefbericht as PruefberichtDaten } from "@/lib/api";
 import { befundAnzeige } from "@/lib/befundtext";
 import { bewertungVon, ladeBewertungen, setze, speichereBewertungen, type Bewertung as BewertungDaten, type Bewertungen } from "@/lib/bewertung";
@@ -12,6 +12,7 @@ import { useEinschaetzung } from "../einschaetzung/Einschaetzung";
 import { Bewertung } from "../bewertung/Bewertung";
 import { Pruefbericht, PRUEFBERICHT_SPEICHER_SCHLUESSEL } from "../Pruefbericht";
 import { Angebot } from "../angebot/Angebot";
+import { Fundstelle } from "../fundstelle/Fundstelle";
 import { Icon } from "../icon/Icon";
 import { Info } from "../info/Info";
 import { KiHinweis } from "../kihinweis/KiHinweis"; // D #168
@@ -35,7 +36,7 @@ const SEITE = 30;
  * sortable list with details and comments) and level 3 (full estimated price report and all analysis tools) only when
  * they want more. Complexity grows on request, never all at once.
  */
-export function Bericht({ bericht, offline = false, anzeigeName }: { bericht: PruefberichtDaten; offline?: boolean; anzeigeName?: string }) {
+export function Bericht({ bericht, offline = false, anzeigeName, original = null }: { bericht: PruefberichtDaten; offline?: boolean; anzeigeName?: string; original?: File | null }) {
   const d = useDok();
   const { e: einstellungen, t } = useEinstellungen();
   const bewertung = useEinschaetzung(bericht);
@@ -58,6 +59,11 @@ export function Bericht({ bericht, offline = false, anzeigeName }: { bericht: Pr
   const bewerte = (id: string, a: Partial<BewertungDaten>) => { const neu = setze(bewertungen, id, a); setBewertungen(neu); speichereBewertungen(bericht.lv.name, neu); };
 
   const positionen = useMemo(() => new Map(bericht.lv.positionen.map((p) => [p.oz, p])), [bericht]);
+  const alleNachOz = useMemo(() => {
+    const karte = new Map<string, typeof bericht.lv.positionen>();
+    for (const p of bericht.lv.positionen) karte.set(p.oz, [...(karte.get(p.oz) ?? []), p]);
+    return karte;
+  }, [bericht]);
   const [preisliste, setPreisliste] = useState<Preis[]>([]);
   useEffect(() => { setPreisliste(ladePreisliste()); }, []);
   const [preisOffen, setPreisOffen] = useState<string | null>(null);
@@ -104,6 +110,23 @@ export function Bericht({ bericht, offline = false, anzeigeName }: { bericht: Pr
     setStufe(neu);
     requestAnimationFrame(() => document.getElementById("bericht-titel")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
+  // #170: the uploaded PDF stays in this tab as a Blob URL, so a finding can open it at its item's page.
+  const [originalUrl, setOriginalUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!original || !original.name.toLowerCase().endsWith(".pdf")) { setOriginalUrl(null); return; }
+    const url = URL.createObjectURL(original);
+    setOriginalUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [original]);
+  // "Show in BoQ": open level 3 and the analysis tools, then the BoQ view selects and highlights the OZ.
+  const [sprung, setSprung] = useState<{ oz: string; n: number } | null>(null);
+  const werkzeugeRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (!sprung || !werkzeugeRef.current) return;
+    werkzeugeRef.current.open = true;
+  }, [sprung]);
+  function imLv(oz: string) { setStufe(3); setSprung((alt) => ({ oz, n: (alt?.n ?? 0) + 1 })); }
+
   function zumExport() { try { window.sessionStorage.setItem(PRUEFBERICHT_SPEICHER_SCHLUESSEL, JSON.stringify(bericht)); } catch { /* export reads its own upload then */ } }
 
   const preisZeilen = preis.zeilen.filter((z) => !nurGeaendert || (z.war && z.diff && Math.abs(z.diff) / Math.abs(z.war) >= .02))
@@ -193,6 +216,10 @@ export function Bericht({ bericht, offline = false, anzeigeName }: { bericht: Pr
                   {auf && (pos || x.text || x.vorschlag || x.finding) && (
                     <div className={styles.details}>
                       {pos && <p className={styles.position}><b>OZ {pos.oz}</b> · {d(pos.kurztext)}{pos.menge !== null && <> · {zahl.format(pos.menge)} {pos.einheit}</>}</p>}
+                      {/* #170: one location per occurrence of the OZ (duplicates show every place); the jump goes to the OZ. */}
+                      {x.oz && (alleNachOz.get(x.oz) ?? [undefined]).slice(0, 5).map((p, i) => (
+                        <Fundstelle key={i} datei={bericht.lv.quelle} oz={x.oz!} position={p} originalUrl={originalUrl} onImLv={i === 0 ? () => imLv(x.oz!) : undefined} />
+                      ))}
                       {x.text && <p><b>{t("Why")}:</b> {x.text}</p>}
                       {x.vorschlag && <p><b>{t("Suggestion")}:</b> {x.vorschlag}</p>}
                       {x.finding && <Bewertung key={x.finding.id} bewertung={bewertungVon(bewertungen, x.finding.id)} onAendern={(a) => bewerte(x.finding!.id, a)} speicherFehler={false} />}
@@ -260,9 +287,9 @@ export function Bericht({ bericht, offline = false, anzeigeName }: { bericht: Pr
 
               <Angebot ekt={preis.geschaetzt} projekt={anzeigeName || bericht.lv.name} />
 
-              <details className={styles.werkzeuge}>
+              <details ref={werkzeugeRef} className={styles.werkzeuge}>
                 <summary><Icon name="dashboard" /> {t("All analysis tools")} <small>{t("overview, findings, items, prices, bidder questions, quantities")}</small></summary>
-                <Pruefbericht bericht={bericht} offline={offline} anzeigeName={anzeigeName} bewertung={bewertung} eingebettet />
+                <Pruefbericht bericht={bericht} offline={offline} anzeigeName={anzeigeName} bewertung={bewertung} eingebettet springeZu={sprung} originalUrl={originalUrl} />
               </details>
               <button type="button" className={styles.mehrLeise} onClick={() => zurueck(1)}>▴ {t("Show less")}</button>
             </section>

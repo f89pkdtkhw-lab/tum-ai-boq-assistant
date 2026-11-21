@@ -1,0 +1,7 @@
+/* #170: location note under a finding; same tokens as the report; "knopfLeise" picks up the glass capsule from globals.css. */
+.fundstelle { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; font-size: 13px; color: var(--muted); }
+.ort { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.ort b { color: var(--ink); font-weight: 600; }
+.knopfLeise { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 12.5px; padding: 3px 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); color: var(--ink); text-decoration: none; cursor: pointer; }
+.knopfLeise:hover { border-color: var(--accent); }
+.hinweis { font-size: 12px; }

@@ -5,6 +5,13 @@ export type Position = {
   einheit: string | null; ep: number | null; gp: number | null;
   typ: "normal" | "bedarf" | "alternativ" | "zulage" | "pauschal" | "stundenlohn";
   titel_pfad: string[];
+  // #170, optional: location in the uploaded original (absent for JSON bills and older reports).
+  quelle?: PositionQuelle;
+};
+/** #170: PDF page/line/box (points, top-left origin), Excel sheet/row, GAEB XML element path or GAEB 90 record line. */
+export type PositionQuelle = {
+  seite?: number; zeile?: number; bbox?: [number, number, number, number]; seite_groesse?: [number, number];
+  blatt?: string; pfad?: string;
 };
 export type LV = { name: string; quelle: string; positionen: Position[]; summen: Record<string, number> };
 export type Finding = {

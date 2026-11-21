@@ -533,7 +533,8 @@ export function LvUpload() {
 
       {ergebnis.phase === "fertig" && (
         <Bericht key={ergebnis.nummer} bericht={ergebnis.bericht} offline={ergebnis.offline}
-          anzeigeName={ergebnis.lauf.art === "datei" ? undefined : t(ergebnis.lauf.titel)} />
+          anzeigeName={ergebnis.lauf.art === "datei" ? undefined : t(ergebnis.lauf.titel)}
+          original={ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei : null} />
       )}
     </main>
   );
