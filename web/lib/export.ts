@@ -1,4 +1,5 @@
 // Export helpers for /export (#15): read a stored Pruefbericht and write it as XLSX without dependencies.
+import type { PreisZeile, Preisbericht } from "./preisbericht";
 import type { Finding, Pruefbericht } from "@/lib/api";
 import { bewertungVon, statusName, type Bewertungen } from "./bewertung";
 import { bieterfragen } from "./bieterfragen";
@@ -27,7 +28,11 @@ const ITEM_TYPE_LABELS = { normal: "Standard item", bedarf: "Optional item", alt
 
 type Zelle = string | number | null;
 
-export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}): { name: string; zeilen: Zelle[][] }[] {
+/** Fills "{name}" placeholders of a price-report reason (English in the file). */
+const grundText = (z: PreisZeile) => z.grund.replace(/\{(\w+)\}/g, (_, k) => String(z.werte?.[k] ?? ""));
+
+/** Sheets of the Excel export; with `preis` it starts with a summary and the estimated price report (final estimated price). */
+export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}, preis?: Preisbericht): { name: string; zeilen: Zelle[][] }[] {
   const positionen: Zelle[][] = [
     ["OZ", "Short description", "Detailed description", "Quantity", "Unit", "Unit price (EUR)", "Total price (EUR)", "Type", "Title"],
     ...bericht.lv.positionen.map((p) => [p.oz, p.kurztext, p.langtext, p.menge, p.einheit, p.ep, p.gp, ITEM_TYPE_LABELS[p.typ], p.titel_pfad.join(" › ")]),
@@ -52,7 +57,20 @@ export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}): 
     ["OZ", "Short description", "Title", "Question", "Note"],
     ...bieterfragen(bericht.findings, bericht.lv.positionen).map((f) => [f.oz, f.kurztext, f.titel, f.frage, f.mock ? "Demonstration (mock)" : ""]),
   ];
+  const z = bericht.zusammenfassung;
+  const zusammenfassung: Zelle[][] = [
+    ["Measure", "Value"],
+    ["Score (out of 10)", z?.score ?? null], ["Big problems", z?.grosse_probleme ?? null], ["Warnings", z?.warnungen ?? null],
+    ["Recommendations", z?.empfehlungen ?? null], ["Items", bericht.lv.positionen.length],
+    ...(preis ? [["Total in the bill, was (EUR)", preis.war], ["Final estimated price (EUR)", preis.geschaetzt], ["Difference (EUR)", preis.diff], ["Items with a changed price", preis.geaendert]] as Zelle[][] : []),
+  ];
+  const preise: Zelle[][] = preis ? [
+    ["OZ", "Item", "Quantity", "Unit", "Was (EUR)", "Estimated (EUR)", "Difference (EUR)", "Why"],
+    ...preis.zeilen.map((r) => [r.oz, r.kurztext, r.menge, r.einheit, r.war, r.geschaetzt, r.diff, grundText(r)]),
+    ["Total", "", null, "", preis.war, preis.geschaetzt, preis.diff, ""],
+  ] : [];
   return [
+    ...(preis ? [{ name: "Summary", zeilen: zusammenfassung }, { name: "Estimated prices", zeilen: preise }] : []),
     { name: "Findings", zeilen: befunde }, { name: "Items", zeilen: positionen },
     { name: "Quantities", zeilen: mengen }, { name: "Bidder questions", zeilen: fragen },
   ];
@@ -85,8 +103,8 @@ function blatt(zeilen: Zelle[][]) {
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetData>${rows}</sheetData></worksheet>`;
 }
 
-export function xlsxDateien(bericht: Pruefbericht, bewertungen: Bewertungen = {}): Record<string, string> {
-  const blaetter = tabellen(bericht, bewertungen);
+export function xlsxDateien(bericht: Pruefbericht, bewertungen: Bewertungen = {}, preis?: Preisbericht): Record<string, string> {
+  const blaetter = tabellen(bericht, bewertungen, preis);
   const dateien: Record<string, string> = {
     "[Content_Types].xml": `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${blaetter.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`,
@@ -145,7 +163,7 @@ export function zip(dateien: Record<string, string>): Uint8Array {
   return out;
 }
 
-export const xlsx = (bericht: Pruefbericht, bewertungen: Bewertungen = {}) => zip(xlsxDateien(bericht, bewertungen));
+export const xlsx = (bericht: Pruefbericht, bewertungen: Bewertungen = {}, preis?: Preisbericht) => zip(xlsxDateien(bericht, bewertungen, preis));
 
 export function dateiname(name: string, endung: string) {
   const basis = name.normalize("NFKD").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();

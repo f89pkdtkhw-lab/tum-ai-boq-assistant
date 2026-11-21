@@ -1,26 +1,40 @@
-/* Slim global nav in the Liquid Glass style of lv-upload.module.css. Not sticky: pages keep their own sticky headers. */
+/* Slim top bar with ≡ menu (team sketch); the drawer slides in from the left. */
 .leiste {
-  max-width: 1080px; margin: 0 auto;
-  padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; height: 52px;
+  padding: 0 16px; background: #0a234b; border-bottom: 3px solid var(--brand); color: #fff;
 }
-.liste {
-  list-style: none; margin: 0 auto; padding: 4px; width: fit-content; max-width: 100%;
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; border-radius: 22px;
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid var(--glass-edge);
-  box-shadow: inset 0 1px 0 var(--glass-light), 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow);
+.burger { display: grid; gap: 4px; width: 36px; height: 36px; place-content: center; border: 0; border-radius: var(--r-md); background: transparent; cursor: pointer; }
+.burger span { display: block; width: 18px; height: 2px; border-radius: 0; background: #fff; }
+.burger:hover { background: rgba(255, 255, 255, .12); }
+.marke { display: flex; align-items: center; gap: 8px; font-family: var(--font-head); font-weight: 900; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: #fff; text-decoration: none; white-space: nowrap; }
+.platz { flex: 1; }
+.thema {
+  position: relative; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--fill); cursor: pointer; font-size: 14px; color: var(--muted);
 }
-@media (prefers-reduced-transparency: reduce) {
-  .liste { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.thema span { display: grid; place-items: center; width: 26px; height: 24px; border-radius: var(--r-md); }
+.thema .an { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px var(--shadow); }
+.thema small { position: absolute; top: -6px; right: -6px; font-size: 9px; font-weight: 700; background: var(--brand); color: #fff; border-radius: var(--r-md); padding: 0 4px; }
+.schleier { position: fixed; inset: 0; z-index: 39; background: rgba(0, 0, 0, .25); }
+.schublade {
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 40; width: min(300px, 86vw); display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 12px; background: var(--card); border-right: 1px solid var(--line); box-shadow: 12px 0 40px var(--shadow);
+  transform: translateX(-105%); transition: transform .2s ease; overflow-y: auto; visibility: hidden;
 }
-.link {
-  display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 18px;
-  font-size: 15px; font-weight: 500; color: var(--muted); text-decoration: none; white-space: nowrap;
-}
-.link:hover { color: var(--ink); background: var(--fill); }
-.link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.link[aria-current="page"] { color: var(--ink); font-weight: 600; background: var(--fill-strong); }
-@media (max-width: 400px) { .link { padding: 0 10px; font-size: 14px; } }
-@media print { .leiste { display: none; } }
+.offen { transform: none; visibility: visible; }
+.kopf { display: flex; align-items: center; gap: 10px; padding: 4px 6px 12px; font-size: 15px; }
+.gruppe { margin: 10px 0 2px; padding: 0 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.link { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: var(--r-md); color: var(--ink); text-decoration: none; font-size: 14px; }
+.link:hover { background: var(--fill); }
+.link[aria-current="page"] { background: color-mix(in srgb, var(--brand) 10%, transparent); box-shadow: inset 3px 0 0 var(--brand); font-weight: 600; }
+.link[aria-current="page"] svg { color: var(--brand); }
+.fuss { margin-top: auto; border-top: 1px solid var(--line); padding-top: 8px; display: grid; gap: 6px; }
+.themaZeile { display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 14px; }
+.burger:focus-visible, .link:focus-visible, .thema:focus-visible, .marke:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { .schublade { transition: none; } }
+@media print { .leiste, .schublade { display: none; } }
+
+/* Theme switch on the navy bar */
+.leiste .thema { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .25); color: rgba(255, 255, 255, .7); }
+.leiste .thema .an { background: #fff; color: #0a234b; }

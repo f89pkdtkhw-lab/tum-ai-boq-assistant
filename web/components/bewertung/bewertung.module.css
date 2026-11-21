@@ -3,7 +3,7 @@
 .gruppe { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .gruppe legend { float: left; margin-right: 6px; font-size: 13px; font-weight: 600; color: var(--pb-muted); }
 .knopf {
-  font: inherit; font-size: 14px; min-height: 36px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: 14px; min-height: 32px; padding: 6px 12px; border-radius: var(--r-sm); cursor: pointer;
   border: 1px solid var(--pb-line); background: var(--pb-card); color: inherit;
 }
 .knopf:hover { border-color: var(--pb-accent); }
@@ -14,12 +14,17 @@
 .label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--pb-muted); }
 .kommentar {
   font: inherit; font-size: 14px; font-weight: 400; color: var(--pb-ink); background: var(--pb-card); resize: vertical;
-  border: 1px solid var(--pb-line); border-radius: 10px; padding: 8px 10px; min-width: 0;
+  border: 1px solid var(--pb-line); border-radius: var(--r-md); padding: 8px 10px; min-width: 0;
 }
 .kommentar:focus { border-color: var(--pb-accent); }
 .hinweis { margin: 0; color: var(--pb-muted); font-size: 12.5px; }
-.zeile { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; }
+.zeile { display: grid; grid-template-columns: minmax(0, 1fr) 118px; align-items: center; gap: 8px; padding-right: 10px; }
 .wahl {
-  font: inherit; font-size: 13px; font-weight: 600; min-height: 32px; padding: 4px 8px; border-radius: 8px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600; min-height: 32px; padding: 4px 8px; border-radius: var(--r-md); cursor: pointer;
   border: 1px solid currentColor; background: var(--pb-card); margin-top: 10px;
 }
+
+/* Larger review buttons (team feedback). */
+.knopf { font-size: 14px; min-height: 38px; padding: 0 16px; border-width: 1.5px; font-weight: 500; }
+.gruppe legend { font-size: 13.5px; color: var(--pb-ink, var(--ink)); }
+.kommentar { font-size: 14px; }

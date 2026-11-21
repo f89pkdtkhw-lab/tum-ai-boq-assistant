@@ -1,8 +1,9 @@
 "use client";
 
 import { useId } from "react";
-import { SEITENGROESSEN, zeilenText, type Seite } from "@/lib/seiten";
+import { SEITENGROESSEN, type Seite } from "@/lib/seiten";
 import styles from "./seiten.module.css";
+import { useT } from "@/lib/einstellungen";
 
 const zahl = new Intl.NumberFormat("en-GB");
 
@@ -15,6 +16,7 @@ export function Seiten({ seite, groesse, beschriftung, onSeite, onGroesse, einge
   onSeite: (seite: number) => void; onGroesse: (groesse: number) => void;
 }) {
   const id = useId();
+  const t = useT();
   if (seite.gesamt <= SEITENGROESSEN[0]) return null;
   const erste = seite.seite === 0;
   const letzte = seite.seite >= seite.seiten - 1;
@@ -22,16 +24,16 @@ export function Seiten({ seite, groesse, beschriftung, onSeite, onGroesse, einge
   return (
     <nav className={`${styles.seiten} ${eingerueckt ? styles.eingerueckt : ""}`} aria-label={beschriftung}>
       <div className={styles.knoepfe}>
-        <button type="button" className={styles.knopf} disabled={erste} onClick={() => onSeite(0)}>First</button>
-        <button type="button" className={styles.knopf} disabled={erste} onClick={() => onSeite(seite.seite - 1)}>Previous</button>
+        <button type="button" className={styles.knopf} disabled={erste} onClick={() => onSeite(0)} aria-label={t("First")} title={t("First")}>«</button>
+        <button type="button" className={styles.knopf} disabled={erste} onClick={() => onSeite(seite.seite - 1)} aria-label={t("Previous")} title={t("Previous")}>‹</button>
         <span className={styles.stand} aria-live="polite">
-          Page {zahl.format(seite.seite + 1)} of {zahl.format(seite.seiten)} · {zeilenText(seite, zahl.format)}
+          {t("Page {a} of {b}", { a: zahl.format(seite.seite + 1), b: zahl.format(seite.seiten) })} · {t("rows {a}–{b} of {n}", { a: zahl.format(seite.von + 1), b: zahl.format(seite.bis), n: zahl.format(seite.gesamt) })}
         </span>
-        <button type="button" className={styles.knopf} disabled={letzte} onClick={() => onSeite(seite.seite + 1)}>Next</button>
-        <button type="button" className={styles.knopf} disabled={letzte} onClick={() => onSeite(seite.seiten - 1)}>Last</button>
+        <button type="button" className={styles.knopf} disabled={letzte} onClick={() => onSeite(seite.seite + 1)} aria-label={t("Next")} title={t("Next")}>›</button>
+        <button type="button" className={styles.knopf} disabled={letzte} onClick={() => onSeite(seite.seiten - 1)} aria-label={t("Last")} title={t("Last")}>»</button>
       </div>
       <label className={styles.groesse} htmlFor={id}>
-        Rows per page
+        {t("Rows per page")}
         <select id={id} value={groesse} onChange={(e) => onGroesse(Number(e.target.value))}>
           {SEITENGROESSEN.map((g) => <option key={g} value={g}>{g}</option>)}
         </select>

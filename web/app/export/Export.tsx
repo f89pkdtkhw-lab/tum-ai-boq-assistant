@@ -1,11 +1,20 @@
 "use client";
 
+import { useDok } from "@/components/dok/useDok";
 import { type ChangeEvent, useEffect, useState } from "react";
 import type { Pruefbericht } from "@/lib/api";
 import { PRUEFBERICHT_SPEICHER_SCHLUESSEL } from "@/components/Pruefbericht";
 import { dateiname, istMock, leseBericht, tabellen, xlsx } from "@/lib/export";
 import { bewertungVon, ladeBewertungen, statusName, type Bewertungen } from "@/lib/bewertung";
 import styles from "./export.module.css";
+import { useEinstellungen, useT } from "@/lib/einstellungen";
+import { befundAnzeige } from "@/lib/befundtext";
+import { berichtPdf } from "@/lib/berichtpdf";
+import { Icon } from "@/components/icon/Icon";
+import { deviationByTrade, historyApi, type TradeStat } from "@/lib/history-api";
+import { ladePreisliste, type Preis } from "@/lib/preisliste";
+import { preisbericht, type Preisbericht } from "@/lib/preisbericht";
+import { GAEB_PHASEN, gaebXml, type GaebPhase } from "@/lib/gaeb";
 
 const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 3 });
 const euro = new Intl.NumberFormat("en-GB", { style: "currency", currency: "EUR" });
@@ -35,11 +44,26 @@ function Blatt({ zeilen, leer }: { zeilen: (string | number | null)[][]; leer: s
 type Zustand = { phase: "laedt" } | { phase: "leer"; fehler: string } | { phase: "bereit"; bericht: Pruefbericht; quelle: string; bewertungen: Bewertungen };
 
 export function Export() {
+  const d = useDok();
+  const t = useT();
+  const sprache = useEinstellungen().e.sprache;
   const [zustand, setZustand] = useState<Zustand>({ phase: "laedt" });
+  const [phase, setPhase] = useState<GaebPhase>("84");
+  // Inputs of the estimated price report: past projects per trade and the browser price list (same as the report, level 3).
+  const [gewerke, setGewerke] = useState<TradeStat[] | null>(null);
+  const [preisliste, setPreisliste] = useState<Preis[]>([]);
+  useEffect(() => {
+    setPreisliste(ladePreisliste());
+    historyApi.list(null, 100).then((c) => setGewerke(deviationByTrade(c))).catch(() => setGewerke([]));
+  }, []);
 
   useEffect(() => {
     let text: string | null = null;
-    try { text = window.sessionStorage.getItem(PRUEFBERICHT_SPEICHER_SCHLUESSEL); } catch { /* storage blocked */ }
+    try {
+      text = window.sessionStorage.getItem(PRUEFBERICHT_SPEICHER_SCHLUESSEL);
+      // Opened from the menu: fall back to the report that is open on "New evaluation" (LvUpload, lv-aktuell-v1).
+      if (!text) { const offen = JSON.parse(window.sessionStorage.getItem("lv-aktuell-v1") ?? "null"); if (offen?.bericht) text = JSON.stringify(offen.bericht); }
+    } catch { /* storage blocked or unreadable */ }
     const bericht = leseBericht(text);
     setZustand(bericht
       ? { phase: "bereit", bericht, quelle: "from the current review", bewertungen: ladeBewertungen(bericht.lv.name, bericht.findings) }
@@ -55,8 +79,15 @@ export function Export() {
       : { phase: "leer", fehler: `“${datei.name}” is not a review report. Please use the JSON file from “Download JSON”.` });
   }
 
-  function excel(bericht: Pruefbericht, bewertungen: Bewertungen) {
-    const blob = new Blob([xlsx(bericht, bewertungen) as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  function gaeb(b: Pruefbericht, dp: GaebPhase, preis?: Preisbericht) {
+    const xml = gaebXml(b.lv, dp, { preis, name: preis ? `${b.lv.name} – ${t("Final estimated price")}` : b.lv.name });
+    const url = URL.createObjectURL(new Blob([xml], { type: "application/xml" }));
+    const name = dateiname(b.lv.name, `x${dp}`).replace("pruefbericht-", preis ? "lv-geschaetzt-" : "lv-");
+    const a = Object.assign(document.createElement("a"), { href: url, download: name });
+    a.click(); URL.revokeObjectURL(url);
+  }
+  function excel(bericht: Pruefbericht, bewertungen: Bewertungen, preis?: Preisbericht) {
+    const blob = new Blob([xlsx(bericht, bewertungen, preis) as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const url = URL.createObjectURL(blob);
     const a = Object.assign(document.createElement("a"), { href: url, download: dateiname(bericht.lv.name, "xlsx") });
     a.click();
@@ -69,13 +100,13 @@ export function Export() {
     return (
       <main className={styles.seite}>
         <section className={`${styles.glas} ${styles.leer}`} aria-labelledby="leer-titel">
-          <h1 id="leer-titel">No review report to export</h1>
+          <h1 id="leer-titel">{t("No review report to export")}</h1>
           {zustand.fehler && <p className={styles.fehler} role="alert">{zustand.fehler}</p>}
           <p>Start a review and select “Export report”, or load a saved report (JSON).</p>
           <div className={styles.aktionen}>
-            <a className={styles.knopf} href="/">Back to review</a>
+            <a className={styles.knopf} href="/">{t("Back to review")}</a>
             <label className={styles.knopfZweit}>
-              Load JSON report
+              {t("Load JSON report")}
               <input type="file" accept=".json,application/json" className={styles.versteckt} onChange={dateiLaden} />
             </label>
           </div>
@@ -85,17 +116,43 @@ export function Export() {
   }
 
   const { bericht, bewertungen } = zustand;
-  const { lv, findings, kennzahlen } = bericht;
+  function pdfSpeichern(b: Pruefbericht, bw: Bewertungen, preis: Preisbericht) {
+    const bytes = berichtPdf(b, { t, sprache, preis, status: (f) => { const s = bewertungVon(bw, f.id).status; return s === "offen" ? "" : t(statusName(s)); } });
+    const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = dateiname(b.lv.name, "pdf");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+  const { lv, kennzahlen } = bericht;
+  // Same reader texts as the report: German when chosen, technical ranking tail removed.
+  const findings = bericht.findings.map((f) => befundAnzeige(f, sprache));
   const mock = kennzahlen.modell_mock || findings.some(istMock);
   const blaetter = Object.fromEntries(tabellen(bericht, bewertungen).map((b) => [b.name, b.zeilen]));
+  const preis = preisbericht(lv.positionen, gewerke, preisliste);
+  const euroGanz = new Intl.NumberFormat(sprache === "de" ? "de-DE" : "en-GB", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+  const geaendert = preis.zeilen.filter((r) => r.war && r.diff && Math.abs(r.diff) / Math.abs(r.war) >= .02).sort((a, b) => Math.abs(b.diff ?? 0) - Math.abs(a.diff ?? 0));
 
   return (
     <main className={styles.seite}>
-      <nav className={`${styles.glas} ${styles.leiste}`} aria-label="Export">
-        <a className={styles.zurueck} href="/">‹ Review</a>
+      <nav className={`${styles.glas} ${styles.leiste}`} aria-label={t("Export")}>
+        <a className={styles.zurueck} href="/">{t("‹ Review")}</a>
         <div className={styles.aktionen}>
-          <button type="button" className={styles.knopfZweit} onClick={() => window.print()}>Print as PDF</button>
-          <button type="button" className={styles.knopf} onClick={() => excel(bericht, bewertungen)}>Download Excel</button>
+          {/* Print opens the printer dialog; Save PDF downloads a real file without any dialog (lib/berichtpdf.ts). */}
+          <button type="button" className={styles.knopfZweit} onClick={() => window.print()}><Icon name="report" /> {t("Print")}</button>
+          <button type="button" className={styles.knopf} onClick={() => pdfSpeichern(bericht, bewertungen, preis)}><Icon name="download" /> {t("Save PDF")}</button>
+          <button type="button" className={styles.knopf} onClick={() => excel(bericht, bewertungen, preis)}><Icon name="download" /> {t("Download Excel")}</button>
+        </div>
+        {/* GAEB DA XML (lib/gaeb.ts): the bill in the chosen phase, and the estimated bill as an offer (X84). */}
+        <div className={styles.aktionen} role="group" aria-label="GAEB">
+          <select className={styles.knopfZweit} value={phase} onChange={(e) => setPhase(e.target.value as GaebPhase)} aria-label={t("GAEB phase")}>
+            {GAEB_PHASEN.map((p) => <option key={p.dp} value={p.dp}>{t(p.name)}</option>)}
+          </select>
+          <button type="button" className={styles.knopf} onClick={() => gaeb(bericht, phase)}><Icon name="download" /> {t("GAEB · bill")}</button>
+          <button type="button" className={styles.knopf} onClick={() => gaeb(bericht, "84", preis)}><Icon name="download" /> {t("GAEB X84 · estimated bill")}</button>
         </div>
       </nav>
 
@@ -108,33 +165,60 @@ export function Export() {
 
         {mock && (
           <p className={styles.hinweis}>
-            Demo mode: The model review ran as an offline mock. Entries marked “Demonstration” are not domain findings.
+            {t("Demo mode: The model review ran as an offline mock. Entries marked “Demonstration” are not domain findings.")}
           </p>
         )}
 
         <dl className={styles.zahlen}>
-          <div><dt>Items</dt><dd>{zahl.format(lv.positionen.length)}</dd></div>
-          <div><dt>Entries</dt><dd>{zahl.format(findings.length)}</dd></div>
-          <div><dt>Critical</dt><dd>{zahl.format(kennzahlen.kritisch)}</dd></div>
+          <div><dt>{t("Items")}</dt><dd>{zahl.format(lv.positionen.length)}</dd></div>
+          <div><dt>{t("Entries")}</dt><dd>{zahl.format(findings.length)}</dd></div>
+          <div><dt>{t("Critical")}</dt><dd>{zahl.format(kennzahlen.kritisch)}</dd></div>
         </dl>
 
-        <h2>Findings</h2>
-        {findings.length === 0 ? <p className={styles.quelle}>No findings.</p> : (
+        {/* Final estimated price (team spec): was vs estimated, then the changed items. */}
+        <dl className={styles.zahlen}>
+          <div><dt>{t("Was")}</dt><dd>{euroGanz.format(preis.war)}</dd></div>
+          <div className={styles.geschaetzt}><dt>{t("Final estimated price")}</dt><dd>{euroGanz.format(preis.geschaetzt)}</dd></div>
+          <div><dt>{t("Difference")}</dt><dd style={{ color: preis.diff > 0 ? "var(--sev-kritisch)" : "var(--sev-ok)" }}>{preis.diff > 0 ? "+" : ""}{euroGanz.format(preis.diff)}</dd></div>
+        </dl>
+        {geaendert.length > 0 && (
+          <>
+            <h2>{t("Estimated price report")} <small className={styles.quelle}>{t("{a} of {b}", { a: Math.min(100, geaendert.length), b: geaendert.length })} {t("changed items")}</small></h2>
+            <div className={styles.rahmen}>
+              <table className={styles.tabelle}>
+                <thead><tr><th>OZ</th><th>{t("Item")}</th><th className={styles.rechts}>{t("Was")}</th><th className={styles.rechts}>{t("Estimated")}</th><th className={styles.rechts}>±</th><th>{t("Why")}</th></tr></thead>
+                <tbody>
+                  {geaendert.slice(0, 100).map((r, i) => (
+                    <tr key={`${r.oz}-${i}`}>
+                      <td className={styles.oz}>{r.oz}</td><td>{d(r.kurztext)}</td>
+                      <td className={styles.rechts}>{euroGanz.format(r.war ?? 0)}</td><td className={styles.rechts}>{euroGanz.format(r.geschaetzt ?? 0)}</td>
+                      <td className={styles.rechts} style={{ color: (r.diff ?? 0) > 0 ? "var(--sev-kritisch)" : "var(--sev-ok)" }}>{(r.diff ?? 0) > 0 ? "+" : ""}{euroGanz.format(r.diff ?? 0)}</td>
+                      <td className={styles.quelle}>{t(r.grund, r.werte)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        <h2>{t("Findings")}</h2>
+        {findings.length === 0 ? <p className={styles.quelle}>{t("No findings.")}</p> : (
           <div className={styles.rahmen}>
-            <table className={styles.tabelle}>
-              <thead><tr><th>OZ</th><th>Category</th><th>Severity</th><th>Finding</th><th>Suggestion</th><th>Source</th><th>Euro impact</th><th>Review status</th><th>Comment</th></tr></thead>
+            <table className={`${styles.tabelle} ${styles.befunde}`}>
+              <thead><tr><th>{t("OZ")}</th><th>{t("Category")}</th><th>{t("Severity")}</th><th className={styles.spFinding}>{t("Finding")}</th><th className={styles.spVorschlag}>{t("Suggestion")}</th><th>{t("Source")}</th><th className={styles.rechts}>{t("Euro impact")}</th><th>{t("Review status")}</th><th className={styles.spKommentar}>{t("Comment")}</th></tr></thead>
               <tbody>
                 {findings.map((f) => (
-                  <tr key={f.id}>
+                  <tr key={f.id} style={{ "--sev": `var(--sev-${f.schwere})` } as React.CSSProperties}>
                     <td className={styles.oz}>{f.oz}</td>
-                    <td>{KATEGORIE[f.kategorie] ?? f.kategorie}</td>
-                    <td>{SEVERITY_LABELS[f.schwere] ?? f.schwere}</td>
-                    <td><b>{f.titel}</b><br />{f.begruendung}{istMock(f) && <span className={styles.mock}> Demonstration</span>}</td>
-                    <td>{f.vorschlag}</td>
-                    <td className={styles.regel}>{f.quelle === "regel" ? "Rule" : "Model"}<br />{f.regel_id.replaceAll("_", "_\u200b")}</td>
-                    <td className={styles.rechts}>{f.euro_wirkung === null ? "unknown" : euro.format(f.euro_wirkung)}</td>
-                    <td>{statusName(bewertungVon(bewertungen, f.id).status)}</td>
-                    <td>{bewertungVon(bewertungen, f.id).kommentar}</td>
+                    <td>{t(KATEGORIE[f.kategorie] ?? f.kategorie)}</td>
+                    <td><span className={styles.schwere}>{t(SEVERITY_LABELS[f.schwere] ?? f.schwere)}</span></td>
+                    <td className={styles.spFinding}><b>{f.titel}</b><span className={styles.begruendung}>{f.begruendung}</span>{istMock(f) && <span className={styles.mock}> {t("Demonstration")}</span>}</td>
+                    <td className={styles.spVorschlag}>{f.vorschlag}</td>
+                    <td className={styles.regel}>{t(f.quelle === "regel" ? "Rule" : "Model")}<br />{f.regel_id.replaceAll("_", "_\u200b")}</td>
+                    <td className={styles.rechts}>{f.euro_wirkung === null ? t("unknown") : euro.format(f.euro_wirkung)}</td>
+                    <td>{t(statusName(bewertungVon(bewertungen, f.id).status))}</td>
+                    <td className={styles.spKommentar}>{bewertungVon(bewertungen, f.id).kommentar}</td>
                   </tr>
                 ))}
               </tbody>
@@ -142,21 +226,21 @@ export function Export() {
           </div>
         )}
 
-        <h2>Quantity totals</h2>
+        <h2>{t("Quantity totals")}</h2>
         <Blatt zeilen={blaetter["Quantities"]} leer="No quantities to total." />
 
-        <h2>Bidder questions</h2>
+        <h2>{t("Bidder questions")}</h2>
         <Blatt zeilen={blaetter["Bidder questions"]} leer="No bidder questions." />
 
-        <h2>Items</h2>
+        <h2>{t("Items")}</h2>
         <div className={styles.rahmen}>
           <table className={styles.tabelle}>
-            <thead><tr><th>OZ</th><th>Short description</th><th className={styles.rechts}>Quantity</th><th>Unit</th><th className={styles.rechts}>Unit price</th><th className={styles.rechts}>Total price</th></tr></thead>
+            <thead><tr><th>{t("OZ")}</th><th>{t("Short description")}</th><th className={styles.rechts}>{t("Quantity")}</th><th>{t("Unit")}</th><th className={styles.rechts}>{t("Unit price")}</th><th className={styles.rechts}>{t("Total price")}</th></tr></thead>
             <tbody>
               {lv.positionen.map((p, i) => (
                 <tr key={`${p.oz}-${i}`}>
                   <td className={styles.oz}>{p.oz}</td>
-                  <td>{p.kurztext}</td>
+                  <td>{d(p.kurztext)}</td>
                   <td className={styles.rechts}>{p.menge === null ? "" : zahl.format(p.menge)}</td>
                   <td>{p.einheit ?? ""}</td>
                   <td className={styles.rechts}>{p.ep === null ? "" : euro.format(p.ep)}</td>

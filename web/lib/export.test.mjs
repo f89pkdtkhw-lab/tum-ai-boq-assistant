@@ -59,3 +59,13 @@ test("Findings sheet carries review status and comment, Open when not reviewed",
   assert.deepEqual(tabellen(b)[0].zeilen[2].slice(-2), ["Open", ""], "no decisions means all Open");
   assert.match(xlsxDateien(b, { "01.01-R1": { status: "bestaetigt", kommentar: "" } })["xl/worksheets/sheet1.xml"], /<c r="K2" t="inlineStr" s="1"><is><t xml:space="preserve">Confirmed<\/t>/);
 });
+
+test("with a price report the workbook starts with a summary and the final estimated price", () => {
+  const preis = { war: 1000, geschaetzt: 1100, diff: 100, geaendert: 1,
+    zeilen: [{ oz: "01.001", kurztext: "Aushub", menge: 10, einheit: "m³", war: 1000, geschaetzt: 1100, diff: 100, quelle: "historie", grund: "Past projects: {trade} {d} %", werte: { trade: "Erdarbeiten", d: "+10" } }] };
+  const b = tabellen({ lv: { name: "LV", quelle: "q", positionen: [p("01.001", "Aushub", 10, "m³")], summen: {} }, findings: [], kennzahlen: { modell_mock: true } }, {}, preis);
+  assert.deepEqual(b.slice(0, 2).map((x) => x.name), ["Summary", "Estimated prices"]);
+  assert.deepEqual(b[0].zeilen.find((z) => z[0] === "Final estimated price (EUR)"), ["Final estimated price (EUR)", 1100]);
+  assert.equal(b[1].zeilen[1][7], "Past projects: Erdarbeiten +10 %");
+  assert.deepEqual(b[1].zeilen.at(-1).slice(4, 7), [1000, 1100, 100]);
+});

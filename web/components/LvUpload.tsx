@@ -1,8 +1,11 @@
 "use client";
 
 import { type ChangeEvent, type DragEvent, type FormEvent, useEffect, useRef, useState } from "react";
-import { api, type Health, type LV, type Pruefbericht as PruefberichtDaten } from "@/lib/api";
-import { Pruefbericht } from "@/components/Pruefbericht";
+import { api, type Example, type Health, type LV, type Pruefbericht as PruefberichtDaten } from "@/lib/api";
+import { useT } from "@/lib/einstellungen";
+import { lesePreisliste, speicherePreisliste } from "@/lib/preisliste";
+import { Icon } from "./icon/Icon";
+import { Bericht } from "@/components/bericht/Bericht";
 import { bietetOffline, ladeOfflineBericht } from "@/lib/offline";
 import styles from "./lv-upload.module.css";
 
@@ -26,7 +29,9 @@ type Schritt = { status: SchrittStatus; text: string };
 type Schritte = Record<SchrittId, Schritt>;
 type Lauf =
   | { art: "datei"; datei: File }
-  | { art: "beispiel" };
+  | { art: "beispiel"; id: string | null; titel: string }
+  // A report restored after switching pages; "Review again" re-runs the review on its LV.
+  | { art: "lv"; titel: string; lv: LV };
 type Ergebnis =
   | { phase: "leer" }
   | { phase: "laeuft"; lauf: Lauf; schritte: Schritte }
@@ -76,9 +81,9 @@ function lokalerFehler(datei: File): string | null {
 }
 
 function startSchritte(lauf: Lauf): Schritte {
-  if (lauf.art === "beispiel") {
+  if (lauf.art !== "datei") {
     return {
-      datei: { status: "entfaellt", text: "No upload: the synthetic example is already on the server." },
+      datei: { status: "entfaellt", text: `No upload: “${lauf.titel}” is already on the server.` },
       import: { status: "laeuft", text: "Loading the example BoQ from the server …" },
       pruefung: { status: "wartet", text: "Starts after import." },
     };
@@ -95,6 +100,34 @@ function fehlerText(fehler: unknown) {
   return fehler instanceof Error && fehler.message ? fehler.message : "Unknown error.";
 }
 
+// The open report survives page switches within this tab (sessionStorage, never sent anywhere).
+const AKTUELL = "lv-aktuell-v1";
+type Aktuell = { titel: string; beispielId: string | null; bericht: PruefberichtDaten };
+function speichereAktuell(titel: string, beispielId: string | null, bericht: PruefberichtDaten) {
+  try { window.sessionStorage.setItem(AKTUELL, JSON.stringify({ titel, beispielId, bericht })); } catch { /* too large or blocked: start screen next time */ }
+}
+function ladeAktuell(): Aktuell | null {
+  try {
+    const roh = JSON.parse(window.sessionStorage.getItem(AKTUELL) ?? "null");
+    return roh && typeof roh.titel === "string" && roh.bericht?.lv ? roh : null;
+  } catch {
+    return null;
+  }
+}
+function vergiss() {
+  try { window.sessionStorage.removeItem(AKTUELL); } catch { /* nothing stored */ }
+}
+
+type Rolle = "lv" | "regel" | "preise";
+/** Guesses a file's role from its name and type; the user can change it in the list. */
+function rolleRaten(datei: File, hatLv: boolean): Rolle {
+  const n = datei.name.toLowerCase();
+  if (/preis|price|kosten|tarif/.test(n) || n.endsWith(".csv")) return "preise";
+  if (/\.(x8[1-6]|d8[1-6]|xlsx|xls)$/.test(n)) return "lv";
+  if (/\.(docx|txt)$/.test(n) || /norm|regel|spezif|spec|anforder|vorgabe|din/.test(n)) return "regel";
+  return hatLv ? "regel" : "lv";
+}
+
 async function backendErreichbar() {
   try {
     await api.health();
@@ -107,6 +140,9 @@ async function backendErreichbar() {
 export function LvUpload() {
   const [health, setHealth] = useState<Health | null | "offline">(null);
   const [datei, setDatei] = useState<File | null>(null);
+  // Optional regulation/specification document (team spec, UI step 1). Not analysed yet: no backend service reads it.
+  const [regelwerk, setRegelwerk] = useState<File | null>(null);
+  const [dateien, setDateien] = useState<{ datei: File; rolle: Rolle }[]>([]);
   const [dateiFehler, setDateiFehler] = useState("");
   const [ziehen, setZiehen] = useState(false);
   const [ergebnis, setErgebnis] = useState<Ergebnis>({ phase: "leer" });
@@ -114,8 +150,28 @@ export function LvUpload() {
   const inputRef = useRef<HTMLInputElement>(null);
   const meldungRef = useRef<HTMLDivElement>(null);
 
+  const [beispiele, setBeispiele] = useState<Example[]>([]);
+  const t = useT();
+
   useEffect(() => {
     api.health().then(setHealth).catch(() => setHealth("offline"));
+    // Coming back from another page: show the report that was open instead of the empty start screen.
+    const offen = new URLSearchParams(window.location.search).get("beispiel") ? null : ladeAktuell();
+    if (offen) {
+      const lauf: Lauf = offen.beispielId ? { art: "beispiel", id: offen.beispielId, titel: offen.titel } : { art: "lv", titel: offen.titel, lv: offen.bericht.lv };
+      const fertig: Schritt = { status: "fertig", text: "Restored from this browser session." };
+      setErgebnis({ phase: "fertig", lauf, lv: offen.bericht.lv, bericht: offen.bericht, nummer: ++laufNummer.current, offline: false,
+        schritte: { datei: fertig, import: fertig, pruefung: fertig } });
+    }
+    api.examples().then((liste) => {
+      setBeispiele(liste);
+      // The dashboard opens a past example again with /?beispiel=<id>.
+      const id = new URLSearchParams(window.location.search).get("beispiel");
+      const treffer = liste.find((b) => b.id === id);
+      if (treffer) void starte({ art: "beispiel", id: treffer.id, titel: treffer.titel });
+    }).catch(() => {});
+    // starte is stable enough here: it only runs once, after the example list arrived.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -133,18 +189,28 @@ export function LvUpload() {
     setDateiFehler(neu ? lokalerFehler(neu) ?? "" : "");
   }
 
-  function aufAuswahl(event: ChangeEvent<HTMLInputElement>) {
-    waehleDatei(event.target.files?.[0] ?? null);
+  // Current files with their role; the bill drives the review, the others are attached (see Rolle).
+  function setzeDateien(liste: { datei: File; rolle: Rolle }[]) {
+    setDateien(liste);
+    waehleDatei(liste.find((d) => d.rolle === "lv")?.datei ?? null);
+    setRegelwerk(liste.find((d) => d.rolle === "regel")?.datei ?? null);
+  }
+  function hinzufuegen(neu: File[]) {
+    const liste = [...dateien];
+    for (const f of neu) liste.push({ datei: f, rolle: rolleRaten(f, liste.some((d) => d.rolle === "lv")) });
+    setzeDateien(liste);
   }
 
-  function aufAblegen(event: DragEvent<HTMLLabelElement>) {
+  function aufAuswahl(event: ChangeEvent<HTMLInputElement>) {
+    hinzufuegen([...(event.target.files ?? [])]);
+    event.target.value = "";
+  }
+
+  function aufAblegen(event: DragEvent<HTMLElement>) {
     event.preventDefault();
     setZiehen(false);
     if (busy) return;
-    const neu = event.dataTransfer.files?.[0];
-    if (!neu) return;
-    if (inputRef.current) inputRef.current.value = "";
-    waehleDatei(neu);
+    hinzufuegen([...(event.dataTransfer.files ?? [])]);
   }
 
   async function starte(lauf: Lauf) {
@@ -175,10 +241,13 @@ export function LvUpload() {
     try {
       if (lauf.art === "datei") {
         lv = await api.importiere(lauf.datei);
+      } else if (lauf.art === "lv") {
+        lv = lauf.lv;
       } else {
-        const beispiele = await api.examples();
-        if (beispiele.length === 0) throw new Error("The backend returned no example BoQ.");
-        lv = beispiele[0].lv;
+        const liste = await api.examples();
+        const beispiel = liste.find((b) => b.id === lauf.id) ?? liste[0];
+        if (!beispiel) throw new Error("The backend returned no example BoQ.");
+        lv = beispiel.lv;
       }
     } catch (fehler) {
       let tipp: string | null = null;
@@ -216,6 +285,7 @@ export function LvUpload() {
       pruefung: { status: "fertig", text: `${anzahl(bericht.findings.length, "Entry", "Entries")} in the report.` },
     };
     setErgebnis({ phase: "fertig", lauf, schritte, lv, bericht, nummer, offline: false });
+    speichereAktuell(lauf.art === "datei" ? lauf.datei.name : lauf.titel, lauf.art === "beispiel" ? lauf.id : null, bericht);
     if (health === "offline") api.health().then(setHealth).catch(() => {});
   }
 
@@ -238,82 +308,84 @@ export function LvUpload() {
     });
   }
 
-  function absenden(event: FormEvent) {
+  async function absenden(event: FormEvent) {
     event.preventDefault();
     if (!datei || dateiFehler || busy) return;
+    // A price list goes into the (browser) price database first, so the price report can use it.
+    const preisDatei = dateien.find((d) => d.rolle === "preise")?.datei;
+    if (preisDatei) { try { speicherePreisliste(lesePreisliste(await preisDatei.text())); } catch { /* not readable: review runs without it */ } }
     void starte({ art: "datei", datei });
   }
 
   function zuruecksetzen() {
+    vergiss();
+    setDateien([]);
+    setRegelwerk(null);
     if (inputRef.current) inputRef.current.value = "";
     waehleDatei(null);
     inputRef.current?.focus();
   }
 
   const status = health === null
-    ? { klasse: styles.statusWartet, text: "Checking backend …" }
+    ? { klasse: styles.statusWartet, text: t("Checking backend …") }
     : health === "offline"
-      ? { klasse: styles.statusOffline, text: "Backend offline" }
+      ? { klasse: styles.statusOffline, text: t("Backend offline") }
       : { klasse: health.mock ? styles.statusMock : styles.statusLive, text: `${health.provider} · ${health.model}` };
 
   return (
     <main className={styles.seite}>
       <header className={styles.kopf}>
-        <span className={styles.marke}>◆ BoQ Review Assistant</span>
+        <span className={styles.marke}>{t("Upload & report")}</span>
         <span className={`${styles.status} ${status.klasse}`}>{status.text}</span>
       </header>
 
-      <section className={styles.einleitung} aria-labelledby="upload-titel">
-        <p className={styles.kicker}>Review a bill of quantities</p>
-        <h1 id="upload-titel" className={styles.titel}>Find errors, risks and potential change orders in your BoQ before submitting a bid.</h1>
-        <p className={styles.lead}>
-          Upload a BoQ file. The assistant imports and checks its items, then shows each finding with its item number and source.
-        </p>
-      </section>
-
-      <form className={styles.karte} onSubmit={absenden} aria-describedby="upload-regeln">
-        <label
-          className={`${styles.ablage} ${ziehen ? styles.ablageAktiv : ""} ${busy ? styles.ablageGesperrt : ""}`}
-          onDragOver={(event) => { event.preventDefault(); if (!busy) setZiehen(true); }}
-          onDragLeave={() => setZiehen(false)}
-          onDrop={aufAblegen}
-        >
-          <input
-            ref={inputRef}
-            className={styles.dateiEingabe}
-            type="file"
-            name="datei"
-            accept={ACCEPT}
-            onChange={aufAuswahl}
-            disabled={busy}
-          />
-          <span className={styles.ablageTitel}>{datei ? datei.name : "Choose a BoQ file"}</span>
-          <span className={styles.ablageText}>
-            {datei ? `${groesse(datei.size)} · choose another file or drag it here` : "Click, press Enter or drag a file here"}
-          </span>
+      {ergebnis.phase === "leer" && (<>
+      {/* Start screen from the team sketch: one upload button, the list of current files, Evaluate. */}
+      <form className={styles.start} onSubmit={absenden} aria-describedby="upload-regeln"
+        onDragOver={(e) => { e.preventDefault(); setZiehen(true); }} onDragLeave={() => setZiehen(false)} onDrop={aufAblegen}>
+        <h1 className={styles.startTitel}>{t("New evaluation")}</h1>
+        <label className={`${styles.hochladen} ${ziehen ? styles.ablageAktiv : ""}`}>
+          <input ref={inputRef} className={styles.dateiEingabe} type="file" multiple accept={`${ACCEPT},.csv,.docx,.txt`} onChange={aufAuswahl} disabled={busy} />
+          <Icon name="upload" size={22} /> {t("Upload files")}
         </label>
-        <p id="upload-regeln" className={styles.regeln}>
-          Formats: {FORMATS.map((f) => `${f.name} (${f.endung})`).join(", ")}. Maximum 10 MiB. The file is read only for this review and is not stored.
-        </p>
-        {dateiFehler && <p className={styles.dateiFehler} role="alert">{dateiFehler}</p>}
-        <div className={styles.aktionen}>
-          <button type="submit" className={styles.knopf} disabled={!datei || !!dateiFehler || busy}>
-            {busy && ergebnis.lauf.art === "datei" ? "Reviewing …" : "Review file"}
-          </button>
-          <button type="button" className={styles.knopfZweit} disabled={busy} onClick={() => { waehleDatei(null); if (inputRef.current) inputRef.current.value = ""; void starte({ art: "beispiel" }); }}>
-            {busy && ergebnis.lauf.art === "beispiel" ? "Reviewing example …" : "Review synthetic example"}
-          </button>
-          {datei && !busy && (
-            <button type="button" className={styles.knopfLeise} onClick={zuruecksetzen}>Clear selection</button>
-          )}
-        </div>
-        <p className={styles.regeln}>The example is a synthetic structural works BoQ without partner data and requires no upload.</p>
-      </form>
+        <p id="upload-regeln" className={styles.regeln}>{t("Bill (GAEB, Excel, PDF, JSON), optionally a regulation document and a price list. Drag files here or click.")}</p>
 
-      {ergebnis.phase !== "leer" && (
+        <div className={styles.dateiListe} aria-live="polite">
+          {dateien.length === 0 ? <p className={styles.leerListe}>{t("No files yet")}</p> : dateien.map((d, i) => (
+            <div key={`${d.datei.name}-${i}`} className={styles.dateiZeile}>
+              <Icon name={d.rolle === "lv" ? "report" : d.rolle === "preise" ? "price" : "folder"} />
+              <span className={styles.dateiName}>{d.datei.name} <small>{groesse(d.datei.size)}</small></span>
+              <select value={d.rolle} aria-label={t("Role of {name}", { name: d.datei.name })}
+                onChange={(e) => setzeDateien(dateien.map((x, k) => (k === i ? { ...x, rolle: e.target.value as Rolle } : x)))}>
+                <option value="lv">{t("Bill of quantities")}</option>
+                <option value="regel">{t("Regulation document")}</option>
+                <option value="preise">{t("Price list")}</option>
+              </select>
+              <button type="button" className={styles.entfernen} aria-label={t("Remove")} onClick={() => setzeDateien(dateien.filter((_, k) => k !== i))}>×</button>
+            </div>
+          ))}
+        </div>
+        {dateiFehler && <p className={styles.dateiFehler} role="alert">{dateiFehler}</p>}
+        {dateien.length > 0 && !datei && <p className={styles.dateiFehler} role="alert">{t("Mark one file as the bill of quantities.")}</p>}
+
+        <button type="submit" className={`${styles.knopf} ${styles.auswerten}`} disabled={!datei || !!dateiFehler || busy}>
+          <Icon name="sparkles" /> {t("Evaluate")}
+        </button>
+        <p className={styles.beispielZeile}>{t("No file at hand?")}{" "}
+          {beispiele.map((b) => (
+            <button key={b.id} type="button" className={styles.beispielChip} disabled={busy}
+              onClick={() => { setzeDateien([]); void starte({ art: "beispiel", id: b.id, titel: b.titel }); }}>
+              {t(b.titel)} · {anzahl(b.lv.positionen.length, t("item"), t("items"))}
+            </button>
+          ))}
+        </p>
+      </form>
+      </>)}
+
+      {(ergebnis.phase === "laeuft" || ergebnis.phase === "fehler") && (
         <section className={styles.karte} aria-labelledby="ablauf-titel" aria-busy={busy}>
           <h2 id="ablauf-titel" className={styles.abschnitt}>
-            {ergebnis.lauf.art === "datei" ? `Progress for ${ergebnis.lauf.datei.name}` : "Progress for the synthetic example"}
+            {t("Progress for")} {ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei.name : t(ergebnis.lauf.titel)}
           </h2>
           <ol className={styles.schritte}>
             {(Object.keys(SCHRITT_NAMEN) as SchrittId[]).map((id) => {
@@ -321,49 +393,56 @@ export function LvUpload() {
               return (
                 <li key={id} className={`${styles.schritt} ${styles[`schritt_${schritt.status}`]}`}>
                   <span className={styles.symbol} aria-hidden="true" />
-                  <span className={styles.schrittName}>{SCHRITT_NAMEN[id]}</span>
-                  <span className={styles.schrittStatus}>{STATUS_NAMEN[schritt.status]}</span>
-                  <span className={styles.schrittText}>{schritt.text}</span>
+                  <span className={styles.schrittName}>{t(SCHRITT_NAMEN[id])}</span>
+                  <span className={styles.schrittStatus}>{t(STATUS_NAMEN[schritt.status])}</span>
+                  <span className={styles.schrittText}>{t(schritt.text)}</span>
                 </li>
               );
             })}
           </ol>
           <div aria-live="polite" className={styles.ansage}>
-            {busy && `${SCHRITT_NAMEN[ergebnis.schritte.pruefung.status === "laeuft" ? "pruefung" : "import"]} is running.`}
+            {busy && t("{step} is running.", { step: t(SCHRITT_NAMEN[ergebnis.schritte.pruefung.status === "laeuft" ? "pruefung" : "import"]) })}
           </div>
           {ergebnis.phase === "fehler" && (
             <div ref={meldungRef} tabIndex={-1} className={styles.fehler} role="alert">
-              <h3>{ergebnis.titel}</h3>
-              <p>{ergebnis.meldung}</p>
-              {ergebnis.tipp && <p className={styles.tipp}>{ergebnis.tipp}</p>}
+              <h3>{t(ergebnis.titel)}</h3>
+              <p>{t(ergebnis.meldung)}</p>
+              {ergebnis.tipp && <p className={styles.tipp}>{t(ergebnis.tipp)}</p>}
               <div className={styles.aktionen}>
-                <button type="button" className={styles.knopf} onClick={() => void starte(ergebnis.lauf)}>Try again</button>
+                <button type="button" className={styles.knopf} onClick={() => void starte(ergebnis.lauf)}>{t("Try again")}</button>
                 {ergebnis.offline && (
                   <button type="button" className={styles.knopfZweit} onClick={() => void zeigeOffline(ergebnis.lauf, ergebnis.schritte)}>
-                    Show offline example report
+                    {t("Show offline example report")}
                   </button>
                 )}
                 {ergebnis.lauf.art === "datei" && (
-                  <button type="button" className={styles.knopfZweit} onClick={zuruecksetzen}>Choose another file</button>
+                  <button type="button" className={styles.knopfZweit} onClick={zuruecksetzen}>{t("Choose another file")}</button>
                 )}
               </div>
-            </div>
-          )}
-          {ergebnis.phase === "fertig" && (
-            <div ref={meldungRef} tabIndex={-1} className={styles.erfolg}>
-              <p>
-                {ergebnis.offline
-                  ? <>The backend is unreachable. Below is the saved report for the synthetic example, not an analysis of your file.</>
-                  : <><strong>{anzahl(ergebnis.lv.positionen.length, "Item", "Items")}</strong> imported and reviewed. The review report is below.</>}
-              </p>
-              <button type="button" className={styles.knopfZweit} onClick={() => void starte(ergebnis.lauf)}>Review again</button>
             </div>
           )}
         </section>
       )}
 
       {ergebnis.phase === "fertig" && (
-        <Pruefbericht key={ergebnis.nummer} bericht={ergebnis.bericht} offline={ergebnis.offline} />
+        <div ref={meldungRef} tabIndex={-1} className={`${styles.karte} ${styles.geladen}`}>
+          <p>
+            <span className={styles.haken} aria-hidden="true">✓</span>{" "}
+            {ergebnis.offline
+              ? <>{t("The backend is unreachable. Below is the saved report for the synthetic example, not an analysis of your file.")}</>
+              : <><strong>{ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei.name : t(ergebnis.lauf.titel)}</strong> · {t("{n} items imported and reviewed.", { n: zahl.format(ergebnis.lv.positionen.length) })}
+                {regelwerk && <> · {t("Regulation document")}: {regelwerk.name} ({t("not checked yet")})</>}</>}
+          </p>
+          <div className={styles.aktionen}>
+            <button type="button" className={styles.knopfZweit} onClick={() => void starte(ergebnis.lauf)}>{t("Review again")}</button>
+            <button type="button" className={styles.knopf} onClick={zuruecksetzen}>{t("Load another file")}</button>
+          </div>
+        </div>
+      )}
+
+      {ergebnis.phase === "fertig" && (
+        <Bericht key={ergebnis.nummer} bericht={ergebnis.bericht} offline={ergebnis.offline}
+          anzeigeName={ergebnis.lauf.art === "datei" ? undefined : t(ergebnis.lauf.titel)} />
       )}
     </main>
   );

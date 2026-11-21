@@ -1,0 +1,212 @@
+[
+ {
+  "item": "Abdichtung Bitumenbahn Bodenplatte",
+  "unit": "m²",
+  "price": 50.37
+ },
+ {
+  "item": "Abdichtung Kellerwandabdichtung",
+  "unit": "m²",
+  "price": 49.36
+ },
+ {
+  "item": "Abdichtung Perimeterdämmung",
+  "unit": "m²",
+  "price": 53.89
+ },
+ {
+  "item": "Betonarbeiten Bodenplatte C25/30",
+  "unit": "m³",
+  "price": 283.29
+ },
+ {
+  "item": "Betonarbeiten Stahlbetondecke",
+  "unit": "m³",
+  "price": 263.24
+ },
+ {
+  "item": "Betonarbeiten Stahlbetonwand",
+  "unit": "m³",
+  "price": 267.15
+ },
+ {
+  "item": "Betonarbeiten Streifenfundament",
+  "unit": "m³",
+  "price": 288.43
+ },
+ {
+  "item": "Betonarbeiten Stütze",
+  "unit": "m³",
+  "price": 264.94
+ },
+ {
+  "item": "Bewehrung Anschlussbewehrung",
+  "unit": "t",
+  "price": 1947.4
+ },
+ {
+  "item": "Bewehrung Betonstahl B500B",
+  "unit": "t",
+  "price": 2032.18
+ },
+ {
+  "item": "Bewehrung Betonstahlmatten",
+  "unit": "t",
+  "price": 1946.36
+ },
+ {
+  "item": "Dacharbeiten Attikaabdeckung",
+  "unit": "m²",
+  "price": 112.55
+ },
+ {
+  "item": "Dacharbeiten Flachdachabdichtung",
+  "unit": "m²",
+  "price": 115.79
+ },
+ {
+  "item": "Dacharbeiten Wärmedämmung Dach",
+  "unit": "m²",
+  "price": 111.62
+ },
+ {
+  "item": "Erdarbeiten Baugrubenaushub",
+  "unit": "m³",
+  "price": 30.13
+ },
+ {
+  "item": "Erdarbeiten Bodenaustausch",
+  "unit": "m³",
+  "price": 30.31
+ },
+ {
+  "item": "Erdarbeiten Grabenaushub",
+  "unit": "m³",
+  "price": 32.18
+ },
+ {
+  "item": "Erdarbeiten Oberboden abtragen",
+  "unit": "m³",
+  "price": 29.9
+ },
+ {
+  "item": "Erdarbeiten Verfüllung",
+  "unit": "m³",
+  "price": 30.83
+ },
+ {
+  "item": "Estricharbeiten Heizestrich",
+  "unit": "m²",
+  "price": 34.56
+ },
+ {
+  "item": "Estricharbeiten Trittschalldämmung",
+  "unit": "m²",
+  "price": 34.58
+ },
+ {
+  "item": "Estricharbeiten Zementestrich 50 mm",
+  "unit": "m²",
+  "price": 31.79
+ },
+ {
+  "item": "Fenster Dachflächenfenster",
+  "unit": "St",
+  "price": 1124.84
+ },
+ {
+  "item": "Fenster Holz-Alu 1-flg.",
+  "unit": "St",
+  "price": 1085.13
+ },
+ {
+  "item": "Fenster Kunststoff 2-flg.",
+  "unit": "St",
+  "price": 1084.1
+ },
+ {
+  "item": "Fliesenarbeiten Bodenfliesen 60x60",
+  "unit": "m²",
+  "price": 78.11
+ },
+ {
+  "item": "Fliesenarbeiten Sockelfliesen",
+  "unit": "m²",
+  "price": 79.33
+ },
+ {
+  "item": "Fliesenarbeiten Wandfliesen Bad",
+  "unit": "m²",
+  "price": 77.4
+ },
+ {
+  "item": "Malerarbeiten Dispersionsanstrich",
+  "unit": "m²",
+  "price": 10.87
+ },
+ {
+  "item": "Malerarbeiten Grundierung",
+  "unit": "m²",
+  "price": 10.87
+ },
+ {
+  "item": "Malerarbeiten Tapezierarbeiten Vlies",
+  "unit": "m²",
+  "price": 11.24
+ },
+ {
+  "item": "Mauerarbeiten Außenwand KS 24 cm",
+  "unit": "m²",
+  "price": 74.09
+ },
+ {
+  "item": "Mauerarbeiten Innenwand KS 17,5 cm",
+  "unit": "m²",
+  "price": 78.22
+ },
+ {
+  "item": "Mauerarbeiten Trennwand 11,5 cm",
+  "unit": "m²",
+  "price": 74.11
+ },
+ {
+  "item": "Mauerarbeiten Ziegelmauerwerk 36,5 cm",
+  "unit": "m²",
+  "price": 73.71
+ },
+ {
+  "item": "Putzarbeiten Außenputz mineralisch",
+  "unit": "m²",
+  "price": 32.46
+ },
+ {
+  "item": "Putzarbeiten Innenputz Kalkgips",
+  "unit": "m²",
+  "price": 29.79
+ },
+ {
+  "item": "Putzarbeiten Sockelputz",
+  "unit": "m²",
+  "price": 33.22
+ },
+ {
+  "item": "Sanitär Abwasserleitung DN 100",
+  "unit": "St",
+  "price": 597.75
+ },
+ {
+  "item": "Sanitär Duschrinne",
+  "unit": "St",
+  "price": 635.73
+ },
+ {
+  "item": "Sanitär WC-Anlage komplett",
+  "unit": "St",
+  "price": 633.03
+ },
+ {
+  "item": "Sanitär Waschtisch",
+  "unit": "St",
+  "price": 626.77
+ }
+]

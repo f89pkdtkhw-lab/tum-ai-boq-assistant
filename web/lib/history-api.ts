@@ -85,9 +85,59 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const historyApi = {
-  list: (tag?: string | null) => call<{ items: HistoryCase[] }>(`/api/history${tag ? `?tag=${encodeURIComponent(tag)}` : ""}`).then((b) => b.items),
+  list: (tag?: string | null, limit = 20) => call<{ items: HistoryCase[] }>(`/api/history?limit=${limit}${tag ? `&tag=${encodeURIComponent(tag)}` : ""}`).then((b) => b.items),
   get: (caseId: string) => call<HistoryCase>(`/api/history/${encodeURIComponent(caseId)}`),
+  create: (body: { date: string; lv: CaseLv; estimated_values: Measurement[] }) => call<HistoryCase>("/api/history", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  }),
   update: (caseId: string, update: CaseUpdate) => call<HistoryCase>(`/api/history/${encodeURIComponent(caseId)}`, {
     method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(update),
   }),
 };
+
+export type PastPosition = { case: HistoryCase; oz: string; kurztext: string; estimated: Measurement[]; real: Measurement[]; mark: Mark | null };
+
+const words = (s: string) => s.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 4);
+
+/** Past positions whose short text starts with the same work type as this one (e.g. "Erdarbeiten …"), newest first. */
+// shortcut: matches only on the first word of the short text; upgrade to the history API's similarity search once #18 offers one.
+export function similarPositions(cases: HistoryCase[], kurztext: string | null | undefined, limit = 5): PastPosition[] {
+  const key = words(kurztext ?? "")[0];
+  if (!key) return [];
+  const found: PastPosition[] = [];
+  for (const c of [...cases].sort((a, b) => b.date.localeCompare(a.date))) {
+    for (const p of c.lv.positionen) {
+      if (words(p.kurztext ?? "")[0] !== key) continue;
+      found.push({
+        case: c, oz: p.oz, kurztext: p.kurztext ?? "",
+        estimated: c.estimated_values.filter((m) => m.oz === p.oz), real: c.real_values.filter((m) => m.oz === p.oz),
+        mark: c.marks.find((m) => m.oz === p.oz) ?? null,
+      });
+    }
+  }
+  return found.slice(0, limit);
+}
+
+export type TradeStat = { trade: string; projects: number; withActual: number; avgDeviation: number | null };
+
+/** Average actual-vs-estimate deviation (%) per work type (first word of the short text), worst first. */
+export function deviationByTrade(cases: HistoryCase[]): TradeStat[] {
+  const stats = new Map<string, { projects: Set<string>; devs: number[] }>();
+  for (const c of cases) {
+    for (const p of c.lv.positionen) {
+      const raw = (p.kurztext ?? "").split(/[^\p{L}\p{N}]+/u).find((w) => w.length >= 4);
+      if (!raw) continue;
+      const trade = raw[0].toUpperCase() + raw.slice(1).toLowerCase();
+      const s = stats.get(trade) ?? { projects: new Set(), devs: [] };
+      s.projects.add(c.case_id);
+      const est = c.estimated_values.find((m) => m.oz === p.oz);
+      const real = c.real_values.find((m) => m.oz === p.oz && m.metric === est?.metric);
+      if (est?.value && real?.value != null) s.devs.push(((real.value - est.value) / est.value) * 100);
+      stats.set(trade, s);
+    }
+  }
+  return [...stats].map(([trade, s]) => ({
+    trade, projects: s.projects.size, withActual: s.devs.length,
+    avgDeviation: s.devs.length ? s.devs.reduce((a, b) => a + b, 0) / s.devs.length : null,
+  })).sort((a, b) => Math.abs(b.avgDeviation ?? 0) - Math.abs(a.avgDeviation ?? 0) || a.trade.localeCompare(b.trade));
+}

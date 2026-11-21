@@ -3,6 +3,8 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { historyApi, isMockSource, MARK_STATUSES, type CaseUpdate, type HistoryCase, type Measurement } from "@/lib/history-api";
 import styles from "./history.module.css";
+import { useT } from "@/lib/einstellungen";
+import { ProjektAbschluss } from "./ProjektAbschluss";
 
 const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
 const datum = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -23,6 +25,7 @@ function draftFor(c: HistoryCase): Draft {
 }
 
 export function HistoryView() {
+  const t = useT();
   const [cases, setCases] = useState<HistoryCase[] | null>(null);
   const [tag, setTag] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -32,13 +35,20 @@ export function HistoryView() {
 
   const load = useCallback(async () => {
     try {
-      setCases(await historyApi.list());
+      setCases(await historyApi.list(null, 100));
       setLoadError("");
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "History could not be loaded.");
     }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  // /history?fall=<id> opens that case (used after "Final bill" on the Submit page).
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("fall");
+    const fall = id && cases?.find((c) => c.case_id === id);
+    if (fall && selected !== fall.case_id) open(fall);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cases]);
 
   const tags = useMemo(() => [...new Set((cases ?? []).flatMap((c) => c.tags))].sort(), [cases]);
   const shown = useMemo(
@@ -88,32 +98,34 @@ export function HistoryView() {
   return (
     <div className={styles.seite}>
       <section className={styles.einleitung}>
-        <p className={styles.eyebrow}>Learn from past jobs</p>
-        <h1>Find comparable cases, then record what really happened.</h1>
-        <p className={styles.lead}>Filter by tag, check the description, and enter actual values, comments and marks. Estimates and actuals stay separate.</p>
+        <p className={styles.eyebrow}>{t("Learn from past jobs")}</p>
+        <h1>{t("Find comparable cases, then record what really happened.")}</h1>
+        <p className={styles.lead}>{t("Filter by tag, check the description, and enter actual values, comments and marks. Estimates and actuals stay separate.")}</p>
       </section>
+
+      <ProjektAbschluss onFertig={(fall) => { void load().then(() => open(fall)); }} />
 
       {loadError && (
         <div className={styles.banner} role="alert">
           <span>{loadError}</span>
-          <button type="button" className={styles.knopfZweit} onClick={() => void load()}>Try again</button>
+          <button type="button" className={styles.knopfZweit} onClick={() => void load()}>{t("Try again")}</button>
         </div>
       )}
 
-      <div className={styles.filter} role="group" aria-label="Filter by tag">
-        <button type="button" className={styles.chip} aria-pressed={tag === null} onClick={() => setTag(null)}>All <span>{cases?.length ?? 0}</span></button>
+      <div className={styles.filter} role="group" aria-label={t("Filter by tag")}>
+        <button type="button" className={styles.chip} aria-pressed={tag === null} onClick={() => setTag(null)}>{t("All")} <span>{cases?.length ?? 0}</span></button>
         {tags.map((t) => (
           <button key={t} type="button" className={styles.chip} aria-pressed={tag === t} onClick={() => setTag(tag === t ? null : t)}>
             {t} <span>{cases?.filter((c) => c.tags.includes(t)).length}</span>
           </button>
         ))}
-        <span className={styles.sortiert}>Newest first</span>
+        <span className={styles.sortiert}>{t("Newest first")}</span>
       </div>
 
       <div className={styles.layout}>
-        <ul className={styles.liste} aria-label="Cases">
-          {cases === null && !loadError && <li className={styles.leer}>Loading cases …</li>}
-          {cases !== null && shown.length === 0 && <li className={styles.leer}>No cases with this tag.</li>}
+        <ul className={styles.liste} aria-label={t("Cases")}>
+          {cases === null && !loadError && <li className={styles.leer}>{t("Loading cases …")}</li>}
+          {cases !== null && shown.length === 0 && <li className={styles.leer}>{t("No cases with this tag.")}</li>}
           {shown.map((c) => (
             <li key={c.case_id}>
               <button type="button" className={`${styles.glas} ${styles.karte}`} aria-current={c.case_id === selected} onClick={() => open(c)}>
@@ -123,7 +135,7 @@ export function HistoryView() {
                 </span>
                 <span className={styles.titel}>{c.lv.name}</span>
                 <span className={styles.beschreibung}>
-                  {c.description}{isMockSource(c.source) && <span className={styles.mock}>Mock</span>}
+                  {c.description}{isMockSource(c.source) && <span className={styles.mock}>{t("Mock")}</span>}
                 </span>
                 {c.tags.length > 0 && <span className={styles.tags}>{c.tags.map((t) => <span key={t}>{t}</span>)}</span>}
               </button>
@@ -131,9 +143,9 @@ export function HistoryView() {
           ))}
         </ul>
 
-        <section className={`${styles.glas} ${styles.detail}`} aria-live="polite" aria-label="Case details">
+        <section className={`${styles.glas} ${styles.detail}`} aria-live="polite" aria-label={t("Case details")}>
           {!current || !draft ? (
-            <p className={styles.hinweis}>Select a case to see its estimates and record actual values.</p>
+            <p className={styles.hinweis}>{t("Select a case to see its estimates and record actual values.")}</p>
           ) : (
             <form onSubmit={save} className={styles.formular}>
               <header className={styles.detailKopf}>
@@ -141,15 +153,15 @@ export function HistoryView() {
                 <h2>{current.lv.name}</h2>
                 <p className={styles.beschreibung}>
                   {current.description}
-                  {isMockSource(current.source) && <span className={styles.mock}>Mock · generated, not a fact</span>}
+                  {isMockSource(current.source) && <span className={styles.mock}>{t("Mock · generated, not a fact")}</span>}
                 </p>
               </header>
 
               <fieldset className={styles.gruppe}>
-                <legend>Estimate and actual</legend>
+                <legend>{t("Estimate and actual")}</legend>
                 <div className={styles.rahmen}>
                   <table className={styles.tabelle}>
-                    <thead><tr><th>OZ</th><th>Position</th><th>Metric</th><th className={styles.rechts}>Estimated</th><th>Actual</th><th className={styles.rechts}>Difference</th></tr></thead>
+                    <thead><tr><th>{t("OZ")}</th><th>{t("Position")}</th><th>{t("Metric")}</th><th className={styles.rechts}>{t("Estimated")}</th><th>{t("Actual")}</th><th className={styles.rechts}>{t("Difference")}</th></tr></thead>
                     <tbody>
                       {current.estimated_values.map((m) => {
                         const k = key(m);
@@ -182,22 +194,22 @@ export function HistoryView() {
               </fieldset>
 
               <fieldset className={styles.gruppe}>
-                <legend>Marks per position</legend>
+                <legend>{t("Marks per position")}</legend>
                 {current.lv.positionen.map((p) => (
-                  <div key={p.oz} className={styles.mark}>
+                  <div key={p.oz} className={styles.mark} data-status={draft.marks[p.oz]?.status || undefined}>
                     <label className={styles.feld}>
-                      <span><span className={styles.oz}>{p.oz}</span> status</span>
+                      <span><span className={styles.oz}>{p.oz}</span> {t("status")}</span>
                       <select value={draft.marks[p.oz]?.status ?? ""} onChange={(e) => setMark(p.oz, "status", e.target.value)}>
-                        <option value="">No mark</option>
-                        {MARK_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        <option value="">{t("No mark")}</option>
+                        {MARK_STATUSES.map((s) => <option key={s} value={s}>{t(s)}</option>)}
                       </select>
                     </label>
                     <label className={styles.feld}>
-                      <span>What happened <i>optional</i></span>
+                      <span>{t("What happened")} <i>{t("optional")}</i></span>
                       <input value={draft.marks[p.oz]?.what_happened ?? ""} onChange={(e) => setMark(p.oz, "what_happened", e.target.value)} />
                     </label>
                     <label className={styles.feld}>
-                      <span>Why <i>optional</i></span>
+                      <span>{t("Why")} <i>{t("optional")}</i></span>
                       <input value={draft.marks[p.oz]?.reason ?? ""} onChange={(e) => setMark(p.oz, "reason", e.target.value)} />
                     </label>
                   </div>
@@ -205,10 +217,10 @@ export function HistoryView() {
               </fieldset>
 
               <fieldset className={styles.gruppe}>
-                <legend>Comments</legend>
+                <legend>{t("Comments")}</legend>
                 {current.comments.length > 0 && <ul className={styles.kommentare}>{current.comments.map((c) => <li key={c}>{c}</li>)}</ul>}
                 <label className={styles.feld}>
-                  <span>Add a comment <i>optional</i></span>
+                  <span>{t("Add a comment")} <i>{t("optional")}</i></span>
                   <textarea rows={2} value={draft.comment} onChange={(e) => setDraft((d) => d && { ...d, comment: e.target.value })} />
                 </label>
               </fieldset>

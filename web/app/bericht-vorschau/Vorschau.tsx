@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, type Example, type Pruefbericht as PruefberichtDaten } from "@/lib/api";
 import { Pruefbericht } from "@/components/Pruefbericht";
 import styles from "./vorschau.module.css";
+import { useT } from "@/lib/einstellungen";
 
 type Zustand =
   | { phase: "beispiele" }
@@ -23,6 +24,7 @@ function meldung(fehler: unknown) {
 }
 
 export function Vorschau() {
+  const t = useT();
   const [zustand, setZustand] = useState<Zustand>({ phase: "beispiele" });
   const [beispiele, setBeispiele] = useState<Example[]>([]);
   const [leerTest, setLeerTest] = useState(false);
@@ -63,8 +65,8 @@ export function Vorschau() {
     <main className={styles.seite}>
       <header className={styles.kopf}>
         <div>
-          <p className={styles.kicker}>Preview · synthetic example</p>
-          <h1 className={styles.titel}>Review report for a bill of quantities</h1>
+          <p className={styles.kicker}>{t("Preview · synthetic example")}</p>
+          <h1 className={styles.titel}>{t("Review report for a bill of quantities")}</h1>
           <p className={styles.lead}>
             This page sends a synthetic example BoQ (no partner data) through the review pipeline and shows the result.
             File upload is available on the home page.
@@ -72,7 +74,7 @@ export function Vorschau() {
         </div>
         {beispiele.length > 1 && (
           <label className={styles.auswahl}>
-            Example
+            {t("Example")}
             <select
               value={aktivesBeispiel?.id ?? ""}
               disabled={zustand.phase === "beispiele" || zustand.phase === "pruefen"}
@@ -89,8 +91,8 @@ export function Vorschau() {
 
       {leerTest && (
         <p className={styles.testHinweis} role="note">
-          <strong>Display test:</strong> All entries are hidden to show the empty state. This is not an actual review result.{" "}
-          <a href="/bericht-vorschau">Show actual report</a>
+          <strong>{t("Display test:")}</strong> All entries are hidden to show the empty state. This is not an actual review result.{" "}
+          <a href="/bericht-vorschau">{t("Show actual report")}</a>
         </p>
       )}
 
@@ -99,12 +101,12 @@ export function Vorschau() {
         {zustand.phase === "pruefen" && <Laden text={`Reviewing “${zustand.beispiel.titel}” …`} />}
         {zustand.phase === "fehler" && (
           <div className={styles.fehler} role="alert">
-            <h2>Could not create the report</h2>
+            <h2>{t("Could not create the report")}</h2>
             <p>Step: {zustand.schritt}. {zustand.meldung}</p>
             <p className={styles.tipp}>
-              Is the backend running? Locally, <code>python tools/dev.py</code> starts the UI and backend together.
+              {t("Is the backend running? Locally,")} <code>{t("python tools/dev.py")}</code> {t("starts the UI and backend together.")}
             </p>
-            <button type="button" className={styles.knopf} onClick={() => void lade()}>Try again</button>
+            <button type="button" className={styles.knopf} onClick={() => void lade()}>{t("Try again")}</button>
           </div>
         )}
       </div>
