@@ -20,6 +20,7 @@ Entry points:
     load_env_file(path)                    reads .env.local at app start (environment variables win)
 """
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+import base64
 import contextvars
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
@@ -157,11 +158,12 @@ def status():
     return result
 
 
-def complete(prompt, system="", max_tokens=1024, *, timeout=None, json_mode=False, effort=None):
+def complete(prompt, system="", max_tokens=1024, *, timeout=None, json_mode=False, effort=None, bilder=None):
     """One model call. ``timeout`` (seconds) bounds the HTTP request; ``json_mode`` asks providers
     that support it (Gemini) for a JSON-only answer; ``effort`` (low|medium|high|xhigh|max) sets the
-    Claude effort level (default: ANTHROPIC_EFFORT, else the model default). Raises LLMError with a
-    UI-safe message."""
+    Claude effort level (default: ANTHROPIC_EFFORT, else the model default). ``bilder`` (#192) is a list
+    of JPEG bytes sent before the prompt (Claude only; other providers raise LLMError). Raises LLMError
+    with a UI-safe message."""
     system = sprache.mit_hinweis(system)
     name = provider()
     chosen = model(name)
@@ -171,9 +173,12 @@ def complete(prompt, system="", max_tokens=1024, *, timeout=None, json_mode=Fals
     if not chosen:
         raise LLMError(f"Set LLM_MODEL for {name} (model name from the provider documentation).")
     limit = timeout if timeout and timeout > 0 else seconds()
+    if bilder and name != "anthropic":
+        raise LLMError(f"{name} cannot read page images here; AI page reading needs Claude (LLM_PROVIDER=anthropic).")
+    extra = {"bilder": bilder} if bilder else {}
     try:
         text = {"anthropic": _anthropic, "openai": _openai, "azure": _azure, "gemini": _gemini, "mock": _mock}[name](
-            prompt, system, chosen, max_tokens, json_mode=json_mode, timeout=limit, effort=effort)
+            prompt, system, chosen, max_tokens, json_mode=json_mode, timeout=limit, effort=effort, **extra)
     except LLMError:
         raise
     except httpx.TimeoutException:
@@ -263,10 +268,15 @@ def _post(url, headers, payload, timeout=None):
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
 
 
-def _anthropic(prompt, system, chosen, max_tokens, json_mode=False, timeout=None, effort=None):
+def _anthropic(prompt, system, chosen, max_tokens, json_mode=False, timeout=None, effort=None, bilder=None):
     """Claude Messages API. Current models reject temperature/top_p/top_k, thinking {type: disabled}
     and assistant prefill, so none is sent; JSON comes from the prompt and parse_json()."""
-    payload = {"model": chosen, "max_tokens": max_tokens, "messages": [{"role": "user", "content": prompt}]}
+    content = prompt
+    if bilder:  # #192: page images first, then the instruction text
+        content = [{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
+                                                 "data": base64.b64encode(b).decode("ascii")}} for b in bilder]
+        content.append({"type": "text", "text": prompt})
+    payload = {"model": chosen, "max_tokens": max_tokens, "messages": [{"role": "user", "content": content}]}
     if system:
         payload["system"] = system
     effort = (effort or env("ANTHROPIC_EFFORT")).lower()
