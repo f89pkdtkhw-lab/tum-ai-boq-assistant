@@ -13,7 +13,12 @@ building standards. Positions are only compared within the same title
    Trade sections ("Abdichtungsarbeiten", "Dämmarbeiten") split one building
    part across titles, so they are ignored when grouping; all other title
    levels (objects, building parts) still separate the groups.
-2. Ratio rules (MENGE_VERHAELTNIS): explicitly configured pairs with a
+   A layer of at most SMALL_LAYER_MAX_AREA m² without a named component is
+   compared with all layer items of the same scope (implausibly small area).
+2. Insulation thermal conductivity group (BEZEICHNUNG_ABWEICHUNG): among
+   insulation items of one title naming exactly one group (e.g. WLG 035), a
+   single item with the minority of exactly two groups yields a hint.
+3. Ratio rules (MENGE_VERHAELTNIS): explicitly configured pairs with a
    plausibility range, e.g. reinforcement per m³ concrete. Custom rules (such as
    a synthetic chairs/tables ratio) are passed in via `ratio_rules`.
 """
@@ -22,8 +27,14 @@ from dataclasses import dataclass
 from statistics import median
 
 from ..modelle import Finding, LV, Position
+from .regeln import _bezeichnungen
 
 LAYER_TOLERANCE = 0.10  # assumption: ±10 % from the group median is unremarkable
+# Plausibility assumptions (not standards) for a layer without a named component.
+SMALL_LAYER_MAX_AREA = 1.0  # m²: at most this area counts as implausibly small
+SMALL_LAYER_FACTOR = 20.0  # sibling median must be at least this many times the item's area
+SMALL_LAYER_MIN_SIBLINGS = 3  # layer items (incl. the small one) needed for a comparison
+WLG_MIN_ITEMS = 3  # insulation items with one thermal conductivity group needed for a comparison
 
 LAYER_TERMS = (
     "voranstrich", "schweißbahn", "schweissbahn", "bitumenbahn", "abdichtung",
@@ -176,6 +187,77 @@ def _check_layers(lv: LV) -> list[Finding]:
                 "Check the area against measurements or plans; explain overhangs or partial areas in the detailed description.",
                 "MENGE_SCHICHTEN_ABWEICHUNG",
             ))
+    findings.extend(_check_small_layers(lv, {f.oz for f in findings}))
+    return findings
+
+
+def _check_small_layers(lv: LV, reported: set[str]) -> list[Finding]:
+    """Tiny layer area without a named component, compared with the layers of the same scope."""
+    scopes: dict[tuple[str, ...], list[tuple[Position, float]]] = {}
+    for pos in lv.positionen:
+        if not _contains(pos, LAYER_TERMS):
+            continue
+        quantity = _base_quantity(pos)
+        if quantity is not None and quantity[0] == "m²":
+            scopes.setdefault(_layer_scope(pos), []).append((pos, quantity[1]))
+
+    findings = []
+    for members in scopes.values():
+        if len(members) < SMALL_LAYER_MIN_SIBLINGS:
+            continue
+        for pos, quantity in members:
+            if quantity > SMALL_LAYER_MAX_AREA or pos.oz in reported or _component(pos) is not None:
+                continue
+            others = [(p, q) for p, q in members if p is not pos]
+            mid = median(q for _, q in others)
+            if mid < SMALL_LAYER_FACTOR * quantity:
+                continue
+            ozs = ", ".join(f"OZ {p.oz}" for p, _ in others)
+            findings.append(_hint(
+                f"MENGE_SCHICHTEN_ABWEICHUNG:{pos.oz}", pos.oz, "Implausibly small layer area",
+                (f"{_num(quantity)} m² is far below the median {_num(mid)} m² of the other layers "
+                 f"in section “{_title(pos)}” ({ozs}). "
+                 f"Assumption: tolerance factor {SMALL_LAYER_FACTOR:g}; not a standard."),
+                "Check the area against measurements or plans; a missing component name may hide a partial area.",
+                "MENGE_SCHICHTEN_ABWEICHUNG",
+            ))
+    return findings
+
+
+def _check_wlg(lv: LV) -> list[Finding]:
+    """Insulation item whose thermal conductivity group differs from all its siblings but one group."""
+    by_title: dict[tuple[str, ...], list[tuple[Position, str, str]]] = {}
+    for pos in lv.positionen:
+        if not _contains(pos, ("dämm", "daemm")):
+            continue
+        # Short text first; the long text only when the short text names no group.
+        groups = (_bezeichnungen(pos.kurztext or "").get("thermal conductivity group")
+                  or _bezeichnungen(pos.langtext or "").get("thermal conductivity group", {}))
+        if len(groups) == 1:
+            key, spelling = next(iter(groups.items()))
+            by_title.setdefault(tuple(pos.titel_pfad), []).append((pos, key, spelling))
+
+    findings = []
+    for members in by_title.values():
+        keys = {k for _, k, _ in members}
+        if len(members) < WLG_MIN_ITEMS or len(keys) != 2:
+            continue
+        counts = {k: sum(1 for _, m, _ in members if m == k) for k in keys}
+        minority = [k for k, c in counts.items() if c == 1]
+        if len(minority) != 1:
+            continue
+        pos, _, spelling = next(m for m in members if m[1] == minority[0])
+        majority = next(k for k in keys if k != minority[0])
+        major_spelling = next(sp for _, k, sp in members if k == majority)
+        ozs = ", ".join(f"OZ {p.oz}" for p, k, _ in members if k == majority)
+        findings.append(_hint(
+            f"BEZEICHNUNG_ABWEICHUNG:{pos.oz}", pos.oz, "Deviating thermal conductivity group",
+            (f"“{spelling}” differs from {major_spelling}, used by {ozs} for the insulation items "
+             f"in section “{_title(pos)}”. Assumption: insulation items of one section normally share "
+             f"one thermal conductivity group; not a standard."),
+            "Check whether the deviating thermal conductivity group is intended and align the description if not.",
+            "BEZEICHNUNG_ABWEICHUNG",
+        ))
     return findings
 
 
@@ -219,6 +301,7 @@ def _check_ratio(lv: LV, rule: RatioRule) -> list[Finding]:
 def pruefe_mengen(lv: LV, ratio_rules: tuple[RatioRule, ...] | None = None) -> list[Finding]:
     rules = DEFAULT_RATIO_RULES if ratio_rules is None else ratio_rules
     findings = _check_layers(lv)
+    findings.extend(_check_wlg(lv))
     for rule in rules:
         findings.extend(_check_ratio(lv, rule))
     return findings
