@@ -40,11 +40,13 @@ import re
 import time
 from collections import OrderedDict
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass, field
 from threading import Lock
 
 from ..ai import llm
+from ..fortschritt import Fortschritt, teilschritt
 from ..modelle import (
     Finding, KiSchritt, LV, Position, Pruefbericht, Recherche, RechercheErgebnis, RechercheQuelle,
 )
@@ -456,12 +458,14 @@ def _prompt(gruppe: Gruppe) -> str:
 
 
 def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
-                       einstellungen: Einstellungen | None = None,
-                       fortschritt: Callable[[str], None] | None = None) -> Pruefbericht:
-    """Deep research over the conspicuous parts of a report; never raises.
+                       einstellungen: Einstellungen | None = None, fortschritt: Fortschritt | None = None,
+                       schritt: int = 1, gesamt: int = 1) -> Pruefbericht:
+    """Deep research over the conspicuous parts of a report; never raises (except the job's own
+    ``AnalyseAbgebrochen`` from a progress call).
 
     ``aufruf`` replaces the Claude call (tests); then the provider check is skipped. ``fortschritt``
-    receives short progress texts (for a background job)."""
+    (#165) is the background job's progress; research reports as step ``schritt`` of ``gesamt``. Progress
+    is only reported when research actually runs, so the caller counts the step only then (``aktiv()``)."""
     if aufruf is None:
         laeuft, grund = aktiv()
         if not laeuft:
@@ -481,6 +485,8 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
             status="ok", meldung="Nothing conspicuous to research (no high-severity, risk, Nachtrag, price or "
                                  "report items)."))
     aufruf = aufruf or claude_recherche
+    melde = teilschritt(fortschritt, schritt, gesamt)
+    melde(f"Web research: {len(plan)} group(s) (findings, prices, reports) …", 0.0)
     budget = Budget(cfg.budget)
     frist = time.monotonic() + cfg.timeout
     fehler: list[str] = []
@@ -494,8 +500,6 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
         if rest <= 1:
             budget.abrechnen(reserviert, 0)
             return gruppe, None, "time"
-        if fortschritt:
-            fortschritt(f"Web research: {gruppe.schritt} · {gruppe.name}")
         try:
             antwort = aufruf(_prompt(gruppe), system=SYSTEM, max_uses=reserviert, max_tokens=4000, timeout=rest)
         except Exception:
@@ -508,9 +512,15 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
     paare, aufrufe = [], 0
     try:
         futures = [pool.submit(eine, g) for g in plan]
-        fertig, offen = wait(futures, timeout=cfg.timeout + 1)
-        if offen:
-            fehler.append(f"{len(offen)} research call(s) did not finish within {cfg.timeout:g} s.")
+        fertig = set()
+        try:
+            for future in as_completed(futures, timeout=cfg.timeout + 1):
+                fertig.add(future)
+                gruppe = plan[futures.index(future)]
+                melde(f"Web research: {gruppe.schritt} · {gruppe.name} done ({len(fertig)}/{len(plan)}).",
+                      len(fertig) / len(plan))
+        except FutureTimeout:
+            fehler.append(f"{len(plan) - len(fertig)} research call(s) did not finish within {cfg.timeout:g} s.")
         for future in futures:
             if future not in fertig:
                 continue
@@ -543,6 +553,10 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
         teile.append(f"{ausgelassen} group(s) skipped (search budget or time limit).")
     teile.extend(fehler)
     status = "ok" if not fehler else "teilweise" if ergebnisse else "fehler"
+    for text in fehler:
+        if fortschritt is not None:
+            fortschritt.fehler(f"Web research: {text}")
+    melde(f"Web research: {teile[0]}", 1.0)
     return _mit_recherche(neuer, Recherche(
         status=status, meldung=" ".join(teile), aufrufe=aufrufe, suchen=budget.verbraucht,
         ergebnisse=sorted(ergebnisse, key=lambda r: ("positionen", "preise", "berichte").index(r.schritt))))

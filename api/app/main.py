@@ -31,7 +31,7 @@ from .risiko.scoring import bewerte
 from . import analyse_job  # #165: background analysis jobs
 from .fortschritt import OHNE_FORTSCHRITT, Fortschritt  # #165: progress API
 from .fortschritt import teilschritt  # #166: N5 research rounds report under step 5
-from .pruefung.recherche import vertiefe_recherche  # E #169: deep web research (Claude key only)
+from .pruefung.recherche import aktiv as recherche_aktiv, vertiefe_recherche  # E #169: deep web research
 
 from .ai import step_api
 from .ai import ki_status  # D #168
@@ -145,7 +145,19 @@ async def import_lv(datei: UploadFile):
 
 @app.post("/api/lv/pruefen", response_model=Pruefbericht)
 def pruefen(lv: LV):
-    return vertiefe_recherche(_pruefbericht(lv))  # E #169: unchanged without a Claude key
+    return _pruefen(lv)
+
+
+def _recherche_schritte() -> int:
+    """E #169: deep research is one more progress step, counted only when it runs (Claude with a key)."""
+    return 1 if recherche_aktiv()[0] else 0
+
+
+def _pruefen(lv: LV, fortschritt: Fortschritt | None = None):
+    """The /api/lv/pruefen pipeline plus deep research (E #169; unchanged without a Claude key)."""
+    gesamt = PRUEF_SCHRITTE + _recherche_schritte()
+    bericht = _pruefbericht(lv, fortschritt=fortschritt, gesamt=gesamt)
+    return vertiefe_recherche(bericht, fortschritt=fortschritt, schritt=gesamt, gesamt=gesamt)
 
 
 PRUEF_SCHRITTE = 7  # #165: steps of `_pruefbericht`; `_analyse` adds the price calculation as step 8
@@ -242,17 +254,18 @@ def analyse(anfrage: AnalyseAnfrage):
 
 def _analyse(anfrage: AnalyseAnfrage, fortschritt: Fortschritt | None = None):
     melde = fortschritt or OHNE_FORTSCHRITT
-    gesamt = PRUEF_SCHRITTE + 1
+    preis_schritt = PRUEF_SCHRITTE + 1
+    gesamt = preis_schritt + _recherche_schritte()  # E #169: + deep research when it runs
     vorgaben = vorgaben_aus_regelwerk(anfrage.regelwerk)  # B3 #96 -> B2 check 1 (lower/bigger/missing/extra)
     bericht = _pruefbericht(anfrage.lv, vorgaben, fortschritt, gesamt)
     # B6 #112 / B9 #133: upload first, price database fills the gaps; no price source → no `kalkulation` field
-    melde(gesamt, gesamt, "Pricing the bill (price list, price database) …")
+    melde(preis_schritt, gesamt, "Pricing the bill (price list, price database) …")
     bericht.kalkulation = kalkuliere_mit_preis_db(anfrage.lv, anfrage.preisliste)
     if bericht.kalkulation is not None:  # B8 #114: adjustments + estimated bill, only with a price source
         bericht = ergaenze_geschaetztes_lv(bericht, anfrage.preisliste)
-    melde(gesamt, gesamt, "Price calculation: no price source." if bericht.kalkulation is None
+    melde(preis_schritt, gesamt, "Price calculation: no price source." if bericht.kalkulation is None
           else "Price calculation and estimated bill done.", 1.0)
-    return vertiefe_recherche(bericht)  # E #169: unchanged without a Claude key
+    return vertiefe_recherche(bericht, fortschritt=fortschritt, schritt=gesamt, gesamt=gesamt)  # E #169
 
 
 # --- Background analysis job with progress (#165, package F) ---------------------------------------
@@ -266,9 +279,9 @@ class AnalyseJobAnfrage(AnalyseAnfrage):
 def analyse_start(anfrage: AnalyseJobAnfrage):
     """Starts the analysis in a background thread and answers at once; poll …/status/{job_id}."""
     if anfrage.nur_pruefen:
-        arbeit, gesamt = (lambda f: _pruefbericht(anfrage.lv, fortschritt=f)), PRUEF_SCHRITTE
+        arbeit, gesamt = (lambda f: _pruefen(anfrage.lv, f)), PRUEF_SCHRITTE + _recherche_schritte()  # E #169
     else:
-        arbeit, gesamt = (lambda f: _analyse(anfrage, f)), PRUEF_SCHRITTE + 1
+        arbeit, gesamt = (lambda f: _analyse(anfrage, f)), PRUEF_SCHRITTE + 1 + _recherche_schritte()
     try:
         return analyse_job.AnalyseStart(job_id=analyse_job.starte(arbeit, gesamt))
     except analyse_job.ZuVieleJobs as exc:

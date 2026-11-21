@@ -222,3 +222,40 @@ def test_claude_http_error_is_ui_safe(monkeypatch):
     with pytest.raises(llm.LLMError) as info:
         recherche.claude_recherche("p", max_uses=1, timeout=5)
     assert "HTTP 401" in str(info.value) and "secret-value" not in str(info.value)
+
+
+def test_progress_reports_one_step_with_shares_and_visible_errors():
+    from app.fortschritt import Aufzeichnung
+    aufzeichnung = Aufzeichnung()
+    bericht = _bericht([_finding("01.01"), _finding("01.02")])  # two trades → two groups
+    recherche.vertiefe_recherche(bericht, aufruf=Stub(), einstellungen=_cfg(), fortschritt=aufzeichnung,
+                                 schritt=9, gesamt=9)
+    assert {(s, g) for s, g, _, _ in aufzeichnung.meldungen} == {(9, 9)}
+    assert aufzeichnung.meldungen[0][3] == 0.0 and aufzeichnung.meldungen[-1][3] == 1.0
+    assert aufzeichnung.fehlerliste == []
+
+    def kaputt(*a, **k):
+        raise llm.LLMError("anthropic research returned HTTP 529.")
+    aufzeichnung = Aufzeichnung()
+    recherche.vertiefe_recherche(bericht, aufruf=kaputt, einstellungen=_cfg(), fortschritt=aufzeichnung)
+    assert aufzeichnung.fehlerliste == ["Web research: anthropic research returned HTTP 529."]
+
+
+def test_job_with_claude_counts_the_research_step(monkeypatch):
+    from app.pruefung import llm_pruefung
+    from tests.test_api_analyse_job import warte
+    monkeypatch.delenv("DEEP_RESEARCH")
+    monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "synthetic-not-a-key")
+    monkeypatch.setenv("NORM_KI_RECHERCHE", "off")
+    monkeypatch.setattr(main, "pruefe_mit_llm_status", llm_pruefung.mock_pruefung)
+    stub = Stub()
+    monkeypatch.setattr(recherche, "claude_recherche", stub)
+    lv = LV.model_validate_json((DATA / "beispiel_lv.json").read_bytes()).model_dump(mode="json")
+    client = TestClient(main.app)
+    stand = warte(client.post("/api/lv/analyse/start", json={"lv": lv, "nur_pruefen": True}).json()["job_id"])
+    assert stand["status"] == "fertig" and stand["schritte_gesamt"] == 8
+    assert stand["fertige_schritte"][-1]["meldung"].startswith("Web research:")
+    assert stand["ergebnis"]["recherche"]["status"] == "ok" and stub.calls
+    sync = client.post("/api/lv/pruefen", json=lv).json()
+    assert sync["recherche"] == stand["ergebnis"]["recherche"]
