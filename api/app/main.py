@@ -61,6 +61,10 @@ try:
 except Exception as exc:  # the optional DB service must not stop the API from starting
     logging.getLogger(__name__).warning("DB router not mounted: %s", exc)
 
+# Project close → history record (D3, #154): POST /api/db/abschluss; the DB itself is imported lazily.
+from .abschluss_api import router as abschluss_router  # noqa: E402
+app.include_router(abschluss_router)
+
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     use_data: bool = True
