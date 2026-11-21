@@ -11,6 +11,8 @@ sources found with the server-side ``web_search`` tool, and every result names i
 - ``berichte``: Reports 2/3 problems of similar projects and what-if items; Claude checks how likely they
   are for this kind of work.
 
+Every call goes through the shared research helper ``llm.research`` of package A (#166).
+
 Cost and time are bounded (never one call per item of a 2,500-item bill):
 
     DEEP_RESEARCH            0/off/false/no switches it off (default on when Claude has a key)
@@ -42,8 +44,6 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from threading import Lock
 
-import httpx
-
 from ..ai import llm
 from ..modelle import (
     Finding, LV, Position, Pruefbericht, Recherche, RechercheErgebnis, RechercheQuelle,
@@ -52,14 +52,12 @@ from ..modelle import (
 log = logging.getLogger(__name__)
 
 AUS = frozenset({"0", "off", "false", "no", "aus"})
-TOOL_TYPE = "web_search_20250305"
 REGEL_PREIS = "RECHERCHE_MARKTPREIS"
 PREIS_SCHWELLE = 0.30  # relative EP deviation that makes a price conspicuous
 MAX_LANGTEXT = 400
 MAX_BEFUNDTEXT = 300
 MAX_TEXT = 600
 MAX_QUELLEN = 4
-MAX_FORTSETZUNGEN = 3  # pause_turn continuations per call
 OHNE_ABSCHNITT = "Without section"
 EINSCHAETZUNGEN = {
     "positionen": ("bestaetigt", "abgeschwaecht", "unklar"),
@@ -166,7 +164,7 @@ def aktiv() -> tuple[bool, str | None]:
 
 
 # ----------------------------------------------------------------------------------------------
-# One research call: Claude Messages API with the server web_search tool
+# One research call: the shared web research helper of package A (llm.research)
 # ----------------------------------------------------------------------------------------------
 @dataclass
 class Antwort:
@@ -185,90 +183,19 @@ def _url(roh) -> str | None:
     return url.rstrip("/") if re.match(r"^https?://[^\s]+$", url) else None
 
 
-def _sammle_quellen(inhalt: list, quellen: dict[str, str]) -> None:
-    for block in inhalt:
-        if not isinstance(block, dict):
-            continue
-        if block.get("type") == "web_search_tool_result" and isinstance(block.get("content"), list):
-            for treffer in block["content"]:
-                url = _url(treffer.get("url")) if isinstance(treffer, dict) else None
-                if url:
-                    quellen.setdefault(url, str(treffer.get("title") or "")[:200])
-        for zitat in block.get("citations") or []:
-            url = _url(zitat.get("url")) if isinstance(zitat, dict) else None
-            if url:
-                quellen.setdefault(url, str(zitat.get("title") or "")[:200])
-
-
 def claude_recherche(prompt: str, system: str = "", *, max_uses: int, max_tokens: int = 4000,
                      timeout: float = 60.0) -> Antwort:
-    """One Claude call with web search; continues ``pause_turn``. Raises ``llm.LLMError`` (UI-safe)."""
-    research = getattr(llm, "research", None)  # package A (#166) shares this helper when it is merged
-    if callable(research):
-        roh = research(prompt, system=system, max_uses=max_uses, max_tokens=max_tokens, timeout=timeout)
-        return _von_llm_research(roh)
-    gesendet = {"model": llm.model("anthropic"), "max_tokens": max_tokens, "system": system,
-                "messages": [{"role": "user", "content": prompt}],
-                "tools": [{"type": TOOL_TYPE, "name": "web_search", "max_uses": max_uses}]}
-    kopf = {"x-api-key": llm.env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01",
-            "content-type": "application/json"}
-    ziel = llm.env("ANTHROPIC_BASE_URL") or "https://api.anthropic.com/v1/messages"
-    frist = time.monotonic() + timeout
-    antwort = Antwort("", suchen=0)
-    teile: list[str] = []
-    try:
-        for _ in range(MAX_FORTSETZUNGEN + 1):
-            rest = frist - time.monotonic()
-            if rest <= 0:
-                raise llm.LLMError(f"anthropic research did not finish within {timeout:g} s.")
-            daten = llm._post(ziel, kopf, gesendet, rest)
-            inhalt = daten.get("content") or []
-            _sammle_quellen(inhalt, antwort.quellen)
-            nutzung = ((daten.get("usage") or {}).get("server_tool_use") or {}).get("web_search_requests")
-            antwort.suchen += nutzung if isinstance(nutzung, int) else sum(
-                1 for b in inhalt if isinstance(b, dict) and b.get("type") == "server_tool_use")
-            teile.extend(b.get("text", "") for b in inhalt if isinstance(b, dict) and b.get("type") == "text")
-            stop = daten.get("stop_reason")
-            if stop == "pause_turn":
-                gesendet = {**gesendet, "messages": [*gesendet["messages"],
-                                                     {"role": "assistant", "content": inhalt}]}
-                continue
-            if stop == "refusal":
-                raise llm.LLMError("anthropic declined the research request (refusal).")
-            if stop == "max_tokens":
-                raise llm.LLMError(f"anthropic research stopped at max_tokens ({max_tokens}).")
-            break
-        else:
-            raise llm.LLMError("anthropic research paused too often; stopped.")
-    except llm.LLMError:
-        raise
-    except httpx.TimeoutException:
-        raise llm.LLMError(f"anthropic research did not answer within {timeout:g} s.") from None
-    except httpx.HTTPStatusError as exc:
-        code = exc.response.status_code
-        hint = "Rate limit reached; wait a minute." if code == 429 else "Check the key, model and web search access."
-        raise llm.LLMError(f"anthropic research returned HTTP {code}. {hint}") from None
-    except httpx.HTTPError:
-        raise llm.LLMError("anthropic is unreachable for research.") from None
-    except (KeyError, IndexError, TypeError, ValueError, AttributeError):
-        raise llm.LLMError("anthropic research returned an unexpected response.") from None
-    antwort.text = "".join(teile).strip()
-    if not antwort.text:
-        raise llm.LLMError("anthropic research returned no text.")
-    return antwort
-
-
-def _von_llm_research(roh) -> Antwort:
-    """Adapter for the shared helper of package A: accepts an object or dict with text/sources."""
-    hole = (lambda k: roh.get(k)) if isinstance(roh, dict) else (lambda k: getattr(roh, k, None))
+    """One research call through the shared helper ``llm.research`` (package A, #166): Claude with the
+    server web_search tool, pause_turn handled there. Raises ``llm.LLMError`` (UI-safe)."""
+    roh = llm.research(prompt, system, max_tokens, max_searches=max_uses, timeout=timeout)
+    if not roh.web_search:
+        raise llm.LLMError(f"{roh.provider} has no web search; deep research needs Claude.")
     quellen: dict[str, str] = {}
-    for q in hole("sources") or hole("quellen") or []:
-        url = _url(q.get("url") if isinstance(q, dict) else getattr(q, "url", None))
+    for eintrag in [*roh.sources, *roh.citations]:  # only URLs this call actually saw or cited
+        url = _url(eintrag.url)
         if url:
-            titel = q.get("title") if isinstance(q, dict) else getattr(q, "title", "")
-            quellen.setdefault(url, str(titel or "")[:200])
-    suchen = hole("searches") if hole("searches") is not None else hole("suchen")
-    return Antwort(str(hole("text") or "").strip(), quellen, suchen if isinstance(suchen, int) else None)
+            quellen.setdefault(url, (eintrag.title or "")[:200])
+    return Antwort(roh.text, quellen, roh.searches)
 
 
 # ----------------------------------------------------------------------------------------------

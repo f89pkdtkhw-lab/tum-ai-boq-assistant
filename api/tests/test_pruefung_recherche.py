@@ -171,7 +171,6 @@ def _antwort(content, stop="end_turn", searches=1):
 
 def test_claude_call_sends_web_search_tool_and_continues_pause_turn(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "fake")
-    monkeypatch.setattr(llm, "research", None, raising=False)
     gesendet = []
     antworten = [
         _antwort([{"type": "server_tool_use", "id": "s1", "name": "web_search", "input": {"query": "q"}},
@@ -188,6 +187,7 @@ def test_claude_call_sends_web_search_tool_and_continues_pause_turn(monkeypatch)
         return antworten[len(gesendet) - 1]
 
     monkeypatch.setattr(llm, "_post", post)
+    monkeypatch.setenv("LLM_PROVIDER", "anthropic")
     antwort = recherche.claude_recherche("prompt", "system", max_uses=2, timeout=5)
     assert gesendet[0]["tools"] == [{"type": "web_search_20250305", "name": "web_search", "max_uses": 2}]
     assert not {"temperature", "top_p", "top_k", "thinking"} & set(gesendet[0])
@@ -202,20 +202,20 @@ def test_claude_call_sends_web_search_tool_and_continues_pause_turn(monkeypatch)
 ])
 def test_claude_call_raises_readable_errors(monkeypatch, daten, meldung):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "fake")
-    monkeypatch.setattr(llm, "research", None, raising=False)
     monkeypatch.setattr(llm, "_post", lambda *a, **k: daten)
+    monkeypatch.setenv("LLM_PROVIDER", "anthropic")
     with pytest.raises(llm.LLMError, match=meldung):
         recherche.claude_recherche("p", max_uses=1, timeout=5)
 
 
 def test_claude_http_error_is_ui_safe(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "secret-value")
-    monkeypatch.setattr(llm, "research", None, raising=False)
 
     def post(*a, **k):
         raise httpx.HTTPStatusError("x", request=httpx.Request("POST", "https://x"), response=httpx.Response(401))
 
     monkeypatch.setattr(llm, "_post", post)
+    monkeypatch.setenv("LLM_PROVIDER", "anthropic")
     with pytest.raises(llm.LLMError) as info:
         recherche.claude_recherche("p", max_uses=1, timeout=5)
     assert "HTTP 401" in str(info.value) and "secret-value" not in str(info.value)
