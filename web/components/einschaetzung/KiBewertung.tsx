@@ -29,9 +29,15 @@ export function KiBewertung({ daten, fehler }: { daten: AiEvaluation | null; feh
     <div className={styles.ki} aria-live="polite">
       <div className={styles.kopf}>
         <h4 className={styles.titel}><span className={styles.symbol} aria-hidden="true">✦</span>{t("AI evaluation")}</h4>
-        <span className={styles.quelle} title={t("Runs as an offline mock: the answer is derived only from the evidence above. A live model returns the same structure.")}>
-          {t("model · offline mock")}
-        </span>
+        {daten?.source === "model" ? (
+          <span className={styles.quelle} title={t("Answered by the configured model from the evidence above; numbers outside the evidence are dropped.")}>
+            {t("model")} · {daten.model ?? "live"}
+          </span>
+        ) : (
+          <span className={styles.quelle} title={t("Runs as an offline mock: the answer is derived only from the evidence above. A live model returns the same structure.")}>
+            {t("model · offline mock")}
+          </span>
+        )}
       </div>
       {!fehler && daten?.reason && <p className={styles.fehler} role="note">{t("Offline mock instead of the configured model")}: {daten.reason}</p>}
       {fehler ? <p className={styles.fehler} role="alert">{t("AI evaluation unavailable")}: {fehler}</p>

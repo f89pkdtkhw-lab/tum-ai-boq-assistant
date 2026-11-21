@@ -22,8 +22,8 @@ export type Finding = {
 };
 export type Kennzahlen = {
   positionen: number; findings: number; kritisch: number; modell_mock: boolean;
-  // #147/#168, optional: why the configured model was not used (mock fallback) and which model reviewed.
-  modell_reason?: string | null; modell?: string | null;
+  // #147/#168/#167, optional: why the model was not (fully) used, which model reviewed, batches sent and failed.
+  modell_reason?: string | null; modell?: string | null; modell_batches?: number | null; modell_batches_fehlgeschlagen?: number | null;
 };
 // D (#168): how each AI step ran; absent when every step ran as the configured mock (no key).
 export type KiSchrittStatus = "ok" | "mock" | "fehler" | "aus";
@@ -60,9 +60,18 @@ export type GeschaetztesLv = {
 export type Pruefbericht = {
   lv: LV; findings: Finding[]; kennzahlen: Kennzahlen; zusammenfassung?: Zusammenfassung;
   kalkulation?: Kalkulation | null; anpassungen?: Anpassung[] | null; geschaetztes_lv?: GeschaetztesLv | null;
-  berichte?: Bericht[] | null; was_wenn?: WasWenn[] | null;
+  berichte?: Bericht[] | null; was_wenn?: WasWenn[] | null; schlussbericht?: Schlussbericht | null;
   ki_schritte?: KiSchritt[] | null; // D #168
 };
+// Final report (epic #93 B5, shown and exported since #167): one row per bill item, none dropped.
+export type ProblemVerweis = {
+  finding_id: string; schwere: Finding["schwere"]; titel: string; quelle: "regel" | "modell"; regel_id: string; bericht?: BerichtId;
+};
+export type SchlussPosition = {
+  oz: string; kurztext: string; menge: number | null; einheit: string | null; geschaetzt: number | null; abweichung: number | null;
+  abweichung_eur: number | null; warum: string; nachtrag: string[]; probleme: ProblemVerweis[]; warnungen: string[]; empfehlungen: string[];
+};
+export type Schlussbericht = { projektbeschreibung: string; positionen: SchlussPosition[]; allgemein: ProblemVerweis[]; warnungen: string[] };
 // Three reports, final report and what-if list (epic #93 B5): optional, absent on older backends.
 export type BerichtId = "regelwerk" | "vergleich" | "was_wenn";
 export type WasWenn = { oz: string | null; problem: string; chance: "hoch" | "niedrig"; empfehlung: string; case_ids: string[]; begruendung?: string };
@@ -115,7 +124,8 @@ export type AiEvaluation = {
   decision: "go" | "go_with_conditions" | "no_go"; headline: string; summary: string;
   predictions: { title: string; low: number | null; high: number | null; unit: string; confidence: "low" | "medium" | "high"; basis: string }[];
   recommendations: { priority: "now" | "before_bid" | "pricing" | "negotiation"; title: string; why: string }[];
-  source: "model_mock";
+  source: "model_mock" | "model";
+  model?: string | null; // #167: live model name
   reason?: string | null; // D #168: why a configured model did not answer
 };
 

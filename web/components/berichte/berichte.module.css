@@ -35,3 +35,8 @@
 .endScore { margin: 0; font-size: 22px; font-weight: 700; }
 .abzuege { margin: 0; padding-left: 18px; color: var(--pb-muted); font-size: 13.5px; }
 .unter { margin: 6px 0 0; font-size: 14.5px; }
+/* Final report table (#167), same tokens as the tables above. */
+.werkzeug { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.zellListe { margin: 0; padding-left: 16px; display: grid; gap: 2px; }
+.zellKnopf { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.zellKnopf:hover { color: var(--pb-accent); }

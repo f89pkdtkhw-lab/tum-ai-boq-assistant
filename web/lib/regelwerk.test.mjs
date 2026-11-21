@@ -8,8 +8,8 @@ const r = { id: "r1", dateiname: "spec.txt", warnungen: [], normverweise: [{ nor
   kennwerte: [{ norm: null, kennwert: "a", wert: "1", einheit: null, fundstelle: "x" }, { norm: null, kennwert: "b", wert: "2", einheit: null, fundstelle: "x" }] };
 const p = { id: "p1", dateiname: "prices.csv", waehrung: "EUR", warnungen: [], eintraege: [] };
 
-test("request building: bill only keeps the old flow, any attachment uses /api/lv/analyse", () => {
-  assert.equal(analyseAnfrage(lv, null, null), null);
+test("request building: always /api/lv/analyse, also for a bill without attachments (#167)", () => {
+  assert.deepEqual(analyseAnfrage(lv, null, null), { lv, regelwerk: null, preisliste: null });
   assert.deepEqual(analyseAnfrage(lv, r, null), { lv, regelwerk: r, preisliste: null });
   assert.deepEqual(analyseAnfrage(lv, null, p), { lv, regelwerk: null, preisliste: p });
   assert.deepEqual(analyseAnfrage(lv, r, p), { lv, regelwerk: r, preisliste: p });

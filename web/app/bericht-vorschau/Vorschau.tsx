@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, type Example, type Pruefbericht as PruefberichtDaten } from "@/lib/api";
 import { Pruefbericht } from "@/components/Pruefbericht";
 import { demoKalkulation } from "@/lib/kalkulation";
+import { routeFehlt } from "@/lib/regelwerk";
 import styles from "./vorschau.module.css";
 import { useT } from "@/lib/einstellungen";
 
@@ -35,7 +36,8 @@ export function Vorschau() {
   const pruefe = useCallback(async (beispiel: Example) => {
     setZustand({ phase: "pruefen", beispiel });
     try {
-      const bericht = await api.pruefen(beispiel.lv);
+      const bericht = await api.analyse({ lv: beispiel.lv, regelwerk: null, preisliste: null }) // #167: full analysis
+        .catch((fehler) => (routeFehlt(fehler) ? api.pruefen(beispiel.lv) : Promise.reject(fehler)));
       setZustand({ phase: "fertig", beispiel, bericht });
     } catch (fehler) {
       setZustand({ phase: "fehler", schritt: "Reviewing the BoQ", meldung: meldung(fehler) });

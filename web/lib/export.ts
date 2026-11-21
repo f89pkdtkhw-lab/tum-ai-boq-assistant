@@ -5,6 +5,7 @@ import { bewertungVon, statusName, type Bewertungen } from "./bewertung";
 import { bieterfragen } from "./bieterfragen";
 import { mengenSummen } from "./mengen";
 import { statusInfo } from "./kalkulation";
+import { schlussTabelle } from "./schlussbericht";
 
 export const MOCK_REGEL = "MOCK_LLM";
 
@@ -116,7 +117,14 @@ export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}, p
     { name: "Findings", zeilen: befunde }, { name: "Items", zeilen: positionen },
     { name: "Quantities", zeilen: mengen }, { name: "Bidder questions", zeilen: fragen },
     ...kalkulationsTabellen(bericht),
+    ...schlussBlatt(bericht),
   ];
+}
+
+/** "Final report" sheet (#167): every item with problems, ± approximation, need to add and recommendations. */
+function schlussBlatt(bericht: Pruefbericht): Tabelle[] {
+  const zeilen = schlussTabelle(bericht);
+  return zeilen ? [{ name: "Final report", zeilen }] : [];
 }
 
 // ---------- XLSX (Office Open XML) ----------

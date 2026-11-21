@@ -451,6 +451,7 @@ export const DE: Record<string, string> = {
   "Re-check {n} unusual unit prices in the Prices tab.": "{n} auffällige Einheitspreise im Reiter Preise prüfen.",
   "Recommendations": "Empfehlungen",
   "Runs as an offline mock: the answer is derived only from the evidence above. A live model returns the same structure.": "Läuft als Offline-Mock: Die Antwort ergibt sich nur aus den Belegen oben. Ein Live-Modell liefert dieselbe Struktur.",
+  "Answered by the configured model from the evidence above; numbers outside the evidence are dropped.": "Vom konfigurierten Modell aus den Belegen oben beantwortet; Zahlen außerhalb der Belege werden verworfen.",
   "Same short text and unit are compared. Unusual means outside 1.5 × the middle spread (IQR) and 20 % off the median; outlier means outside 3 ×. ◆ marks the median unit price of past projects of the same trade.": "Verglichen werden gleicher Kurztext und gleiche Einheit. Auffällig heißt außerhalb des 1,5-fachen Interquartilsabstands (IQR) und mindestens 20 % vom Median entfernt; Ausreißer heißt außerhalb des 3-fachen. ◆ markiert den Median-EP früherer Projekte desselben Gewerks.",
   "Unit price check": "Einheitspreis-Prüfung (Preisspiegel)",
   "Unit price range": "Spanne der Einheitspreise",
