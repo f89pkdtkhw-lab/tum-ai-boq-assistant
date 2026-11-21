@@ -39,6 +39,16 @@ The board is pinned issue #1. All agents read and post using `tools/board` (macO
 
 **Situation report:** `python tools/stand.py` shows active (`in-arbeit`), ready (`agent-bereit`) and blocked (`blockiert`) issues, open PRs with CI, and overlap warnings. `python tools/stand.py --naechstes` suggests the next available issue. Every First Mate runs it each round; every worker runs it before starting work.
 
+## Pinboard: who works on what
+
+An issue is **in progress** when it has the `in-arbeit` label, or when an open pull request mentions it with `Closes #n`, `Fixes #n`, `Resolves #n` or `Refs #n` in the title or body. An issue labelled `blockiert` is blocked. Otherwise it is free. This applies to every person and every agent, so two crews never work on the same issue.
+
+1. Before starting, confirm the issue is free: no `in-arbeit`, no open PR with `Closes`/`Fixes`/`Resolves`/`Refs #n`, and not `blockiert`.
+2. When you start, set the label and assign yourself: `gh issue edit <n> --add-label in-arbeit --add-assignee @me`. `python tools/aufgabe.py <n> --uebernehmen` does this and also creates the worktree.
+3. Every pull request names the issue with `Closes #n` (or `Refs #n` for partial work).
+4. If you stop or pause without an open PR, remove the `in-arbeit` label so the issue becomes free again.
+5. Do not take an issue assigned to someone else unless they agree on the board.
+
 ## 3. Ownership
 
 Each area has a primary owner so two agents never rewrite the same file simultaneously. Prefer your own folders. Before touching another owner's file, post briefly on the board (`@<owner> I am changing X in file Y because …`) and proceed unless someone objects within 10 minutes. Exception: the one-time kickoff interface PR (`kickoff` skill). The lead's integration crew may create the necessary files across areas and announces them with `@all`.
@@ -59,13 +69,13 @@ The kickoff defines the UI/backend interface once (`api/app/main.py`, `api/app/m
 **Graphify is mandatory before every task:** after setup (`python tools/setup.py`), update the local code graph (`graphify update .` if a graph exists; initially `/graphify` with the explicit instruction “code only, no semantic extraction”). Use `graphify extract . --code-only` for a guaranteed AST-only run. First explore affected code and dependencies with `graphify query`, `graphify explain` or `graphify path`; then read/search specific files. `.graphifyignore` always applies: never index `data/datensatz/` or `data/testfaelle/`. No PDF/document/media analysis and no cloud upload. If Graphify is missing or updating fails, repair setup and report the blocker before implementation. Guide: [Graphify](docs/agenten.md#graphify-mandatory-code-context).
 
 1. A task is a GitHub issue with an owner, scope and acceptance test. If anything is missing, ask in the issue instead of guessing.
-2. Claim it visibly: `python tools/aufgabe.py <number> --uebernehmen` creates branch `<number>-<short-name>` and a separate worktree from fresh `main`, assigns you, sets `in-arbeit` and posts on the board. Never take an issue marked `in-arbeit` or assigned to someone else. Never work in another agent's checkout.
+2. Claim it visibly: `python tools/aufgabe.py <number> --uebernehmen` creates branch `<number>-<short-name>` and a separate worktree from fresh `main`, assigns you, sets `in-arbeit` and posts on the board. Follow the pinboard rules: never take an issue that is already in progress. Issues assigned to someone else only after they agree on the board. Never work in another agent's checkout.
 3. Make small commits. Stage only your own files, never `git add -A`.
 4. Before saying “done”, run `python -m unittest discover -s tests -v`, `cd api && python -m pytest -q`, the issue's acceptance example and, for UI work, inspect it in a browser. State what you ran.
-5. `git fetch` and `git rebase origin/main`, then push and open a pull request with `Closes #<number>`. Never force-push a shared branch.
+5. `git fetch` and `git rebase origin/main`, then push and open a pull request with `Closes #<number>` (or `Refs #<number>` for partial work). Never force-push a shared branch.
 6. Under FirstMate (`direct-PR +yolo`), the crew opens the finished PR; the First Mate merges after successful local tests and green checks. Without FirstMate, merge yourself: `gh pr checks --watch`, then `gh pr merge --squash --delete-branch`.
 7. If your merge changes something others depend on (API route, LV item model, finding format, environment variable), post with `@all` on the board.
-8. If you must stop midway (quota, full context, switching Claude ↔ Codex), commit the current state on your branch and use `handoff` to leave a handover comment in the issue so another agent can continue.
+8. If you must stop midway (quota, full context, switching Claude ↔ Codex), commit the current state on your branch and use `handoff` to leave a handover comment in the issue so another agent can continue. If you are not continuing, remove the `in-arbeit` label so the issue is free again.
 9. Clean up your worktree: `git worktree remove ../<repo>-<number>` (under FirstMate, the First Mate does this).
 
 ## 5. Boundaries
