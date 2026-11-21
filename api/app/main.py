@@ -69,6 +69,10 @@ except Exception as exc:  # the optional DB service must not stop the API from s
 from .abschluss_api import router as abschluss_router  # noqa: E402
 app.include_router(abschluss_router)
 
+# Price list upload, price DB page and the B9 price seam (#153): routes live in preis_api.py.
+from .preis_api import einbinden as preis_api_einbinden  # noqa: E402
+preis_api_einbinden(app)
+
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     use_data: bool = True
