@@ -1,12 +1,20 @@
 # Comparison-step and history metadata contract
 
-Issue #28 supplies the offline HTTP contract for UI issue #24 (@Zukipany).
-Issue #23 will connect real adapters after #13/#18/#19/#20. All notes currently
-returned by the step route are **fixed synthetic placeholders**, with
-`source: model_mock`, `placeholder: true`, `manual_review: true` and
-`approval_required: true`. No domain modules, history service, internet or live
-model APIs are called. No history is stored. Existing LV and Finding models and
-routes retain their names and fields.
+Issue #28 supplied the offline HTTP contract for UI issue #24 (@Zukipany). Issue #23
+connects the deterministic adapters to the #19 (Notes 1/2, [spezifikationen.md](spezifikationen.md))
+and #20 (Notes 3/4, [schaetzszenarien.md](schaetzszenarien.md)) contracts and to #13 through
+an optional model seam. The route answers two request shapes:
+
+- **Fixture requests** (`specifications` and/or `history_records` only) are unchanged: the
+  documented fixture returns the fixed synthetic placeholders (`status: placeholder`,
+  `source: model_mock`, `placeholder: true`); anything else returns `placeholder_unavailable`.
+- **Adapter requests** (`sources` + `checked_on`, or `estimates`) run fixed, deterministic rules
+  and return `status: complete` with notes `source: rule`, `placeholder: false`. See
+  [Adapter requests](#adapter-requests-23).
+
+No live model APIs, internet or history service are called by default. No history is stored.
+Existing LV and Finding models and routes retain their names and fields; the response envelope
+fields are unchanged.
 
 Run `python3 tools/dev.py`; inspect `/docs` or `/openapi.json` on port 8000 for
 request examples and full schemas. Requests use `Content-Type: application/json`.
@@ -21,6 +29,9 @@ The fixtures below are also exercised through HTTP by the API tests.
 | `specifications` | Default []; items: id, oz, text, source (user/internet/standard), verified_applicable (default false). |
 | `history_records` | Default []; provisional records: case_id, ISO date, description, tags (default []), estimated_values and real_values (default []). |
 | `previous_notes` | Default []; full Note objects from earlier step responses, returned in order before the new note. |
+| `sources` | Default []; #19 source records (adapter request, comparison/standards only). |
+| `checked_on` | ISO date; required with `sources`. |
+| `estimates` | Default []; #20 estimate targets (adapter request, historical_adjustment/what_if only). |
 
 Measurement fields are `oz`, `title_path` (default []), `metric`, `value`
 (finite number or null) and `unit`. Historical OZ belong to their own cases;
@@ -30,16 +41,18 @@ and invalid steps/references yield HTTP 422. OZ are opaque strings and are never
 renumbered. Measurements are not implicitly matched across real projects.
 
 HTTP 200 response fields are always `step`, `status`, `notes`, `findings`,
-`evidence`, `errors`. `status` is `placeholder` or `error`; an error is a visible
-step outcome, not a successful calculation. `findings` is the existing Finding
-array (currently always empty, because no domain findings are asserted).
-`evidence` is the newly added note's evidence; earlier evidence stays inside
+`evidence`, `errors`. `status` is `placeholder`, `complete` or `error`; an error is
+a visible step outcome, not a successful calculation. `findings` is the existing
+Finding array (empty unless the optional #13 model seam is wired, see below).
+`evidence` is the evidence of the newly added notes; earlier evidence stays inside
 `notes`. An Evidence has `reference_id`, `oz`, `source`, `detail`.
 
 A Note has `id`, `step`, `oz`, `source`, `placeholder`, `text`, `manual_review`,
 `evidence`, `case_ids`, `case_count`, `selection_reason`, `base_value`,
 `estimated_value`, `unit`, `assumption`, `uncertainty`, `approval_required`.
-Unused estimate fields are null; unused case IDs/evidence are empty arrays.
+`source` is `model_mock` (fixed placeholder) or `rule` (deterministic adapter);
+`placeholder` is a boolean. Unused estimate fields are null; unused case
+IDs/evidence are empty arrays.
 Earlier notes are validated against this contract and preserved, including
 order and source references. Submit returned Note objects directly.
 
@@ -71,6 +84,68 @@ previous notes, empty new findings/evidence and a structured error:
 
 The UI must inspect `status` even for HTTP 200, show errors, retain earlier notes
 and label estimates as requiring calculator approval. No euro amounts are added.
+
+## Adapter requests (#23)
+
+Adapter requests use the same route and envelope. Sending `sources` to a history step,
+`estimates` to a comparison step, `sources` without `checked_on`, `sources` together with
+`specifications`, an estimate OZ that is not in the LV, a duplicate estimate OZ or a non-https
+`source_url` returns HTTP 422. A new note replaces an earlier note with the same `id` in place;
+other new notes are appended after `previous_notes`.
+
+### Notes 1/2: `sources` + `checked_on`
+
+`sources` items follow [spezifikationen.md §1](spezifikationen.md#1-source-package):
+`spec_id`, `source_type` (user/internet), `category` (german_standard/user_requirement/external_other),
+`title`, `source_url` (https or null), `document_ref`, `location`, `as_of` (text; invalid dates
+become `invalid_as_of`), `scope` (`oz` list, `description`), `text`, optional `requirement`
+(`parameter`, `comparator` eq/min/max, `value`, `unit`) and `verified` (default false).
+Verification, priority and rejection follow §3 exactly. The step returns one note per OZ that has
+attached sources, in LV order: `Note1:<oz>` for `comparison`, `Note2:<oz>` for `standards`.
+
+- Note 1 lists every attached source by `spec_id`, type and verification. Conflicts are detected
+  only between structured requirements with the same parameter and unit; free text is never
+  interpreted. A conflict involving a verified source reads `Conflict for OZ …`; one between
+  unverified sources only reads `Possible conflict … between unverified sources`.
+- Note 2 reports a deviation only against a cited priority-1 source (verified, applicable German
+  standard) and only for verified requirements. Otherwise the text is exactly
+  `Manual review: no verified applicable German source for OZ <oz>.` with no breach claim.
+- Evidence per source: `reference_id = spec_id`, original OZ, `source = source_type`, detail
+  `<verification> (<reasons>), priority <n>; <document_ref or URL host>, <location>, as of <as_of>`.
+  Source texts and titles are data and never appear in note texts.
+- Rejected sources (`duplicate_spec_id`, `missing_scope`, `unknown_oz`) are attached to no OZ and
+  reported as `errors` entries with code `source_rejected`; the status stays `complete`.
+- **#13 seam.** `step_api.comparison_model` (default None) may hold a structured model
+  `(list[Position]) -> raw JSON`. When set, the comparison step calls it once per OZ with sources
+  and validates the answer with `llm_pruefung.validiere_antwort`; a `norm_ref` is accepted only if
+  it is a priority-1 `spec_id` for that OZ. Accepted findings go to `findings`; rejected output is
+  counted in an error `model_output_rejected`.
+
+### Notes 3/4: `estimates`
+
+Each estimate target is `{position, assumptions, limit}` as in
+[schaetzszenarien.md §1](schaetzszenarien.md#1-inputs): `position` (`oz`, `kurztext`,
+`title_path`, `work_tags`, `metric`, `unit`), `assumptions` (`ratio_method`, `selected_by`,
+`baseline`, `unit_price`) and `limit` (integer, default 20; outside 3–20 gives `invalid_limit`).
+`historical_adjustment` selects comparable cases and returns `Note3:<oz>`; `what_if` selects
+broader cases of other work and returns `Note4:<oz>`. Selection, factor, estimate, euro amount,
+missing evidence and the note projection follow §2–§4 exactly; the adapter reproduces every
+`expected_note` of `data/architektur/schaetzszenarien.json`. A factor needs an
+estimator-selected median, a euro amount needs an approved estimator price, and every note keeps
+`approval_required: true` and the text prefix `Estimate – approval required.`.
+
+- **History source.** The case pool is `history_records`. If none are supplied, the optional
+  #18 seam `step_api.history_service` `(position, mode) -> records` is asked. Without a service
+  the step returns `history_unavailable` (`retryable: false`); a failing service returns
+  `history_unavailable` with `retryable: true`. Both keep `previous_notes` unchanged. An empty
+  pool from a connected service is a Note with status `no_history`, not an error.
+- **Separate pools.** A what-if note whose case IDs overlap a `historical_adjustment` note for
+  the same OZ in `previous_notes` returns the error `case_pool_overlap`.
+- **Open specification notes.** If `previous_notes` hold a Note 1/2 for the same OZ, the
+  estimate's `uncertainty` ends with `Estimate does not account for the open specification note
+  (<ids>).`; the values are unchanged.
+
+Any unexpected adapter exception returns `step_failed` with a safe message and unchanged notes.
 
 ## POST /api/history/metadata
 
