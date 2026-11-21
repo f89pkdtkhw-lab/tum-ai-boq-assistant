@@ -358,16 +358,22 @@ def test_errors_are_logged_and_the_check_is_skipped(monkeypatch, caplog):
     assert "Norm check N3" in caplog.text and "synthetic failure" in caplog.text
 
 
-def test_pruefen_report_is_identical_with_switch_off_for_a_norm_lv(monkeypatch):
+def test_pruefen_report_is_unchanged_with_switch_off_and_appends_n3_when_on(monkeypatch):
+    """Since N2 (#81) the guarded hook in pruefen() also carries the N3 findings."""
     for key in LLM_KEYS:
         monkeypatch.delenv(key, raising=False)
     client = TestClient(main.app)
     lv = beton_lv("Beton XC4, C20/25", "Stahlbeton nach DIN 1045-2 liefern.").model_dump(mode="json")
-    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
-    standard = client.post("/api/lv/pruefen", json=lv)
+    with monkeypatch.context() as m:
+        m.setattr(main, "pruefe_normen_sicher", lambda lv: [])
+        ohne_hook = client.post("/api/lv/pruefen", json=lv)
     monkeypatch.setenv("NORMPRUEFUNG", "0")
     aus = client.post("/api/lv/pruefen", json=lv)
-    assert standard.status_code == aus.status_code == 200 and standard.content == aus.content
+    assert ohne_hook.status_code == aus.status_code == 200 and ohne_hook.content == aus.content
+    monkeypatch.delenv("NORMPRUEFUNG")
+    original, an = ohne_hook.json()["findings"], client.post("/api/lv/pruefen", json=lv).json()["findings"]
+    assert an[:len(original)] == original
+    assert [f["regel_id"] for f in an[len(original):]] == [NORM_KENNWERT_ABWEICHUNG]
 
 
 NOTE2_LV = LV(name="Synthetic Note 2 LV", quelle="test", positionen=[
@@ -591,3 +597,12 @@ def test_sicher_respects_the_switch_and_swallows_errors(monkeypatch, caplog):
     with caplog.at_level("ERROR", logger=normen.__name__):
         assert pruefe_normen_sicher(ALLE_LV) == []
     assert "Norm check failed" in caplog.text and "register broken" in caplog.text
+
+
+def test_pruefe_normen_also_carries_n3_key_value_findings():
+    lv = beton_lv("Beton XC4, C20/25", "Stahlbeton nach DIN 1045-2 (2008-08) liefern.")
+    assert [(f.regel_id, f.oz) for f in pruefe_normen(lv)] == [
+        ("NORM_AUSGABE_VERALTET", "02.01"), (NORM_KENNWERT_ABWEICHUNG, "02.01"),
+    ]
+    assert [f for f in pruefe_normen(lv) if f.regel_id == NORM_KENNWERT_ABWEICHUNG] == pruefe_kennwerte(
+        lv, lade_register())

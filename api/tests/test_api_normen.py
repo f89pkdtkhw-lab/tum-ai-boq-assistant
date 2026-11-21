@@ -40,6 +40,8 @@ def beispiel_mit_normen() -> dict:
                  menge=10, einheit="m3", ep=20, gp=200).model_dump(),
         Position(oz="99.03", kurztext="Sonstiges", langtext="Ausführung nach DIN.",
                  menge=1, einheit="psch", ep=50, gp=50).model_dump(),
+        Position(oz="99.04", kurztext="Beton XC4, C20/25", langtext="Stahlbeton liefern und einbauen.",
+                 menge=120, einheit="m3", ep=150, gp=18000).model_dump(),
     ]
     return lv
 
@@ -82,6 +84,7 @@ def test_switch_on_appends_norm_findings_after_the_unchanged_original_findings(m
     angehaengt = findings[len(original):]
     assert [f["regel_id"] for f in angehaengt] == [
         "NORM_ZURUECKGEZOGEN", "NORM_AUSGABE_VERALTET", "NORM_BODENKLASSEN", "NORM_OHNE_REFERENZ",
+        "NORM_KENNWERT_ABWEICHUNG",
     ]
     assert all(f["euro_wirkung"] is None and f["quelle"] == "regel" for f in angehaengt)
     assert body["kennzahlen"]["findings"] == len(findings)

@@ -3,7 +3,8 @@
 Bonus feature "norm check" (Normpruefung), purely additive. The N1 part only
 collects references and builds a norm list; it creates **no** `Finding`. The N2
 part at the end of this module turns register hits into hint findings and offers
-the guarded hook `pruefe_normen_sicher()` for `pruefen()`.
+the guarded hook `pruefe_normen_sicher()` for `pruefen()`, which also carries the
+N3 key-value findings.
 
 1. `extrahiere_normverweise(lv)` finds references such as "ATV DIN 18300 (2012-09)",
    "DIN EN1092-1" or "DIN 1045 Teil 2" in the short and long text of each position
@@ -543,8 +544,7 @@ def pruefe_kennwerte_sicher(lv: LV, register: Register | None = None,
 
 logger = logging.getLogger(__name__)
 
-HINWEIS = ("Hint, not a standards expert opinion (kein Normgutachten); contractual validity is decided "
-           "by a person (VOB/B § 1 (2)).")
+HINWEIS = KEIN_NORMGUTACHTEN  # same note as N3
 BEWERTET = ("gueltig", "zurueckgezogen", "teilweise_ersetzt")  # register status values that may create findings
 STATUS_TEXT = {"gueltig": "valid", "zurueckgezogen": "withdrawn", "teilweise_ersetzt": "partly replaced"}
 BODEN_ATVS = ("ATV DIN 18300", "ATV DIN 18301", "ATV DIN 18319")
@@ -767,12 +767,17 @@ def pruefe_status(verweise: list[NormVerweis], register: Register, lv: LV | None
 
 
 def pruefe_normen(lv: LV, register: Register | None = None) -> list[Finding]:
-    """N1 extraction + curated register + `pruefe_status`."""
-    return pruefe_status(extrahiere_normverweise(lv), register or lade_register(), lv)
+    """N1 extraction + curated register + `pruefe_status` (N2), followed by the N3 key-value
+    findings of `pruefe_kennwerte`, in position order (stable: N2 before N3 on the same OZ)."""
+    register = register or lade_register()
+    findings = pruefe_status(extrahiere_normverweise(lv), register, lv) + pruefe_kennwerte(lv, register)
+    reihenfolge = {oz: i for i, oz in enumerate(dict.fromkeys(p.oz for p in lv.positionen))}
+    return sorted(findings, key=lambda f: reihenfolge.get(f.oz, len(reihenfolge)))
 
 
 def pruefe_normen_sicher(lv: LV) -> list[Finding]:
-    """Hook for `pruefen()`: [] when NORMPRUEFUNG is off or the norm check fails (the error is logged)."""
+    """Hook for `pruefen()` (N2 + N3 findings): [] when NORMPRUEFUNG is off or the norm check fails
+    (the error is logged)."""
     if not normpruefung_aktiv():
         return []
     try:
