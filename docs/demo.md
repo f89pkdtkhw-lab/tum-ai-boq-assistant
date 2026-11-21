@@ -12,7 +12,7 @@ The demo needs no API key and no internet. The review runs fixed rules, quantity
 | Start | `python3 tools/dev.py` | UI `http://localhost:3000`, backend `http://localhost:8000/health` |
 | Health | open `http://localhost:8000/health` | `"ok": true`, `"mock": true` |
 | UI badge | open `http://localhost:3000` | top right "mock · offline-lv-mock", not "Backend offline" |
-| Rehearse | run the flow below once with the benchmark PDF | import 100 items in about 3 s, 35 entries in the report |
+| Rehearse | run the flow below once with the benchmark PDF | import 100 items in about 9 s, 32 entries in the report |
 | Fallback | switch the backend off (Ctrl+C the `api` process) and try plan C below | "Show offline example report" appears |
 
 Use the laptop that presents. Start the product **before** the audience arrives. Keep `data/testfaelle/rohbau_efh/lv_rohbau_efh.pdf` in a visible folder so it can be dragged in. The file stays on the laptop (confidential benchmark LV; never upload it to a third-party service).
@@ -23,13 +23,13 @@ Matches the scenes in the pitch. Times are guides.
 
 | Time | Action | What the audience sees | Say |
 | --- | --- | --- | --- |
-| 0:00 | Open `/`. Drag `lv_rohbau_efh.pdf` into the drop zone, press **Review file**. | Three steps turn green: Upload, Import ("100 Items detected"), Review ("35 Entries in the report"). About 3 s. | "A real 40-page PDF bill of quantities, no preparation." |
-| 0:30 | Scroll to the report header and the key figures. | 100 items, 35 entries, "Demo mode" banner, euro impact "unknown". | "The model part is a mock and says so. We show no euro value without a basis." |
+| 0:00 | Open `/`. Drag `lv_rohbau_efh.pdf` into the drop zone, press **Review file**. | Three steps turn green: Upload, Import ("100 Items detected"), Review ("32 Entries in the report"). About 9 s. | "A real 40-page PDF bill of quantities, no preparation." |
+| 0:30 | Scroll to the report header and the key figures. | 100 items, 32 entries, "Demo mode" banner, euro impact "unknown". | "The model part is a mock and says so. We show no euro value without a basis." |
 | 0:50 | **Look at these first** panel, then the **Findings** filter (category, severity). | The ten most important items first, not 100 rows. | "The partner's problem is finding the 100 items that matter." |
 | 1:20 | Open the detail of OZ `9...1` (no quantity, unit or long text) or `8...3` (quantity without unit). | OZ, reason, suggested action, source "rule" (`MENGE_FEHLT`, `EINHEIT_FEHLT`). | "Every finding names its item number and whether a rule or the model produced it." |
 | 1:50 | **Bidder questions** panel; use **Copy all**. | Questions derived from risk findings (e.g. hourly-wage items in title 7, contingency items). | "This becomes a question to the client before I submit my price." |
 | 2:15 | **Export report** (PDF print or XLSX), or **Step reports** in the navigation. | Printable report; step reports show their synthetic placeholders. | Optional, skip if short on time. |
-| 2:30 | Say the limits and the measurement. | Nothing to show; `data/vergleich.md` open in a tab. | "On our one benchmark LV the fixed rules find 6 of 25 documented findings; the rest needs the live model. 18 findings match none of the 25." (Numbers from `data/vergleich.md`; do not quote others.) |
+| 2:30 | Say the limits and the measurement. | Nothing to show; `data/vergleich.md` open in a tab. | "On our one benchmark LV the fixed rules find 14 of 25 documented findings; the rest needs the live model. 1 of the 31 non-mock findings matches none of the 25." (Numbers from `data/vergleich.md`; do not quote others.) |
 
 Do not claim: a hit rate on other LVs, a time saving versus manual work (not measured), euro savings (none computed), or Excel import (`.xlsx` answers "not implemented yet"). Supported on `main`: JSON, GAEB X83/X84, PDF.
 
@@ -63,7 +63,7 @@ Publishing and infrastructure changes are made only on a separate instruction of
 - **Backend:** `render.yaml` defines one Render web service `boq-api` (`rootDir: api`, `pip install -r requirements.txt`, `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, health check `/health`). `api/index.py` is the entry point if the backend runs as a Vercel project with root `api/`. The demo needs **no key**: the BoQ pipeline always uses the mock, even if keys are set. Set `WEB_ORIGINS` to the UI origin only if the browser calls the backend directly (the UI normally goes through the proxy below, so no CORS entry is needed).
 - **UI:** `web/next.config.mjs` proxies `/backend/*` to `API_URL` (default `http://127.0.0.1:8000`). For a deployment set `API_URL` to the public backend URL in the UI host's environment. `npm run build` must pass (CI job `produkt` checks it).
 - **Jury URL:** the workflow `Demo-Stand` moves branch `demo` to the latest green `main`; the comment in `.github/workflows/demo.yml` says the Vercel production deployment follows `demo`. The Vercel project settings themselves are not in the repository and were **not verified**.
-- **Open points to confirm in the hosting dashboards (not changed here):** (1) the Python version on Render (CI uses 3.12; `render.yaml` sets none); (2) the upload size limit of the hosting proxy for files near 10 MiB (the 127 KiB demo PDF is far below any limit); (3) the backend cold start on a free instance, which can take longer than the 3 s import; open `/health` a few minutes before presenting.
+- **Open points to confirm in the hosting dashboards (not changed here):** (1) the Python version on Render (CI uses 3.12; `render.yaml` sets none); (2) the upload size limit of the hosting proxy for files near 10 MiB (the 127 KiB demo PDF is far below any limit); (3) the backend cold start on a free instance, which can take longer than the 9 s import; open `/health` a few minutes before presenting.
 - **Same code, three states of the demo:** local laptop (`tools/dev.py`), deployed UI plus backend, offline snapshot. Prefer the local laptop for the pitch; use the deployed URL only if it was rehearsed.
 
 ## 6. Checklist right before going on stage
