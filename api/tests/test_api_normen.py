@@ -53,7 +53,7 @@ def bericht_vor_n2(lv_json: dict) -> dict:
     return Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
         positionen=len(lv.positionen), findings=len(findings),
         kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=True,
-    )).model_dump(mode="json")
+    ), zusammenfassung=main.zusammenfassen(findings)).model_dump(mode="json")
 
 
 def ohne_hook(monkeypatch, lv_json: dict) -> bytes:

@@ -47,10 +47,27 @@ class Kennzahlen(Vertrag):
     modell_mock: bool = True
 
 
+class ScoreAbzug(Vertrag):
+    grund: str
+    punkte: float
+    bericht: Literal["regelwerk", "vergleich", "was_wenn"]
+
+
+class Zusammenfassung(Vertrag):
+    score: float = Field(ge=0, le=10)
+    score_abzuege: list[ScoreAbzug] = Field(default_factory=list)
+    schaetzung_abweichung_eur: float | None = None
+    grosse_probleme: int = Field(ge=0)
+    warnungen: int = Field(ge=0)
+    hinweise: int = Field(ge=0)
+    empfehlungen: int = Field(ge=0)
+
+
 class Pruefbericht(Vertrag):
     lv: LV
     findings: list[Finding]
     kennzahlen: Kennzahlen
+    zusammenfassung: Zusammenfassung | None = None
 
 
 class Beispiel(Vertrag):
