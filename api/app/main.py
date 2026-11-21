@@ -35,6 +35,8 @@ try:
 except Exception:
     pass
 
+
+
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -46,7 +48,8 @@ app.add_middleware(
     allow_origins=[s.strip() for s in os.environ.get("WEB_ORIGINS", "http://localhost:3000").split(",") if s.strip()],
     allow_methods=["GET", "POST"], allow_headers=["Content-Type"],
 )
-
+from db.client import router as db_router
+app.include_router(db_router)
 
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
