@@ -77,18 +77,13 @@ export function einschaetzen(bericht: Pruefbericht, gewerke: TradeStat[] | null,
   const preisAnteil = preise?.verglichen ? preise.auffaellig / preise.verglichen : 0;
   const offenAnteil = nachgerechnet ? optional / nachgerechnet : 0;
 
-  // Team scoring rule (project spec): start at 10. A check that finds big problems costs 1 point, 2 if they affect more than
-  // 5 % of the items. Each estimate whose ± approximation is too large costs 0.1 (at most 3). Recommendations and what-if
-  // cases cost nothing; they only raise awareness.
   const gross = echte.filter((f) => ROT.includes(f.schwere)).length;
   const preisRot = preise?.rot ?? 0;
   const warnungen = echte.length - gross + Math.max(0, (preise?.auffaellig ?? 0) - preisRot);
-  // Same constants as api/app/pruefung/bewertung.py (#94): a report with big problems costs 1, or 2 with 5+ of them
-  // or any critical one; each too-wide approximation (>25 %) costs 0.1, at most 1.
+  // Match the API rule-check deduction when the backend summary is absent.
   const kritisch = echte.some((f) => f.schwere === "kritisch");
-  const abzugFuer = (anzahl: number, schwer = false) => (anzahl === 0 ? 0 : anzahl >= 5 || schwer ? 2 : 1);
-  const abzugRegeln = abzugFuer(gross, kritisch);
-  const abzugHistorie = abzugFuer(preisRot);
+  const abzugRegeln = gross === 0 ? 0 : gross >= 5 || kritisch ? 4 : 3.5;
+  const abzugHistorie = preisRot === 0 ? 0 : preisRot >= 5 ? 2 : 1;
   const zuWeit = rechenbar.filter((p) => Math.abs(abweichung.get(gewerkVon(p.kurztext) ?? "") ?? 0) > 25).length + preisRot;
   const abzugSchaetzung = Math.round(Math.min(1, zuWeit * .1) * 10) / 10;
   // The backend score (#94) is the official one. Until it sends Report 2 deductions ("vergleich"), the browser adds its
@@ -99,8 +94,7 @@ export function einschaetzen(bericht: Pruefbericht, gewerke: TradeStat[] | null,
   const roh = offiziell ? offiziell.score - browserR2 : 10 - abzugRegeln - abzugHistorie - abzugSchaetzung;
   const score = Math.round(Math.max(0, Math.min(10, roh)) * 10) / 10;
   const punkte = Math.round(score * 10);
-  // Bands for the 10-point score. With at most −2 per report and −1 for estimates the score rarely falls below 5,
-  // so red starts below 6.5 and green at 8.5 (clean BoQs reach 9–10).
+  // Scores below 6.5 are red. Scores from 8.5 are ready to price.
   const ampel: Ampel = score >= 8.5 ? "gruen" : score >= 6.5 ? "gelb" : "rot";
   const urteil = ampel === "gruen" ? "Looks good – ready to price" : ampel === "gelb" ? "Bid with care – clarify first" : "High risk – do not bid as is";
   const abzug = (x: number) => (x === 0 ? "0" : `−${x}`);
@@ -141,7 +135,7 @@ export function einschaetzen(bericht: Pruefbericht, gewerke: TradeStat[] | null,
   if (preise?.auffaellig) empfehlungen.push({ ampel: preisAnteil >= .04 ? "rot" : "gelb", text: "Re-check {n} unusual unit prices in the Prices tab.", werte: { n: preise.auffaellig } });
   if (optional > 0) empfehlungen.push({ ampel: offenAnteil >= .15 ? "rot" : "gelb", text: "Optional and alternative items are worth {euro} on top; agree how they will be instructed.",
     werte: { euro: Math.round(optional) } });
-  if (empfehlungen.length === 0) empfehlungen.push({ ampel: "gruen", text: "No blocking issues found by the rules. Do a final manual check and price the BoQ." });
+  if (empfehlungen.length === 0 && ampel === "gruen") empfehlungen.push({ ampel: "gruen", text: "No blocking issues found by the rules. Do a final manual check and price the BoQ." });
 
   return { score, punkte, ampel, urteil, positionen, kosten: { angegeben, nachgerechnet, risiko, historie }, faktoren, empfehlungen,
     // Counts are always what the report lists (real findings + price outliers, no demo entry), so tiles, ring and list agree.

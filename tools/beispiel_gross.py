@@ -1,7 +1,7 @@
 """Generate synthetic example BoQs (no partner data) of different quality, so a demo can show every side.
 
 Deterministic (fixed seeds), so the files only change when this script changes. Run: python tools/beispiel_gross.py
-- sauber:  small office building, ~300 items, almost no errors           → data/beispiel_lv_sauber.json
+- sauber:  small office building, ~300 items, no seeded errors           → data/beispiel_lv_sauber.json
 - mittel:  residential building, ~800 items, some errors and outliers     → data/beispiel_lv_mittel.json
 - gross:   housing estate, ~2,400 items in 3 buildings x 12 trades, ~4 % seeded errors (arithmetic, missing quantity,
            unit or long text, duplicate OZ), ~1.5 % unit-price outliers, outdated standards → data/beispiel_lv_gross.json
@@ -76,6 +76,9 @@ def erzeuge(profil: str = "gross") -> dict:
                 }
                 if zufall.random() < p["fehler"]:
                     fehler = zufall.choice(["rechnung", "menge", "einheit", "langtext", "duplikat"])
+                    # Keep the original random draws so the clean example retains its items and prices.
+                    if profil == "sauber":
+                        fehler = None
                     if fehler == "rechnung":
                         pos["gp"] = round(pos["gp"] * zufall.choice([0.1, 1.5, 10]), 2)
                     elif fehler == "menge":
@@ -84,7 +87,7 @@ def erzeuge(profil: str = "gross") -> dict:
                         pos["einheit"] = None
                     elif fehler == "langtext":
                         pos["langtext"] = ""
-                    elif positionen:
+                    elif fehler == "duplikat" and positionen:
                         pos["oz"] = positionen[-1]["oz"]
                 # Standard references as found in real BoQs, so the norm checks (N1–N5) have something to review.
                 if normen.random() < p["norm"] and gewerk in NORMTEXTE:

@@ -1,4 +1,6 @@
 """Score and counters: offline, synthetic data only."""
+import json
+from pathlib import Path
 from types import SimpleNamespace as NS
 
 from fastapi.testclient import TestClient
@@ -23,18 +25,18 @@ def test_no_findings_is_ten():
     assert z.score == 10.0 and z.score_abzuege == [] and z.schaetzung_abweichung_eur is None
 
 
-def test_one_big_problem_minus_one():
+def test_one_big_problem_minus_three_and_a_half():
     z = zusammenfassen([_f(1, "hoch")])
-    assert z.score == 9.0 and z.grosse_probleme == 1
-    assert (z.score_abzuege[0].punkte, z.score_abzuege[0].bericht) == (-1.0, "regelwerk")
+    assert z.score == 6.5 and z.grosse_probleme == 1
+    assert (z.score_abzuege[0].punkte, z.score_abzuege[0].bericht) == (-3.5, "regelwerk")
 
 
-def test_critical_minus_two():
-    assert zusammenfassen([_f(1, "kritisch")]).score == 8.0
+def test_critical_minus_four():
+    assert zusammenfassen([_f(1, "kritisch")]).score == 6.0
 
 
-def test_five_big_problems_minus_two_not_more():
-    assert zusammenfassen([_f(i, "hoch") for i in range(40)]).score == 8.0
+def test_five_big_problems_minus_four_not_more():
+    assert zusammenfassen([_f(i, "hoch") for i in range(40)]).score == 6.0
 
 
 def test_warnings_and_notices_have_no_penalty():
@@ -76,3 +78,16 @@ def test_route_returns_zusammenfassung_and_keeps_fields():
     assert r.status_code == 200 and set(body) >= {"lv", "findings", "kennzahlen", "zusammenfassung"}
     z = body["zusammenfassung"]
     assert 0 <= z["score"] <= 10 and z["schaetzung_abweichung_eur"] is None
+
+
+def test_synthetic_boqs_show_pricing_readiness():
+    client = TestClient(main.app)
+    data = Path(__file__).resolve().parents[2] / "data"
+    for name, ready in (("beispiel_lv.json", False), ("beispiel_lv_sauber.json", True)):
+        response = client.post("/api/lv/pruefen", json=json.loads((data / name).read_text(encoding="utf-8")))
+        assert response.status_code == 200
+        score = response.json()["zusammenfassung"]["score"]
+        if ready:
+            assert score >= 9
+        else:
+            assert score < 7
