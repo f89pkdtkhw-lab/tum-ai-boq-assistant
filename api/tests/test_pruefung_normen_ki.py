@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from app import main
 from app.ai import llm
 from app.modelle import LV, Position
-from app.pruefung import normen, normen_ki
+from app.pruefung import llm_pruefung, normen, normen_ki
 from app.pruefung.normen import KEIN_NORMGUTACHTEN, lade_register, pruefe_normen, pruefe_normen_sicher
 from app.pruefung.normen_ki import (
     BESTAETIGT, NORM_KI_HINWEIS, UNBESTAETIGT, norm_ki_aktiv, recherchiere_normen, recherchiere_normen_sicher,
@@ -222,6 +222,8 @@ def test_pruefbericht_is_identical_with_switch_off_and_in_mock_mode(monkeypatch)
     standard_mock = bericht(client, LV_N5)
     monkeypatch.setenv("NORM_KI_RECHERCHE", "off")
     aus = bericht(client, LV_N5)
+    # #147: the item review now uses a configured provider; pin it to the mock so only N5 is compared.
+    monkeypatch.setattr(main, "pruefe_mit_llm_status", llm_pruefung.mock_pruefung)
     monkeypatch.setenv("LLM_PROVIDER", "anthropic")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "synthetic-not-a-key")
     aus_mit_provider = bericht(client, LV_N5)
@@ -231,6 +233,7 @@ def test_pruefbericht_is_identical_with_switch_off_and_in_mock_mode(monkeypatch)
 def test_live_provider_appends_hints_after_n2_n3_findings(monkeypatch):
     client = TestClient(main.app)
     heute = json.loads(bericht(client, LV_N5))["findings"]
+    monkeypatch.setattr(main, "pruefe_mit_llm_status", llm_pruefung.mock_pruefung)  # #147: N5 only
     monkeypatch.setenv("LLM_PROVIDER", "anthropic")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "synthetic-not-a-key")
     monkeypatch.setattr(llm, "complete", fake(antwort(UNBEKANNT_VORSCHLAG, DIN_4109)))

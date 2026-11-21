@@ -3,16 +3,29 @@
 Select through environment variables (see .env.example):
     LLM_PROVIDER   anthropic | openai | azure | gemini | mock   (empty = first provider with a key, otherwise mock)
     LLM_MODEL      Model name; defaults to a provider-specific model when omitted
+    LLM_TIMEOUT    Seconds per model call (default 60); the BoQ review has its own LLM_REVIEW_TIMEOUT
 
 `mock` runs without network access or keys so the demo and tests always start.
 Keys never leave the server and never appear in error messages.
+
+Entry points:
+    complete(prompt, system, max_tokens)   raises LLMError with a UI-safe message
+    complete_with_fallback(...)            never raises: on a missing key, error or timeout it answers
+                                           with the mock and sets ``Answer.reason``
+    config() / status()                    what the app runs on; status() also says whether the app
+                                           effectively runs on the mock and why, and never raises
+    parse_json(text)                       robust JSON object extraction (code fences, prose around it)
+    load_env_file(path)                    reads .env.local at app start (environment variables win)
 """
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 import hashlib
 import json
 import os
+import re
 import time
+from pathlib import Path
 from threading import RLock
 
 import httpx
@@ -26,7 +39,8 @@ DEFAULT_MODELS = {
 }
 KEY_FOR = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "azure": "AZURE_OPENAI_API_KEY",
            "gemini": "GEMINI_API_KEY"}
-TIMEOUT = float(os.environ.get("LLM_TIMEOUT", "60"))
+DEFAULT_TIMEOUT = 60.0
+TIMEOUT = DEFAULT_TIMEOUT  # kept for compatibility; the effective value comes from seconds()
 
 
 class LLMError(Exception):
@@ -39,10 +53,49 @@ class Answer:
     provider: str
     model: str
     ms: int
+    reason: str | None = None  # set only by complete_with_fallback when it answered with the mock
+
+
+def seconds(name="LLM_TIMEOUT", default=DEFAULT_TIMEOUT):
+    """Seconds from an environment variable; invalid or non-positive values use the default."""
+    try:
+        value = float(os.environ.get(name, "") or default)
+    except ValueError:
+        return float(default)
+    return value if value > 0 else float(default)
 
 
 def env(name):
     return os.environ.get(name, "").strip()
+
+
+_ENV_LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
+
+
+def load_env_file(path):
+    """Load ``NAME=value`` lines (e.g. ``.env.local``) into ``os.environ``; returns the loaded names.
+
+    Variables already set in the environment win, empty values and comments are skipped, quotes
+    around a value are removed. Values are never logged or returned. A missing file is no error.
+    """
+    try:
+        lines = Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return []
+    loaded = []
+    for line in lines:
+        match = _ENV_LINE.match(line)
+        if not match or line.lstrip().startswith("#"):
+            continue
+        name, value = match.groups()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        elif " #" in value:
+            value = value.split(" #", 1)[0].rstrip()
+        if value and not os.environ.get(name, "").strip():
+            os.environ[name] = value
+            loaded.append(name)
+    return loaded
 
 
 def provider():
@@ -66,7 +119,36 @@ def config():
             "keys": {provider_name: bool(env(key)) for provider_name, key in KEY_FOR.items()}}
 
 
-def complete(prompt, system="", max_tokens=1024):
+def _keys():
+    return {provider_name: bool(env(key)) for provider_name, key in KEY_FOR.items()}
+
+
+def status():
+    """Like config(), but never raises and reports the effective mode.
+
+    ``mock`` is True when no real call would be made: provider ``mock``, an unknown provider, a
+    missing key or a missing model name. ``reason`` explains why a configured provider is not used
+    (None when the mock was chosen on purpose or no key exists at all).
+    """
+    try:
+        name = provider()
+    except LLMError as exc:
+        return {"provider": "mock", "model": DEFAULT_MODELS["mock"], "mock": True, "keys": _keys(),
+                "reason": str(exc)}
+    chosen = model(name)
+    result = {"provider": name, "model": chosen, "mock": name == "mock", "keys": _keys(), "reason": None}
+    if name != "mock" and not env(KEY_FOR[name]):
+        result.update(mock=True, reason=f"Missing {KEY_FOR[name]} for {name}; the offline mock answers instead.")
+    elif name != "mock" and not chosen:
+        result.update(mock=True, reason=f"Set LLM_MODEL for {name}; the offline mock answers instead.")
+    return result
+
+
+def complete(prompt, system="", max_tokens=1024, *, timeout=None, json_mode=False, effort=None):
+    """One model call. ``timeout`` (seconds) bounds the HTTP request; ``json_mode`` asks providers
+    that support it (Gemini) for a JSON-only answer; ``effort`` (low|medium|high|xhigh|max) sets the
+    Claude effort level (default: ANTHROPIC_EFFORT, else the model default). Raises LLMError with a
+    UI-safe message."""
     name = provider()
     chosen = model(name)
     started = time.perf_counter()
@@ -74,11 +156,18 @@ def complete(prompt, system="", max_tokens=1024):
         raise LLMError(f"Missing {KEY_FOR[name]} for {name}. Without a key, set LLM_PROVIDER=mock.")
     if not chosen:
         raise LLMError(f"Set LLM_MODEL for {name} (model name from the provider documentation).")
+    limit = timeout if timeout and timeout > 0 else seconds()
     try:
         text = {"anthropic": _anthropic, "openai": _openai, "azure": _azure, "gemini": _gemini, "mock": _mock}[name](
-            prompt, system, chosen, max_tokens)
+            prompt, system, chosen, max_tokens, json_mode=json_mode, timeout=limit, effort=effort)
+    except LLMError:
+        raise
+    except httpx.TimeoutException:
+        raise LLMError(f"{name} did not answer within {limit:g} s.") from None
     except httpx.HTTPStatusError as exc:
-        raise LLMError(f"{name} returned HTTP {exc.response.status_code}. Check the key, model and credit.") from None
+        code = exc.response.status_code
+        hint = "Rate limit or free quota reached; wait a minute." if code == 429 else "Check the key, model and credit."
+        raise LLMError(f"{name} returned HTTP {code}. {hint}") from None
     except httpx.HTTPError:
         raise LLMError(f"{name} is unreachable. Check the network or set LLM_PROVIDER=mock.") from None
     except (KeyError, IndexError, TypeError, ValueError):
@@ -86,53 +175,154 @@ def complete(prompt, system="", max_tokens=1024):
     return Answer(text.strip(), name, chosen, round((time.perf_counter() - started) * 1000))
 
 
-def _post(url, headers, payload):
-    response = httpx.post(url, headers=headers, json=payload, timeout=TIMEOUT)
+def complete_with_fallback(prompt, system="", max_tokens=1024, *, timeout=None, json_mode=False, effort=None,
+                           mock_text=None):
+    """Like complete(), but never raises and never waits longer than ``timeout`` seconds in total.
+
+    On a missing key, HTTP error, unexpected answer or timeout it returns the mock answer (or
+    ``mock_text`` when given) with ``provider == "mock"`` and a readable ``reason``. A deliberate mock
+    configuration answers with the mock and ``reason=None``.
+    """
+    state = status()
+    limit = timeout if timeout and timeout > 0 else seconds()
+
+    def fallback(reason):
+        answer = mock(prompt, system, max_tokens)
+        if mock_text is not None:
+            answer.text = mock_text
+        answer.reason = reason
+        return answer
+
+    if state["mock"]:
+        return fallback(state["reason"])
+    pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="llm-call")
+    try:
+        return pool.submit(complete, prompt, system, max_tokens, timeout=limit, json_mode=json_mode,
+                           effort=effort).result(
+            timeout=limit + 1)
+    except FutureTimeout:
+        return fallback(f"{state['provider']} did not answer within {limit:g} s; offline mock used.")
+    except LLMError as exc:
+        return fallback(f"{exc} Offline mock used.")
+    except Exception as exc:  # the demo must never crash on a model call
+        return fallback(f"{state['provider']} call failed ({type(exc).__name__}); offline mock used.")
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+
+
+_FENCE = re.compile(r"```(?:json|JSON)?\s*(.*?)```", re.DOTALL)
+
+
+def parse_json(text):
+    """Return the first JSON object or array in a model answer, or raise ValueError.
+
+    Accepts plain JSON, JSON inside Markdown code fences and JSON with prose before or after it.
+    """
+    if not isinstance(text, str):
+        raise ValueError("answer is not text")
+    candidates = [text.strip()] + [block.strip() for block in _FENCE.findall(text)]
+    decoder = json.JSONDecoder()
+    for candidate in candidates:
+        if not candidate:
+            continue
+        try:
+            return json.loads(candidate)
+        except ValueError:
+            pass
+        for index, char in enumerate(candidate):
+            if char in "{[":
+                try:
+                    return decoder.raw_decode(candidate, index)[0]
+                except ValueError:
+                    continue
+    raise ValueError("no JSON found in answer")
+
+
+def _post(url, headers, payload, timeout=None):
+    response = httpx.post(url, headers=headers, json=payload, timeout=timeout or seconds())
     response.raise_for_status()
     return response.json()
 
 
-def _anthropic(prompt, system, chosen, max_tokens):
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
+
+
+def _anthropic(prompt, system, chosen, max_tokens, json_mode=False, timeout=None, effort=None):
+    """Claude Messages API. Current models reject temperature/top_p/top_k, thinking {type: disabled}
+    and assistant prefill, so none is sent; JSON comes from the prompt and parse_json()."""
     payload = {"model": chosen, "max_tokens": max_tokens, "messages": [{"role": "user", "content": prompt}]}
     if system:
         payload["system"] = system
+    effort = (effort or env("ANTHROPIC_EFFORT")).lower()
+    if effort in EFFORTS:
+        payload["output_config"] = {"effort": effort}
     data = _post(env("ANTHROPIC_BASE_URL") or "https://api.anthropic.com/v1/messages",
-                 {"x-api-key": env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01"}, payload)
-    return "".join(block.get("text", "") for block in data["content"] if block.get("type") == "text")
+                 {"x-api-key": env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01",
+                  "content-type": "application/json"}, payload, timeout)
+    stop = data.get("stop_reason")
+    if stop == "refusal":
+        category = (data.get("stop_details") or {}).get("category")
+        raise LLMError(f"anthropic declined the request (refusal{': ' + category if category else ''}).")
+    if stop == "max_tokens":
+        raise LLMError(f"anthropic stopped at max_tokens ({max_tokens}); the answer is incomplete.")
+    text = "".join(block.get("text", "") for block in data["content"] if block.get("type") == "text")
+    if not text.strip():
+        raise LLMError(f"anthropic returned no text ({stop or 'empty answer'}).")
+    return text
 
 
 def _chat_messages(prompt, system):
     return ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
 
 
-def _openai(prompt, system, chosen, max_tokens):
+def _openai(prompt, system, chosen, max_tokens, json_mode=False, timeout=None, effort=None):
     base = (env("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
     data = _post(f"{base}/chat/completions", {"Authorization": f"Bearer {env('OPENAI_API_KEY')}"},
-                 {"model": chosen, "messages": _chat_messages(prompt, system), "max_completion_tokens": max_tokens})
+                 {"model": chosen, "messages": _chat_messages(prompt, system), "max_completion_tokens": max_tokens},
+                 timeout)
     return data["choices"][0]["message"]["content"]
 
 
-def _azure(prompt, system, chosen, max_tokens):
+def _azure(prompt, system, chosen, max_tokens, json_mode=False, timeout=None, effort=None):
     endpoint = env("AZURE_OPENAI_ENDPOINT").rstrip("/")
     if not endpoint or not chosen:
         raise LLMError("For azure, set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_DEPLOYMENT.")
     version = env("AZURE_OPENAI_API_VERSION") or "2024-10-21"
     data = _post(f"{endpoint}/openai/deployments/{chosen}/chat/completions?api-version={version}",
                  {"api-key": env("AZURE_OPENAI_API_KEY")},
-                 {"messages": _chat_messages(prompt, system), "max_completion_tokens": max_tokens})
+                 {"messages": _chat_messages(prompt, system), "max_completion_tokens": max_tokens}, timeout)
     return data["choices"][0]["message"]["content"]
 
 
-def _gemini(prompt, system, chosen, max_tokens):
-    payload = {"contents": [{"role": "user", "parts": [{"text": prompt}]}], "generationConfig": {"maxOutputTokens": max_tokens}}
+def _gemini(prompt, system, chosen, max_tokens, json_mode=False, timeout=None, effort=None):
+    generation = {"maxOutputTokens": max_tokens}
+    if json_mode:
+        generation["responseMimeType"] = "application/json"
+    budget = env("GEMINI_THINKING_BUDGET")
+    if budget.lstrip("-").isdigit():  # optional; e.g. 0 turns thinking off on Flash models
+        generation["thinkingConfig"] = {"thinkingBudget": int(budget)}
+    payload = {"contents": [{"role": "user", "parts": [{"text": prompt}]}], "generationConfig": generation}
     if system:
         payload["systemInstruction"] = {"parts": [{"text": system}]}
-    data = _post(f"https://generativelanguage.googleapis.com/v1beta/models/{chosen}:generateContent",
-                 {"x-goog-api-key": env("GEMINI_API_KEY")}, payload)
-    return "".join(part.get("text", "") for part in data["candidates"][0]["content"]["parts"])
+    base = (env("GEMINI_BASE_URL") or "https://generativelanguage.googleapis.com/v1beta").rstrip("/")
+    data = _post(f"{base}/models/{chosen}:generateContent", {"x-goog-api-key": env("GEMINI_API_KEY")}, payload,
+                 timeout=timeout)
+    blocked = (data.get("promptFeedback") or {}).get("blockReason")
+    if blocked:
+        raise LLMError(f"gemini blocked the request ({blocked}).")
+    candidates = data.get("candidates") or []
+    if not candidates:
+        raise LLMError("gemini returned no answer.")
+    parts = (candidates[0].get("content") or {}).get("parts") or []
+    text = "".join(part.get("text", "") for part in parts if not part.get("thought"))
+    if not text.strip():
+        reason = candidates[0].get("finishReason") or "empty answer"
+        hint = " Raise max_tokens or set GEMINI_THINKING_BUDGET=0." if reason == "MAX_TOKENS" else ""
+        raise LLMError(f"gemini returned no text ({reason}).{hint}")
+    return text
 
 
-def _mock(prompt, system, chosen, max_tokens):
+def _mock(prompt, system, chosen, max_tokens, json_mode=False, timeout=None, effort=None):
     lines = [line.strip() for line in prompt.strip().splitlines() if line.strip()]
     question = (lines[-1] if lines else "").removeprefix("Frage:").removeprefix("Question:").strip()[:160]
     return f"[Mock response] Answered without a model key: “{question}”. With a key in .env.local, a real model responds."

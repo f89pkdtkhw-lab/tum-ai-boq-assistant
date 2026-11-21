@@ -68,17 +68,24 @@ def test_unknown_values_zero_duplicate_oz_and_missing_prices_survive_roundtrip()
     assert all(p["ep"] is None and p["gp"] is None for p in positions)
 
 
-def test_public_routes_remain_mock_even_with_provider_selected(monkeypatch):
+def test_public_routes_fall_back_to_mock_when_the_selected_provider_fails(monkeypatch):
+    """#147: a configured provider is used; when its call fails, every route still answers (mock + reason)."""
     import httpx
     def no_network(*args, **kwargs):
         raise AssertionError("Offline route attempted a network request")
     monkeypatch.setenv("LLM_PROVIDER", "anthropic")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "synthetic-test-value")
     monkeypatch.setattr(httpx, "post", no_network)
-    assert client.get("/health").json()["mock"] is True
-    assert client.post("/api/ask", json={"question": "Offline?"}).json()["provider"] == "mock"
+    health = client.get("/health").json()
+    assert health["provider"] == "anthropic" and health["mock"] is False
+    asked = client.post("/api/ask", json={"question": "Offline?"}).json()
+    assert asked["provider"] == "mock" and asked["mock"] is True and asked["reason"]
     lv = json.loads((ROOT / "data/beispiel_lv.json").read_text(encoding="utf-8"))
-    assert client.post("/api/lv/pruefen", json=lv).json()["kennzahlen"]["modell_mock"] is True
+    report = client.post("/api/lv/pruefen", json=lv)
+    assert report.status_code == 200
+    kennzahlen = report.json()["kennzahlen"]
+    assert kennzahlen["modell_mock"] is True and "mock" in kennzahlen["modell_reason"]
+    assert "synthetic-test-value" not in report.text
 
 
 def test_invalid_position_and_nonfinite_numbers_are_rejected():
