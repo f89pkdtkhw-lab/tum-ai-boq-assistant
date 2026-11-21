@@ -266,6 +266,17 @@ class GeschaetztesLv(Vertrag):
 # --- end B8 ---------------------------------------------------------------------------------------
 
 
+# --- D (#168): per-step AI status, so failures and mock fallbacks are visible in the report (optional) ---
+class KiSchritt(Vertrag):
+    """How one AI step ran; filled by `app.ai.ki_status.melde`. Absent steps ran as configured mock or not at all."""
+    schritt: str = Field(min_length=1)  # "positionspruefung", "normrecherche", "evaluation", "vergleich", "was_wenn", …
+    titel: str = Field(min_length=1)
+    status: Literal["ok", "mock", "fehler", "aus"]  # ok = model answered; mock = fell back; fehler = result missing
+    grund: str | None = Field(default=None, exclude_if=_ohne_null)  # UI-safe reason, e.g. timeout after 60 s
+    modell: str | None = Field(default=None, exclude_if=_ohne_null)  # "anthropic/claude-sonnet-5-5"
+# --- end D ---------------------------------------------------------------------------------------------
+
+
 class Pruefbericht(Vertrag):
     lv: LV
     findings: list[Finding]
@@ -278,6 +289,7 @@ class Pruefbericht(Vertrag):
     schlussbericht: Schlussbericht | None = None
     anpassungen: list[Anpassung] | None = Field(default=None, exclude_if=_ohne_null)  # B7 #113
     geschaetztes_lv: GeschaetztesLv | None = Field(default=None, exclude_if=_ohne_null)  # B8 #114
+    ki_schritte: list[KiSchritt] | None = Field(default=None, exclude_if=_ohne_null)  # D #168
 
 
 class Beispiel(Vertrag):

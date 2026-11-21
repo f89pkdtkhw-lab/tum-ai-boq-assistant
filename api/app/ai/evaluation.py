@@ -68,6 +68,8 @@ class Evaluation(Vertrag):
     predictions: list[Prediction]
     recommendations: list[Recommendation]
     source: Literal["model_mock"]
+    # D #168, optional: why a configured model did not answer (the offline mock answered instead).
+    reason: str | None = Field(default=None, exclude_if=lambda wert: wert is None)
 
 
 def _eur(value):
@@ -173,4 +175,16 @@ def ai_evaluation(evidence: Evidence):
                                                      mock_response=mock_evaluation(evidence))], max_output_tokens=8000)[0]
     except llm.LLMError as exc:
         raise HTTPException(502, str(exc)) from None
-    return Evaluation.model_validate(answer.data)
+    evaluation = Evaluation.model_validate(answer.data)
+    if evaluation.source == "model_mock" and evaluation.reason is None:
+        evaluation.reason = _mock_grund()
+    return evaluation
+
+
+def _mock_grund() -> str | None:
+    """D #168: None when the mock runs by configuration (no key); otherwise why the mock answered."""
+    zustand = llm.status()
+    if zustand["mock"]:
+        return zustand["reason"]
+    return (f"{zustand['provider']}/{zustand['model']} is configured, but the AI evaluation is not connected to a "
+            "live model yet; the offline mock derived from the evidence answered instead.")

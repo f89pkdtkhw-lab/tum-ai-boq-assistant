@@ -33,6 +33,7 @@ export function KiBewertung({ daten, fehler }: { daten: AiEvaluation | null; feh
           {t("model · offline mock")}
         </span>
       </div>
+      {!fehler && daten?.reason && <p className={styles.fehler} role="note">{t("Offline mock instead of the configured model")}: {daten.reason}</p>}
       {fehler ? <p className={styles.fehler} role="alert">{t("AI evaluation unavailable")}: {fehler}</p>
         : !daten ? <p className={styles.hinweis}>{t("Evaluating the whole BoQ…")}</p>
         : (

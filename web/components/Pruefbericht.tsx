@@ -24,6 +24,8 @@ import { Kalkulation } from "./kalkulation/Kalkulation";
 import { Historie } from "./historie/Historie";
 import { Einschaetzung, useEinschaetzung, type Bewertungsdaten } from "./einschaetzung/Einschaetzung";
 import { Icon, type IconName } from "./icon/Icon";
+import { KiHinweis } from "./kihinweis/KiHinweis"; // D #168
+import { kiHinweise } from "@/lib/kischritte";
 import { Preisspiegel } from "./preise/Preisspiegel";
 import { liesJetzt, useEinstellungen, useT } from "@/lib/einstellungen";
 import { befundAnzeige } from "@/lib/befundtext";
@@ -343,6 +345,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
           <code>{MOCK_REGEL}</code> {t("only demonstrate the report format and are not domain findings.")}
         </p>
       )}
+      <KiHinweis hinweise={kiHinweise(bericht, bewertung.ki)} />
 
       {/* Team spec: score out of 10, estimated amount ±, then how many recommendations, warnings and big problems. */}
       <div className={styles.kopfzahlen}>
