@@ -11,13 +11,16 @@ from pydantic import BaseModel, Field
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = str(BASE_DIR / "database.duckdb")
+PRICE_DB_PATH = str(BASE_DIR / "price.duckdb")
+
 conn: Optional[duckdb.DuckDBPyConnection] = None
+price_conn: Optional[duckdb.DuckDBPyConnection] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global conn
-    # Connect to a persistent local DuckDB file
+    global conn, price_conn
+    # Connect to the first database (records)
     conn = duckdb.connect(DB_PATH)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS database (
@@ -30,15 +33,30 @@ async def lifespan(app: FastAPI):
             note VARCHAR
         )
     """)
+
+    # Connect to the second database (price)
+    price_conn = duckdb.connect(PRICE_DB_PATH)
+    price_conn.execute("""
+        CREATE TABLE IF NOT EXISTS prices (
+            id UBIGINT,
+            name VARCHAR,
+            unit VARCHAR,
+            price_per_unit DOUBLE
+        )
+    """)
+
     yield
+
     if conn:
         conn.close()
+    if price_conn:
+        price_conn.close()
 
 
-app = FastAPI(title="DuckDB Test Results API", lifespan=lifespan)
+app = FastAPI(title="DuckDB Test Results & Price API", lifespan=lifespan)
 
 
-# --- Pydantic Models ---
+# --- Pydantic Models (Database 1: Records) ---
 
 class RecordCreate(BaseModel):
     id: Optional[int] = Field(default=None, description="Auto-generated if omitted")
@@ -60,7 +78,23 @@ class RecordResponse(BaseModel):
     note: str
 
 
-# --- Helper Function ---
+# --- Pydantic Models (Database 2: Price) ---
+
+class PriceCreate(BaseModel):
+    id: Optional[int] = Field(default=None, description="Auto-generated if omitted")
+    name: str
+    unit: str
+    price_per_unit: float
+
+
+class PriceResponse(BaseModel):
+    id: int
+    name: str
+    unit: str
+    price_per_unit: float
+
+
+# --- Helper Functions ---
 
 def format_rows(rows: List[tuple]) -> List[RecordResponse]:
     """Maps raw database tuples into typed Pydantic response models."""
@@ -80,7 +114,20 @@ def format_rows(rows: List[tuple]) -> List[RecordResponse]:
     return results
 
 
-# --- Endpoints ---
+def format_price_rows(rows: List[tuple]) -> List[PriceResponse]:
+    """Maps raw price database tuples into typed Pydantic response models."""
+    return [
+        PriceResponse(
+            id=int(r[0]),
+            name=r[1],
+            unit=r[2],
+            price_per_unit=float(r[3]),
+        )
+        for r in rows
+    ]
+
+
+# --- Endpoints (Database 1: Records) ---
 
 @app.post("/records", response_model=RecordResponse, status_code=201)
 def insert_record(record: RecordCreate):
@@ -150,3 +197,65 @@ def get_latest_by_tag(
         [tag, limit],
     ).fetchall()
     return format_rows(rows)
+
+
+# --- Endpoints (Database 2: Price) ---
+
+@app.post("/prices", response_model=PriceResponse, status_code=201)
+def insert_price(item: PriceCreate):
+    """Insert a new price item into the price database."""
+    item_id = item.id if item.id is not None else int(time.time() * 1000)
+
+    try:
+        price_conn.execute(
+            """
+            INSERT INTO prices (id, name, unit, price_per_unit)
+            VALUES (?, ?, ?, ?)
+            """,
+            [
+                item_id,
+                item.name,
+                item.unit,
+                item.price_per_unit,
+            ],
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Price database insert error: {str(e)}")
+
+    return PriceResponse(
+        id=item_id,
+        name=item.name,
+        unit=item.unit,
+        price_per_unit=item.price_per_unit,
+    )
+
+
+@app.get("/prices", response_model=List[PriceResponse])
+def get_prices(
+    name: Optional[str] = Query(default=None, description="Filter by item name (optional)"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
+):
+    """Get a list of prices, optionally filtered by name."""
+    if name:
+        rows = price_conn.execute(
+            """
+            SELECT id, name, unit, price_per_unit
+            FROM prices
+            WHERE name ILIKE ?
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            [f"%{name}%", limit],
+        ).fetchall()
+    else:
+        rows = price_conn.execute(
+            """
+            SELECT id, name, unit, price_per_unit
+            FROM prices
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            [limit],
+        ).fetchall()
+
+    return format_price_rows(rows)
