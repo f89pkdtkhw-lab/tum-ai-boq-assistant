@@ -45,7 +45,7 @@ export function Ring({ teile, mitte, unter, farbe, beschriftung, max = 200, plas
           </>
         ) : bogen(0, false)}
         <text x="70" y={innen ? 69 : 70} textAnchor="middle" dominantBaseline={innen ? "auto" : "central"}
-          style={{ fontSize: groesse, fontWeight: 800, letterSpacing: "-.02em" }} fill={farbe ?? "var(--ink)"}>{mitte}</text>
+          style={{ fontSize: groesse, fontWeight: 600, letterSpacing: "-.02em" }} fill={farbe ?? "var(--ink)"}>{mitte}</text>
         {innen && <text x="70" y="94" textAnchor="middle" style={{ fontSize: 11 }} fill="var(--muted)">{unter}</text>}
       </svg>
       {unter && !innen && <figcaption style={{ fontSize: 12.5, color: "var(--muted)", textAlign: "center" }}>{unter}</figcaption>}

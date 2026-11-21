@@ -20,7 +20,7 @@
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
   padding: 0 0 12px; border: 0 !important; background: none !important; box-shadow: none !important; border-bottom: 1px solid var(--line) !important; border-radius: 0;
 }
-.marke { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.marke { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
 .status {
   display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: var(--r-lg);
   font-size: 13px; font-weight: 500; color: var(--muted); background: var(--fill);
@@ -31,12 +31,12 @@
 .statusOffline::before { background: var(--bad); }
 
 .einleitung { padding: 24px 0 0; text-align: center; display: grid; gap: 8px; justify-items: center; }
-.kicker { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+.kicker { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
 .titel { margin: 0; font-size: clamp(24px, 3vw, 30px); line-height: 1.2; font-weight: 700; letter-spacing: -.015em; max-width: 34ch; text-wrap: balance; }
 .lead { margin: 0; font-size: 13.5px; color: var(--muted); max-width: 64ch; text-wrap: pretty; }
 
 .karte { border-radius: var(--r-lg); padding: 16px; display: grid; gap: 16px; width: 100%; max-width: 720px; margin: 0 auto; }
-.abschnitt { margin: 0; font-size: 13px; font-weight: 400; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); overflow-wrap: anywhere; }
+.abschnitt { margin: 0; font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--muted); overflow-wrap: anywhere; }
 
 .ablage {
   position: relative; display: grid; gap: 4px; justify-items: center; text-align: center; cursor: pointer;

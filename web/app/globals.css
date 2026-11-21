@@ -1,20 +1,16 @@
-/* osifont: free DIN EN ISO 3098 lettering, bundled so it works offline (public/fonts/OSIFONT-LICENSE.txt). */
-@font-face { font-family: osifont; src: url("/fonts/osifont.ttf") format("truetype"); font-display: swap; }
-/* Construction-industry look after German site software (SYFIT Baugerätemanager): deep navy, one orange
-   signal colour, cool grey page, square corners, bold condensed headings. Components read these tokens;
-   --glass* are kept as aliases of flat surfaces. */
+/* Clean, Apple-style look: system font (SF Pro on Apple devices), near-black text, one blue accent,
+   rounded buttons and cards, white page. Components read these tokens; --glass* are flat-surface aliases. */
 :root {
-  --bg: #ffffff; --ink: #0a234b; --muted: #565969; --line: #d9dbe3; --card: #ffffff;
-  --accent: #0a234b; --accent-2: #3b4f6f; --brand: #ff5000; --good: #12a150; --warn: #d97706; --bad: #d92d20;
-  --fill: #f3f3f5; --fill-strong: #e4e5eb;
-  --button: #0a234b; --button-ink: #ffffff;
+  --bg: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --line: #d2d2d7; --card: #ffffff;
+  --accent: #0071e3; --accent-2: #424245; --brand: #0071e3; --good: #12a150; --warn: #d97706; --bad: #d92d20;
+  --fill: #f5f5f7; --fill-strong: #e8e8ed;
+  --button: #0071e3; --button-ink: #ffffff;
   --glass: var(--card); --glass-edge: var(--line); --glass-light: transparent;
   --glass-line: transparent; --shadow: rgba(16, 24, 40, .06);
   --glow-a: transparent; --glow-b: transparent; --glow-c: transparent;
-  --r-sm: 0; --r-md: 2px; --r-lg: 2px;
-  /* DIN EN ISO 3098 technical lettering (as on construction drawings) for all text: osifont is the free
-     ISO 3098 font, ISOCPEUR/ISOCP the CAD ones; others fall back to a plain sans-serif. */
-  --font-iso: osifont, ISOCPEUR, ISOCP, "ISO 3098", "Open Sans", Arial, sans-serif;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+  /* System font for all text (name kept so components need no change). */
+  --font-iso: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-head: var(--font-iso);
   /* Danger scale, red (critical) → green (no findings). */
   --sev-kritisch: #d92d20; --sev-hoch: #f08c00; --sev-mittel: #f5c518; --sev-niedrig: #8cc63f; --sev-ok: #22a356;
@@ -24,10 +20,10 @@
 }
 /* Dark: chosen in settings, or automatically from 19:00 to 07:00 (see lib/einstellungen.tsx). */
 :root[data-theme="dark"] {
-  --bg: #07142b; --ink: #e8ebf2; --muted: #9aa3b5; --line: #22324f; --card: #0d1d38;
-  --accent: #ff6a1f; --accent-2: #8ea2c4; --brand: #ff5000; --good: #3ccf7a; --warn: #f5a524; --bad: #f04438;
-  --fill: #12244a; --fill-strong: #1a2f5a;
-  --button: #ff5000; --button-ink: #ffffff;
+  --bg: #000000; --ink: #f5f5f7; --muted: #a1a1a6; --line: #38383a; --card: #1c1c1e;
+  --accent: #2997ff; --accent-2: #a1a1a6; --brand: #2997ff; --good: #3ccf7a; --warn: #f5a524; --bad: #f04438;
+  --fill: #2c2c2e; --fill-strong: #3a3a3c;
+  --button: #0a84ff; --button-ink: #ffffff;
   --shadow: rgba(0, 0, 0, .4);
   --sev-kritisch: #f04438; --sev-hoch: #f79009; --sev-mittel: #f5c518; --sev-niedrig: #9ad04f; --sev-ok: #32c26d;
   --sev-mittel-text: #f5c518;
@@ -40,7 +36,7 @@ summary { cursor: pointer; }
 summary > h3, summary > div { display: inline-flex; vertical-align: middle; }
 body {
   margin: 0; min-height: 100vh; color: var(--ink); -webkit-font-smoothing: antialiased; background: var(--bg);
-  font: 14px/1.5 var(--font-iso);
+  font: 15px/1.47 var(--font-iso); letter-spacing: -.01em;
   font-feature-settings: "tnum" 0, "cv11" 1;
 }
 /* App frame: top bar, then the page. */
@@ -50,7 +46,7 @@ body {
 .app > main { align-content: start; }
 .shell { max-width: 1040px; margin: 0 auto; padding: 24px 20px 64px; }
 .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.brand { font-weight: 700; letter-spacing: .02em; }
+.brand { font-weight: 700; letter-spacing: 0; }
 .status { font: 12px var(--font-iso); padding: 4px 10px; border-radius: var(--r-md); border: 1px solid var(--line); }
 .status.live { color: var(--good); border-color: currentColor; }
 .status.mock { color: var(--warn); border-color: currentColor; }
@@ -87,11 +83,11 @@ html[data-dichte="kompakt"] body { zoom: .88; }
 }
 .info:hover::after, .info:focus-visible::after { opacity: 1; }
 
-/* Headings: bold Roboto-style, navy; page titles uppercase like construction-industry sites. */
-h1, h2, h3 { font-family: var(--font-head); color: var(--ink); letter-spacing: 0; }
-main h1 { font-weight: 900; text-transform: uppercase; letter-spacing: .01em; }
-/* Orange is the one signal colour: focus rings and the active state. */
+/* Headings: semibold, slightly tight tracking, sentence case. */
+h1, h2, h3 { font-family: var(--font-head); color: var(--ink); letter-spacing: -.015em; font-weight: 600; }
+main h1 { font-weight: 700; letter-spacing: -.02em; }
+/* Blue is the one signal colour: focus rings and the active state. */
 :focus-visible { outline-color: var(--brand); }
 a { color: var(--accent); }
-/* ISO 3098 everywhere: form controls and SVG text don't inherit the body font by default. */
+/* Form controls and SVG text don't inherit the body font by default. */
 button, input, select, textarea, svg text { font-family: var(--font-iso); }

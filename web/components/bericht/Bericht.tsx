@@ -158,7 +158,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
         <div className={styles.score}>
           {/* The ring shows exactly the three counts below it: issues (red), warnings (yellow), recommendations (green). */}
           <Ring teile={[{ wert: zaehler("issue"), farbe: AMPEL.rot }, { wert: zaehler("warning"), farbe: AMPEL.gelb }, { wert: zaehler("rec"), farbe: AMPEL.gruen }]}
-            mitte={e.score.toFixed(1)} unter="/ 10" farbe={TEXT[e.ampel]} beschriftung={`${t("Score")} ${e.score} / 10`} max={460} plastisch />
+            mitte={e.score.toFixed(1)} unter="/ 10" farbe={TEXT[e.ampel]} beschriftung={`${t("Score")} ${e.score} / 10`} max={260} />
           <strong style={{ color: TEXT[e.ampel] }}>{t(e.urteil)}</strong>
         </div>
         <button type="button" className={`${styles.preisKachel} ${styles.geschaetzt}`} onClick={zeigePreise} title={t("Show full estimated price report")}>

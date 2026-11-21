@@ -48,12 +48,12 @@
 /* Compact key button on the navy top bar (redesign): same look as the theme switch next to it; the dot shows live / mock / offline. */
 .keyButton {
   position: relative; display: inline-grid; place-items: center; width: 34px; height: 32px; padding: 0; cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, .25); border-radius: var(--r-md, 8px); background: rgba(255, 255, 255, .08); color: rgba(255, 255, 255, .8);
+  border: 1px solid var(--line); border-radius: var(--r-md, 8px); background: var(--fill); color: var(--muted);
 }
-.keyButton:hover { background: rgba(255, 255, 255, .16); color: #fff; }
+.keyButton:hover { background: var(--fill-strong); color: var(--ink); }
 .keyButton:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.keyDot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, .5); box-shadow: 0 0 0 1.5px #0a234b; }
-.keyButton.live, .keyButton.mock, .keyButton.off { border-style: solid; color: rgba(255, 255, 255, .8); }
+.keyDot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 1.5px var(--bg); }
+.keyButton.live, .keyButton.mock, .keyButton.off { border-style: solid; color: var(--muted); }
 .keyButton.live .keyDot { background: var(--good); }
 .keyButton.mock .keyDot { background: var(--warn); }
 .keyButton.off .keyDot { background: var(--bad); }
