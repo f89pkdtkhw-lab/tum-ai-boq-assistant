@@ -222,6 +222,46 @@ class Anpassung(Vertrag):
 # --- end B7 ---------------------------------------------------------------------------------------
 
 
+# --- B8 (#114): new estimated bill with the adjustments applied (epic #93, "Price calculation") ---
+class GeschaetztePosition(Vertrag):
+    """One row of the estimated bill; every original item stays, removed ones with `gp_neu` 0."""
+    oz: str
+    status: Literal["unchanged", "updated", "added", "removed"]
+    kurztext: str = ""
+    einheit: str | None = None
+    menge_alt: float | None = None     # null for added items
+    menge_neu: float | None = None     # 0 for removed items
+    ep: float | None = None            # unit price from the price list; null without a match
+    gp_alt: float | None = None
+    gp_neu: float | None = None
+    anpassung_ids: list[str] = Field(default_factory=list)
+    grund: str = ""
+    freigabe_noetig: bool = False      # true for adjustments from Report 2/3 or needing approval
+    in_summe: bool = True              # false for "bedarf"/"alternativ" items, as in `kalkulation`
+
+
+class StatusAnzahl(Vertrag):
+    unchanged: int = Field(default=0, ge=0)
+    updated: int = Field(default=0, ge=0)
+    added: int = Field(default=0, ge=0)
+    removed: int = Field(default=0, ge=0)
+
+
+class GeschaetztesLv(Vertrag):
+    preisliste_id: str | None = None
+    waehrung: str = "EUR"
+    mwst_satz: float = 0.19
+    positionen: list[GeschaetztePosition] = Field(default_factory=list)
+    summe_netto: float | None = None        # null without a price list
+    summe_brutto: float | None = None
+    differenz_netto: float | None = None    # summe_netto - kalkulation.summe_netto
+    differenz_prozent: float | None = None  # null when the original net sum is 0 or unknown
+    ohne_preis: int = Field(default=0, ge=0)  # kept or added rows without a unit price
+    vollstaendig: bool = False                # every summed row has a gp_neu
+    anzahl: StatusAnzahl = Field(default_factory=StatusAnzahl)
+# --- end B8 ---------------------------------------------------------------------------------------
+
+
 class Pruefbericht(Vertrag):
     lv: LV
     findings: list[Finding]
@@ -233,6 +273,7 @@ class Pruefbericht(Vertrag):
     was_wenn: list[WasWenn] | None = None
     schlussbericht: Schlussbericht | None = None
     anpassungen: list[Anpassung] | None = Field(default=None, exclude_if=_ohne_null)  # B7 #113
+    geschaetztes_lv: GeschaetztesLv | None = Field(default=None, exclude_if=_ohne_null)  # B8 #114
 
 
 class Beispiel(Vertrag):
