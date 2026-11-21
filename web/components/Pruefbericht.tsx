@@ -17,6 +17,7 @@ import { Suche } from "./suche/Suche";
 import { Titelbaum } from "./titelbaum/Titelbaum";
 import { Top } from "./top/Top";
 import { Seiten } from "./seiten/Seiten";
+import { Berichte } from "./berichte/Berichte";
 import styles from "./pruefbericht.module.css";
 
 /**
@@ -313,6 +314,11 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
       <Top findings={findings} positionen={lv.positionen} onWaehle={(oz, id) => {
         waehle(oz, id);
         // The panel sits above the list, so the detail is off-screen on wide layouts too.
+        requestAnimationFrame(() => { detailRef.current?.scrollIntoView({ block: "nearest" }); detailRef.current?.focus({ preventScroll: true }); });
+      }} />
+
+      <Berichte bericht={bericht} onWaehle={(oz, id) => {
+        waehle(oz, id);
         requestAnimationFrame(() => { detailRef.current?.scrollIntoView({ block: "nearest" }); detailRef.current?.focus({ preventScroll: true }); });
       }} />
 
