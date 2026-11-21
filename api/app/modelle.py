@@ -224,3 +224,29 @@ class Beispiel(Vertrag):
 
 class Beispiele(Vertrag):
     items: list[Beispiel]
+
+
+# --- Regulation document (B3, issue #96): optional, additive models for /api/regelwerk/import and
+# /api/lv/analyse (body model AnalyseAnfrage lives in main.py, B6). Shared contract of epic #93; existing models above stay unchanged.
+class RegelwerkNormverweis(Vertrag):
+    norm_id: str = Field(min_length=1)  # normalised designation, e.g. "DIN 1045-2"
+    ausgabe: str | None = None  # edition "2008-08" or year, if stated
+    fundstelle: str = Field(min_length=1)  # "<file>, page <p>, line <l>" of the first occurrence
+
+
+class RegelwerkKennwert(Vertrag):
+    norm: str | None = None  # norm the value belongs to (last reference before it), if any
+    kennwert: str = Field(min_length=1)  # "min_strength_class" or the stated name, e.g. "Betondeckung c_nom"
+    wert: str = Field(min_length=1)  # as a string: "C30/37", "40", "0.035"
+    einheit: str | None = None
+    fundstelle: str = Field(min_length=1)
+    bedingung: str | None = None  # condition, e.g. exposure class "XC4"
+    vergleich: Literal["min", "max"] | None = None
+
+
+class Regelwerk(Vertrag):
+    id: str = Field(min_length=1)
+    dateiname: str = Field(min_length=1)
+    normverweise: list[RegelwerkNormverweis] = Field(default_factory=list)
+    kennwerte: list[RegelwerkKennwert] = Field(default_factory=list)
+    warnungen: list[str] = Field(default_factory=list)
