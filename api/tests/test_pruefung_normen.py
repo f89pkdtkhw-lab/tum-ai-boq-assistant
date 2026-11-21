@@ -850,3 +850,143 @@ def test_b2_switch_off_and_hook_with_uploaded_values(monkeypatch):
     monkeypatch.setenv("NORM_KI_RECHERCHE", "off")
     assert [f.regel_id for f in pruefe_normen_sicher(lv, vorgaben)] == [NORM_KENNWERT_ABWEICHUNG]
     assert pruefe_normen_sicher(lv) == pruefe_normen(lv)
+
+
+# ---------------------------------------------------------------------------
+# B4 (issue #97, epic #93): register key values as Note 2 sources and assumption notes in the report.
+# ---------------------------------------------------------------------------
+from app.pruefung.normen import ergaenze_annahmen, mit_register_quellen  # noqa: E402
+
+XC4_QUELLE = "NORM:DIN 1045-2:min_strength_class:XC4"
+
+
+def note2_anfrage(**extra) -> dict:
+    return {"step": "standards", "lv": NOTE2_LV.model_dump(mode="json"), "checked_on": STICHTAG.isoformat(), **extra}
+
+
+def nutzer_quelle(oz: str = "03.01", wert: float = 20) -> dict:
+    return {"spec_id": "U1", "source_type": "user", "category": "user_requirement", "document_ref": "client spec",
+            "location": "p. 3", "as_of": "2026-11-20", "scope": {"oz": [oz]}, "verified": True,
+            "requirement": {"parameter": "concrete strength f_ck,cyl for exposure class XC4", "comparator": "eq",
+                            "value": wert, "unit": "N/mm²"}}
+
+
+def test_b4_checked_register_entry_is_a_source_of_note_2(monkeypatch):
+    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    client = TestClient(main.app)
+    body = client.post("/api/comparison/steps", json=note2_anfrage()).json()
+    assert body["status"] == "complete" and body["errors"] == []
+    notes = {n["id"]: n for n in body["notes"]}
+    assert list(notes) == ["Note2:03.01", "Note2:03.02"]  # 03.03 cites no register norm
+    assert XC4_QUELLE in notes["Note2:03.01"]["text"]
+    assert [e["reference_id"] for e in notes["Note2:03.01"]["evidence"]] == [XC4_QUELLE]
+    # With a deviating user requirement Note 2 states the deviation against the register.
+    mit_nutzer = client.post("/api/comparison/steps", json=note2_anfrage(sources=[nutzer_quelle()])).json()
+    note = {n["id"]: n for n in mit_nutzer["notes"]}["Note2:03.01"]
+    assert note["text"].startswith("Deviation for OZ 03.01") and XC4_QUELLE in note["text"]
+    assert {e["reference_id"] for e in note["evidence"]} == {XC4_QUELLE, "U1"}
+
+
+def test_b4_unchecked_register_entry_is_not_used(monkeypatch):
+    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
+    client = TestClient(main.app)
+    nur_lv = client.post("/api/comparison/steps", json=note2_anfrage()).json()
+    assert nur_lv["status"] == "error" and nur_lv["errors"][0]["code"] == "placeholder_unavailable"
+    body = client.post("/api/comparison/steps", json=note2_anfrage(sources=[nutzer_quelle()])).json()
+    [note] = body["notes"]  # repository register: DIN 1045-2 is geprueft false
+    assert note["text"].startswith("Manual review: no verified applicable German source for OZ 03.01")
+    assert [e["reference_id"] for e in note["evidence"]] == ["U1"] and XC4_QUELLE not in json.dumps(body)
+
+
+def test_b4_note_2_hook_keeps_other_requests_unchanged(monkeypatch):
+    from app.ai.step_api import StepRequest
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    standards = StepRequest.model_validate(note2_anfrage(sources=[nutzer_quelle()]))
+    vergleich = StepRequest.model_validate(note2_anfrage(step="comparison", sources=[nutzer_quelle()]))
+    ohne_stichtag = StepRequest.model_validate({"step": "standards", "lv": NOTE2_LV.model_dump(mode="json")})
+    assert mit_register_quellen(vergleich) is vergleich and mit_register_quellen(ohne_stichtag) is ohne_stichtag
+    xc1 = "NORM:DIN 1045-2:min_strength_class:XC1"
+    assert [s.spec_id for s in mit_register_quellen(standards).sources] == ["U1", xc1, XC4_QUELLE]
+    eigene = StepRequest.model_validate(note2_anfrage(sources=[{**nutzer_quelle(), "spec_id": XC4_QUELLE}]))
+    assert [s.spec_id for s in mit_register_quellen(eigene).sources] == [XC4_QUELLE, xc1]  # caller's id wins
+    monkeypatch.setenv("NORMPRUEFUNG", "off")
+    assert mit_register_quellen(standards) is standards
+
+
+def test_b4_note_2_switch_off_gives_todays_response(monkeypatch):
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    client = TestClient(main.app)
+    anfragen = [note2_anfrage(), note2_anfrage(sources=[nutzer_quelle()])]
+    monkeypatch.setenv("NORMPRUEFUNG", "off")
+    aus = [client.post("/api/comparison/steps", json=a).content for a in anfragen]
+    monkeypatch.setattr(normen, "mit_register_quellen", lambda request, register=None: request)
+    assert aus == [client.post("/api/comparison/steps", json=a).content for a in anfragen]
+
+
+def test_b4_note_2_hook_errors_are_logged_and_skipped(monkeypatch, caplog):
+    from app.ai.step_api import StepRequest
+    def kaputt(*args, **kwargs):
+        raise RuntimeError("synthetic failure")
+    monkeypatch.setattr(normen, "lade_register", kaputt)
+    anfrage = StepRequest.model_validate(note2_anfrage())
+    with caplog.at_level(logging.ERROR, logger=normen.__name__):
+        assert mit_register_quellen(anfrage) is anfrage
+    assert "Note 2 failed" in caplog.text
+
+
+ANNAHME_LV = beton_lv("Beton XC4, C20/25", "Stahlbeton nach DIN 1045-2 liefern.")
+
+
+def test_b4_assumption_note_is_visible_in_the_report(monkeypatch):
+    for key in LLM_KEYS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
+    client = TestClient(main.app)
+    lv = ANNAHME_LV.model_dump(mode="json")
+    heute = client.post("/api/lv/pruefen", json=lv).json()  # repository register: unchecked, no assumption
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    with monkeypatch.context() as m:
+        m.setattr(main, "ergaenze_annahmen", lambda bericht: bericht)
+        ohne_hook = client.post("/api/lv/pruefen", json=lv).json()
+    an = client.post("/api/lv/pruefen", json=lv).json()
+    assert an["findings"] == ohne_hook["findings"]  # findings unchanged, only the hook differs
+    assert [f["regel_id"] for f in an["findings"] if f["regel_id"] == NORM_KENNWERT_ABWEICHUNG] == [
+        NORM_KENNWERT_ABWEICHUNG]
+    regelwerk = an["berichte"][0]
+    assert regelwerk["id"] == "regelwerk"
+    [note] = [n for n in regelwerk["notes"] if n["id"] == "NormAssumption:02.01"]
+    assert note["assumption"].startswith(f"{ANNAHME_PRAEFIX}: for 120 m³ (OZ 02.01) C25/30 instead of C20/25")
+    assert (note["step"], note["approval_required"], note["manual_review"], note["oz"]) == (
+        "standards", True, True, "02.01")
+    assert ANNAHME_PRAEFIX in regelwerk["meldung"]
+    assert regelwerk["zaehler"]["empfehlungen"] == ohne_hook["berichte"][0]["zaehler"]["empfehlungen"] + 1
+    assert an["zusammenfassung"]["empfehlungen"] == ohne_hook["zusammenfassung"]["empfehlungen"] + 1
+    assert an["zusammenfassung"]["score"] == ohne_hook["zusammenfassung"]["score"]  # never a penalty
+    [zeile] = an["schlussbericht"]["positionen"]
+    assert note["assumption"] in zeile["empfehlungen"]
+    assert all(not n["id"].startswith("NormAssumption") for n in heute["berichte"][0]["notes"])
+
+
+def test_b4_assumption_switch_off_gives_todays_report(monkeypatch):
+    for key in LLM_KEYS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    client = TestClient(main.app)
+    lv = ANNAHME_LV.model_dump(mode="json")
+    monkeypatch.setenv("NORMPRUEFUNG", "off")
+    aus = client.post("/api/lv/pruefen", json=lv)
+    monkeypatch.setattr(main, "ergaenze_annahmen", lambda bericht: bericht)
+    heute = client.post("/api/lv/pruefen", json=lv)
+    assert aus.status_code == heute.status_code == 200 and aus.content == heute.content
+
+
+def test_b4_assumption_hook_returns_the_report_unchanged_without_notes_or_on_error(monkeypatch, caplog):
+    bericht = main.pruefen(beton_lv("Beton XC4, C25/30", "Stahlbeton nach DIN 1045-2 liefern."))
+    assert ergaenze_annahmen(bericht, register_mit(True)) is bericht  # no deviation → no assumption
+    def kaputt(*args, **kwargs):
+        raise RuntimeError("synthetic failure")
+    monkeypatch.setattr(normen, "pruefe_kennwerte_sicher", kaputt)
+    with caplog.at_level(logging.ERROR, logger=normen.__name__):
+        assert ergaenze_annahmen(bericht, register_mit(True)) is bericht
+    assert "Assumption notes for the report failed" in caplog.text

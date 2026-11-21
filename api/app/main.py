@@ -15,7 +15,7 @@ from .pruefung.preise import kalkuliere  # B6 #112
 from .pruefung.regeln import pruefe_regeln
 from .pruefung.mengen import pruefe_mengen
 from .pruefung.llm_pruefung import pruefe_mit_llm
-from .pruefung.normen import pruefe_normen_sicher
+from .pruefung.normen import ergaenze_annahmen, pruefe_normen_sicher  # B4 #97: ergaenze_annahmen
 from .pruefung.bewertung import zusammenfassen
 from .pruefung.berichte import ergaenze_berichte  # B5 (#98)
 from .modelle import Regelwerk  # B3 (#96)
@@ -87,10 +87,10 @@ def _pruefbericht(lv: LV, vorgaben=None):
     """`vorgaben`: requirements of the uploaded regulation document (B3 #96) for check 1; None = as before."""
     findings = (bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + pruefe_mit_llm(lv))
                 + (pruefe_normen_sicher(lv) if vorgaben is None else pruefe_normen_sicher(lv, vorgaben=vorgaben)))
-    return ergaenze_berichte(Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
+    return ergaenze_annahmen(ergaenze_berichte(Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
         positionen=len(lv.positionen), findings=len(findings),
         kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=True,
-    ), zusammenfassung=zusammenfassen(findings)))
+    ), zusammenfassung=zusammenfassen(findings))))
 
 
 class AnalyseAnfrage(BaseModel):
