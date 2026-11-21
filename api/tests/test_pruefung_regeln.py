@@ -96,6 +96,58 @@ def test_text_widerspruch_sauberer_kontrollfall_bei_uebereinstimmung():
     assert all(f.regel_id != "TEXT_WIDERSPRUCH" for f in pruefe_regeln(lv))
 
 
+def _text_widersprueche(kurztext: str, langtext: str) -> list:
+    lv = LV(name="Test", quelle="synthetisch", positionen=[
+        Position(oz="01", kurztext=kurztext, langtext=langtext),
+    ])
+    return [f for f in pruefe_regeln(lv) if f.regel_id == "TEXT_WIDERSPRUCH"]
+
+
+def test_text_widerspruch_bei_abweichender_betonfestigkeitsklasse():
+    befunde = _text_widersprueche("Beton C25/30", "Beton C30/37")
+    assert len(befunde) == 1
+    befund = befunde[0]
+    assert befund.oz == "01"
+    assert befund.quelle == "regel"
+    assert "C25/30" in befund.begruendung and "C30/37" in befund.begruendung
+
+
+def test_text_widerspruch_sauberer_kontrollfall_bei_wiederholter_festigkeitsklasse():
+    assert _text_widersprueche("Stahlbeton C25/30", "Stahlbeton der Festigkeitsklasse C25/30 herstellen.") == []
+
+
+def test_text_widerspruch_bei_abweichendem_mass():
+    befunde = _text_widersprueche("Wand d = 20 cm", "Wand aus Mauerwerk, d = 24 cm, herstellen.")
+    assert len(befunde) == 1
+    assert "d = 20 cm" in befunde[0].begruendung and "d = 24 cm" in befunde[0].begruendung
+
+
+def test_text_widerspruch_gleiches_mass_in_anderer_schreibweise():
+    assert _text_widersprueche("Wand d=17,5 cm", "Wand d = 175 mm herstellen.") == []
+
+
+def test_text_widerspruch_bei_abweichendem_produkttyp_und_stahlsorte():
+    befunde = _text_widersprueche("Anker ABCD 3/400-B, Betonstahl BSt 500 M",
+                                  "Anker ABCD 2/400-B oder gleichwertig, Betonstahl BSt 500 S liefern.")
+    assert len(befunde) == 1
+    begruendung = befunde[0].begruendung
+    for token in ("ABCD 3/400-B", "ABCD 2/400-B", "BSt 500 M", "BSt 500 S"):
+        assert token in begruendung
+
+
+def test_text_widerspruch_kein_fehlalarm_bei_zusaetzlichen_angaben_im_langtext():
+    assert _text_widersprueche(
+        "Stahlbeton C25/30",
+        "Stahlbeton C25/30, Expositionsklassen XC4, XF1, d = 24 cm, Betonstahl BSt 500 S, "
+        "Unterbeton C12/15 nach Wahl.",
+    ) == []
+
+
+def test_text_widerspruch_unterschiedliche_expositionsgruppen_widersprechen_nicht():
+    assert _text_widersprueche("Beton XC4", "Beton XF1 herstellen.") == []
+    assert len(_text_widersprueche("Beton XC2", "Beton XC4 herstellen.")) == 1
+
+
 def test_einheit_tippfehler_bekannte_schreibweise():
     lv = LV(name="Test", quelle="synthetisch", positionen=[Position(oz="01", einheit="qm", langtext="x")])
     befund = next(f for f in pruefe_regeln(lv) if f.regel_id == "EINHEIT_TIPPFEHLER")

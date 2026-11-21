@@ -98,15 +98,98 @@ def _pruefe_einheit_tippfehler(pos: Position) -> Finding | None:
     )
 
 
+def _norm_wert(text: str) -> Decimal:
+    return Decimal(text.replace(",", "."))
+
+
+_MASS_FAKTOR_MM = {"mm": Decimal(1), "cm": Decimal(10), "m": Decimal(1000)}
+
+
+def _bezeichnung_beton(m: re.Match) -> tuple[str, str]:
+    return "concrete strength class", m.group(1).upper()
+
+
+def _bezeichnung_betonstahl(m: re.Match) -> tuple[str, str]:
+    return "reinforcing steel grade", f"BSt {m.group(1)} {m.group(2).upper()}"
+
+
+def _bezeichnung_exposition(m: re.Match) -> tuple[str, str]:
+    return f"exposure class X{m.group(1).upper()}", m.group(0).upper()
+
+
+def _bezeichnung_mass(m: re.Match) -> tuple[str, str]:
+    mm = _norm_wert(m.group(2)) * _MASS_FAKTOR_MM[m.group(3).lower()]
+    return f"dimension {m.group(1).lower()}", f"{m.group(1).lower()} = {mm.normalize():f} mm"
+
+
+def _bezeichnung_produkt(m: re.Match) -> tuple[str, str]:
+    return f"product type {m.group(1)}", f"{m.group(1)} {m.group(2)}"
+
+
+def _bezeichnung_daemmung(m: re.Match) -> tuple[str, str]:
+    return "thermal conductivity group", f"{m.group(1).upper()} {int(m.group(2)):03d}"
+
+
+def _bezeichnung_nennweite(m: re.Match) -> tuple[str, str]:
+    return "nominal diameter", f"DN {m.group(1)}"
+
+
+# Designation kinds compared between short and long text. Each pattern yields
+# (kind, normalized token); only tokens of the same kind can contradict.
+BEZEICHNUNG_MUSTER = (
+    (re.compile(r"\b(L?C\d{1,3}/\d{1,3})\b", re.IGNORECASE), _bezeichnung_beton),
+    (re.compile(r"\bB\s?St\s*(\d{3})\s*([SM])\b", re.IGNORECASE), _bezeichnung_betonstahl),
+    (re.compile(r"\bX([CDFASM])\d\b"), _bezeichnung_exposition),
+    (re.compile(r"\b([dhbt])\s*=\s*(\d+(?:[.,]\d+)?)\s*(mm|cm|m)\b"), _bezeichnung_mass),
+    (re.compile(r"\b([A-ZÄÖÜ]{3,})\s+(\d+(?:[/-][A-Z0-9]+)+)\b"), _bezeichnung_produkt),
+    (re.compile(r"\b(WL[GS])\s*(\d{2,3})\b"), _bezeichnung_daemmung),
+    (re.compile(r"\bDN\s*(\d{2,4})\b"), _bezeichnung_nennweite),
+)
+
+
+def _bezeichnungen(text: str) -> dict[str, dict[str, str]]:
+    """Designation tokens per kind: normalized key -> first spelling as written, in order of appearance."""
+    gefunden: dict[str, dict[str, str]] = defaultdict(dict)
+    for muster, deuten in BEZEICHNUNG_MUSTER:
+        for m in muster.finditer(text):
+            art, schluessel = deuten(m)
+            gefunden[art].setdefault(schluessel, " ".join(m.group(0).split()))
+    return gefunden
+
+
+def _bezeichnungs_widersprueche(kurztext: str, langtext: str) -> list[str]:
+    """Kinds named in both texts without any shared token; extra detail in the long text is no conflict."""
+    kurz = _bezeichnungen(kurztext)
+    lang = _bezeichnungen(langtext)
+    widersprueche = []
+    for art, kurz_tokens in kurz.items():
+        lang_tokens = lang.get(art)
+        if not lang_tokens or kurz_tokens.keys() & lang_tokens.keys():
+            continue
+        widersprueche.append(
+            f"{art}: short description “{', '.join(kurz_tokens.values())}”, "
+            f"detailed description “{', '.join(lang_tokens.values())}”")
+    return widersprueche
+
+
 def _pruefe_text_widerspruch(pos: Position) -> Finding | None:
-    kurz = MENGE_EINHEIT_MUSTER.findall(pos.kurztext or "")
-    lang = MENGE_EINHEIT_MUSTER.findall(pos.langtext or "")
-    if not kurz or not lang or set(kurz) & set(lang):
+    kurztext, langtext = pos.kurztext or "", pos.langtext or ""
+    teile = []
+    kurz = MENGE_EINHEIT_MUSTER.findall(kurztext)
+    lang = MENGE_EINHEIT_MUSTER.findall(langtext)
+    if kurz and lang and not set(kurz) & set(lang):
+        teile.append(f"Short description states {kurz[0][0]} {kurz[0][1]}, "
+                     f"detailed description states {lang[0][0]} {lang[0][1]}.")
+    bezeichnungen = _bezeichnungs_widersprueche(kurztext, langtext)
+    if bezeichnungen:
+        teile.append("Conflicting designations – " + "; ".join(bezeichnungen) + ".")
+    if not teile:
         return None
+    vorschlag = ("Align the short and detailed descriptions on quantity/unit." if not bezeichnungen
+                 else "Clarify which designation applies and align the short and detailed descriptions.")
     return _finding(
         f"TEXT_WIDERSPRUCH:{pos.oz}", pos.oz, "mittel", "Short description contradicts detailed description",
-        f"Short description states {kurz[0][0]} {kurz[0][1]}, detailed description states {lang[0][0]} {lang[0][1]}.",
-        "Align the short and detailed descriptions on quantity/unit.", "TEXT_WIDERSPRUCH",
+        " ".join(teile), vorschlag, "TEXT_WIDERSPRUCH",
     )
 
 
