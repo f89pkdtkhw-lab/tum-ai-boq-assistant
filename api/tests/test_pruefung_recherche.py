@@ -91,6 +91,7 @@ def test_findings_get_sourced_research_grouped_by_trade():
     assert r.status == "ok" and r.aufrufe == 1 and r.suchen == 1
     assert {e.finding_id for e in r.ergebnisse} == {"f-01.01", "f-01.03"}
     assert r.ergebnisse[0].quellen[0].url == URL_A
+    assert [(s.schritt, s.status) for s in ergebnis.ki_schritte] == [("recherche", "ok")]
 
 
 def test_unseen_source_urls_are_dropped():
@@ -155,6 +156,8 @@ def test_failures_are_visible_not_silent():
     bericht = _bericht([_finding("01.01")])
     ergebnis = recherche.vertiefe_recherche(bericht, aufruf=kaputt, einstellungen=_cfg())
     assert ergebnis.recherche.status == "fehler" and "HTTP 529" in ergebnis.recherche.meldung
+    [schritt] = ergebnis.ki_schritte  # D #168: the failure is also an AI step status
+    assert schritt.schritt == "recherche" and schritt.status == "fehler" and "HTTP 529" in schritt.grund
     assert ergebnis.findings == bericht.findings
 
 

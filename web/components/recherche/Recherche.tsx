@@ -11,9 +11,10 @@ const EINSCHAETZUNG: Record<RechercheErgebnis["einschaetzung"], string> = {
 
 export function RechercheHinweis({ recherche }: { recherche: Recherche }) {
   const t = useT();
-  const art = recherche.status === "ok" ? styles.ok : recherche.status === "aus" ? styles.aus : styles.problem;
+  // Failures (fehler/teilweise) are also an AI step status (ki_schritte, D #168) and shown by KiHinweis there.
+  if (recherche.status === "fehler" || recherche.status === "teilweise") return null;
   return (
-    <p className={`${styles.hinweis} ${art}`} role={recherche.status === "fehler" ? "alert" : "note"}>
+    <p className={`${styles.hinweis} ${recherche.status === "ok" ? styles.ok : styles.aus}`} role="note">
       <strong>{t("Web research:")}</strong> {recherche.meldung}
     </p>
   );

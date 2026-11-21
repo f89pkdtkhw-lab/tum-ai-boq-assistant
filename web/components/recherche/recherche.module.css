@@ -6,10 +6,6 @@
 }
 .ok { border-color: color-mix(in srgb, var(--pb-good, #059669) 45%, transparent); }
 .aus { color: var(--pb-muted, var(--muted)); }
-.problem {
-  border-color: color-mix(in srgb, var(--pb-warn, #d97706) 55%, transparent);
-  background: color-mix(in srgb, var(--pb-warn, #d97706) 10%, transparent);
-}
 .liste { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
 .quellen { margin: 2px 0 0; padding-left: 16px; font-size: 13px; }
 .quellen a { color: var(--pb-accent, var(--accent)); overflow-wrap: anywhere; }

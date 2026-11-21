@@ -46,7 +46,7 @@ from threading import Lock
 
 from ..ai import llm
 from ..modelle import (
-    Finding, LV, Position, Pruefbericht, Recherche, RechercheErgebnis, RechercheQuelle,
+    Finding, KiSchritt, LV, Position, Pruefbericht, Recherche, RechercheErgebnis, RechercheQuelle,
 )
 
 log = logging.getLogger(__name__)
@@ -436,6 +436,20 @@ def anwenden(bericht: Pruefbericht, paare: list[tuple[str, dict, RechercheErgebn
 # ----------------------------------------------------------------------------------------------
 # Entry point
 # ----------------------------------------------------------------------------------------------
+SCHRITT_ID = "recherche"
+SCHRITT_TITEL = "AI deep research (web)"
+SCHRITT_STATUS = {"ok": "ok", "teilweise": "fehler", "fehler": "fehler", "aus": "aus"}
+
+
+def _mit_recherche(bericht: Pruefbericht, recherche: Recherche) -> Pruefbericht:
+    """Set ``recherche`` and report the step in ``ki_schritte`` (D #168) so the UI's AI status shows it too."""
+    modell = f"anthropic/{llm.model('anthropic')}" if recherche.aufrufe else None
+    schritt = KiSchritt(schritt=SCHRITT_ID, titel=SCHRITT_TITEL, status=SCHRITT_STATUS[recherche.status],
+                        grund=_kurz(recherche.meldung, 300) or None, modell=modell)
+    schritte = [s for s in bericht.ki_schritte or [] if s.schritt != SCHRITT_ID] + [schritt]
+    return bericht.model_copy(update={"recherche": recherche, "ki_schritte": schritte})
+
+
 def _prompt(gruppe: Gruppe) -> str:
     return (f"{AUFGABEN[gruppe.schritt]}\nTrade/group: {gruppe.name}\n"
             f"Input:\n{json.dumps(gruppe.eingabe, ensure_ascii=False)}")
@@ -453,19 +467,19 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
         if not laeuft:
             if grund is None:
                 return bericht
-            return bericht.model_copy(update={"recherche": Recherche(status="aus", meldung=grund)})
+            return _mit_recherche(bericht, Recherche(status="aus", meldung=grund))
     cfg = einstellungen or Einstellungen.aus_env()
     try:
         plan = plane([gruppen_positionen(bericht, cfg.max_items), gruppen_preise(bericht, cfg.max_items),
                       gruppen_berichte(bericht, cfg.max_items)], cfg.max_calls)
     except Exception:
         log.exception("Deep research: selecting groups failed")
-        return bericht.model_copy(update={"recherche": Recherche(
-            status="fehler", meldung="Deep research could not select items; report shown without it.")})
+        return _mit_recherche(bericht, Recherche(
+            status="fehler", meldung="Deep research could not select items; report shown without it."))
     if not plan:
-        return bericht.model_copy(update={"recherche": Recherche(
+        return _mit_recherche(bericht, Recherche(
             status="ok", meldung="Nothing conspicuous to research (no high-severity, risk, Nachtrag, price or "
-                                 "report items).")})
+                                 "report items)."))
     aufruf = aufruf or claude_recherche
     budget = Budget(cfg.budget)
     frist = time.monotonic() + cfg.timeout
@@ -529,6 +543,6 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
         teile.append(f"{ausgelassen} group(s) skipped (search budget or time limit).")
     teile.extend(fehler)
     status = "ok" if not fehler else "teilweise" if ergebnisse else "fehler"
-    return neuer.model_copy(update={"recherche": Recherche(
+    return _mit_recherche(neuer, Recherche(
         status=status, meldung=" ".join(teile), aufrufe=aufrufe, suchen=budget.verbraucht,
-        ergebnisse=sorted(ergebnisse, key=lambda r: ("positionen", "preise", "berichte").index(r.schritt)))})
+        ergebnisse=sorted(ergebnisse, key=lambda r: ("positionen", "preise", "berichte").index(r.schritt))))
