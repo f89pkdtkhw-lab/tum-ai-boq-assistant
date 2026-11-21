@@ -73,13 +73,15 @@ def bewerte(lv: LV, findings: list[Finding]) -> list[Finding]:
                 "What measurable demand and instruction criteria define the required quantity?",
             )))
         for rule, (uncertainty, title, evidence, question) in conditions:
+            type_hint = rule != "RISK_AS_REQUIRED"
+            reason = (f"OZ {pos.oz}: {evidence}. " if type_hint else
+                      f"OZ {pos.oz}: {evidence}. Scope or quantity needs clarification; "
+                      "this does not establish an entitlement to additional payment. ")
             result.append(Finding(
                 id=f"{rule}:{pos.oz}:{index}", oz=pos.oz,
                 kategorie="nachtrag" if rule == "RISK_AS_REQUIRED" else "risiko",
-                schwere="hoch" if uncertainty == 3 else "mittel", titel=title,
-                begruendung=(f"OZ {pos.oz}: {evidence}. Scope or quantity needs clarification; "
-                             "this does not establish an entitlement to additional payment. "
-                             + material.get(index, "")),
+                schwere="hoch" if uncertainty == 3 and not type_hint else "mittel", titel=title,
+                begruendung=reason + material.get(index, ""),
                 vorschlag=f"OZ {pos.oz}: {question}", quelle="regel", regel_id=rule,
             ))
     # Preserve error evidence verbatim, including #7's measured arithmetic deltas.

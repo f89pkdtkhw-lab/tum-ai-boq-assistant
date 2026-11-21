@@ -237,3 +237,21 @@ def test_text_widerspruch_erkennt_festigkeitsklasse_mit_leerzeichen():
 
 def test_text_widerspruch_gleiche_festigkeitsklasse_mit_und_ohne_leerzeichen():
     assert _text_widersprueche("Beton C 25/30", "Beton C25/30") == []
+
+
+def _fehlende_werte(quelle):
+    lv = LV(name="X", quelle=quelle, positionen=[Position(oz="01", kurztext="A", langtext="B")])
+    return {f.regel_id: f for f in pruefe_regeln(lv) if f.regel_id in {"MENGE_FEHLT", "EINHEIT_FEHLT"}}
+
+
+def test_missing_quantity_and_unit_from_pdf_are_low_parser_gap_findings():
+    befunde = _fehlende_werte("Tender.PDF")
+    assert {k: f.schwere for k, f in befunde.items()} == {"MENGE_FEHLT": "niedrig", "EINHEIT_FEHLT": "niedrig"}
+    assert befunde["MENGE_FEHLT"].id == "MENGE_FEHLT:01"
+    assert "original" in befunde["MENGE_FEHLT"].vorschlag and "PDF" in befunde["MENGE_FEHLT"].titel
+
+
+def test_missing_quantity_and_unit_from_other_sources_keep_severity():
+    befunde = _fehlende_werte("tender.x83")
+    assert befunde["MENGE_FEHLT"].schwere == "hoch" and befunde["EINHEIT_FEHLT"].schwere == "mittel"
+    assert befunde["MENGE_FEHLT"].titel == "Missing quantity"
