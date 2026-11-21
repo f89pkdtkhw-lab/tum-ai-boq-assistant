@@ -899,8 +899,11 @@ def pruefe_normen_sicher(lv: LV, vorgaben: "Regelwerksvorgaben | None" = None) -
     try:
         from .normen_ki import recherchiere_normen_sicher  # late import: normen_ki builds on this module
         return findings + recherchiere_normen_sicher(lv)
-    except Exception:
+    except Exception as exc:
         logger.exception("Norm check N5 failed; the report is returned without N5 hints.")
+        from ..ai import ki_status  # D #168: the failure is visible in the report, not only in the log
+        ki_status.melde("normrecherche", "fehler", f"The AI norm research failed ({type(exc).__name__}); "
+                                                   "the report has no AI norm hints.")
         return findings
 
 

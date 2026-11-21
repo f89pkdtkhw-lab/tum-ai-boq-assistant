@@ -14,6 +14,8 @@ import { Pruefbericht, PRUEFBERICHT_SPEICHER_SCHLUESSEL } from "../Pruefbericht"
 import { Angebot } from "../angebot/Angebot";
 import { Icon } from "../icon/Icon";
 import { Info } from "../info/Info";
+import { KiHinweis } from "../kihinweis/KiHinweis"; // D #168
+import { kiHinweise } from "@/lib/kischritte";
 import { Ring } from "../ring/Ring";
 import styles from "./bericht.module.css";
 
@@ -118,6 +120,7 @@ export function Bericht({ bericht, offline = false, anzeigeName }: { bericht: Pr
         </div>
         <a className={styles.knopfLeise} href="/export" onClick={zumExport}><Icon name="download" /> {t("Export report")}</a>
       </header>
+      <KiHinweis hinweise={kiHinweise(bericht, bewertung.ki)} />
 
       {/* Level 1: the summary from the sketch – was, score, estimated; issues, warnings, recommendations. */}
       <div className={styles.stufe1}>

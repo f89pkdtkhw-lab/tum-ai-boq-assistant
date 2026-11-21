@@ -27,7 +27,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 
-from ..ai import llm
+from ..ai import ki_status, llm  # ki_status: D #168
 from ..modelle import LV, Finding
 from .normen import (
     AUS_WERTE, KEIN_NORMGUTACHTEN, NORM_MUSTER, Register, RegisterEintrag, _Ids, _normalisiere, _quelle,
@@ -251,11 +251,24 @@ def recherchiere_normen_sicher(lv: LV, client: Client | None = None) -> list[Fin
     """Hook called by `pruefe_normen_sicher()`: [] when switched off, in mock/offline mode, on error
     or on timeout (logged). With an injected `client` the provider check is skipped (tests)."""
     if not norm_ki_aktiv() or (client is None and not _client_verfuegbar()):
-        return []
+        return []  # switched off or mock by configuration: deliberate, so no step status (report unchanged)
     try:
-        return recherchiere_normen(lv, client=client)
+        findings = recherchiere_normen(lv, client=client)
     except FutureTimeout:
         logger.exception("Norm check N5 (AI research) timed out; the report is returned without N5 hints.")
-    except Exception:
+        ki_status.melde("normrecherche", "fehler", f"No answer within {_timeout():g} s (NORM_KI_TIMEOUT); "
+                                                   "the report has no AI norm hints.")
+    except Exception as exc:
         logger.exception("Norm check N5 (AI research) failed; the report is returned without N5 hints.")
+        text = str(exc) if isinstance(exc, llm.LLMError) else f"The model call failed ({type(exc).__name__})."
+        ki_status.melde("normrecherche", "fehler", f"{text} The report has no AI norm hints.")
+    else:
+        ki_status.melde("normrecherche", "ok", f"{len(findings)} additional standard(s) suggested.",
+                        modell=_modellname() if client is None else None)
+        return findings
     return []
+
+
+def _modellname() -> str | None:
+    zustand = llm.status()
+    return None if zustand["mock"] else f"{zustand['provider']}/{zustand['model']}"

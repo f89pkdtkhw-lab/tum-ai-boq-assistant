@@ -13,7 +13,14 @@ export type Finding = {
   titel: string; begruendung: string; vorschlag: string;
   quelle: "regel" | "modell"; regel_id: string; euro_wirkung: number | null;
 };
-export type Kennzahlen = { positionen: number; findings: number; kritisch: number; modell_mock: boolean };
+export type Kennzahlen = {
+  positionen: number; findings: number; kritisch: number; modell_mock: boolean;
+  // #147/#168, optional: why the configured model was not used (mock fallback) and which model reviewed.
+  modell_reason?: string | null; modell?: string | null;
+};
+// D (#168): how each AI step ran; absent when every step ran as the configured mock (no key).
+export type KiSchrittStatus = "ok" | "mock" | "fehler" | "aus";
+export type KiSchritt = { schritt: string; titel: string; status: KiSchrittStatus; grund?: string | null; modell?: string | null };
 export type ScoreAbzug = { grund: string; punkte: number; bericht: "regelwerk" | "vergleich" | "was_wenn" };
 export type Zusammenfassung = {
   score: number; score_abzuege: ScoreAbzug[]; schaetzung_abweichung_eur: number | null;
@@ -47,6 +54,7 @@ export type Pruefbericht = {
   lv: LV; findings: Finding[]; kennzahlen: Kennzahlen; zusammenfassung?: Zusammenfassung;
   kalkulation?: Kalkulation | null; anpassungen?: Anpassung[] | null; geschaetztes_lv?: GeschaetztesLv | null;
   berichte?: Bericht[] | null; was_wenn?: WasWenn[] | null;
+  ki_schritte?: KiSchritt[] | null; // D #168
 };
 // Three reports, final report and what-if list (epic #93 B5): optional, absent on older backends.
 export type BerichtId = "regelwerk" | "vergleich" | "was_wenn";
@@ -101,6 +109,7 @@ export type AiEvaluation = {
   predictions: { title: string; low: number | null; high: number | null; unit: string; confidence: "low" | "medium" | "high"; basis: string }[];
   recommendations: { priority: "now" | "before_bid" | "pricing" | "negotiation"; title: string; why: string }[];
   source: "model_mock";
+  reason?: string | null; // D #168: why a configured model did not answer
 };
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {

@@ -29,6 +29,7 @@ from .pruefung.normen import vorgaben_aus_regelwerk  # B3 (#96)
 from .risiko.scoring import bewerte
 
 from .ai import step_api
+from .ai import ki_status  # D #168
 import logging
 import sys
 
@@ -144,14 +145,27 @@ def pruefen(lv: LV):
 
 def _pruefbericht(lv: LV, vorgaben=None):
     """`vorgaben`: requirements of the uploaded regulation document (B3 #96) for check 1; None = as before."""
-    modell = pruefe_mit_llm_status(lv)  # #147: never raises; falls back to the mock with a reason
-    findings = (bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + modell.findings)
-                + (pruefe_normen_sicher(lv) if vorgaben is None else pruefe_normen_sicher(lv, vorgaben=vorgaben)))
-    return ergaenze_annahmen(ergaenze_berichte(Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
-        positionen=len(lv.positionen), findings=len(findings),
-        kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=modell.mock,
-        modell_reason=modell.reason, modell=None if modell.mock else f"{modell.provider}/{modell.model}",
-    ), zusammenfassung=zusammenfassen(findings))))
+    with ki_status.erfasse() as ki_schritte:  # D #168: every AI step reports how it ran (failures stay visible)
+        modell = pruefe_mit_llm_status(lv)  # #147: never raises; falls back to the mock with a reason
+        _melde_positionspruefung(modell)
+        findings = (bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + modell.findings)
+                    + (pruefe_normen_sicher(lv) if vorgaben is None else pruefe_normen_sicher(lv, vorgaben=vorgaben)))
+        bericht = ergaenze_annahmen(ergaenze_berichte(Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
+            positionen=len(lv.positionen), findings=len(findings),
+            kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=modell.mock,
+            modell_reason=modell.reason, modell=None if modell.mock else f"{modell.provider}/{modell.model}",
+        ), zusammenfassung=zusammenfassen(findings))))
+    bericht.ki_schritte = ki_status.ergebnis(ki_schritte)
+    return bericht
+
+
+def _melde_positionspruefung(modell) -> None:
+    """D #168: the position review's outcome as a step status; a mock chosen by configuration reports nothing."""
+    if not modell.mock:
+        ki_status.melde("positionspruefung", "ok", f"{modell.batches} batch(es) reviewed by the model.",
+                        modell=f"{modell.provider}/{modell.model}")
+    elif modell.reason:
+        ki_status.melde("positionspruefung", "mock", modell.reason)
 
 
 class AnalyseAnfrage(BaseModel):

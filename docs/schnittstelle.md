@@ -25,6 +25,8 @@ At kickoff, only JSON imports. X83/X84, XLSX and PDF are explicit placeholders; 
 
 `Pruefbericht`: unchanged input `lv`, `findings`, `kennzahlen` containing `positionen`, `findings`, `kritisch`, `modell_mock`. `findings` counts all displayed entries, including the clearly marked demo mock, without claiming they are real errors. Evaluation excludes `regel_id == "MOCK_LLM"`.
 
+Optional AI step status (#168): `kennzahlen.modell_reason` and `kennzahlen.modell` (#147), and `ki_schritte`: a list of `{schritt, titel, status: "ok"|"mock"|"fehler"|"aus", grund?, modell?}` for the AI steps (`positionspruefung`, `normrecherche`, `evaluation`, `vergleich`, `was_wenn`, …). Steps report through `app.ai.ki_status.melde(...)`; the field is absent when every step ran as the configured mock (no key), so mock reports stay unchanged. `/api/lv/ai-evaluation` may carry an optional `reason` when a configured model did not answer. The UI shows every `mock`/`fehler` step as a notice in the report.
+
 Kickoff example: `data/beispiel_lv.json` (30 items). POST `/api/lv/pruefen` returns those 30 items and one `MOCK_LLM` entry at OZ `01.00.0001`, no confirmed domain findings, `euro_wirkung:null`, `kennzahlen:{positionen:30,findings:1,kritisch:0,modell_mock:true}`. Five expected real rule findings for the follow-up task: `data/beispiel_erwartung.json`.
 
 ## Connected domain boundaries
