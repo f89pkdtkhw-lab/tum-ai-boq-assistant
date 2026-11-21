@@ -18,6 +18,7 @@ from .pruefung.llm_pruefung import pruefe_mit_llm
 from .pruefung.normen import ergaenze_annahmen, pruefe_normen_sicher  # B4 #97: ergaenze_annahmen
 from .pruefung.bewertung import zusammenfassen
 from .pruefung.berichte import ergaenze_berichte  # B5 (#98)
+from .pruefung.geschaetztes_lv import ergaenze_geschaetztes_lv  # B8 #114
 from .modelle import Regelwerk  # B3 (#96)
 from .pruefung.regelwerk import importiere_regelwerk  # B3 (#96)
 from .pruefung.normen import vorgaben_aus_regelwerk  # B3 (#96)
@@ -139,6 +140,8 @@ def analyse(anfrage: AnalyseAnfrage):
     bericht = _pruefbericht(anfrage.lv, vorgaben)
     # B6 #112 / B9 #133: upload first, price database fills the gaps; no price source → no `kalkulation` field
     bericht.kalkulation = kalkuliere_mit_preis_db(anfrage.lv, anfrage.preisliste)
+    if bericht.kalkulation is not None:  # B8 #114: adjustments + estimated bill, only with a price source
+        bericht = ergaenze_geschaetztes_lv(bericht, anfrage.preisliste)
     return bericht
 
 
