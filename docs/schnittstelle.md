@@ -10,6 +10,8 @@ Authoritative implementation: `api/app/modelle.py`; TypeScript mirror: `web/lib/
 | `GET /api/beispiele` | None | `{items:[{id,titel,beschreibung,lv}]}` | — |
 | `POST /api/lv/import` | multipart/form-data, field `datei`, max. 10 MiB | `LV` | 413 too large; 422 empty/invalid/unknown format; 501 known importer still a placeholder |
 | `POST /api/lv/pruefen` | `LV` as application/json | `Pruefbericht` | 422 invalid contract |
+| `POST /api/lv/analyse/start` (#165) | body of `/api/lv/analyse`, optional `nur_pruefen:true` (= `/api/lv/pruefen` pipeline) | 202 `{job_id}` at once; the analysis runs in a background thread | 422 invalid contract; 429 too many running jobs |
+| `GET /api/lv/analyse/status/{job_id}` (#165) | None | `{job_id, status:"laeuft"\|"fertig"\|"fehler", schritt, schritte_gesamt, prozent, meldung, fertige_schritte:[{schritt,meldung,sekunden}], fehler:[], sekunden, ergebnis:Pruefbericht\|null}` | 404 unknown or expired job |
 
 At kickoff, only JSON imports. X83/X84, XLSX and PDF are explicit placeholders; each assigned format issue replaces only its module. Files are not stored permanently. Error responses contain a readable `detail` string; FastAPI validation errors use the usual list, displayed by the client as a general input error.
 

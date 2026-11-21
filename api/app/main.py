@@ -27,6 +27,8 @@ from .modelle import Regelwerk  # B3 (#96)
 from .pruefung.regelwerk import importiere_regelwerk  # B3 (#96)
 from .pruefung.normen import vorgaben_aus_regelwerk  # B3 (#96)
 from .risiko.scoring import bewerte
+from . import analyse_job  # #165: background analysis jobs
+from .fortschritt import OHNE_FORTSCHRITT, Fortschritt  # #165: progress API
 
 from .ai import step_api
 from .ai import ki_status  # D #168
@@ -143,18 +145,45 @@ def pruefen(lv: LV):
     return _pruefbericht(lv)
 
 
-def _pruefbericht(lv: LV, vorgaben=None):
-    """`vorgaben`: requirements of the uploaded regulation document (B3 #96) for check 1; None = as before."""
+PRUEF_SCHRITTE = 7  # #165: steps of `_pruefbericht`; `_analyse` adds the price calculation as step 8
+
+
+def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None, gesamt: int = PRUEF_SCHRITTE):
+    """`vorgaben`: requirements of the uploaded regulation document (B3 #96) for check 1; None = as before.
+    `fortschritt` (#165): progress callback of a background job (see fortschritt.py); None = no reports."""
+    melde = fortschritt or OHNE_FORTSCHRITT
+    n = len(lv.positionen)
     with ki_status.erfasse() as ki_schritte:  # D #168: every AI step reports how it ran (failures stay visible)
+        melde(1, gesamt, f"Running fixed rules on {n} items …")
+        regeln = pruefe_regeln(lv)
+        melde(1, gesamt, f"Fixed rules: {len(regeln)} findings.", 1.0)
+        melde(2, gesamt, "Checking quantities and units …")
+        mengen = pruefe_mengen(lv)
+        melde(2, gesamt, f"Quantity checks: {len(mengen)} findings.", 1.0)
+        ki = llm.status()
+        melde(3, gesamt, f"AI item review of {n} items with {ki['provider']}/{ki['model']} …" if not ki["mock"]
+              else f"AI item review of {n} items (offline mock) …")
         modell = pruefe_mit_llm_status(lv)  # #147: never raises; falls back to the mock with a reason
         _melde_positionspruefung(modell)
-        findings = (bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + modell.findings)
-                    + (pruefe_normen_sicher(lv) if vorgaben is None else pruefe_normen_sicher(lv, vorgaben=vorgaben)))
-        bericht = ergaenze_annahmen(ergaenze_berichte(Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
+        melde(3, gesamt, f"AI item review: {len(modell.findings)} findings{' (mock)' if modell.mock else ''}.", 1.0)
+        melde(4, gesamt, "Scoring risks and Nachtrag potential …")
+        bewertet = bewerte(lv, regeln + mengen + modell.findings)
+        melde(4, gesamt, f"Risk scoring: {len(bewertet)} findings scored.", 1.0)
+        melde(5, gesamt, "Checking standards and regulations …" if vorgaben is None
+              else "Checking standards against the uploaded regulation document …")
+        normen = pruefe_normen_sicher(lv) if vorgaben is None else pruefe_normen_sicher(lv, vorgaben=vorgaben)
+        melde(5, gesamt, f"Standards check: {len(normen)} findings.", 1.0)
+        findings = bewertet + normen
+        melde(6, gesamt, "Building reports 1–3 (rules, comparison, what-if) …")
+        bericht = ergaenze_berichte(Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
             positionen=len(lv.positionen), findings=len(findings),
             kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=modell.mock,
             modell_reason=modell.reason, modell=None if modell.mock else f"{modell.provider}/{modell.model}",
-        ), zusammenfassung=zusammenfassen(findings))))
+        ), zusammenfassung=zusammenfassen(findings)))
+        melde(6, gesamt, f"Reports: {len(bericht.berichte or [])} built.", 1.0)
+        melde(7, gesamt, "Adding assumptions and the final report …")
+        bericht = ergaenze_annahmen(bericht)
+        melde(7, gesamt, "Assumptions and final report added.", 1.0)
     bericht.ki_schritte = ki_status.ergebnis(ki_schritte)
     return bericht
 
@@ -195,13 +224,51 @@ async def import_regelwerk(datei: UploadFile):
 def analyse(anfrage: AnalyseAnfrage):
     """`/api/lv/pruefen` plus check 1 with the uploaded regulation document (B3, via B2's `vorgaben`) and
     the price list (B6); `regelwerk: null` and no `preisliste` = identical result."""
+    return _analyse(anfrage)
+
+
+def _analyse(anfrage: AnalyseAnfrage, fortschritt: Fortschritt | None = None):
+    melde = fortschritt or OHNE_FORTSCHRITT
+    gesamt = PRUEF_SCHRITTE + 1
     vorgaben = vorgaben_aus_regelwerk(anfrage.regelwerk)  # B3 #96 -> B2 check 1 (lower/bigger/missing/extra)
-    bericht = _pruefbericht(anfrage.lv, vorgaben)
+    bericht = _pruefbericht(anfrage.lv, vorgaben, fortschritt, gesamt)
     # B6 #112 / B9 #133: upload first, price database fills the gaps; no price source → no `kalkulation` field
+    melde(gesamt, gesamt, "Pricing the bill (price list, price database) …")
     bericht.kalkulation = kalkuliere_mit_preis_db(anfrage.lv, anfrage.preisliste)
     if bericht.kalkulation is not None:  # B8 #114: adjustments + estimated bill, only with a price source
         bericht = ergaenze_geschaetztes_lv(bericht, anfrage.preisliste)
+    melde(gesamt, gesamt, "Price calculation: no price source." if bericht.kalkulation is None
+          else "Price calculation and estimated bill done.", 1.0)
     return bericht
+
+
+# --- Background analysis job with progress (#165, package F) ---------------------------------------
+class AnalyseJobAnfrage(AnalyseAnfrage):
+    """Body of POST /api/lv/analyse/start: like /api/lv/analyse; `nur_pruefen: true` runs the
+    /api/lv/pruefen pipeline instead (bill only, no price calculation), exactly as the sync route."""
+    nur_pruefen: bool = False
+
+
+@app.post("/api/lv/analyse/start", response_model=analyse_job.AnalyseStart, status_code=202)
+def analyse_start(anfrage: AnalyseJobAnfrage):
+    """Starts the analysis in a background thread and answers at once; poll …/status/{job_id}."""
+    if anfrage.nur_pruefen:
+        arbeit, gesamt = (lambda f: _pruefbericht(anfrage.lv, fortschritt=f)), PRUEF_SCHRITTE
+    else:
+        arbeit, gesamt = (lambda f: _analyse(anfrage, f)), PRUEF_SCHRITTE + 1
+    try:
+        return analyse_job.AnalyseStart(job_id=analyse_job.starte(arbeit, gesamt))
+    except analyse_job.ZuVieleJobs as exc:
+        raise HTTPException(429, str(exc)) from None
+
+
+@app.get("/api/lv/analyse/status/{job_id}", response_model=analyse_job.AnalyseStatus)
+def analyse_status(job_id: str):
+    """`{status, schritt, schritte_gesamt, prozent, meldung, fertige_schritte[], fehler[], ergebnis?}`."""
+    stand = analyse_job.status(job_id)
+    if stand is None:
+        raise HTTPException(404, "Unknown or expired analysis job. Please start the analysis again.")
+    return stand
 
 
 @app.post("/api/ask")

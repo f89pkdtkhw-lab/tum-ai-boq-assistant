@@ -1,13 +1,14 @@
 "use client";
 
 import { type ChangeEvent, type DragEvent, type FormEvent, useEffect, useRef, useState } from "react";
-import { api, type Example, type Health, type LV, type Preisliste, type Pruefbericht as PruefberichtDaten, type Regelwerk } from "@/lib/api";
+import { api, type AnalyseStatus, type Example, type Health, type LV, type Preisliste, type Pruefbericht as PruefberichtDaten, type Regelwerk } from "@/lib/api";
 import { analyseAnfrage, importFehlerText, regelwerkText, routeFehlt } from "@/lib/regelwerk";
 import { useT } from "@/lib/einstellungen";
 import { lesePreisliste, preislisteText, speicherePreisliste } from "@/lib/preisliste";
 import { Icon } from "./icon/Icon";
 import { Bericht } from "@/components/bericht/Bericht";
 import { bietetOffline, ladeOfflineBericht } from "@/lib/offline";
+import { fuehreAnalyseAus } from "@/lib/analyse-job";
 import styles from "./lv-upload.module.css";
 
 // Same limit as MAX_UPLOAD_BYTES in api/app/main.py; checked locally so oversized files never leave the browser.
@@ -38,9 +39,10 @@ type Lauf =
   | { art: "lv"; titel: string; lv: LV };
 type Ergebnis =
   | { phase: "leer" }
-  | { phase: "laeuft"; lauf: Lauf; schritte: Schritte }
+  // `stand`: live status of the background analysis job (#165), drawn as the progress bar.
+  | { phase: "laeuft"; lauf: Lauf; schritte: Schritte; stand?: AnalyseStatus | null }
   | { phase: "fertig"; lauf: Lauf; schritte: Schritte; lv: LV; bericht: PruefberichtDaten; nummer: number; offline: boolean; hinweise?: string[] }
-  | { phase: "fehler"; lauf: Lauf; schritte: Schritte; titel: string; meldung: string; tipp: string | null; offline: boolean };
+  | { phase: "fehler"; lauf: Lauf; schritte: Schritte; titel: string; meldung: string; tipp: string | null; offline: boolean; stand?: AnalyseStatus | null };
 
 const SCHRITT_NAMEN: Record<SchrittId, string> = {
   datei: "Upload",
@@ -141,6 +143,40 @@ async function backendErreichbar() {
   }
 }
 
+/** Progress bar of the background analysis (#165): percent, current step and the finished steps. */
+function AnalyseFortschritt({ stand, t }: { stand: AnalyseStatus; t: ReturnType<typeof useT> }) {
+  const schritt = Math.max(1, Math.min(stand.schritt, stand.schritte_gesamt));
+  return (
+    <div className={`${styles.fortschritt} ${stand.status === "fehler" ? styles.fortschrittGestoppt : ""}`}>
+      <div className={styles.fortschrittKopf}>
+        <span>{t("Step {n} of {total}", { n: schritt, total: stand.schritte_gesamt })}</span>
+        <span className={styles.prozent}>{stand.prozent} %</span>
+      </div>
+      <div className={styles.balken} role="progressbar" aria-label={t("Analysis progress")}
+        aria-valuemin={0} aria-valuemax={100} aria-valuenow={stand.prozent} aria-valuetext={stand.meldung}>
+        <span className={styles.balkenFuellung} style={{ width: `${stand.prozent}%` }} />
+      </div>
+      <p className={styles.fortschrittText}>{stand.meldung}</p>
+      {stand.fertige_schritte.length > 0 && (
+        <ol className={styles.fertigListe} aria-label={t("Finished steps")}>
+          {stand.fertige_schritte.map((s) => (
+            <li key={s.schritt}>
+              <span className={styles.haken} aria-hidden="true">✓</span>
+              <span>{s.meldung}</span>
+              <small>{zahl.format(Math.round(s.sekunden * 10) / 10)} s</small>
+            </li>
+          ))}
+        </ol>
+      )}
+      {stand.fehler.length > 0 && (
+        <ul className={styles.fortschrittFehler} role="note">
+          {stand.fehler.map((f) => <li key={f}>{f}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function LvUpload() {
   const [health, setHealth] = useState<Health | null | "offline">(null);
   const [datei, setDatei] = useState<File | null>(null);
@@ -223,7 +259,7 @@ export function LvUpload() {
     let schritte = startSchritte(lauf);
     setErgebnis({ phase: "laeuft", lauf, schritte });
 
-    const scheitern = async (schritt: SchrittId, titel: string, fehler: unknown, tipp: string | null) => {
+    const scheitern = async (schritt: SchrittId, titel: string, fehler: unknown, tipp: string | null, stand: AnalyseStatus | null = null) => {
       let meldung = fehlerText(fehler);
       let hinweis = tipp;
       const erreichbar = await backendErreichbar();
@@ -238,7 +274,7 @@ export function LvUpload() {
         schritte.datei = { status: "fertig", text: `${lauf.datei.name} (${groesse(lauf.datei.size)}) uploaded.` };
       }
       if (schritte.pruefung.status === "wartet") schritte.pruefung = { status: "wartet", text: "Not started." };
-      setErgebnis({ phase: "fehler", lauf, schritte, titel, meldung, tipp: hinweis, offline: bietetOffline(fehler, erreichbar) });
+      setErgebnis({ phase: "fehler", lauf, schritte, titel, meldung, tipp: hinweis, offline: bietetOffline(fehler, erreichbar), stand });
     };
 
     let lv: LV;
@@ -303,15 +339,33 @@ export function LvUpload() {
     }
 
     let bericht: PruefberichtDaten;
+    const job: { stand: AnalyseStatus | null } = { stand: null };
     try {
       const anfrage = analyseAnfrage(lv, regelwerkDaten, preislisteDaten);
-      bericht = anfrage === null ? await api.pruefen(lv) : await api.analyse(anfrage).catch((fehler) => {
+      const synchron = () => anfrage === null ? api.pruefen(lv) : api.analyse(anfrage).catch((fehler) => {
         if (!routeFehlt(fehler)) throw fehler;
         hinweise.push("This backend has no combined analysis yet: the bill was reviewed without its attachments.");
         return api.pruefen(lv);
       });
+      // #165: background job with progress; same pipeline as before (bill only = /api/lv/pruefen via nur_pruefen).
+      try {
+        const ende = await fuehreAnalyseAus(api, anfrage ?? { lv, regelwerk: null, preisliste: null, nur_pruefen: true }, {
+          aktiv: aktuell,
+          aufStand: (stand) => {
+            job.stand = stand;
+            schritte = { ...schritte, pruefung: { status: "laeuft", text: stand.meldung } };
+            setErgebnis({ phase: "laeuft", lauf, schritte, stand });
+          },
+        });
+        if (ende === null) return;
+        bericht = ende.bericht;
+        hinweise.push(...ende.stand.fehler);
+      } catch (fehler) {
+        if (job.stand || !routeFehlt(fehler)) throw fehler;
+        bericht = await synchron(); // older backend without the job routes: one synchronous request as before
+      }
     } catch (fehler) {
-      await scheitern("pruefung", "Review failed", fehler, null);
+      await scheitern("pruefung", "Review failed", fehler, null, job.stand);
       return;
     }
     if (!aktuell()) return;
@@ -435,6 +489,7 @@ export function LvUpload() {
               );
             })}
           </ol>
+          {ergebnis.stand && <AnalyseFortschritt stand={ergebnis.stand} t={t} />}
           <div aria-live="polite" className={styles.ansage}>
             {busy && t("{step} is running.", { step: t(SCHRITT_NAMEN[ergebnis.schritte.pruefung.status === "laeuft" ? "pruefung" : "import"]) })}
           </div>
