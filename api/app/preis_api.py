@@ -198,11 +198,13 @@ def _aus_tabelle(dateiname: str, zeilen: list[list[str]]) -> tuple[list[Preislis
             continue
         oz, text, einheit, roh_ep = zelle(z, "oz"), zelle(z, "kurztext"), zelle(z, "einheit"), zelle(z, "ep")
         ep = _zahl(roh_ep)
-        if ep is None:
+        if not (text or oz):
+            warnungen.append(f"Row {nummer}: no short text or OZ, skipped.")
+        elif not einheit:
+            warnungen.append(f"Row {nummer}: no unit, skipped.")
+        elif ep is None or ep < 0:
             warnungen.append(f"Row {nummer}: no valid unit price ({roh_ep or 'empty'}), skipped.")
         else:
-            if not einheit:
-                raise ValueError(f"{dateiname}:{nummer}: unit must not be blank")
             if zelle(z, "waehrung"):
                 waehrungen.add(zelle(z, "waehrung").upper())
             eintraege.append(PreislistenEintrag(id=f"z{nummer}", oz=oz or None, kurztext=text,
@@ -316,7 +318,7 @@ def _als_neue_preise(liste: Preisliste) -> list[NeuerPreis]:
         except ValidationError as exc:
             fehler = exc.errors()[0]
             quelle = e.quelle or f"{liste.dateiname} entry {nummer}"
-            raise ValueError(f"{quelle}: {fehler['loc'][0]} {fehler['msg']}") from None
+            liste.warnungen.append(f"{quelle}: {fehler['loc'][0]} {fehler['msg']}, skipped for database import.")
     return neue
 
 
@@ -329,11 +331,11 @@ async def import_preisliste(datei: UploadFile):
         if not inhalt:
             raise HTTPException(422, "The uploaded file is empty.")
         liste = lies_preisliste(datei.filename or "", inhalt)
-        neue = _als_neue_preise(liste)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from None
     finally:
         await datei.close()
+    neue = _als_neue_preise(liste)
     try:
         speichere_preise(neue)
     except Exception as exc:  # noqa: BLE001 - the parsed list is still usable for this analysis

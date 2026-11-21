@@ -106,27 +106,32 @@ def test_post_preise_rejects_invalid_rows(field, value, message):
     assert client.get("/api/db/preise").json() == []
 
 
-@pytest.mark.parametrize("row, field, message", [
-    ("string;t;25", "item", "placeholder"),
-    ("Kies; STRING ;25", "unit", "placeholder"),
-    (" ;t;25", "item", "must not be blank"),
-    ("Kies;t;0", "price_per_unit", "greater than 0"),
-    ("Kies;t;-1", "price_per_unit", "greater than 0"),
+@pytest.mark.parametrize("row, warning", [
+    ("string;t;25", "placeholder"),
+    ("Kies; STRING ;25", "placeholder"),
+    (" ;t;25", "no short text or OZ"),
+    ("Kies; ;25", "no unit"),
+    ("Kies;t;0", "greater than 0"),
+    ("Kies;t;-1", "no valid unit price"),
 ])
-def test_csv_import_rejects_invalid_rows_before_storing_any_prices(row, field, message):
+def test_csv_import_warns_and_stores_only_valid_rows(row, warning):
     r = upload("preise.csv", f"item;unit;ep\nSand;t;12\n{row}\n".encode())
-    assert r.status_code == 422, r.text
-    detail = r.json()["detail"]
-    assert "preise.csv:3" in detail and field in detail and message in detail
-    assert client.get("/api/db/preise").json() == []
+    assert r.status_code == 200, r.text
+    warnings = r.json()["warnungen"]
+    assert len(warnings) == 1 and warning in warnings[0] and "skipped" in warnings[0]
+    assert [(e["item"], e["price_per_unit"]) for e in client.get("/api/db/preise").json()] == [("Sand", 12)]
 
 
-def test_json_import_rejects_placeholder_unit():
-    data = {"id": "prices", "eintraege": [{"id": "1", "kurztext": "Kies", "einheit": "string", "ep": 25}]}
-    r = upload("preise.json", json.dumps(data).encode())
-    assert r.status_code == 422, r.text
-    assert "unit" in r.json()["detail"] and "placeholder" in r.json()["detail"]
-    assert client.get("/api/db/preise").json() == []
+def test_json_import_skips_placeholder_unit_when_storing_prices():
+    entries = [
+        {"id": "1", "kurztext": "Kies", "einheit": "string", "ep": 25},
+        {"id": "2", "kurztext": "Sand", "einheit": "t", "ep": 12},
+    ]
+    r = upload("preise.json", json.dumps({"id": "prices", "eintraege": entries}).encode())
+    assert r.status_code == 200, r.text
+    warnings = r.json()["warnungen"]
+    assert len(warnings) == 1 and "preise.json entry 1: unit" in warnings[0] and "placeholder" in warnings[0]
+    assert [(e["item"], e["price_per_unit"]) for e in client.get("/api/db/preise").json()] == [("Sand", 12)]
 
 
 @pytest.mark.parametrize("name, inhalt, status, text", [
@@ -163,10 +168,19 @@ def _xlsx(zeilen):
 
 
 def test_xlsx_import():
-    inhalt = _xlsx([["OZ", "Kurztext", "Einheit", "EP"], ["01.0010", "Aushub", "m3", 18.5], ["", "Verfüllen", "m³", "7,25"]])
+    inhalt = _xlsx([
+        ["OZ", "Kurztext", "Einheit", "EP"],
+        ["01.0010", "Aushub", "m3", 18.5],
+        ["", "Verfüllen", "m³", "7,25"],
+        ["", "Ohne Einheit", "", 3],
+        ["", "", "t", 4],
+        ["01.0020", "", "t", 5],
+    ])
     liste = upload("preise.xlsx", inhalt).json()
     assert [(e["oz"], e["kurztext"], e["einheit"], e["ep"]) for e in liste["eintraege"]] == [
-        ("01.0010", "Aushub", "m³", 18.5), (None, "Verfüllen", "m³", 7.25)]
+        ("01.0010", "Aushub", "m³", 18.5), (None, "Verfüllen", "m³", 7.25), ("01.0020", "", "t", 5)]
+    assert liste["warnungen"] == ["Row 4: no unit, skipped.", "Row 5: no short text or OZ, skipped."]
+    assert {e["item"] for e in client.get("/api/db/preise").json()} == {"Aushub", "Verfüllen", "01.0020"}
 
 
 def test_gaeb_x84_import_uses_priced_items():
