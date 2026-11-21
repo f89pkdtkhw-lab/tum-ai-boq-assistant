@@ -624,6 +624,45 @@ def ergaenze_annahmen(bericht: Pruefbericht, register: Register | None = None) -
         return bericht
 
 
+NOTE2_PRAEFIX = "Note2:"
+
+
+def ergaenze_note2(bericht: Pruefbericht, register: Register | None = None,
+                   checked_on: date | None = None) -> Pruefbericht:
+    """#167: Note 2 in the analysis path. The register key values cited by this LV
+    (`register_als_quellen`) go through the existing Note 2 logic (`build_specification_context`
+    -> `standards_note`); the notes are appended to Report 1 (`regelwerk`) `notes`. Checked
+    entries are priority 1, unchecked ones stay priority 4 (hint, manual review). Findings, score and
+    the final report stay unchanged. Returned unchanged with NORMPRUEFUNG off, without B5 reports,
+    without cited register key values or on any error (logged)."""
+    if not normpruefung_aktiv():
+        return bericht
+    try:
+        from ..ai.step_api import build_specification_context, standards_note
+        berichte = getattr(bericht, "berichte", None)
+        if not berichte or berichte[0].id != "regelwerk":
+            return bericht
+        register = register or lade_register()
+        quellen = register_als_quellen(extrahiere_normverweise(bericht.lv), register, bericht.lv)
+        if not quellen:
+            return bericht
+        kontext = build_specification_context(bericht.lv, quellen, checked_on=checked_on or date.today())
+        regelwerk = berichte[0]
+        vorhanden = {n.get("id") for n in regelwerk.notes}
+        neu = [note.model_dump(mode="json") for note in (standards_note(item) for item in kontext.items if item.sources)
+               if note.id not in vorhanden]
+        if not neu:
+            return bericht
+        regelwerk = regelwerk.model_copy(update={
+            "notes": [*regelwerk.notes, *neu],
+            "meldung": f"{regelwerk.meldung} {len(neu)} Note 2 standards comparison(s) from the norm register.".strip(),
+        })
+        return bericht.model_copy(update={"berichte": [regelwerk, *berichte[1:]]})
+    except Exception:
+        logging.getLogger(__name__).exception("Note 2 for the analysis failed; report unchanged.")
+        return bericht
+
+
 # ---------------------------------------------------------------------------
 # Norm check, part 2 (N2): status findings and the guarded hook for pruefen().
 #

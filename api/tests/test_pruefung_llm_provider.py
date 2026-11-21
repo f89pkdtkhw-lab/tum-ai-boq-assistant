@@ -231,14 +231,80 @@ def test_hanging_provider_is_cut_off_by_the_review_deadline(gemini, monkeypatch)
     assert result.mock is True and "within 0.2 s" in result.reason
 
 
-def test_one_failing_batch_falls_back_for_the_whole_review(gemini, monkeypatch):
+def test_one_failing_batch_keeps_the_other_batches_and_names_the_failure(gemini, monkeypatch):
+    """#167: no silent mock fallback; partial results stay, the failed batch is reported."""
     def answer(items, payload):
         if items[0]["oz"] == "01.002":
             raise httpx.ReadTimeout("slow")
         return json.dumps({"findings": [finding_for(items[0]["oz"])]})
     stub(monkeypatch, answer)
     result = pruefe_mit_llm_status(synthetic_lv(4), batch_size=2, parallel=1)
-    assert result.mock is True and result.reason.startswith("Batch 2/2:")
+    assert result.mock is False and [f.oz for f in result.findings] == ["01.000"]
+    assert (result.batches, result.fehlgeschlagen) == (2, 1)
+    assert result.reason.startswith("1/2 model batch(es) failed")
+    assert "batch 2 (OZ 01.002–01.003)" in result.reason and "did not answer within" in result.reason
+
+
+def test_partial_failure_is_visible_in_kennzahlen(gemini, monkeypatch):
+    monkeypatch.setenv("LLM_BATCH_SIZE", "20")
+
+    def answer(items, payload):
+        if items[0]["oz"] == "01.020":
+            raise httpx.ConnectError("down")
+        return json.dumps({"findings": [finding_for(items[0]["oz"])]})
+    stub(monkeypatch, answer)
+    response = client.post("/api/lv/pruefen", json=synthetic_lv(45).model_dump(mode="json"))
+    kennzahlen = response.json()["kennzahlen"]
+    assert kennzahlen["modell_mock"] is False and kennzahlen["modell"] == "gemini/gemini-2.5-flash"
+    assert (kennzahlen["modell_batches"], kennzahlen["modell_batches_fehlgeschlagen"]) == (3, 1)
+    assert "1/3 model batch(es) failed" in kennzahlen["modell_reason"]
+    assert sorted(f["oz"] for f in response.json()["findings"] if f["quelle"] == "modell") == ["01.000", "01.040"]
+
+
+def test_progress_callback_reports_every_batch(gemini, monkeypatch):
+    stub(monkeypatch, lambda items, payload: json.dumps({"findings": []}))
+    seen = []
+    result = pruefe_mit_llm_status(synthetic_lv(5), batch_size=2, parallel=2, fortschritt=lambda d, t: seen.append((d, t)))
+    assert result.mock is False and sorted(seen) == [(1, 3), (2, 3), (3, 3)]
+
+
+def test_broken_progress_callback_never_breaks_the_review(gemini, monkeypatch):
+    stub(monkeypatch, lambda items, payload: json.dumps({"findings": [finding_for(items[0]["oz"])]}))
+
+    def kaputt(done, total):
+        raise RuntimeError("listener gone")
+    result = pruefe_mit_llm_status(synthetic_lv(3), fortschritt=kaputt)
+    assert result.mock is False and len(result.findings) == 1
+
+
+def test_progress_callback_runs_once_on_the_mock(monkeypatch):
+    seen = []
+    result = pruefe_mit_llm_status(synthetic_lv(3), fortschritt=lambda d, t: seen.append((d, t)))
+    assert result.mock is True and seen == [(1, 1)]
+
+
+def test_batch_timeout_is_per_call_and_configurable(gemini, monkeypatch):
+    monkeypatch.setenv("LLM_BATCH_TIMEOUT", "12")
+    calls = []
+    stub(monkeypatch, lambda items, payload: json.dumps({"findings": []}), calls)
+    pruefe_mit_llm_status(synthetic_lv(3))
+    assert calls and all(c["timeout"] == 12 for c in calls)
+
+
+def test_unfinished_batches_at_the_deadline_keep_finished_ones(gemini, monkeypatch):
+    release = threading.Event()
+
+    def answer(items, payload):
+        if items[0]["oz"] == "01.002":
+            release.wait(5)
+        return json.dumps({"findings": [finding_for(items[0]["oz"])]})
+    stub(monkeypatch, answer)
+    try:
+        result = pruefe_mit_llm_status(synthetic_lv(4), batch_size=2, parallel=2, timeout=0.3)
+    finally:
+        release.set()
+    assert result.mock is False and [f.oz for f in result.findings] == ["01.000"]
+    assert result.fehlgeschlagen == 1 and "did not finish the review within 0.3 s" in result.reason
 
 
 # --- llm.py: Gemini path, JSON parsing, fallback helper (also for the Excel import #9) -------------
@@ -450,3 +516,36 @@ def test_claude_effort_is_optional_for_other_callers(claude, monkeypatch):
     assert seen[-1]["output_config"] == {"effort": "medium"}
     llm.complete("prompt", effort="nonsense")
     assert "output_config" not in seen[-1]
+
+
+def test_batch_progress_and_failed_batches_reach_the_job_progress_api(gemini, monkeypatch):
+    """#167 on #165: each model batch reports into step 3 of the job's progress; a failed batch is a visible error."""
+    from app import main
+    from app.fortschritt import Aufzeichnung
+    monkeypatch.setenv("LLM_BATCH_SIZE", "2")
+    monkeypatch.setenv("LLM_PARALLEL", "1")
+
+    def answer(items, payload):
+        if items[0]["oz"] == "01.002":
+            raise httpx.ConnectError("down")
+        return json.dumps({"findings": []})
+    stub(monkeypatch, answer)
+    aufzeichnung = Aufzeichnung()
+    bericht = main._pruefbericht(synthetic_lv(5), fortschritt=aufzeichnung)
+    batches = [(m[2], m[3]) for m in aufzeichnung.meldungen if m[0] == 3 and "batch" in m[2]]
+    assert batches == [("AI item review: batch 1 of 3 done …", 1 / 3), ("AI item review: batch 2 of 3 done …", 2 / 3),
+                       ("AI item review: batch 3 of 3 done …", 1.0)]
+    assert len(aufzeichnung.fehlerliste) == 1 and "1/3 model batch(es) failed" in aufzeichnung.fehlerliste[0]
+    assert bericht.kennzahlen.modell_batches_fehlgeschlagen == 1
+    schritt = next(s for s in bericht.ki_schritte if s.schritt == "positionspruefung")
+    assert schritt.status == "fehler" and "batch 2" in schritt.grund
+
+
+def test_job_abort_inside_the_review_is_not_swallowed(gemini, monkeypatch):
+    from app.fortschritt import AnalyseAbgebrochen
+    stub(monkeypatch, lambda items, payload: json.dumps({"findings": []}))
+
+    def abbrechen(done, total):
+        raise AnalyseAbgebrochen()
+    with pytest.raises(AnalyseAbgebrochen):
+        pruefe_mit_llm_status(synthetic_lv(3), fortschritt=abbrechen)

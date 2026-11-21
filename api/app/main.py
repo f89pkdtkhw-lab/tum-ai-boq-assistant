@@ -21,6 +21,7 @@ from .pruefung.mengen import pruefe_mengen
 from .pruefung.llm_pruefung import pruefe_mit_llm, pruefe_mit_llm_status  # noqa: F401 (pruefe_mit_llm: golden tests)
 from .pruefung.normen import ergaenze_annahmen, pruefe_normen_sicher  # B4 #97: ergaenze_annahmen
 from .pruefung.normen_ki import starte_recherche as starte_normrecherche  # #166
+from .pruefung.normen import ergaenze_note2  # #167: Note 2 (register_als_quellen) in the analysis path
 from .pruefung.bewertung import zusammenfassen
 from .pruefung.berichte import ergaenze_berichte  # B5 (#98)
 from .pruefung.geschaetztes_lv import ergaenze_geschaetztes_lv  # B8 #114
@@ -166,8 +167,14 @@ def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None,
         ki = llm.status()
         melde(3, gesamt, f"AI item review of {n} items with {ki['provider']}/{ki['model']} …" if not ki["mock"]
               else f"AI item review of {n} items (offline mock) …")
-        modell = pruefe_mit_llm_status(lv)  # #147: never raises; falls back to the mock with a reason
+        if fortschritt is None:  # #147/#167: never raises; failed batches are named, partial results kept
+            modell = pruefe_mit_llm_status(lv)
+        else:  # #167: progress per model batch inside step 3
+            modell = pruefe_mit_llm_status(lv, fortschritt=lambda fertig, alle: melde(
+                3, gesamt, f"AI item review: batch {fertig} of {alle} done …", fertig / alle))
         _melde_positionspruefung(modell)
+        if modell.fehlgeschlagen:
+            melde.fehler(f"AI item review: {modell.reason}")
         melde(3, gesamt, f"AI item review: {len(modell.findings)} findings{' (mock)' if modell.mock else ''}.", 1.0)
         melde(4, gesamt, "Scoring risks and Nachtrag potential …")
         bewertet = bewerte(lv, regeln + mengen + modell.findings)
@@ -182,10 +189,12 @@ def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None,
             positionen=len(lv.positionen), findings=len(findings),
             kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=modell.mock,
             modell_reason=modell.reason, modell=None if modell.mock else f"{modell.provider}/{modell.model}",
+            modell_batches=None if modell.mock else modell.batches,  # #167
+            modell_batches_fehlgeschlagen=None if modell.mock else modell.fehlgeschlagen,
         ), zusammenfassung=zusammenfassen(findings)))
         melde(6, gesamt, f"Reports: {len(bericht.berichte or [])} built.", 1.0)
         melde(7, gesamt, "Adding assumptions and the final report …")
-        bericht = ergaenze_annahmen(bericht)
+        bericht = ergaenze_note2(ergaenze_annahmen(bericht))  # #167: Note 2 from the norm register
         melde(7, gesamt, "Assumptions and final report added.", 1.0)
     bericht.ki_schritte = ki_status.ergebnis(ki_schritte)
     return bericht
@@ -201,8 +210,11 @@ def _normen_optionen(vorgaben, fortschritt, gesamt) -> dict:
 
 
 def _melde_positionspruefung(modell) -> None:
-    """D #168: the position review's outcome as a step status; a mock chosen by configuration reports nothing."""
-    if not modell.mock:
+    """D #168: the position review's outcome as a step status; a mock chosen by configuration reports nothing.
+    #167: failed batches (partial results kept) are reported as `fehler` with the batches named."""
+    if not modell.mock and modell.fehlgeschlagen:
+        ki_status.melde("positionspruefung", "fehler", modell.reason, modell=f"{modell.provider}/{modell.model}")
+    elif not modell.mock:
         ki_status.melde("positionspruefung", "ok", f"{modell.batches} batch(es) reviewed by the model.",
                         modell=f"{modell.provider}/{modell.model}")
     elif modell.reason:
@@ -235,7 +247,8 @@ async def import_regelwerk(datei: UploadFile):
 @app.post("/api/lv/analyse", response_model=Pruefbericht)
 def analyse(anfrage: AnalyseAnfrage):
     """`/api/lv/pruefen` plus check 1 with the uploaded regulation document (B3, via B2's `vorgaben`) and
-    the price list (B6); `regelwerk: null` and no `preisliste` = identical result."""
+    the price list (B6); `regelwerk: null` and no `preisliste` = identical findings, plus the price DB
+    calculation and estimated bill whenever the price database has prices (#167: the UI always uses it)."""
     return _analyse(anfrage)
 
 

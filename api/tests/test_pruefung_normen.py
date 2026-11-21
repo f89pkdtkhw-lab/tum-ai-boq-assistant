@@ -366,6 +366,7 @@ def test_pruefen_report_is_unchanged_with_switch_off_and_appends_n3_when_on(monk
     lv = beton_lv("Beton XC4, C20/25", "Stahlbeton nach DIN 1045-2 liefern.").model_dump(mode="json")
     with monkeypatch.context() as m:
         m.setattr(main, "pruefe_normen_sicher", lambda lv: [])
+        m.setattr(main, "ergaenze_note2", lambda bericht: bericht)  # #167: Note 2 has its own test
         ohne_hook = client.post("/api/lv/pruefen", json=lv)
     monkeypatch.setenv("NORMPRUEFUNG", "0")
     aus = client.post("/api/lv/pruefen", json=lv)
@@ -428,6 +429,27 @@ def test_unverified_register_source_stays_priority_4_and_manual_review():
     assert [(e.priority, e.verification, e.unverified_reasons) for e in item.sources] == [
         (4, "unverified", ["not_confirmed"])]
     assert standards_note(item).text.startswith("Manual review: no verified applicable German source for OZ 03.01")
+
+
+def test_note_2_from_the_register_is_added_to_report_1_in_the_analysis_path(monkeypatch):
+    """#167: `register_als_quellen` -> Note 2 in Report 1; findings stay unchanged; switch off = unchanged."""
+    from app.modelle import Kennzahlen, Pruefbericht
+    from app.pruefung.berichte import ergaenze_berichte
+    from app.pruefung.normen import ergaenze_note2
+    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
+    bericht = ergaenze_berichte(Pruefbericht(lv=NOTE2_LV, findings=[], kennzahlen=Kennzahlen(
+        positionen=3, findings=0, kritisch=0)), db=None)
+    mit = ergaenze_note2(bericht, register_mit(True), checked_on=STICHTAG)
+    notes = mit.berichte[0].notes
+    assert [(n["id"], n["step"]) for n in notes] == [("Note2:03.01", "standards"), ("Note2:03.02", "standards")]
+    assert "NORM:DIN 1045-2:min_strength_class:XC4" in notes[0]["text"]
+    assert "2 Note 2 standards comparison(s)" in mit.berichte[0].meldung
+    assert mit.findings == bericht.findings and mit.berichte[1:] == bericht.berichte[1:]
+    assert ergaenze_note2(mit, register_mit(True), checked_on=STICHTAG).berichte[0].notes == notes  # no duplicates
+    unverified = ergaenze_note2(bericht, register_mit(False), checked_on=STICHTAG).berichte[0].notes
+    assert unverified[0]["text"].startswith("Manual review: no verified applicable German source")
+    monkeypatch.setenv("NORMPRUEFUNG", "0")
+    assert ergaenze_note2(bericht, register_mit(True), checked_on=STICHTAG) is bericht
 
 
 # ---------------------------------------------------------------------------

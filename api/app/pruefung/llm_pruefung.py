@@ -8,24 +8,29 @@ standard references only with catalogue evidence.
   accepted finding is an explicit demonstration (``regel_id`` starts with ``MOCK_``).
 - Real mode (a provider with a key, e.g. Claude via ANTHROPIC_API_KEY, or Gemini): every item is reviewed, in batches of
   ``LLM_BATCH_SIZE`` items, through ``app.ai.llm.complete``. Findings carry ``regel_id`` ``LLM_*``.
-  The whole review is bounded by ``LLM_REVIEW_TIMEOUT`` seconds. Any timeout, HTTP error or a run
-  without a single readable answer falls back to the mock result with ``mock=True`` and a reason, so
-  the report is always returned.
+  Every batch call is bounded by ``LLM_BATCH_TIMEOUT`` seconds, the whole review by the generous
+  ``LLM_REVIEW_TIMEOUT`` (#167). A failing or unfinished batch never discards the others: partial
+  results are kept and the failed batches are named in ``reason`` (no silent mock fallback). Only a
+  run without a single readable answer falls back to the mock result with ``mock=True`` and a reason,
+  so the report is always returned. An optional ``fortschritt(done, total)`` callback reports each
+  finished batch (progress for the analysis job, #165).
 """
 import json
 import os
 import re
 from collections.abc import Callable, Mapping
-from concurrent.futures import ThreadPoolExecutor, wait, FIRST_EXCEPTION
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeout
 from dataclasses import dataclass, field
 
 from pydantic import ValidationError
 
 from ..ai import llm
+from ..fortschritt import AnalyseAbgebrochen
 from ..modelle import Finding, LV, Position
 
 DEFAULT_BATCH_SIZE = 20
-DEFAULT_REVIEW_TIMEOUT = 60.0  # seconds for the whole real-model review
+DEFAULT_REVIEW_TIMEOUT = 600.0  # seconds for the whole real-model review (#167: all batches of a large LV; < job's 900 s)
+DEFAULT_BATCH_TIMEOUT = 90.0    # seconds per batch call (#167: instead of one tight global deadline)
 DEFAULT_PARALLEL = 3           # concurrent batch calls (low enough for small rate limits)
 DEFAULT_EFFORT = "low"         # Claude effort for the item review: short, consistent answers, fast
 MAX_TOKENS = 8192
@@ -37,6 +42,7 @@ ALLOWED_KATEGORIEN = frozenset({"fehler", "risiko", "nachtrag"})
 ALLOWED_SCHWEREN = frozenset({"kritisch", "hoch", "mittel", "niedrig"})
 
 MockModel = Callable[[list[Position]], str]
+Fortschritt = Callable[[int, int], None]  # (finished batches, total batches); main.py maps it to #165 step 3
 
 
 @dataclass
@@ -206,6 +212,7 @@ class LlmPruefung:
     model: str = "mock"
     batches: int = 0
     rejected: list[str] = field(default_factory=list)
+    fehlgeschlagen: int = 0  # #167: batches without a readable answer (their items were not reviewed)
 
 
 def _int_env(name: str, default: int) -> int:
@@ -232,10 +239,31 @@ def llm_modell(timeout: float) -> MockModel:
     return call
 
 
-def mock_pruefung(lv: LV, reason: str | None = None) -> LlmPruefung:
-    """The offline mock review (first batch only), as used without a key and on every fallback."""
+def mock_pruefung(lv: LV, reason: str | None = None, fortschritt: "Fortschritt | None" = None) -> LlmPruefung:
+    """The offline mock review (first batch only), as used without a key and on a full fallback.
+    `fortschritt` keeps the signature interchangeable with `pruefe_mit_llm_status` (one step, at once)."""
+    _melde(fortschritt, 1, 1)
     return LlmPruefung(pruefe_in_batches(lv, max_batches=1).findings, mock=True, reason=reason,
                        provider="mock", model=llm.DEFAULT_MODELS["mock"])
+
+
+def _melde(fortschritt: Fortschritt | None, fertig: int, gesamt: int) -> None:
+    if fortschritt is None:
+        return
+    try:
+        fortschritt(fertig, gesamt)
+    except AnalyseAbgebrochen:  # #165: the job passed its own timeout; stop the review cleanly
+        raise
+    except Exception:  # a broken progress listener must never break the review
+        pass
+
+
+def _bereich(batch: list[Position]) -> str:
+    return batch[0].oz if len(batch) == 1 else f"{batch[0].oz}–{batch[-1].oz}"
+
+
+def _fehler_text(exc: BaseException, name: str) -> str:
+    return str(exc) if isinstance(exc, llm.LLMError) else f"{name} call failed ({type(exc).__name__})."
 
 
 def pruefe_mit_llm_status(
@@ -244,55 +272,81 @@ def pruefe_mit_llm_status(
     batch_size: int | None = None,
     timeout: float | None = None,
     parallel: int | None = None,
+    fortschritt: Fortschritt | None = None,
 ) -> LlmPruefung:
     """Review all items with the configured model; never raises.
 
     Without a usable provider (or ``modell``), the offline mock result is returned unchanged
-    (``mock=True``). With a provider, every batch is sent; if any call fails or the deadline passes,
-    the mock result is returned with ``mock=True`` and a readable ``reason``. ``modell`` is a test seam
-    that replaces the provider call.
+    (``mock=True``). With a provider, every batch is sent, each bounded by ``LLM_BATCH_TIMEOUT``
+    and all together by ``timeout`` (default ``LLM_REVIEW_TIMEOUT``). Failed or unfinished batches
+    are reported in ``reason`` while the findings of the other batches are kept (``mock=False``).
+    Only when no batch gave a readable answer is the mock result returned with ``mock=True`` and a
+    readable ``reason``. ``modell`` is a test seam that replaces the provider call; ``fortschritt``
+    is called with ``(finished, total)`` after every batch.
     """
     state = llm.status()
     if modell is None and state["mock"]:
-        return mock_pruefung(lv, state["reason"])
+        return mock_pruefung(lv, state["reason"], fortschritt)
     limit = timeout if timeout and timeout > 0 else llm.seconds("LLM_REVIEW_TIMEOUT", DEFAULT_REVIEW_TIMEOUT)
+    pro_batch = min(limit, llm.seconds("LLM_BATCH_TIMEOUT", DEFAULT_BATCH_TIMEOUT))
     size = batch_size or _int_env("LLM_BATCH_SIZE", DEFAULT_BATCH_SIZE)
     workers = parallel or _int_env("LLM_PARALLEL", DEFAULT_PARALLEL)
-    call = modell or llm_modell(limit)
+    call = modell or llm_modell(pro_batch)
     name = state["provider"] if modell is None else "model"
     batches = [lv.positionen[start:start + size] for start in range(0, len(lv.positionen), size)]
     if not batches:
         return LlmPruefung([], mock=False, provider=state["provider"], model=state["model"])
 
+    answers: list[str | None] = [None] * len(batches)
+    fehler: dict[int, str] = {}
     pool = ThreadPoolExecutor(max_workers=max(1, min(workers, len(batches))), thread_name_prefix="llm-review")
     try:
-        futures = [pool.submit(call, batch) for batch in batches]
-        done, pending = wait(futures, timeout=limit + 1, return_when=FIRST_EXCEPTION)
-        if pending and not any(f.exception() for f in done):
-            return mock_pruefung(lv, f"{name} did not finish the review within {limit:g} s; "
-                                    "offline mock findings shown instead.")
-        for number, future in enumerate(futures, 1):
-            if future.done() and future.exception() is not None:
+        futures = {pool.submit(call, batch): index for index, batch in enumerate(batches)}
+        fertig = 0
+        try:
+            for future in as_completed(futures, timeout=limit + 1):
+                index = futures[future]
                 exc = future.exception()
-                text = str(exc) if isinstance(exc, llm.LLMError) else f"{name} call failed ({type(exc).__name__})."
-                return mock_pruefung(lv, f"Batch {number}/{len(batches)}: {text} Offline mock findings shown instead.")
-        answers = [future.result() for future in futures]
+                if exc is not None:
+                    fehler[index] = _fehler_text(exc, name)
+                else:
+                    answers[index] = future.result()
+                fertig += 1
+                _melde(fortschritt, fertig, len(batches))
+        except FuturesTimeout:
+            for future, index in futures.items():
+                if not future.done() or (answers[index] is None and index not in fehler):
+                    fehler[index] = f"{name} did not finish the review within {limit:g} s."
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
 
-    total, seen, readable = BatchResult(), set(), 0
-    for batch, raw in zip(batches, answers):
+    total, seen = BatchResult(), set()
+    for index, (batch, raw) in enumerate(zip(batches, answers)):
+        if raw is None:
+            continue
         part = validiere_antwort(raw, batch, real=True)
-        readable += not (part.rejected and part.rejected[0] in ("invalid JSON", "missing findings list"))
+        if part.rejected and part.rejected[0] in ("invalid JSON", "missing findings list"):
+            fehler[index] = f"{name} answered without readable JSON."
         total.rejected.extend(part.rejected)
         for finding in part.findings:
             if finding.id not in seen:
                 seen.add(finding.id)
                 total.findings.append(finding)
-    if not readable:
-        return mock_pruefung(lv, f"{name} answered without readable JSON; offline mock findings shown instead.")
-    return LlmPruefung(total.findings, mock=False, provider=state["provider"], model=state["model"],
-                       batches=len(batches), rejected=total.rejected)
+    if len(fehler) == len(batches):
+        erster = fehler[min(fehler)]
+        if all(text == erster for text in fehler.values()) and "within" in erster and "finish" in erster:
+            return mock_pruefung(lv, f"{erster.rstrip('.')}; offline mock findings shown instead.")
+        prefix = f"Batch 1/1: " if len(batches) == 1 else f"All {len(batches)} batches failed; first: "
+        return mock_pruefung(lv, f"{prefix}{erster} Offline mock findings shown instead.")
+    reason = None
+    if fehler:
+        teile = [f"batch {i + 1} (OZ {_bereich(batches[i])}): {fehler[i]}" for i in sorted(fehler)[:5]]
+        mehr = f" … and {len(fehler) - 5} more" if len(fehler) > 5 else ""
+        reason = (f"{len(fehler)}/{len(batches)} model batch(es) failed, their items were not reviewed by the "
+                  f"model; findings of the other {len(batches) - len(fehler)} batch(es) are kept. "
+                  + "; ".join(teile) + mehr)
+    return LlmPruefung(total.findings, mock=False, reason=reason, provider=state["provider"], model=state["model"],
+                       batches=len(batches), rejected=total.rejected, fehlgeschlagen=len(fehler))
 
 
 def pruefe_mit_llm(lv: LV) -> list[Finding]:

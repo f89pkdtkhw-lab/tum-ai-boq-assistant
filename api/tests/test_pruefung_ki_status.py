@@ -159,6 +159,9 @@ def test_evaluation_names_why_the_mock_answered_only_when_a_model_is_configured(
     assert "reason" not in client.post("/api/lv/ai-evaluation", json=EVIDENCE).json()
     monkeypatch.setenv("LLM_PROVIDER", "anthropic")
     monkeypatch.setenv("ANTHROPIC_API_KEY", FAKE_KEY)
+    # #167: with a key the evaluation calls the model; a failing call (stubbed, never the network) names the mock
+    monkeypatch.setattr(httpx, "post", lambda url, headers, json, timeout: httpx.Response(
+        529, json={}, request=httpx.Request("POST", url)))
     body = client.post("/api/lv/ai-evaluation", json=EVIDENCE).json()
     assert body["source"] == "model_mock"
     assert "offline mock" in body["reason"] and FAKE_KEY not in body["reason"]
