@@ -1,5 +1,5 @@
 """Shared BoQ contract; JSON numbers, unknown quantities/prices remain null."""
-from typing import Literal
+from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -116,12 +116,103 @@ class Kalkulation(Vertrag):
     vollstaendig: bool                 # every summed position has a gp
 
 
+# --- B5 (#98): three reports, final report and what-if list (epic #93 contract; optional) ---
+class Zaehler(Vertrag):
+    """Severity groups per report: big problem = kritisch/hoch, warning = mittel, notice = niedrig."""
+
+    grosse_probleme: int = Field(default=0, ge=0)
+    warnungen: int = Field(default=0, ge=0)
+    hinweise: int = Field(default=0, ge=0)
+    empfehlungen: int = Field(default=0, ge=0)
+    zu_grosse_naeherungen: int = Field(default=0, ge=0)
+
+
+class Naeherung(Vertrag):
+    """± approximation of one item quantity from similar projects (Report 2, approval required)."""
+
+    oz: str
+    kurztext: str = ""
+    einheit: str
+    menge: float
+    geschaetzt: float
+    abweichung: float
+    abweichung_prozent: float
+    abweichung_eur: float | None = None
+    zu_gross: bool = False
+    faktor: float
+    case_ids: list[str] = Field(default_factory=list)
+    note_id: str
+    warum: str
+
+
+class WasWenn(Vertrag):
+    """Problem from notes/marks of past cases with its chance in this project; never a penalty."""
+
+    oz: str | None = None
+    problem: str
+    chance: Literal["hoch", "niedrig"]
+    empfehlung: str = ""
+    case_ids: list[str] = Field(default_factory=list)
+    begruendung: str = ""
+
+
+class Bericht(Vertrag):
+    id: Literal["regelwerk", "vergleich", "was_wenn"]
+    titel: str
+    status: Literal["ok", "nicht_verbunden", "fehler"]
+    meldung: str = ""
+    finding_ids: list[str] = Field(default_factory=list)
+    notes: list[dict[str, Any]] = Field(default_factory=list)  # serialised step API `Note` objects
+    neue_tags: list[str] = Field(default_factory=list)  # Report 2 only, when no comparable tag exists
+    tags: list[str] = Field(default_factory=list)  # Report 2: comparable DB tags found for this LV
+    zaehler: Zaehler = Field(default_factory=Zaehler)
+    naeherungen: list[Naeherung] = Field(default_factory=list)
+    probleme: list[WasWenn] = Field(default_factory=list)  # Report 2: problems of similar projects
+
+
+class ProblemVerweis(Vertrag):
+    finding_id: str
+    schwere: Literal["kritisch", "hoch", "mittel", "niedrig"]
+    titel: str
+    quelle: Literal["regel", "modell"]
+    regel_id: str
+    bericht: Literal["regelwerk", "vergleich", "was_wenn"] = "regelwerk"
+
+
+class SchlussPosition(Vertrag):
+    """One row per bill item, in LV order; no item is ever dropped."""
+
+    oz: str
+    kurztext: str = ""
+    menge: float | None = None
+    einheit: str | None = None
+    geschaetzt: float | None = None
+    abweichung: float | None = None
+    abweichung_eur: float | None = None
+    warum: str = ""
+    nachtrag: list[str] = Field(default_factory=list)
+    probleme: list[ProblemVerweis] = Field(default_factory=list)
+    warnungen: list[str] = Field(default_factory=list)
+    empfehlungen: list[str] = Field(default_factory=list)
+
+
+class Schlussbericht(Vertrag):
+    projektbeschreibung: str
+    positionen: list[SchlussPosition]
+    allgemein: list[ProblemVerweis] = Field(default_factory=list)  # findings whose OZ is not an item
+    warnungen: list[str] = Field(default_factory=list)
+
+
 class Pruefbericht(Vertrag):
     lv: LV
     findings: list[Finding]
     kennzahlen: Kennzahlen
     zusammenfassung: Zusammenfassung | None = None
     kalkulation: Kalkulation | None = Field(default=None, exclude_if=_ohne_null)  # B6 #112
+    # B5 (#98), optional: always three reports in the order regelwerk, vergleich, was_wenn.
+    berichte: list[Bericht] | None = None
+    was_wenn: list[WasWenn] | None = None
+    schlussbericht: Schlussbericht | None = None
 
 
 class Beispiel(Vertrag):
