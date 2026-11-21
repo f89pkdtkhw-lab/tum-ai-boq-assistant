@@ -29,6 +29,7 @@ import { kiHinweise } from "@/lib/kischritte";
 import { Preisspiegel } from "./preise/Preisspiegel";
 import { liesJetzt, useEinstellungen, useT } from "@/lib/einstellungen";
 import { befundAnzeige } from "@/lib/befundtext";
+import { Fundstelle } from "./fundstelle/Fundstelle";
 import styles from "./pruefbericht.module.css";
 
 /**
@@ -118,8 +119,11 @@ type Reiter = "uebersicht" | "findings" | "positionen" | "preise" | "fragen" | "
 
 /** `anzeigeName`: the readable report name (e.g. the translated example title); the file's own name stays in the source line. */
 /** `bewertung` comes from the levelled report (components/bericht) when embedded; `eingebettet` hides header and summary there. */
-export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung: vonAussen, eingebettet = false }: {
+/** #170: `springeZu` (a new `n` per click) opens the items tab, selects the OZ and scrolls its highlighted row into view;
+ *  `originalUrl` is the uploaded PDF in this tab (Blob URL), so the item detail can open it at the item's page. */
+export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung: vonAussen, eingebettet = false, springeZu = null, originalUrl = null }: {
   bericht: PruefberichtDaten; offline?: boolean; anzeigeName?: string; bewertung?: Bewertungsdaten; eingebettet?: boolean;
+  springeZu?: { oz: string; n: number } | null; originalUrl?: string | null;
 }) {
   const d = useDok();
   const { e: einstellungen, t } = useEinstellungen();
@@ -223,6 +227,26 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
       }
     });
   }
+
+  // #170: jump from a finding to its item in the BoQ view: clear the item filters, show the page holding the OZ,
+  // select it (highlighted row + detail with its source location) and scroll the row into view.
+  useEffect(() => {
+    if (!springeZu) return;
+    setReiter("positionen");
+    setEinheit(null); setTitel(null); setSuche("");
+    setAuswahl({ oz: springeZu.oz, findingId: null });
+    const seite = seiteFuer(lv.positionen, (p) => p.oz === springeZu.oz, positionGroesse);
+    if (seite !== null) setPositionBlatt({ schluessel: JSON.stringify([null, null, ""]), seite });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const zeile = document.querySelector<HTMLElement>(`.${styles.zeileGewaehlt}`);
+      zeile?.scrollIntoView({ behavior: "smooth", block: "center" });
+      // A short accent flash on top of the normal selection, so the eye finds the row after the jump.
+      zeile?.animate?.([{ backgroundColor: "color-mix(in srgb, var(--accent) 32%, transparent)" }, { backgroundColor: "transparent" }],
+        { duration: 1800, easing: "ease-out" });
+    }));
+    // Runs once per click (n); the other values are read at that moment on purpose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [springeZu?.n]);
 
   function herunterladen() {
     const blob = new Blob([JSON.stringify(bericht, null, 2)], { type: "application/json" });
@@ -586,6 +610,8 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
               oz={auswahl.oz}
               findingId={auswahl.findingId}
               positionen={positionenNachOz.get(auswahl.oz) ?? []}
+              datei={lv.quelle}
+              originalUrl={originalUrl}
               findings={findingsNachOz.get(auswahl.oz) ?? []}
               onWaehle={(id) => waehle(auswahl.oz, id)}
               onSchliessen={() => setAuswahl(null)}
@@ -641,8 +667,8 @@ function FindingKarte({ finding, gewaehlt, ozBekannt, onWaehle }: {
   );
 }
 
-function Detail({ oz, findingId, positionen, findings, onWaehle, onSchliessen, bewertungen, onBewerte, speicherFehler, schritt }: {
-  oz: string; findingId: string | null; positionen: Position[]; findings: Finding[];
+function Detail({ oz, findingId, positionen, datei, originalUrl, findings, onWaehle, onSchliessen, bewertungen, onBewerte, speicherFehler, schritt }: {
+  oz: string; findingId: string | null; positionen: Position[]; datei: string; originalUrl: string | null; findings: Finding[];
   onWaehle: (id: string) => void; onSchliessen: () => void;
   bewertungen: Bewertungen; onBewerte: (id: string, a: Partial<BewertungDaten>) => void; speicherFehler: boolean;
   schritt: { index: number; gesamt: number; onSchritt: (d: number) => void } | null;
@@ -721,6 +747,7 @@ function Detail({ oz, findingId, positionen, findings, onWaehle, onSchliessen, b
                 <div><dt>{t("Total price")}</dt><dd><Euro wert={position.gp} /></dd></div>
                 <div><dt>{t("Type")}</dt><dd>{t(TYP_NAME[position.typ] ?? position.typ)}</dd></div>
               </dl>
+              <Fundstelle datei={datei} oz={position.oz} position={position} originalUrl={originalUrl} />
             </article>
           ))}
           <Historie key={oz} oz={oz} kurztext={positionen[0].kurztext} />

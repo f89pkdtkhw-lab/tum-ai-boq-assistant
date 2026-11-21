@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from decimal import Decimal, InvalidOperation
 from xml.etree import ElementTree as ET
-from ..modelle import LV, Position
+from ..modelle import LV, Position, PositionQuelle
 from .schemas import BoQDocument, DecimalValue, Evidence, Item, RawContent, Source, TextValue
 
 
@@ -168,6 +168,15 @@ def parse_gaeb(dateiname: str, inhalt: bytes) -> BoQDocument:
                        raw=RawContent(content=base64.b64encode(inhalt).decode("ascii")))
 
 
+def _quelle(item: Item) -> PositionQuelle | None:
+    """#170: GAEB XML element path of the item (from its own RNoPart source), or the GAEB 90 record line."""
+    eigene = [s for s in item.oz.sources if s.path and s.path.endswith("/@RNoPart")]
+    if eigene and eigene[-1].path.startswith("/GAEB"):
+        return PositionQuelle(pfad=eigene[-1].path.removesuffix("/@RNoPart"))
+    zeile = item.oz.sources[-1].line if item.oz.sources else None
+    return PositionQuelle(zeile=zeile) if zeile else None
+
+
 def to_lv(document: BoQDocument) -> LV:
     def number(value):
         if value is None:
@@ -182,7 +191,8 @@ def to_lv(document: BoQDocument) -> LV:
                                    langtext=p.detailed_text.value if p.detailed_text else "",
                                    menge=number(p.quantity), einheit=p.unit.value if p.unit else None,
                                    ep=number(p.unit_price), gp=number(p.total_price), typ=p.kind,
-                                   titel_pfad=[t.value for t in p.title_path]) for p in document.positions],
+                                   titel_pfad=[t.value for t in p.title_path], quelle=_quelle(p))
+                         for p in document.positions],
               summen={key: number(value) for key, value in document.section_totals.items()})
 
 

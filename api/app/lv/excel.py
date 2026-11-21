@@ -33,7 +33,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from ..ai import llm
-from ..modelle import LV, Position
+from ..modelle import LV, Position, PositionQuelle
 
 logger = logging.getLogger(__name__)
 
@@ -453,7 +453,9 @@ def importiere(dateiname: str, inhalt: bytes, client: Client | None = None) -> L
             gefunden, grund = _pruefe(block, antwort, verwendet)
             if grund and not gefunden:
                 fehler.append(grund)
-            positionen.extend((index, zeile, position) for zeile, position in gefunden)
+            # #170: sheet and row of the item, so a finding can name its place in the workbook.
+            positionen.extend((index, zeile, position.model_copy(update={"quelle": PositionQuelle(blatt=blatt.name, zeile=zeile)}))
+                              for zeile, position in gefunden)
             if gefunden:
                 pfad = gefunden[-1][1].titel_pfad
     if not positionen:

@@ -43,7 +43,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from ..modelle import LV, Position
+from ..modelle import LV, Position, PositionQuelle
 
 Bbox = tuple[float, float, float, float]
 
@@ -230,7 +230,9 @@ def import_with_blocks(dateiname: str, inhalt: bytes) -> PdfImport:
     events = _segment(items, oz_column)
     entries = list({id(e): e for _, _, e in events if e is not None and e.kind == "oz"}.values())
     _classify(entries, warnings)
-    lv = _build_lv(dateiname, entries, body, warnings)
+    # #170: 1-based line number of every text line on its page, counted before headers and footers are removed.
+    line_numbers = {id(line): number for lines in page_lines for number, line in enumerate(lines, 1)}
+    lv = _build_lv(dateiname, entries, body, warnings, line_numbers)
     if not lv.positionen:
         raise ValueError("No BoQ positions were recognized in the PDF. "
                          "Please check that it is a text BoQ, or upload GAEB or Excel.")
@@ -627,7 +629,8 @@ def _join_long(lines: list[_Line]) -> str:
     return "".join(parts)
 
 
-def _build_lv(dateiname: str, entries: list[_Entry], body: list[list[_Line]], warnings: list[str]) -> LV:
+def _build_lv(dateiname: str, entries: list[_Entry], body: list[list[_Line]], warnings: list[str],
+              line_numbers: dict[int, int] | None = None) -> LV:
     titles: list[_Entry] = []
     positions, seen = [], Counter()
     for entry in entries:
@@ -659,7 +662,7 @@ def _build_lv(dateiname: str, entries: list[_Entry], body: list[list[_Line]], wa
         seen[entry.oz] += 1
         positions.append(Position(oz=entry.oz, kurztext=kurztext, langtext=_join_long(long_lines),
                                   menge=entry.quantity, einheit=unit, ep=entry.unit_price, gp=entry.total_price,
-                                  typ=typ, titel_pfad=path))
+                                  typ=typ, titel_pfad=path, quelle=_location(entry, line_numbers or {})))
     duplicates = sorted(oz for oz, count in seen.items() if count > 1)
     if duplicates:
         warnings.append("Duplicate OZ in the PDF: " + ", ".join(duplicates) + ".")
@@ -671,6 +674,17 @@ def _build_lv(dateiname: str, entries: list[_Entry], body: list[list[_Line]], wa
     name = name_line.text.strip() if name_line is not None and name_line.size >= body_size + 2 else ""
     return LV(name=name or Path(dateiname).stem or "PDF BoQ", quelle=dateiname or "upload.pdf",
               positionen=positions, summen={})
+
+
+def _location(entry: _Entry, line_numbers: dict[int, int]) -> PositionQuelle | None:
+    """#170: page, line and box of the item's OZ line plus the text lines below it on the same page."""
+    head = entry.head_line
+    if head is None:
+        return None
+    lines = [head, *(l for l in entry.lines if l.page == head.page)]
+    bbox = (min(l.bbox[0] for l in lines), min(l.top for l in lines), max(l.bbox[2] for l in lines), max(l.bottom for l in lines))
+    return PositionQuelle(seite=head.page, zeile=line_numbers.get(id(head)), bbox=tuple(round(v, 1) for v in bbox),
+                          seite_groesse=(round(head.page_width, 1), round(head.page_height, 1)))
 
 
 def _title_text(entry: _Entry) -> str:
