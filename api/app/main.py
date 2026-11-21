@@ -12,6 +12,7 @@ from .ai.history_metadata import router as metadata_router
 from .ai.evaluation import router as evaluation_router
 from .ai.submission import router as submission_router
 from .ai.uebersetzen import router as uebersetzen_router
+from .ai.sprache import Antwortsprache  # #196
 from .lv.importer import importiere
 from .modelle import Beispiel, Beispiele, Kennzahlen, LV, Pruefbericht
 from .modelle import Preisliste  # B6 #112
@@ -67,6 +68,7 @@ app.include_router(metadata_router)
 app.include_router(evaluation_router)
 app.include_router(submission_router)
 app.include_router(uebersetzen_router)
+app.add_middleware(Antwortsprache)  # #196: answer language from the UI cookie
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[s.strip() for s in os.environ.get("WEB_ORIGINS", "http://localhost:3000").split(",") if s.strip()],

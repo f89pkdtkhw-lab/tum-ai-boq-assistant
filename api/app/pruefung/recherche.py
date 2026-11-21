@@ -41,6 +41,7 @@ import re
 import time
 from collections import OrderedDict
 from collections.abc import Callable
+import contextvars
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass, field
@@ -565,7 +566,7 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
     pool = ThreadPoolExecutor(max_workers=min(cfg.parallel, len(plan)), thread_name_prefix="deep-research")
     paare, aufrufe = [], 0
     try:
-        futures = [pool.submit(eine, g) for g in plan]
+        futures = [pool.submit(contextvars.copy_context().run, eine, g) for g in plan]  # #196: keep answer language
         fertig = set()
         try:
             for future in as_completed(futures, timeout=cfg.timeout + 1):

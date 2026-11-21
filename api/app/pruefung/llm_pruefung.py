@@ -15,6 +15,7 @@ standard references only with catalogue evidence.
   so the report is always returned. An optional ``fortschritt(done, total)`` callback reports each
   finished batch (progress for the analysis job, #165).
 """
+import contextvars
 import json
 import os
 import re
@@ -301,7 +302,8 @@ def pruefe_mit_llm_status(
     fehler: dict[int, str] = {}
     pool = ThreadPoolExecutor(max_workers=max(1, min(workers, len(batches))), thread_name_prefix="llm-review")
     try:
-        futures = {pool.submit(call, batch): index for index, batch in enumerate(batches)}
+        futures = {pool.submit(contextvars.copy_context().run, call, batch): index  # #196: keep answer language
+                   for index, batch in enumerate(batches)}
         fertig = 0
         try:
             for future in as_completed(futures, timeout=limit + 1):

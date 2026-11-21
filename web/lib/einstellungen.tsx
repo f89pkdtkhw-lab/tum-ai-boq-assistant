@@ -36,6 +36,8 @@ const EinstellungenKontext = createContext<Kontext>({ e: STANDARD, setze: () => 
 function anwenden(e: Einstellungen) {
   const html = document.documentElement;
   html.lang = e.sprache;
+  // #196: the backend reads this cookie and lets the AI answer in the same language
+  try { document.cookie = `sprache=${e.sprache}; path=/; max-age=31536000; samesite=lax`; } catch { /* cookies blocked: English AI texts */ }
   html.dataset.dichte = e.dichte;
   html.dataset.theme = e.thema === "auto" ? (nachts(new Date().getHours()) ? "dark" : "light") : e.thema;
 }
