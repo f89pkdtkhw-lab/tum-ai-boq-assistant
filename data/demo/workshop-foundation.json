@@ -1,0 +1,57 @@
+{
+  "name": "Workshop foundation — synthetic demo",
+  "quelle": "Synthetic demo created for Challenge A",
+  "positionen": [
+    {
+      "oz": "01.0010",
+      "kurztext": "Excavation for workshop foundation",
+      "langtext": "Excavate the workshop foundation pit and stockpile spoil on site. ATV DIN 18300 (2012-09), Bodenklasse 3–5.",
+      "menge": 75,
+      "einheit": "m³",
+      "ep": 24,
+      "gp": 1500,
+      "titel_pfad": ["01 Earthworks"]
+    },
+    {
+      "oz": "01.0020",
+      "kurztext": "Temporary excavation dewatering",
+      "langtext": "Provide and operate a temporary pump as required. Confirm pump capacity, operating duration and discharge location before bidding.",
+      "menge": 8,
+      "einheit": "h",
+      "typ": "bedarf",
+      "titel_pfad": ["01 Earthworks"]
+    },
+    {
+      "oz": "02.0010",
+      "kurztext": "Voranstrich Bodenplatte",
+      "langtext": "Apply primer beneath the waterproofing membrane across the workshop slab footprint.",
+      "menge": 180,
+      "einheit": "m²",
+      "titel_pfad": ["02 Workshop slab"]
+    },
+    {
+      "oz": "02.0020",
+      "kurztext": "Schweißbahn Bodenplatte",
+      "langtext": "Install the waterproofing membrane across the workshop slab footprint.",
+      "menge": 120,
+      "einheit": "m²",
+      "titel_pfad": ["02 Workshop slab"]
+    },
+    {
+      "oz": "02.0030",
+      "kurztext": "Dämmung Bodenplatte",
+      "langtext": "Lay rigid insulation across the workshop slab footprint.",
+      "menge": 120,
+      "einheit": "m²",
+      "titel_pfad": ["02 Workshop slab"]
+    },
+    {
+      "oz": "02.0040",
+      "kurztext": "PE-Folie Bodenplatte",
+      "langtext": "Lay the polyethylene separation sheet across the workshop slab footprint.",
+      "menge": 120,
+      "einheit": "m²",
+      "titel_pfad": ["02 Workshop slab"]
+    }
+  ]
+}
