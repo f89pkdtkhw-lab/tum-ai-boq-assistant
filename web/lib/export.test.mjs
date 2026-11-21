@@ -9,7 +9,8 @@ registerHooks({
     try { return next(spec, ctx); } catch (e) { if (spec.startsWith(".")) return next(`${spec}.ts`, ctx); throw e; }
   },
 });
-const { tabellen, xlsxDateien } = await import("./export.ts");
+const { tabellen, xlsxDateien, STIL_IDS } = await import("./export.ts");
+const { demoKalkulation } = await import("./kalkulation.ts");
 
 const p = (oz, kurztext, menge, einheit, typ = "normal", titel = ["01 Earthworks"]) =>
   ({ oz, kurztext, langtext: "", menge, einheit, ep: null, gp: null, typ, titel_pfad: titel });
@@ -58,4 +59,69 @@ test("Findings sheet carries review status and comment, Open when not reviewed",
   assert.deepEqual(befunde.zeilen[2].slice(-2), ["Dismissed", "covered by 01.02"]);
   assert.deepEqual(tabellen(b)[0].zeilen[2].slice(-2), ["Open", ""], "no decisions means all Open");
   assert.match(xlsxDateien(b, { "01.01-R1": { status: "bestaetigt", kommentar: "" } })["xl/worksheets/sheet1.xml"], /<c r="K2" t="inlineStr" s="1"><is><t xml:space="preserve">Confirmed<\/t>/);
+});
+
+test("PDF content (#105): same rows as the XLSX, summary and reports when present, safe text and file name", async () => {
+  const { pdfInhalt, pdfDateiname, pdfText } = await import("./export.ts");
+  const b = bericht([p("01.01", "Excavation", 10, "m³")], [f("01.01", "fehler", "hoch", "Check it")]);
+  b.kennzahlen = { positionen: 1, findings: 1, kritisch: 0, modell_mock: false };
+  const ohne = pdfInhalt(b);
+  const xlsxBlaetter = tabellen(b);
+  assert.deepEqual(ohne.abschnitte.map((a) => a.name), xlsxBlaetter.map((t) => t.name));
+  ohne.abschnitte.forEach((a, i) => {
+    assert.equal(a.zeilen.length, xlsxBlaetter[i].zeilen.length - 1, a.name);
+    assert.equal(a.kopf.length, xlsxBlaetter[i].zeilen[0].length);
+  });
+  assert.equal(ohne.zusammenfassung.length, 1);
+
+  const mit = pdfInhalt({ ...b,
+    zusammenfassung: { score: 8.5, score_abzuege: [{ grund: "Report 1: 1 big problem", punkte: -1, bericht: "regelwerk" }], schaetzung_abweichung_eur: null, grosse_probleme: 1, warnungen: 0, hinweise: 0, empfehlungen: 0 },
+    berichte: [{ titel: "Report 1", status: "ok", meldung: "", finding_ids: ["x"] }, { titel: "Report 2", status: "nicht_verbunden", meldung: "DB offline", finding_ids: [] }] });
+  assert.match(mit.zusammenfassung[1], /Score: 8\.5 \/ 10/);
+  assert.match(mit.zusammenfassung[2], /not connected/);
+  assert.match(mit.zusammenfassung[3], /Deduction -1\.0/);
+  assert.equal(mit.abschnitte[0].name, "Reports");
+  assert.deepEqual(mit.abschnitte[0].zeilen[1], ["Report 2", "not connected", "0", "DB offline"]);
+
+  assert.equal(pdfText("10 → 12 · −5 € m³ Ä ✓"), "10 -> 12 · -5 € m³ Ä ?");
+  assert.equal(pdfDateiname("Synthetic House Ü", new Date("2026-11-21T10:00:00Z")), "review-report-synthetic-house-u-2026-11-21.pdf");
+});
+
+test("priced and estimated bill sheets (#117): one row per position incl. added/removed, status, colours, sums", () => {
+  const positionen = [p("01.01", "Excavation", 10, "m³"), p("01.02", "Backfill", 4, "m³"), p("01.03", "Rebar", 3, "kg"), p("01.04", "Formwork", 2, "m²")];
+  const ohne = bericht(positionen, []);
+  const mit = { ...ohne, ...demoKalkulation(positionen) };
+  const vorher = tabellen(ohne);
+  const nachher = tabellen(mit);
+  assert.deepEqual(nachher.slice(0, vorher.length), vorher, "existing sheets unchanged");
+  const [preis, schaetzung] = nachher.slice(vorher.length);
+  assert.equal(preis.name, "Priced bill");
+  assert.equal(preis.zeilen.length, 1 + positionen.length + 3);
+  assert.deepEqual(preis.zeilen.at(-3).slice(0, 1), ["Net"]);
+  assert.equal(preis.zeilen.at(-3)[5], mit.kalkulation.summe_netto);
+  assert.equal(preis.zeilen[4][6], "no price");
+
+  assert.equal(schaetzung.name, "Estimated bill");
+  assert.equal(schaetzung.zeilen.length, 1 + positionen.length + 1 + 3, "removed item kept, added item appended");
+  assert.deepEqual(schaetzung.zeilen.slice(1, 1 + positionen.length + 1).map((z) => z[0]), ["unchanged", "old → new", "− removed", "unchanged", "+ new"]);
+  assert.deepEqual(schaetzung.stile.slice(1, 6), [undefined, "updated", "removed", undefined, "added"]);
+  assert.equal(schaetzung.zeilen.at(-1)[8], mit.geschaetztes_lv.differenz_netto);
+
+  const dateien = xlsxDateien(mit);
+  const blatt = dateien[`xl/worksheets/sheet${vorher.length + 2}.xml`];
+  for (const stil of ["added", "removed", "updated", "summe"]) assert.match(blatt, new RegExp(`s="${STIL_IDS[stil][0]}"`), stil);
+  assert.match(dateien["xl/styles.xml"], /FFD1FAE5/);
+  assert.match(dateien["xl/styles.xml"], /FFFEE2E2/);
+  assert.match(dateien["xl/styles.xml"], /FFFEF3C7/);
+  assert.match(dateien["xl/styles.xml"], /<strike\/>/);
+  assert.match(dateien["xl/workbook.xml"], /name="Estimated bill"/);
+});
+
+test("without kalkulation/geschaetztes_lv no sheets are added and sheet XML is unchanged", () => {
+  const b = bericht([p("01.01", "Excavation", 10, "m³")], []);
+  const ohne = xlsxDateien(b);
+  const leer = xlsxDateien({ ...b, kalkulation: null, geschaetztes_lv: null });
+  assert.deepEqual(Object.keys(leer), Object.keys(ohne));
+  assert.equal(tabellen(b).length, 4);
+  assert.doesNotMatch(ohne["xl/workbook.xml"], /Priced bill|Estimated bill/);
 });

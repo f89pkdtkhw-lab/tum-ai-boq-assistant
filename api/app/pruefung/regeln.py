@@ -85,17 +85,42 @@ def _pruefe_langtext_fehlt(pos: Position) -> Finding | None:
     )
 
 
-def _pruefe_einheit_tippfehler(pos: Position) -> Finding | None:
-    if not pos.einheit:
-        return None
-    korrektur = BEKANNTE_EINHEITEN_TIPPFEHLER.get(pos.einheit.strip().lower())
-    if not korrektur:
-        return None
-    return _finding(
-        f"EINHEIT_TIPPFEHLER:{pos.oz}", pos.oz, "niedrig", "Unusual unit spelling",
-        f"Unit “{pos.einheit}” is a known variant spelling.",
-        f"Standardize the unit to “{korrektur}”.", "EINHEIT_TIPPFEHLER",
-    )
+def _kanonische_einheit(einheit: str) -> str:
+    """Canonical unit for a known variant spelling; any other unit is returned as written."""
+    roh = einheit.strip()
+    return BEKANNTE_EINHEITEN_TIPPFEHLER.get(roh.lower(), roh)
+
+
+def _pruefe_einheit_tippfehler(lv: LV) -> list[Finding]:
+    """Variant spellings are typos only when the same LV also uses another spelling of that unit.
+
+    A variant used consistently on every item is the LV's convention and stays silent.
+    """
+    schreibweisen: dict[str, dict[str, list[Position]]] = defaultdict(lambda: defaultdict(list))
+    kanonische_formen = {k.lower() for k in BEKANNTE_EINHEITEN_TIPPFEHLER.values()}
+    for pos in lv.positionen:
+        if not pos.einheit or not pos.einheit.strip():
+            continue
+        roh = pos.einheit.strip()
+        if roh.lower() in BEKANNTE_EINHEITEN_TIPPFEHLER or roh.lower() in kanonische_formen:
+            schreibweisen[_kanonische_einheit(roh).lower()][roh].append(pos)
+    befunde = []
+    for varianten in schreibweisen.values():
+        if len(varianten) < 2:
+            continue
+        for roh, positionen in varianten.items():
+            korrektur = BEKANNTE_EINHEITEN_TIPPFEHLER.get(roh.lower())
+            if not korrektur:
+                continue
+            andere = ", ".join(f"“{s}” ({len(p)} item{'s' if len(p) != 1 else ''})"
+                               for s, p in varianten.items() if s != roh)
+            for pos in positionen:
+                befunde.append(_finding(
+                    f"EINHEIT_TIPPFEHLER:{pos.oz}", pos.oz, "niedrig", "Unusual unit spelling",
+                    f"Unit “{pos.einheit}” is a known variant spelling, and this LV also uses {andere}.",
+                    f"Standardize the unit to “{korrektur}”.", "EINHEIT_TIPPFEHLER",
+                ))
+    return befunde
 
 
 def _norm_wert(text: str) -> Decimal:
@@ -177,6 +202,11 @@ def _pruefe_text_widerspruch(pos: Position) -> Finding | None:
     teile = []
     kurz = MENGE_EINHEIT_MUSTER.findall(kurztext)
     lang = MENGE_EINHEIT_MUSTER.findall(langtext)
+    if pos.einheit and pos.einheit.strip():
+        # compare quantities only in the item unit; other units (e.g. a thickness) are no contradiction
+        einheit = _kanonische_einheit(pos.einheit)
+        kurz = [m for m in kurz if m[1] == einheit]
+        lang = [m for m in lang if m[1] == einheit]
     if kurz and lang and not set(kurz) & set(lang):
         teile.append(f"Short description states {kurz[0][0]} {kurz[0][1]}, "
                      f"detailed description states {lang[0][0]} {lang[0][1]}.")
@@ -256,10 +286,11 @@ def pruefe_regeln(lv: LV) -> list[Finding]:
     befunde: list[Finding] = []
     for pos in lv.positionen:
         for pruefung in (_pruefe_rechenfehler, _pruefe_einheit_fehlt, _pruefe_menge_fehlt,
-                         _pruefe_langtext_fehlt, _pruefe_einheit_tippfehler, _pruefe_text_widerspruch):
+                         _pruefe_langtext_fehlt, _pruefe_text_widerspruch):
             befund = pruefung(pos)
             if befund is not None:
                 befunde.append(befund)
+    befunde.extend(_pruefe_einheit_tippfehler(lv))
     befunde.extend(_pruefe_oz_duplikate(lv))
     befunde.extend(_pruefe_inhalt_duplikate(lv))
     befunde.extend(_pruefe_titelsummen(lv))

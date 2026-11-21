@@ -50,10 +50,10 @@ def bericht_vor_n2(lv_json: dict) -> dict:
     """The report exactly as `pruefen()` built it before the N2 hook existed."""
     lv = LV.model_validate(lv_json)
     findings = main.bewerte(lv, main.pruefe_regeln(lv) + main.pruefe_mengen(lv) + main.pruefe_mit_llm(lv))
-    return Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
+    return main.ergaenze_berichte(Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
         positionen=len(lv.positionen), findings=len(findings),
         kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=True,
-    )).model_dump(mode="json")
+    ), zusammenfassung=main.zusammenfassen(findings))).model_dump(mode="json")
 
 
 def ohne_hook(monkeypatch, lv_json: dict) -> bytes:
@@ -73,6 +73,7 @@ def test_switch_off_returns_the_report_from_before_this_change(monkeypatch, lv_j
     assert antwort.status_code == 200
     assert antwort.content == golden
     assert antwort.json() == bericht_vor_n2(lv_json)
+    assert [b["id"] for b in antwort.json()["berichte"]] == ["regelwerk", "vergleich", "was_wenn"]  # B5 additive
 
 
 def test_switch_on_appends_norm_findings_after_the_unchanged_original_findings(monkeypatch):

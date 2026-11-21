@@ -10,10 +10,17 @@ from .ai.step_api import router as comparison_router
 from .ai.history_metadata import router as metadata_router
 from .lv.importer import importiere
 from .modelle import Beispiel, Beispiele, Kennzahlen, LV, Pruefbericht
+from .modelle import Preisliste  # B6 #112
+from .pruefung.preise import kalkuliere_mit_preis_db  # B6 #112, B9 #133
 from .pruefung.regeln import pruefe_regeln
 from .pruefung.mengen import pruefe_mengen
 from .pruefung.llm_pruefung import pruefe_mit_llm
-from .pruefung.normen import pruefe_normen_sicher
+from .pruefung.normen import ergaenze_annahmen, pruefe_normen_sicher  # B4 #97: ergaenze_annahmen
+from .pruefung.bewertung import zusammenfassen
+from .pruefung.berichte import ergaenze_berichte  # B5 (#98)
+from .modelle import Regelwerk  # B3 (#96)
+from .pruefung.regelwerk import importiere_regelwerk  # B3 (#96)
+from .pruefung.normen import vorgaben_aus_regelwerk  # B3 (#96)
 from .risiko.scoring import bewerte
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -73,11 +80,51 @@ async def import_lv(datei: UploadFile):
 
 @app.post("/api/lv/pruefen", response_model=Pruefbericht)
 def pruefen(lv: LV):
-    findings = bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + pruefe_mit_llm(lv)) + pruefe_normen_sicher(lv)
-    return Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
+    return _pruefbericht(lv)
+
+
+def _pruefbericht(lv: LV, vorgaben=None):
+    """`vorgaben`: requirements of the uploaded regulation document (B3 #96) for check 1; None = as before."""
+    findings = (bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + pruefe_mit_llm(lv))
+                + (pruefe_normen_sicher(lv) if vorgaben is None else pruefe_normen_sicher(lv, vorgaben=vorgaben)))
+    return ergaenze_annahmen(ergaenze_berichte(Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
         positionen=len(lv.positionen), findings=len(findings),
         kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=True,
-    ))
+    ), zusammenfassung=zusammenfassen(findings))))
+
+
+class AnalyseAnfrage(BaseModel):
+    """Body of POST /api/lv/analyse (epic #93): `regelwerk` from B3 (#96), `preisliste` from B6 (#112)."""
+    lv: LV
+    regelwerk: Regelwerk | None = None  # B3 #96
+    preisliste: Preisliste | None = None  # B6 #112
+
+
+# --- Regulation document (B3, issue #96): upload + analysis with the uploaded key values. ---
+@app.post("/api/regelwerk/import", response_model=Regelwerk)
+async def import_regelwerk(datei: UploadFile):
+    try:
+        inhalt = await datei.read(MAX_UPLOAD_BYTES + 1)
+        if len(inhalt) > MAX_UPLOAD_BYTES:
+            raise HTTPException(413, "File is too large (maximum 10 MiB).")
+        if not inhalt:
+            raise HTTPException(422, "The uploaded file is empty.")
+        return importiere_regelwerk(datei.filename or "", inhalt)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    finally:
+        await datei.close()
+
+
+@app.post("/api/lv/analyse", response_model=Pruefbericht)
+def analyse(anfrage: AnalyseAnfrage):
+    """`/api/lv/pruefen` plus check 1 with the uploaded regulation document (B3, via B2's `vorgaben`) and
+    the price list (B6); `regelwerk: null` and no `preisliste` = identical result."""
+    vorgaben = vorgaben_aus_regelwerk(anfrage.regelwerk)  # B3 #96 -> B2 check 1 (lower/bigger/missing/extra)
+    bericht = _pruefbericht(anfrage.lv, vorgaben)
+    # B6 #112 / B9 #133: upload first, price database fills the gaps; no price source → no `kalkulation` field
+    bericht.kalkulation = kalkuliere_mit_preis_db(anfrage.lv, anfrage.preisliste)
+    return bericht
 
 
 @app.post("/api/ask")

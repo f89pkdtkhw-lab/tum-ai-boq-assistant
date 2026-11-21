@@ -606,3 +606,400 @@ def test_pruefe_normen_also_carries_n3_key_value_findings():
     ]
     assert [f for f in pruefe_normen(lv) if f.regel_id == NORM_KENNWERT_ABWEICHUNG] == pruefe_kennwerte(
         lv, lade_register())
+
+
+# ---------------------------------------------------------------------------
+# B2 (issue #95): check 1 severity rules – lower, bigger, missing, extra.
+# Synthetic register values only (marked "synthetic"); no dataset text.
+# ---------------------------------------------------------------------------
+from app.pruefung.normen import (  # noqa: E402
+    NORM_EXTRA, NORM_KENNWERT_HOEHER, NORM_POSITION_FEHLT, Pflichtposition, Regelwerksvorgaben,
+    pruefe_kennwerte_hoeher, pruefe_pflichtpositionen, vorgaben_aus_regelwerk,
+)
+
+SYNTH_QUELLE = {"url": "https://example.org/synthetic-regulation", "abgerufen": "2026-11-21"}
+SYNTH_PFLICHT = {
+    "id": "SYNTH-P1", "gewerk": "synthetic floor slab", "gewerk_merkmale": ["Bodenplatte"],
+    "position": "synthetic blinding layer", "merkmale": ["Sauberkeitsschicht"],
+    "fundstelle": "synthetic test value", "quelle": SYNTH_QUELLE, "faktor": 1.0, "einheit": "m²",
+}
+SYNTH_EXTRA = {
+    "id": "SYNTH-E1", "gewerk": "synthetic floor slab", "gewerk_merkmale": ["Bodenplatte"],
+    "position": "synthetic formwork cleaning", "merkmale": ["Schalung reinigen"],
+    "fundstelle": "synthetic test value", "quelle": SYNTH_QUELLE,
+}
+
+
+def pflicht(roh: dict) -> Pflichtposition:
+    return normen._pruefe_pflichtposition(roh, "test", "pflichtpositionen")
+
+
+def b2_register(geprueft: bool, pflicht_roh=(SYNTH_PFLICHT,), extra_roh=(SYNTH_EXTRA,)) -> normen.Register:
+    """The repository register with synthetic required/not-required items on the DIN 1045-2 entry."""
+    basis = register_mit(geprueft)
+    return normen.Register(stand=basis.stand, eintraege=[
+        dataclasses.replace(
+            e, pflichtpositionen=tuple(pflicht(p) for p in pflicht_roh),
+            nicht_erforderlich=tuple(normen._pruefe_pflichtposition(x, "test", "nicht_erforderlich")
+                                     for x in extra_roh),
+        ) if e.norm_id == "DIN 1045-2" else e
+        for e in basis.eintraege
+    ])
+
+
+def b2_lv(*positionen: tuple[str, str, float, str]) -> LV:
+    return LV(name="Synthetic B2 LV", quelle="test", positionen=[
+        Position(oz=f"05.{i:02d}", kurztext=kurz, langtext=lang, menge=menge, einheit=einheit)
+        for i, (kurz, lang, menge, einheit) in enumerate(positionen, start=1)
+    ])
+
+
+def b2_texte(findings) -> list[str]:
+    return [t for f in findings for t in (f.titel, f.begruendung, f.vorschlag)]
+
+
+def test_b2_lower_checked_is_hoch_and_unchecked_is_mittel():
+    lv = beton_lv("Beton XC4, C20/25")
+    [geprueft] = pruefe_kennwerte(lv, register_mit(geprueft=True))
+    [ungeprueft] = pruefe_kennwerte(lv, register_mit(geprueft=False))
+    assert (geprueft.regel_id, geprueft.schwere) == (NORM_KENNWERT_ABWEICHUNG, "hoch")
+    assert (ungeprueft.regel_id, ungeprueft.schwere) == (NORM_KENNWERT_ABWEICHUNG, "mittel")
+    assert geprueft.model_copy(update={"schwere": "mittel"}) == ungeprueft.model_copy(
+        update={"begruendung": geprueft.begruendung})  # only severity and the checked-by note differ
+
+
+@pytest.mark.parametrize("geprueft", [True, False])
+def test_b2_bigger_is_mittel_warning(geprueft):
+    lv = beton_lv("Beton XC4, C35/45")
+    assert pruefe_kennwerte(lv, register_mit(geprueft)) == []
+    [finding] = pruefe_kennwerte_hoeher(lv, register_mit(geprueft))
+    assert (finding.id, finding.regel_id, finding.kategorie, finding.schwere, finding.quelle) == (
+        f"{NORM_KENNWERT_HOEHER}:02.01", NORM_KENNWERT_HOEHER, "risiko", "mittel", "regel")
+    assert "C35/45" in finding.titel and "C25/30" in finding.titel and finding.euro_wirkung is None
+    assert "note the difference" in finding.begruendung and KENNWERT_URL in finding.begruendung
+    assert finding.vorschlag.startswith("Bidder question")
+    assert [f.regel_id for f in pruefe_normen(lv, register_mit(geprueft))] == [NORM_KENNWERT_HOEHER]
+
+
+def test_b2_equal_class_gives_neither_lower_nor_bigger():
+    lv = beton_lv("Beton XC4, C25/30")
+    assert pruefe_kennwerte(lv, register_mit(True)) == pruefe_kennwerte_hoeher(lv, register_mit(True)) == []
+
+
+def test_b2_missing_required_item_is_hoch_with_what_and_how_much():
+    lv = b2_lv(("Bodenplatte C25/30", "Bodenplatte d=25 cm.", 120.0, "m2"),
+               ("Bodenplatte Randbereich", "Bodenplatte Rand.", 30.0, "m²"),
+               ("Wand", "Mauerwerk.", 50.0, "m²"))
+    [finding] = pruefe_pflichtpositionen(lv, b2_register(geprueft=True))
+    assert (finding.id, finding.regel_id, finding.oz, finding.kategorie, finding.schwere, finding.quelle) == (
+        f"{NORM_POSITION_FEHLT}:05.01", NORM_POSITION_FEHLT, "05.01", "nachtrag", "hoch", "regel")
+    assert "Missing: synthetic blinding layer, 150 m² (1 × 150 m² of OZ 05.01, 05.02)" in finding.begruendung
+    assert "OZ 05.01, 05.02" in finding.begruendung and "https://example.org/synthetic-regulation" in finding.begruendung
+    assert finding.vorschlag.startswith("OZ 05.01:") and finding.vorschlag.endswith("Please confirm.")
+    assert finding.euro_wirkung is None
+
+
+def test_b2_missing_with_absolute_or_no_quantity():
+    lv = b2_lv(("Bodenplatte", "Beton.", 10.0, "m³"))
+    absolut = {**SYNTH_PFLICHT, "faktor": None, "menge": 2, "einheit": "St"}
+    absolut.pop("faktor")
+    ohne = {k: v for k, v in SYNTH_PFLICHT.items() if k not in ("faktor", "einheit")}
+    [a] = pruefe_pflichtpositionen(lv, b2_register(True, [absolut], []))
+    [o] = pruefe_pflichtpositionen(lv, b2_register(True, [ohne], []))
+    [f] = pruefe_pflichtpositionen(lv, b2_register(True, [SYNTH_PFLICHT], []))
+    assert "2 St (quantity stated by the source)" in a.begruendung
+    assert "quantity not stated by the source; to be determined" in o.begruendung
+    assert "no work-type item is measured in m²" in f.begruendung
+
+
+def test_b2_no_missing_when_item_present_or_work_type_absent():
+    vorhanden = b2_lv(("Bodenplatte", "Beton.", 100.0, "m²"), ("Sauberkeitsschicht", "C8/10, 5 cm.", 100.0, "m²"))
+    ohne_gewerk = b2_lv(("Wand", "Mauerwerk.", 50.0, "m²"))
+    assert pruefe_pflichtpositionen(vorhanden, b2_register(True, extra_roh=())) == []
+    assert pruefe_pflichtpositionen(ohne_gewerk, b2_register(True)) == []
+
+
+def test_b2_extra_item_is_niedrig_notice():
+    lv = b2_lv(("Bodenplatte", "Beton.", 100.0, "m²"), ("Sauberkeitsschicht", "C8/10.", 100.0, "m²"),
+               ("Schalung reinigen", "Nach dem Betonieren.", 1.0, "psch"))
+    [finding] = pruefe_pflichtpositionen(lv, b2_register(geprueft=True))
+    assert (finding.id, finding.regel_id, finding.oz, finding.kategorie, finding.schwere) == (
+        f"{NORM_EXTRA}:05.03", NORM_EXTRA, "05.03", "risiko", "niedrig")
+    assert "For awareness only" in finding.begruendung and finding.vorschlag.startswith("OZ 05.03:")
+    # Without the work type in the LV the same item is not flagged.
+    assert pruefe_pflichtpositionen(b2_lv(("Schalung reinigen", "x", 1.0, "psch")), b2_register(True)) == []
+
+
+def test_b2_unchecked_register_entry_never_produces_hoch():
+    register = b2_register(geprueft=False)
+    lv = b2_lv(("Bodenplatte XC4, C20/25", "Bodenplatte.", 100.0, "m²"),
+               ("Fundament XC4, C35/45", "Beton.", 10.0, "m³"),
+               ("Schalung reinigen", "x", 1.0, "psch"))
+    findings = pruefe_normen(lv, register)
+    assert {f.regel_id for f in findings} >= {NORM_KENNWERT_ABWEICHUNG, NORM_KENNWERT_HOEHER, NORM_POSITION_FEHLT,
+                                             NORM_EXTRA}
+    assert all(f.schwere != "hoch" for f in findings if f.regel_id.startswith("NORM_KENNWERT")
+               or f.regel_id in (NORM_POSITION_FEHLT, NORM_EXTRA))
+    assert [f.schwere for f in findings if f.regel_id == NORM_POSITION_FEHLT] == ["mittel"]
+    assert "not yet checked by a person (geprueft: false)" in next(
+        f.begruendung for f in findings if f.regel_id == NORM_POSITION_FEHLT)
+
+
+def test_b2_all_four_cases_in_one_lv_with_checked_register():
+    lv = b2_lv(("Bodenplatte XC4, C20/25", "Bodenplatte.", 100.0, "m²"),
+               ("Fundament XC4, C35/45", "Beton.", 10.0, "m³"),
+               ("Schalung reinigen", "x", 1.0, "psch"))
+    findings = pruefe_normen(lv, b2_register(geprueft=True))
+    assert [(f.regel_id, f.oz, f.schwere) for f in findings] == [
+        (NORM_KENNWERT_ABWEICHUNG, "05.01", "hoch"), (NORM_POSITION_FEHLT, "05.01", "hoch"),
+        (NORM_KENNWERT_HOEHER, "05.02", "mittel"), (NORM_EXTRA, "05.03", "niedrig"),
+    ]
+    assert len({f.id for f in findings}) == len(findings)
+    for f in findings:
+        assert not CLAIM_WORDS.search(" ".join((f.titel, f.begruendung, f.vorschlag))), f.id
+        assert KEIN_NORMGUTACHTEN in f.begruendung and f.quelle == "regel" and f.euro_wirkung is None
+
+
+def test_b2_repository_register_has_no_required_items_so_nothing_new_fires():
+    register = lade_register()
+    assert all(e.pflichtpositionen == () and e.nicht_erforderlich == () for e in register.eintraege)
+    lv = b2_lv(("Bodenplatte", "Beton.", 100.0, "m²"), ("Schalung reinigen", "x", 1.0, "psch"))
+    assert pruefe_pflichtpositionen(lv, register) == []
+
+
+def test_b2_register_json_accepts_and_validates_required_items(tmp_path):
+    register = lade_register(schreibe_register(tmp_path, pflichtpositionen=[SYNTH_PFLICHT],
+                                               nicht_erforderlich=[SYNTH_EXTRA]))
+    [eintrag] = register.eintraege
+    assert eintrag.pflichtpositionen[0] == Pflichtposition(
+        id="SYNTH-P1", gewerk="synthetic floor slab", gewerk_merkmale=("Bodenplatte",),
+        position="synthetic blinding layer", merkmale=("Sauberkeitsschicht",), fundstelle="synthetic test value",
+        quelle=SYNTH_QUELLE, menge=None, faktor=1.0, einheit="m²")
+    assert eintrag.nicht_erforderlich[0].id == "SYNTH-E1"
+
+
+@pytest.mark.parametrize("liste, aenderung, fehler", [
+    ("pflichtpositionen", {"gewerk_merkmale": []}, "gewerk_merkmale"),
+    ("pflichtpositionen", {"merkmale": [""]}, "merkmale"),
+    ("pflichtpositionen", {"menge": 3}, "either 'menge' or 'faktor'"),
+    ("pflichtpositionen", {"faktor": -1}, "positive"),
+    ("pflichtpositionen", {"einheit": None}, "needs 'einheit'"),
+    ("pflichtpositionen", {"quelle": {"url": "http://example.org", "abgerufen": "2026-11-21"}}, "https"),
+    ("pflichtpositionen", {"quelle": {"url": "https://example.org"}}, "abgerufen"),
+    ("pflichtpositionen", {"extra": 1}, "unknown fields"),
+    ("nicht_erforderlich", {"menge": 1, "einheit": "St"}, "take no"),
+])
+def test_b2_register_rejects_invalid_required_items(tmp_path, liste, aenderung, fehler):
+    basis = SYNTH_PFLICHT if liste == "pflichtpositionen" else SYNTH_EXTRA
+    with pytest.raises(ValueError, match=fehler):
+        lade_register(schreibe_register(tmp_path, **{liste: [{**basis, **aenderung}]}))
+
+
+def test_b2_register_rejects_duplicate_required_item_ids(tmp_path):
+    with pytest.raises(ValueError, match="duplicate ids"):
+        lade_register(schreibe_register(tmp_path, pflichtpositionen=[SYNTH_PFLICHT, SYNTH_PFLICHT]))
+
+
+SYNTH_REGELWERK = {
+    "id": "rw-1", "dateiname": "synthetic_spec.pdf", "normverweise": [], "warnungen": [],
+    "kennwerte": [
+        {"norm": "DIN 1045-2", "kennwert": "minimum strength class XC4", "wert": "C30/37", "einheit": None,
+         "fundstelle": "p. 2"},
+        {"norm": "DIN 1045-2", "kennwert": "maximum w/c ratio XC4", "wert": "0.50", "einheit": None,
+         "fundstelle": "p. 2"},
+        {"norm": None, "kennwert": "maximum strength class", "bedingung": "XC1", "wert": "C50/60",
+         "einheit": None, "fundstelle": "p. 3"},
+    ],
+    "pflichtpositionen": [{k: v for k, v in SYNTH_PFLICHT.items() if k != "quelle"}],
+}
+
+
+def test_b2_uploaded_regulation_values_feed_lower_and_cite_the_file():
+    vorgaben = vorgaben_aus_regelwerk(SYNTH_REGELWERK)
+    assert [(k.bedingung, k.value, k.fundstelle) for k in vorgaben.kennwerte] == [("XC4", "C30/37", "DIN 1045-2, p. 2")]
+    lv = beton_lv("Beton XC4, C25/30")  # equal to the register value, below the uploaded document
+    assert pruefe_kennwerte(lv, register_mit(False)) == []
+    [finding] = pruefe_kennwerte(lv, register_mit(False), vorgaben)
+    assert (finding.regel_id, finding.schwere) == (NORM_KENNWERT_ABWEICHUNG, "hoch")
+    assert "uploaded regulation document synthetic_spec.pdf" in finding.begruendung
+    assert "synthetic_spec.pdf" in finding.vorschlag and "C30/37" in finding.titel
+    assert not CLAIM_WORDS.search(" ".join(b2_texte([finding])))
+    # The bigger case uses the strictest value as well.
+    [hoeher] = pruefe_kennwerte_hoeher(beton_lv("Beton XC4, C35/45"), register_mit(False), vorgaben)
+    assert "minimum C30/37 listed by the uploaded regulation document synthetic_spec.pdf" in hoeher.vorschlag
+
+
+def test_b2_uploaded_regulation_required_items_count_as_checked():
+    vorgaben = vorgaben_aus_regelwerk(SYNTH_REGELWERK)
+    lv = b2_lv(("Bodenplatte", "Beton.", 80.0, "m²"))
+    [finding] = pruefe_pflichtpositionen(lv, lade_register(), vorgaben)
+    assert (finding.regel_id, finding.schwere) == (NORM_POSITION_FEHLT, "hoch")
+    assert "uploaded regulation document synthetic_spec.pdf (synthetic test value)" in finding.begruendung
+    assert "80 m²" in finding.begruendung
+    assert vorgaben_aus_regelwerk(None) is None
+    assert vorgaben_aus_regelwerk({"dateiname": "x.pdf", "kennwerte": [], "pflichtpositionen": [{"id": "bad"}]}) == (
+        Regelwerksvorgaben("x.pdf"))
+
+
+def test_b2_switch_off_and_hook_with_uploaded_values(monkeypatch):
+    vorgaben = vorgaben_aus_regelwerk(SYNTH_REGELWERK)
+    lv = beton_lv("Beton XC4, C25/30")
+    monkeypatch.setenv("NORMPRUEFUNG", "off")
+    assert pruefe_normen_sicher(lv, vorgaben) == [] and pruefe_normen_sicher(lv) == []
+    monkeypatch.delenv("NORMPRUEFUNG")
+    monkeypatch.setenv("NORM_KI_RECHERCHE", "off")
+    assert [f.regel_id for f in pruefe_normen_sicher(lv, vorgaben)] == [NORM_KENNWERT_ABWEICHUNG]
+    assert pruefe_normen_sicher(lv) == pruefe_normen(lv)
+
+
+# ---------------------------------------------------------------------------
+# B4 (issue #97, epic #93): register key values as Note 2 sources and assumption notes in the report.
+# ---------------------------------------------------------------------------
+from app.pruefung.normen import ergaenze_annahmen, mit_register_quellen  # noqa: E402
+
+XC4_QUELLE = "NORM:DIN 1045-2:min_strength_class:XC4"
+
+
+def note2_anfrage(**extra) -> dict:
+    return {"step": "standards", "lv": NOTE2_LV.model_dump(mode="json"), "checked_on": STICHTAG.isoformat(), **extra}
+
+
+def nutzer_quelle(oz: str = "03.01", wert: float = 20) -> dict:
+    return {"spec_id": "U1", "source_type": "user", "category": "user_requirement", "document_ref": "client spec",
+            "location": "p. 3", "as_of": "2026-11-20", "scope": {"oz": [oz]}, "verified": True,
+            "requirement": {"parameter": "concrete strength f_ck,cyl for exposure class XC4", "comparator": "eq",
+                            "value": wert, "unit": "N/mm²"}}
+
+
+def test_b4_checked_register_entry_is_a_source_of_note_2(monkeypatch):
+    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    client = TestClient(main.app)
+    body = client.post("/api/comparison/steps", json=note2_anfrage()).json()
+    assert body["status"] == "complete" and body["errors"] == []
+    notes = {n["id"]: n for n in body["notes"]}
+    assert list(notes) == ["Note2:03.01", "Note2:03.02"]  # 03.03 cites no register norm
+    assert XC4_QUELLE in notes["Note2:03.01"]["text"]
+    assert [e["reference_id"] for e in notes["Note2:03.01"]["evidence"]] == [XC4_QUELLE]
+    # With a deviating user requirement Note 2 states the deviation against the register.
+    mit_nutzer = client.post("/api/comparison/steps", json=note2_anfrage(sources=[nutzer_quelle()])).json()
+    note = {n["id"]: n for n in mit_nutzer["notes"]}["Note2:03.01"]
+    assert note["text"].startswith("Deviation for OZ 03.01") and XC4_QUELLE in note["text"]
+    assert {e["reference_id"] for e in note["evidence"]} == {XC4_QUELLE, "U1"}
+
+
+def test_b4_unchecked_register_entry_is_not_used(monkeypatch):
+    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
+    client = TestClient(main.app)
+    nur_lv = client.post("/api/comparison/steps", json=note2_anfrage()).json()
+    assert nur_lv["status"] == "error" and nur_lv["errors"][0]["code"] == "placeholder_unavailable"
+    body = client.post("/api/comparison/steps", json=note2_anfrage(sources=[nutzer_quelle()])).json()
+    [note] = body["notes"]  # repository register: DIN 1045-2 is geprueft false
+    assert note["text"].startswith("Manual review: no verified applicable German source for OZ 03.01")
+    assert [e["reference_id"] for e in note["evidence"]] == ["U1"] and XC4_QUELLE not in json.dumps(body)
+
+
+def test_b4_note_2_hook_keeps_other_requests_unchanged(monkeypatch):
+    from app.ai.step_api import StepRequest
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    standards = StepRequest.model_validate(note2_anfrage(sources=[nutzer_quelle()]))
+    vergleich = StepRequest.model_validate(note2_anfrage(step="comparison", sources=[nutzer_quelle()]))
+    ohne_stichtag = StepRequest.model_validate({"step": "standards", "lv": NOTE2_LV.model_dump(mode="json")})
+    assert mit_register_quellen(vergleich) is vergleich and mit_register_quellen(ohne_stichtag) is ohne_stichtag
+    xc1 = "NORM:DIN 1045-2:min_strength_class:XC1"
+    assert [s.spec_id for s in mit_register_quellen(standards).sources] == ["U1", xc1, XC4_QUELLE]
+    eigene = StepRequest.model_validate(note2_anfrage(sources=[{**nutzer_quelle(), "spec_id": XC4_QUELLE}]))
+    assert [s.spec_id for s in mit_register_quellen(eigene).sources] == [XC4_QUELLE, xc1]  # caller's id wins
+    monkeypatch.setenv("NORMPRUEFUNG", "off")
+    assert mit_register_quellen(standards) is standards
+
+
+def test_b4_note_2_switch_off_gives_todays_response(monkeypatch):
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    client = TestClient(main.app)
+    anfragen = [note2_anfrage(), note2_anfrage(sources=[nutzer_quelle()])]
+    monkeypatch.setenv("NORMPRUEFUNG", "off")
+    aus = [client.post("/api/comparison/steps", json=a).content for a in anfragen]
+    monkeypatch.setattr(normen, "mit_register_quellen", lambda request, register=None: request)
+    assert aus == [client.post("/api/comparison/steps", json=a).content for a in anfragen]
+
+
+def test_b4_note_2_hook_errors_are_logged_and_skipped(monkeypatch, caplog):
+    from app.ai.step_api import StepRequest
+    def kaputt(*args, **kwargs):
+        raise RuntimeError("synthetic failure")
+    monkeypatch.setattr(normen, "lade_register", kaputt)
+    anfrage = StepRequest.model_validate(note2_anfrage())
+    with caplog.at_level(logging.ERROR, logger=normen.__name__):
+        assert mit_register_quellen(anfrage) is anfrage
+    assert "Note 2 failed" in caplog.text
+
+
+ANNAHME_LV = beton_lv("Beton XC4, C20/25", "Stahlbeton nach DIN 1045-2 liefern.")
+
+
+def test_b4_assumption_note_is_visible_in_the_report(monkeypatch):
+    for key in LLM_KEYS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
+    client = TestClient(main.app)
+    lv = ANNAHME_LV.model_dump(mode="json")
+    heute = client.post("/api/lv/pruefen", json=lv).json()  # repository register: unchecked, no assumption
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    with monkeypatch.context() as m:
+        m.setattr(main, "ergaenze_annahmen", lambda bericht: bericht)
+        ohne_hook = client.post("/api/lv/pruefen", json=lv).json()
+    an = client.post("/api/lv/pruefen", json=lv).json()
+    assert an["findings"] == ohne_hook["findings"]  # findings unchanged, only the hook differs
+    assert [f["regel_id"] for f in an["findings"] if f["regel_id"] == NORM_KENNWERT_ABWEICHUNG] == [
+        NORM_KENNWERT_ABWEICHUNG]
+    regelwerk = an["berichte"][0]
+    assert regelwerk["id"] == "regelwerk"
+    [note] = [n for n in regelwerk["notes"] if n["id"] == "NormAssumption:02.01"]
+    assert note["assumption"].startswith(f"{ANNAHME_PRAEFIX}: for 120 m³ (OZ 02.01) C25/30 instead of C20/25")
+    assert (note["step"], note["approval_required"], note["manual_review"], note["oz"]) == (
+        "standards", True, True, "02.01")
+    assert ANNAHME_PRAEFIX in regelwerk["meldung"]
+    assert regelwerk["zaehler"]["empfehlungen"] == ohne_hook["berichte"][0]["zaehler"]["empfehlungen"] + 1
+    assert an["zusammenfassung"]["empfehlungen"] == ohne_hook["zusammenfassung"]["empfehlungen"] + 1
+    assert an["zusammenfassung"]["score"] == ohne_hook["zusammenfassung"]["score"]  # never a penalty
+    [zeile] = an["schlussbericht"]["positionen"]
+    assert note["assumption"] in zeile["empfehlungen"]
+    assert all(not n["id"].startswith("NormAssumption") for n in heute["berichte"][0]["notes"])
+
+
+def test_b4_assumption_switch_off_gives_todays_report(monkeypatch):
+    for key in LLM_KEYS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    client = TestClient(main.app)
+    lv = ANNAHME_LV.model_dump(mode="json")
+    monkeypatch.setenv("NORMPRUEFUNG", "off")
+    aus = client.post("/api/lv/pruefen", json=lv)
+    monkeypatch.setattr(main, "ergaenze_annahmen", lambda bericht: bericht)
+    heute = client.post("/api/lv/pruefen", json=lv)
+    assert aus.status_code == heute.status_code == 200 and aus.content == heute.content
+
+
+def test_b4_assumption_hook_returns_the_report_unchanged_without_notes_or_on_error(monkeypatch, caplog):
+    bericht = main.pruefen(beton_lv("Beton XC4, C25/30", "Stahlbeton nach DIN 1045-2 liefern."))
+    assert ergaenze_annahmen(bericht, register_mit(True)) is bericht  # no deviation → no assumption
+    def kaputt(*args, **kwargs):
+        raise RuntimeError("synthetic failure")
+    monkeypatch.setattr(normen, "pruefe_kennwerte_sicher", kaputt)
+    with caplog.at_level(logging.ERROR, logger=normen.__name__):
+        assert ergaenze_annahmen(bericht, register_mit(True)) is bericht
+    assert "Assumption notes for the report failed" in caplog.text
+
+
+def test_b4_analyse_without_regelwerk_equals_pruefen_and_carries_the_assumption(monkeypatch):
+    for key in LLM_KEYS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("NORMPRUEFUNG", raising=False)
+    monkeypatch.setattr(normen, "lade_register", lambda path=None: register_mit(True))
+    client = TestClient(main.app)
+    lv = ANNAHME_LV.model_dump(mode="json")
+    pruefen = client.post("/api/lv/pruefen", json=lv)
+    analyse = client.post("/api/lv/analyse", json={"lv": lv, "regelwerk": None})
+    assert pruefen.status_code == analyse.status_code == 200 and analyse.content == pruefen.content
+    assert "NormAssumption:02.01" in [n["id"] for n in analyse.json()["berichte"][0]["notes"]]
