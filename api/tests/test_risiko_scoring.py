@@ -135,3 +135,12 @@ def test_ranking_prefers_uncertainty_before_money_and_sorts_evidence_by_absolute
 @pytest.mark.skip(reason="Real GAEB acceptance deferred until importer #6 lands; synthetic LV covered above.")
 def test_real_gaeb_risk_acceptance_after_issue_6():
     """Replace with an offline GAEB fixture/import check when #6 is merged."""
+
+
+def test_position_type_hints_are_mittel_with_short_reason_but_as_required_stays_hoch():
+    lv = LV(name="T", quelle="synthetic", positionen=[
+        Position(oz="01", typ="bedarf", langtext="nach Bedarf")])
+    by_rule = {f.regel_id: f for f in bewerte(lv, [])}
+    assert by_rule["RISK_BEDARF"].schwere == "mittel"
+    assert "entitlement" not in by_rule["RISK_BEDARF"].begruendung
+    assert by_rule["RISK_AS_REQUIRED"].schwere == "hoch"

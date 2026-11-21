@@ -57,18 +57,35 @@ def _pruefe_rechenfehler(pos: Position) -> Finding | None:
     )
 
 
-def _pruefe_einheit_fehlt(pos: Position) -> Finding | None:
+def _aus_pdf(lv: LV) -> bool:
+    """The PDF importer records the uploaded file name in `LV.quelle`."""
+    return lv.quelle.strip().lower().endswith(".pdf")
+
+
+def _pruefe_einheit_fehlt(pos: Position, pdf: bool = False) -> Finding | None:
     if pos.einheit:
         return None
+    if pdf:
+        return _finding(
+            f"EINHEIT_FEHLT:{pos.oz}", pos.oz, "niedrig", "Unit not read from PDF (possible parser gap)",
+            "No unit was extracted from the PDF; the parser may have missed it.",
+            "Check the unit in the original document.", "EINHEIT_FEHLT",
+        )
     return _finding(
         f"EINHEIT_FEHLT:{pos.oz}", pos.oz, "mittel", "Missing unit",
         "Missing unit.", "Add the unit specified in the work description.", "EINHEIT_FEHLT",
     )
 
 
-def _pruefe_menge_fehlt(pos: Position) -> Finding | None:
+def _pruefe_menge_fehlt(pos: Position, pdf: bool = False) -> Finding | None:
     if pos.menge is not None:
         return None  # Zero quantity is known, not unknown
+    if pdf:
+        return _finding(
+            f"MENGE_FEHLT:{pos.oz}", pos.oz, "niedrig", "Quantity not read from PDF (possible parser gap)",
+            "No quantity was extracted from the PDF; the parser may have missed it.",
+            "Check the quantity in the original document.", "MENGE_FEHLT",
+        )
     return _finding(
         f"MENGE_FEHLT:{pos.oz}", pos.oz, "hoch", "Missing quantity",
         "Quantity unknown; do not treat it as zero.",
@@ -284,8 +301,10 @@ def _pruefe_titelsummen(lv: LV) -> list[Finding]:
 
 def pruefe_regeln(lv: LV) -> list[Finding]:
     befunde: list[Finding] = []
+    pdf = _aus_pdf(lv)
     for pos in lv.positionen:
-        for pruefung in (_pruefe_rechenfehler, _pruefe_einheit_fehlt, _pruefe_menge_fehlt,
+        for pruefung in (_pruefe_rechenfehler,
+                         lambda p: _pruefe_einheit_fehlt(p, pdf), lambda p: _pruefe_menge_fehlt(p, pdf),
                          _pruefe_langtext_fehlt, _pruefe_text_widerspruch):
             befund = pruefung(pos)
             if befund is not None:
