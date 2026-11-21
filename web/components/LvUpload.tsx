@@ -343,15 +343,16 @@ export function LvUpload() {
     let bericht: PruefberichtDaten;
     const job: { stand: AnalyseStatus | null } = { stand: null };
     try {
+      // #167: always the full analysis, so the price database, calculation and estimated bill run without attachments too.
       const anfrage = analyseAnfrage(lv, regelwerkDaten, preislisteDaten);
-      const synchron = () => anfrage === null ? api.pruefen(lv) : api.analyse(anfrage).catch((fehler) => {
+      const synchron = () => api.analyse(anfrage).catch((fehler) => {
         if (!routeFehlt(fehler)) throw fehler;
-        hinweise.push("This backend has no combined analysis yet: the bill was reviewed without its attachments.");
+        if (regelwerkDaten || preislisteDaten) hinweise.push("This backend has no combined analysis yet: the bill was reviewed without its attachments.");
         return api.pruefen(lv);
       });
-      // #165: background job with progress; same pipeline as before (bill only = /api/lv/pruefen via nur_pruefen).
+      // #165: background job with progress; #167: always the full analysis (no `nur_pruefen`).
       try {
-        const ende = await fuehreAnalyseAus(api, anfrage ?? { lv, regelwerk: null, preisliste: null, nur_pruefen: true }, {
+        const ende = await fuehreAnalyseAus(api, anfrage, {
           aktiv: aktuell,
           aufStand: (stand) => {
             job.stand = stand;

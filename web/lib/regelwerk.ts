@@ -39,7 +39,8 @@ export function regelwerkText(r: Regelwerk): string {
   return `${r.dateiname}: ${teile.join(", ")}`;
 }
 
-/** /api/lv/analyse only when an attachment is present; otherwise the bill-only flow stays exactly as before. */
+/** Always /api/lv/analyse (#167): without attachments the price database still prices the bill and the
+ *  estimated bill is built; the findings are the same as /api/lv/pruefen. */
 export function analyseAnfrage(lv: LV, regelwerk: Regelwerk | null, preisliste: Preisliste | null) {
-  return regelwerk || preisliste ? { lv, regelwerk, preisliste } : null;
+  return { lv, regelwerk, preisliste };
 }

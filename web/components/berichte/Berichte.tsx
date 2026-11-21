@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Finding, Pruefbericht } from "@/lib/api";
 import { abschnitte, chanceName, hatBerichte, prozentText, TABS, wasWennListe, type Abschnitt, type TabId } from "@/lib/berichte";
+import { schlussZeilen } from "@/lib/schlussbericht";
 import styles from "./berichte.module.css";
 
 const SCHWERE: Record<Finding["schwere"], string> = { kritisch: "Critical", hoch: "High", mittel: "Medium", niedrig: "Low" };
@@ -37,7 +38,7 @@ export function Berichte({ bericht, onWaehle }: { bericht: Pruefbericht; onWaehl
       </div>
       <div id="bericht-panel" role="tabpanel" aria-labelledby={`bericht-tab-${tab}`} className={styles.panel}>
         {tab === "endbericht" ? (
-          <Endbericht bericht={bericht} liste={liste} wasWenn={wasWenn} />
+          <Endbericht bericht={bericht} liste={liste} wasWenn={wasWenn} onWaehle={onWaehle} />
         ) : aktiv ? (
           <BerichtInhalt a={aktiv} onWaehle={onWaehle} />
         ) : (
@@ -131,7 +132,9 @@ function BerichtInhalt({ a, onWaehle }: { a: Abschnitt; onWaehle: (oz: string, i
   );
 }
 
-function Endbericht({ bericht, liste, wasWenn }: { bericht: Pruefbericht; liste: Abschnitt[]; wasWenn: ReturnType<typeof wasWennListe> }) {
+function Endbericht({ bericht, liste, wasWenn, onWaehle }: {
+  bericht: Pruefbericht; liste: Abschnitt[]; wasWenn: ReturnType<typeof wasWennListe>; onWaehle: (oz: string, id: string | null) => void;
+}) {
   const z = bericht.zusammenfassung;
   return (
     <div className={styles.inhalt}>
@@ -151,6 +154,89 @@ function Endbericht({ bericht, liste, wasWenn }: { bericht: Pruefbericht; liste:
       </ul>
       <h4 className={styles.unter}>What-if list</h4>
       {wasWenn.length === 0 ? <p className={styles.leer}>No what-if items.</p> : <WasWennListe liste={wasWenn} />}
+      <Schlussbericht bericht={bericht} onWaehle={onWaehle} />
     </div>
+  );
+}
+
+const SEITE = 100;
+
+/** Final report (#167): one row per bill item with problems, ± approximation, need to add and recommendations. */
+function Schlussbericht({ bericht, onWaehle }: { bericht: Pruefbericht; onWaehle: (oz: string, id: string | null) => void }) {
+  const [alle, setAlle] = useState(false);
+  const [anzahl, setAnzahl] = useState(SEITE);
+  const s = bericht.schlussbericht;
+  if (!s) return null;
+  const zeilen = schlussZeilen(bericht, alle);
+  const fehlgeschlagen = bericht.kennzahlen.modell_batches_fehlgeschlagen ?? 0;
+  return (
+    <>
+      <h4 className={styles.unter}>Final report</h4>
+      <p className={styles.hinweis}>{s.projektbeschreibung}</p>
+      {fehlgeschlagen > 0 && (
+        <p className={styles.hinweis} role="note">
+          <span className={`${styles.marke} ${styles.hoch}`}>model</span>
+          {fehlgeschlagen} of {bericht.kennzahlen.modell_batches} model batches failed; their items were checked by the rules only.
+        </p>
+      )}
+      {s.warnungen.length > 0 && <ul className={styles.abzuege}>{s.warnungen.map((w, i) => <li key={i}>{w}</li>)}</ul>}
+      {s.allgemein.length > 0 && (
+        <p className={styles.hinweis}>General: {s.allgemein.map((p) => <span key={p.finding_id} className={styles.marke}>{p.titel}</span>)}</p>
+      )}
+      <div className={styles.werkzeug}>
+        <span className={styles.hinweis}>{zeilen.length} of {s.positionen.length} items{alle ? "" : " with something to note"}</span>
+        <button type="button" className={styles.tab} aria-pressed={alle} onClick={() => { setAlle(!alle); setAnzahl(SEITE); }}>
+          {alle ? "Only items with notes" : "Show all items"}
+        </button>
+      </div>
+      {zeilen.length === 0 ? <p className={styles.leer}>No item needs attention.</p> : (
+        <div className={styles.rahmen}>
+          <table className={styles.tabelle}>
+            <thead><tr><th scope="col">OZ</th><th scope="col">Short description</th><th scope="col" className={styles.rechts}>Quantity</th>
+              <th scope="col" className={styles.rechts}>Estimated · ±</th><th scope="col">Need to add</th><th scope="col">Problems</th>
+              <th scope="col">Warnings · recommendations</th></tr></thead>
+            <tbody>
+              {zeilen.slice(0, anzahl).map((z, i) => (
+                <tr key={`${z.oz}-${i}`} className={z.warnungen.length > 0 ? styles.zuGross : undefined}>
+                  <td><button type="button" className={styles.link} onClick={() => onWaehle(z.oz, null)}>{z.oz}</button></td>
+                  <td>{z.kurztext}</td>
+                  <td className={styles.rechts}>{z.menge === null ? "–" : `${zahl.format(z.menge)} ${z.einheit ?? ""}`}</td>
+                  <td className={styles.rechts} title={z.warum || undefined}>
+                    {z.geschaetzt === null ? "–" : <>{zahl.format(z.geschaetzt)} · {z.abweichung !== null && z.abweichung > 0 ? "+" : ""}{zahl.format(z.abweichung ?? 0)}</>}
+                    {z.abweichung_eur !== null && <> · {euro.format(z.abweichung_eur)}</>}
+                  </td>
+                  <td>{z.nachtrag.length > 0 && <ul className={styles.zellListe}>{z.nachtrag.map((n, j) => <li key={j}>{n}</li>)}</ul>}</td>
+                  <td>
+                    {z.probleme.length > 0 && (
+                      <ul className={styles.zellListe}>
+                        {z.probleme.map((p) => (
+                          <li key={p.finding_id}>
+                            <button type="button" className={styles.zellKnopf} onClick={() => onWaehle(z.oz, p.finding_id)}>
+                              <span className={`${styles.marke} ${p.schwere === "kritisch" || p.schwere === "hoch" ? styles.hoch : ""}`}>{SCHWERE[p.schwere]}</span>
+                              {p.titel} <span className={styles.oz}>{p.quelle === "modell" ? "model" : "rule"}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                  <td>
+                    {(z.warnungen.length > 0 || z.empfehlungen.length > 0) && (
+                      <ul className={styles.zellListe}>
+                        {z.warnungen.map((w, j) => <li key={`w${j}`}>{w}</li>)}
+                        {z.empfehlungen.map((e, j) => <li key={`e${j}`}>{e}</li>)}
+                      </ul>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {zeilen.length > anzahl && (
+        <button type="button" className={styles.tab} onClick={() => setAnzahl(anzahl + SEITE)}>Show {Math.min(SEITE, zeilen.length - anzahl)} more</button>
+      )}
+    </>
   );
 }

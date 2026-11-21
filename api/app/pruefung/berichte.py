@@ -21,8 +21,10 @@ History access goes only through the D1 DB actions, behind the seam `history_db`
 `HistoryDB` below; None = not connected). If it is None or fails, Reports 2/3 get
 `status="nicht_verbunden"` with a readable message and everything else still works.
 
-Deterministic and offline: no model call, no invented items, prices or standards. Case texts
-are data, never instructions. Every approximation stays approval-required.
+Deterministic and offline by default: no invented items, prices or standards. With a usable key
+(#167) Claude adds comparable tags and rates the chance of each noted problem (`berichte_ki`); without
+a key or on any model error the deterministic result stays. Case texts are data, never instructions.
+Every approximation stays approval-required.
 """
 import json
 import logging
@@ -40,6 +42,7 @@ from ..modelle import (
     SchlussPosition, WasWenn, Zaehler, Zusammenfassung,
 )
 from .bewertung import zusammenfassen
+from . import berichte_ki  # #167: AI checks 2/3 (Claude) on top of the deterministic matching
 
 log = logging.getLogger(__name__)
 
@@ -351,6 +354,14 @@ def bewerte_probleme(lv: LV, faelle: Sequence[dict[str, Any]], projekt_tags: set
     return sorted(ergebnis, key=lambda w: (w.chance != "hoch", w.case_ids[0] if w.case_ids else "", w.problem))
 
 
+def _probleme(lv: LV, faelle: Sequence[dict[str, Any]], projekt_tags: set[str], schritt: str
+              ) -> tuple[list[WasWenn], bool]:
+    """Deterministic rating, then Claude's rating when a model is configured (#167). True = rated by Claude."""
+    liste = bewerte_probleme(lv, faelle, projekt_tags)
+    ki = berichte_ki.bewerte_chancen(lv, liste, schritt)
+    return (ki, True) if ki is not None else (liste, False)
+
+
 # ---------------------------------------------------------------------------------------------
 # Report 2: ± approximation per item through the existing estimate step (Note 3)
 # ---------------------------------------------------------------------------------------------
@@ -414,6 +425,8 @@ def naeherung(position: Position, faelle: Sequence[dict[str, Any]], vergleich_ta
 def bericht_vergleich(lv: LV, db: HistoryDB) -> tuple[Bericht, set[str]]:
     db_tags = _tag_namen(_db_aufruf(db.tags))
     tags = vergleichbare_tags(lv, db_tags)
+    ki_tags = [t for t in (berichte_ki.vergleiche_tags(lv, db_tags) or []) if t not in tags]  # #167
+    tags = [*tags, *ki_tags]
     if not tags:
         vorschlag = neue_tags_vorschlag(lv)
         return Bericht(id="vergleich", titel=TITEL["vergleich"], status="ok", neue_tags=vorschlag,
@@ -435,11 +448,15 @@ def bericht_vergleich(lv: LV, db: HistoryDB) -> tuple[Bericht, set[str]]:
             notes.append(note.model_dump(mode="json"))
         if wert is not None:
             naeherungen.append(wert)
-    probleme = bewerte_probleme(lv, faelle, set(tags))
+    probleme, von_ki = _probleme(lv, faelle, set(tags), "vergleich")
     zu_gross = sum(n.zu_gross for n in naeherungen)
     meldung = (f"{len(faelle)} similar case(s) for tag(s) {', '.join(tags)}; {len(naeherungen)} "
                f"approximation(s), {zu_gross} above ±{int(ZU_GROSS_SCHWELLE * 100)} %; "
                f"{len(probleme)} problem(s) from notes/marks.")
+    if ki_tags:
+        meldung += f" Claude matched tag(s) {', '.join(ki_tags)}."
+    if von_ki:
+        meldung += " Chances rated by Claude (model)."
     return Bericht(
         id="vergleich", titel=TITEL["vergleich"], status="ok", meldung=meldung, tags=tags, notes=notes,
         naeherungen=naeherungen, probleme=probleme,
@@ -450,13 +467,14 @@ def bericht_vergleich(lv: LV, db: HistoryDB) -> tuple[Bericht, set[str]]:
 
 def bericht_was_wenn(lv: LV, db: HistoryDB, projekt_tags: set[str]) -> Bericht:
     faelle = _faelle(_db_aufruf(db.records_latest, FALL_LIMIT))
-    liste = bewerte_probleme(lv, faelle, projekt_tags)
+    liste, von_ki = _probleme(lv, faelle, projekt_tags, "was_wenn")
     hoch = sum(w.chance == "hoch" for w in liste)
     return Bericht(
         id="was_wenn", titel=TITEL["was_wenn"], status="ok", probleme=liste,
         zaehler=Zaehler(empfehlungen=hoch, hinweise=len(liste) - hoch),
         meldung=(f"{len(faelle)} recent case(s); {len(liste)} problem(s) from notes/marks: {hoch} with "
-                 f"high chance (recommendation), {len(liste) - hoch} for awareness. No score penalty."),
+                 f"high chance (recommendation), {len(liste) - hoch} for awareness. No score penalty."
+                 + (" Chances rated by Claude (model)." if von_ki else "")),
     )
 
 

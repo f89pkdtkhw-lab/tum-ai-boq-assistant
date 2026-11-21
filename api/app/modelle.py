@@ -71,6 +71,10 @@ class Kennzahlen(Vertrag):
     # Both are absent when the mock runs by configuration, so mock-mode reports stay byte-identical.
     modell_reason: str | None = Field(default=None, exclude_if=lambda wert: wert is None)
     modell: str | None = Field(default=None, exclude_if=lambda wert: wert is None)  # e.g. "gemini/gemini-2.5-flash"
+    # #167, optional: model batches sent and those that failed (their items were not model-reviewed);
+    # absent on mock runs, so mock-mode reports stay byte-identical.
+    modell_batches: int | None = Field(default=None, ge=0, exclude_if=lambda wert: wert is None)
+    modell_batches_fehlgeschlagen: int | None = Field(default=None, ge=0, exclude_if=lambda wert: wert is None)
 
 
 class ScoreAbzug(Vertrag):
