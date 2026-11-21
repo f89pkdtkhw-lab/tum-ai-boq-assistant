@@ -17,6 +17,8 @@ import { Suche } from "./suche/Suche";
 import { Titelbaum } from "./titelbaum/Titelbaum";
 import { Top } from "./top/Top";
 import { Seiten } from "./seiten/Seiten";
+import { Zusammenfassung } from "./zusammenfassung/Zusammenfassung";
+import { inGruppe, type Gruppe } from "@/lib/zusammenfassung";
 import { Kalkulation } from "./kalkulation/Kalkulation";
 import styles from "./pruefbericht.module.css";
 
@@ -96,6 +98,7 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
   const { lv, findings, kennzahlen } = bericht;
   const [kategorie, setKategorie] = useState<Kategorie | null>(null);
   const [schwere, setSchwere] = useState<Schwere | null>(null);
+  const [gruppe, setGruppe] = useState<Gruppe | null>(null);
   const [auswahl, setAuswahl] = useState<Auswahl | null>(null);
   const [exportFehler, setExportFehler] = useState("");
   const [einheit, setEinheit] = useState<string | null>(null);
@@ -140,8 +143,9 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
   const gefiltert = useMemo(
     () => filtereFindings(sortiert, lv.positionen, { suche, kategorie, schwere })
       .filter((f) => status === null || bewertungVon(bewertungen, f.id).status === status)
-      .filter((f) => ozImTitel === null || ozImTitel.has(f.oz)),
-    [sortiert, lv.positionen, suche, kategorie, schwere, status, bewertungen, ozImTitel],
+      .filter((f) => ozImTitel === null || ozImTitel.has(f.oz))
+      .filter((f) => inGruppe(f, gruppe)),
+    [sortiert, lv.positionen, suche, kategorie, schwere, status, bewertungen, ozImTitel, gruppe],
   );
 
   // Load after mount: localStorage does not exist during server rendering.
@@ -204,13 +208,13 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
   }
 
   const sucheAktiv = normalisiere(suche) !== "";
-  const filterAktiv = kategorie !== null || schwere !== null || status !== null || titel !== null || sucheAktiv;
+  const filterAktiv = kategorie !== null || schwere !== null || gruppe !== null || status !== null || titel !== null || sucheAktiv;
   const sichtbarePositionen = lv.positionen.filter(
     (p) => (einheit === null || mengenSchluessel(p) === einheit) && (titel === null || imTeilbaum(p, titel)) && positionTrifft(p, suche),
   );
 
   // Paging runs after every filter; a changed filter key shows page 1 again (issue #67).
-  const findingSchluessel = JSON.stringify([kategorie, schwere, status, titel, suche]);
+  const findingSchluessel = JSON.stringify([kategorie, schwere, gruppe, status, titel, suche]);
   const findingSeite = seiteVon(gefiltert.length, aktuelleSeite(findingBlatt, findingSchluessel), findingGroesse);
   const sichtbareFindings = ausschnitt(gefiltert, findingSeite);
   const positionSchluessel = JSON.stringify([einheit, titel, suche]);
@@ -277,6 +281,8 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
           the identifier <code>{MOCK_REGEL}</code> only demonstrate the report format and are not domain findings.
         </p>
       )}
+
+      <Zusammenfassung bericht={bericht} aktiv={gruppe} onWaehle={setGruppe} />
 
       <dl className={styles.kennzahlen}>
         <div className={styles.kachel}>
@@ -379,7 +385,7 @@ export function Pruefbericht({ bericht, offline = false }: { bericht: Pruefberic
             <div className={styles.leer}>
               <p>No findings match this filter.</p>
               {filterAktiv && (
-                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setStatus(null); setTitel(null); setSuche(""); }}>
+                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setGruppe(null); setStatus(null); setTitel(null); setSuche(""); }}>
                   Reset filters
                 </button>
               )}
