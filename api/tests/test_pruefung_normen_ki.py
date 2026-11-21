@@ -7,6 +7,7 @@ import json
 import logging
 import re
 import threading
+import time
 
 import httpx
 import pytest
@@ -408,3 +409,58 @@ def test_background_start_does_nothing_without_key_or_when_switched_off(monkeypa
         monkeypatch.setenv(key, value)
     normen_ki.starte_recherche(LV_N5)
     assert normen_ki._LAUFEND == {}
+
+
+# --- #166 + F #165: every research round reports into the job progress ----------------------
+
+def test_each_round_reports_its_trade_and_the_rounds_done():
+    meldungen, sperre = [], threading.Lock()
+    def melde(meldung, anteil=None):
+        with sperre:
+            meldungen.append((meldung, anteil))
+    recherchiere_normen(LV_N5, client=fake(antwort(DIN_4109)), melde=melde)
+    texte = [m for m, _ in meldungen]
+    assert any(t.startswith("Researching standards for Erdarbeiten") and "(round 1 of 2)" in t for t in texte)
+    assert any(t.startswith("Researching standards for Rohbau") and "(round 2 of 2)" in t for t in texte)
+    assert meldungen[-1] == ("Standards research: 2 of 2 rounds done.", 1.0)
+
+
+def test_a_failing_progress_callback_never_stops_the_research():
+    def kaputt_melden(*_):
+        raise RuntimeError("synthetic progress failure")
+    assert len(recherchiere_normen(LV_N5, client=fake(antwort(DIN_4109)), melde=kaputt_melden)) == 1
+
+
+def test_waiting_job_follows_the_background_rounds_and_a_cache_hit_says_so(monkeypatch):
+    freigabe = threading.Event()
+    def client(prompt, system="", max_tokens=1024, **_):
+        freigabe.wait(5)
+        return llm.ResearchAnswer(antwort(DIN_4109), "anthropic", "fake-model", 1)
+    live(monkeypatch, client)
+    normen_ki.starte_recherche(LV_N5)
+    meldungen = []
+    warten = threading.Thread(target=lambda: meldungen.append(recherchiere_normen_sicher(
+        LV_N5, melde=lambda m, a=None: meldungen.append(m))))
+    warten.start()
+    for _ in range(200):
+        if normen_ki._ZUHOERER:
+            break
+        time.sleep(0.01)
+    freigabe.set()
+    warten.join(5)
+    assert any(isinstance(m, str) and m.startswith("Researching standards for") for m in meldungen)
+    assert "Standards research: 2 of 2 rounds done." in meldungen and normen_ki._ZUHOERER == {}
+    nochmal = []
+    recherchiere_normen_sicher(LV_N5, melde=lambda m, a=None: nochmal.append((m, a)))
+    assert nochmal == [("Standards research: result ready (researched in the background or cached for this BoQ).", 1.0)]
+
+
+def test_job_status_shows_the_research_rounds_under_the_standards_step(monkeypatch):
+    from app.fortschritt import Aufzeichnung
+    monkeypatch.setattr(main, "pruefe_mit_llm_status", llm_pruefung.mock_pruefung)
+    live(monkeypatch, recherche(antwort(DIN_4109), [ZITAT]))
+    aufzeichnung = Aufzeichnung()
+    main._pruefbericht(LV_N5, fortschritt=aufzeichnung)
+    recherche_meldungen = [schritt for schritt, _, meldung, _ in aufzeichnung.meldungen
+                           if meldung.startswith(("Researching standards", "Standards research:"))]
+    assert recherche_meldungen and set(recherche_meldungen) == {5}

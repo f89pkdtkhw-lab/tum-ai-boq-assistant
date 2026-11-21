@@ -503,7 +503,7 @@ def _warte(lv: LV, melde) -> list[Finding]:
     schluessel = _schluessel(lv)
     treffer, auftrag = _auftrag(lv)
     if auftrag is None:
-        _melden(melde, "Standards research: result of an earlier review of this BoQ reused.", 1.0)
+        _melden(melde, "Standards research: result ready (researched in the background or cached for this BoQ).", 1.0)
         return treffer
     if melde is not None:
         with _SPERRE:
