@@ -25,7 +25,7 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 from fastapi import APIRouter, FastAPI, HTTPException, Query, UploadFile
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from .modelle import LV, Preisliste, PreislistenEintrag
 from .pruefung import preise
@@ -38,9 +38,19 @@ router = APIRouter(tags=["prices"])
 
 class NeuerPreis(BaseModel):
     """Body row of POST /api/db/preise (epic #93 D5)."""
-    item: str = Field(min_length=1)
-    unit: str = Field(min_length=1)
-    price_per_unit: float = Field(ge=0, allow_inf_nan=False)
+    item: str
+    unit: str
+    price_per_unit: float = Field(gt=0, allow_inf_nan=False)
+
+    @field_validator("item", "unit")
+    @classmethod
+    def validate_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        if value.casefold() == "string":
+            raise ValueError("'string' is a placeholder")
+        return value
 
 
 class PreisEintrag(BaseModel):
@@ -188,13 +198,11 @@ def _aus_tabelle(dateiname: str, zeilen: list[list[str]]) -> tuple[list[Preislis
             continue
         oz, text, einheit, roh_ep = zelle(z, "oz"), zelle(z, "kurztext"), zelle(z, "einheit"), zelle(z, "ep")
         ep = _zahl(roh_ep)
-        if not (text or oz):
-            warnungen.append(f"Row {nummer}: no short text or OZ, skipped.")
-        elif not einheit:
-            warnungen.append(f"Row {nummer}: no unit, skipped.")
-        elif ep is None or ep < 0:
+        if ep is None:
             warnungen.append(f"Row {nummer}: no valid unit price ({roh_ep or 'empty'}), skipped.")
         else:
+            if not einheit:
+                raise ValueError(f"{dateiname}:{nummer}: unit must not be blank")
             if zelle(z, "waehrung"):
                 waehrungen.add(zelle(z, "waehrung").upper())
             eintraege.append(PreislistenEintrag(id=f"z{nummer}", oz=oz or None, kurztext=text,
@@ -266,7 +274,7 @@ def _aus_gaeb(dateiname: str, inhalt: bytes) -> tuple[list[PreislistenEintrag], 
         lv = gaeb.importiere(dateiname, inhalt)
     eintraege = [PreislistenEintrag(id=f"oz-{p.oz}", oz=p.oz, kurztext=p.kurztext.strip(),
                                     einheit=_einheit(p.einheit), ep=p.ep, quelle=f"{dateiname}:{p.oz}")
-                 for p in lv.positionen if p.ep is not None and p.ep >= 0 and p.einheit and p.einheit.strip()]
+                 for p in lv.positionen if p.ep is not None and p.einheit and p.einheit.strip()]
     ohne = len(lv.positionen) - len(eintraege)
     warnungen = [f"{ohne} item(s) without unit price or unit were skipped."] if ohne else []
     if not eintraege:
@@ -301,8 +309,15 @@ def lies_preisliste(dateiname: str, inhalt: bytes) -> Preisliste:
 
 def _als_neue_preise(liste: Preisliste) -> list[NeuerPreis]:
     """Same mapping as the UI preview (web/lib/preis-db.ts): item falls back to the OZ."""
-    return [NeuerPreis(item=(e.kurztext or e.oz or "").strip(), unit=e.einheit.strip(), price_per_unit=e.ep)
-            for e in liste.eintraege if (e.kurztext or e.oz or "").strip() and e.einheit.strip() and e.ep >= 0]
+    neue = []
+    for nummer, e in enumerate(liste.eintraege, start=1):
+        try:
+            neue.append(NeuerPreis(item=e.kurztext.strip() or e.oz or "", unit=e.einheit, price_per_unit=e.ep))
+        except ValidationError as exc:
+            fehler = exc.errors()[0]
+            quelle = e.quelle or f"{liste.dateiname} entry {nummer}"
+            raise ValueError(f"{quelle}: {fehler['loc'][0]} {fehler['msg']}") from None
+    return neue
 
 
 @router.post("/api/preisliste/import", response_model=Preisliste)
@@ -314,12 +329,13 @@ async def import_preisliste(datei: UploadFile):
         if not inhalt:
             raise HTTPException(422, "The uploaded file is empty.")
         liste = lies_preisliste(datei.filename or "", inhalt)
+        neue = _als_neue_preise(liste)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from None
     finally:
         await datei.close()
     try:
-        speichere_preise(_als_neue_preise(liste))
+        speichere_preise(neue)
     except Exception as exc:  # noqa: BLE001 - the parsed list is still usable for this analysis
         detail = exc.detail if isinstance(exc, HTTPException) else str(exc)
         liste.warnungen.append(f"Prices were read but not stored in the price database: {detail}")
