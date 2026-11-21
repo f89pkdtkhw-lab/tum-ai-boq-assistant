@@ -120,6 +120,8 @@ class RegisterEintrag:
     geprueft: bool
     hinweis: str
     kennwert_regeln: tuple = ()  # N3: structured key values (`Kennwert`) from the same JSON list
+    pflichtpositionen: tuple = ()  # B2: required items per work type (`Pflichtposition`), optional JSON field
+    nicht_erforderlich: tuple = ()  # B2: items listed as not required per work type (`Pflichtposition`)
 
 
 @dataclass
@@ -202,7 +204,7 @@ def _pruefe_eintrag(roh: dict, index: int) -> RegisterEintrag:
     for schluessel, typ in pflicht.items():
         if not isinstance(roh.get(schluessel), typ):
             raise ValueError(f"Norm register: {name} needs '{schluessel}' of type {typ.__name__}.")
-    unbekannt = set(roh) - set(pflicht) - {"aktuelle_ausgabe"}
+    unbekannt = set(roh) - set(pflicht) - {"aktuelle_ausgabe", *PFLICHT_LISTEN}
     if unbekannt:
         raise ValueError(f"Norm register: {name} has unknown fields {sorted(unbekannt)}.")
     if roh["status"] not in STATUS:
@@ -233,7 +235,9 @@ def _pruefe_eintrag(roh: dict, index: int) -> RegisterEintrag:
         )
     kennwerte = [w for w in roh["kennwerte"] if isinstance(w, str)]
     regeln = tuple(_pruefe_kennwert(w, name) for w in roh["kennwerte"] if isinstance(w, dict))
-    return RegisterEintrag(**{**roh, "aktuelle_ausgabe": ausgabe, "kennwerte": kennwerte, "kennwert_regeln": regeln})
+    listen = {liste: _pruefe_pflichtliste(roh.get(liste, []), name, liste) for liste in PFLICHT_LISTEN}
+    return RegisterEintrag(**{**roh, "aktuelle_ausgabe": ausgabe, "kennwerte": kennwerte, "kennwert_regeln": regeln,
+                              **listen})
 
 
 def lade_register(path: str | Path | None = None) -> Register:
@@ -324,8 +328,10 @@ class KennwertTreffer:
     oz: str
     gegeben: str  # stated strength class
     bedingung: str  # exposure class that sets the requirement
-    eintrag: RegisterEintrag
+    eintrag: RegisterEintrag | None  # None: the key value comes from the uploaded regulation document (B2/B3)
     kennwert: Kennwert
+    richtung: Literal["niedriger", "hoeher"] = "niedriger"  # stated class below or above the key value
+    datei: str | None = None  # file name of the uploaded regulation document
 
 
 def _pruefe_kennwert(roh: dict, name: str) -> Kennwert:
@@ -369,48 +375,82 @@ def _klassen(position: Position) -> tuple[list[str], list[str]]:
     return beton, list(dict.fromkeys(exposition))
 
 
-def _kennwert_treffer(position: Position, register: Register) -> KennwertTreffer | None:
-    """The strictest applicable key value when every stated strength class is below it."""
+def _vergleich(position: Position, register: Register,
+               vorgaben: "Regelwerksvorgaben | None" = None) -> KennwertTreffer | None:
+    """The strictest applicable key value (uploaded regulation document first, then `gueltig` register
+    entries) compared with the highest stated strength class: below it, above it, or None when equal."""
     beton, exposition = _klassen(position)
     if not beton or not exposition:
         return None
-    regeln = [(e, k) for e in register.eintraege if e.status == "gueltig" for k in e.kennwert_regeln
+    regeln = [(None, k) for k in (vorgaben.kennwerte if vorgaben else ())
               if k.parameter == "min_strength_class" and k.bedingung in exposition]
+    regeln += [(e, k) for e in register.eintraege if e.status == "gueltig" for k in e.kennwert_regeln
+               if k.parameter == "min_strength_class" and k.bedingung in exposition]
     if not regeln:
         return None
     eintrag, kennwert = max(regeln, key=lambda ek: _festigkeit(ek[1].value))
     gegeben = max(beton, key=_festigkeit)
-    if _festigkeit(gegeben) >= _festigkeit(kennwert.value):
+    if _festigkeit(gegeben) == _festigkeit(kennwert.value):
         return None
-    return KennwertTreffer(position.oz, gegeben, kennwert.bedingung, eintrag, kennwert)
+    richtung = "niedriger" if _festigkeit(gegeben) < _festigkeit(kennwert.value) else "hoeher"
+    return KennwertTreffer(position.oz, gegeben, kennwert.bedingung, eintrag, kennwert, richtung,
+                           None if eintrag else vorgaben.dateiname)
+
+
+def _kennwert_treffer(position: Position, register: Register) -> KennwertTreffer | None:
+    """The strictest applicable register key value when every stated strength class is below it."""
+    treffer = _vergleich(position, register)
+    return treffer if treffer is not None and treffer.richtung == "niedriger" else None
 
 
 def _quellenangabe(treffer: KennwertTreffer) -> str:
     k, e = treffer.kennwert, treffer.eintrag
+    if e is None:
+        return (f"uploaded regulation document {treffer.datei}, key value {k.parameter} {k.bedingung} = {k.value} "
+                f"({k.fundstelle}); supplied by the user")
     status = "checked by a person" if e.geprueft else "not yet checked by a person (geprueft: false)"
     return (f"norm register {e.norm_id}, key value {k.parameter} {k.bedingung} = {k.value} ({k.fundstelle}); "
             f"{k.quelle['url']}, retrieved {k.quelle['abgerufen']}; register entry {status}")
 
 
-def pruefe_kennwerte(lv: LV, register: Register) -> list[Finding]:
-    """One NORM_KENNWERT_ABWEICHUNG finding per position whose strength class is below the
-    register key value for its exposure class. The bidder question is the `vorschlag`."""
+def _wer(treffer: KennwertTreffer) -> str:
+    return "the norm register" if treffer.eintrag else f"the uploaded regulation document {treffer.datei}"
+
+
+def _kurzquelle(treffer: KennwertTreffer) -> str:
+    k = treffer.kennwert
+    if treffer.eintrag is None:
+        return f"uploaded regulation document {treffer.datei} ({k.fundstelle})"
+    return f"{k.quelle['url']}, retrieved {k.quelle['abgerufen']}"
+
+
+def _belastbar(treffer: KennwertTreffer) -> bool:
+    """Only a person-checked register entry or the user's own regulation document may make a big problem."""
+    return treffer.eintrag is None or treffer.eintrag.geprueft
+
+
+def pruefe_kennwerte(lv: LV, register: Register, vorgaben: "Regelwerksvorgaben | None" = None) -> list[Finding]:
+    """One NORM_KENNWERT_ABWEICHUNG finding per position whose strength class is below the key value
+    for its exposure class (register, or the uploaded regulation document when given). Severity
+    `hoch` for a person-checked register entry or the uploaded document, else `mittel` (B2).
+    The bidder question is the `vorschlag`."""
     findings = []
     for position in lv.positionen:
-        treffer = _kennwert_treffer(position, register)
-        if treffer is None:
+        treffer = _vergleich(position, register, vorgaben)
+        if treffer is None or treffer.richtung != "niedriger":
             continue
         k, quelle = treffer.kennwert, _quellenangabe(treffer)
+        titel_quelle = "register key value" if treffer.eintrag else "regulation document key value"
         findings.append(Finding(
-            id=f"{NORM_KENNWERT_ABWEICHUNG}:{position.oz}", oz=position.oz, kategorie="risiko", schwere="hoch",
-            titel=f"Strength class {treffer.gegeben} below register key value {k.value} for {k.bedingung}",
+            id=f"{NORM_KENNWERT_ABWEICHUNG}:{position.oz}", oz=position.oz, kategorie="risiko",
+            schwere="hoch" if _belastbar(treffer) else "mittel",
+            titel=f"Strength class {treffer.gegeben} below {titel_quelle} {k.value} for {k.bedingung}",
             begruendung=(f"OZ {position.oz} states {treffer.gegeben} together with exposure class {k.bedingung}; "
-                         f"the norm register lists at least {k.value} for {k.bedingung}. Source: {quelle}. "
+                         f"{_wer(treffer)} lists at least {k.value} for {k.bedingung}. Source: {quelle}. "
                          f"{KEIN_NORMGUTACHTEN}"),
             vorschlag=(f"Bidder question (Bieterfrage): for OZ {position.oz} the LV specifies {treffer.gegeben} "
-                       f"with exposure class {k.bedingung}, while the norm register lists at least {k.value}. "
-                       f"Which strength class is to be priced? Source: {k.quelle['url']}, retrieved "
-                       f"{k.quelle['abgerufen']}. {KEIN_NORMGUTACHTEN}"),
+                       f"with exposure class {k.bedingung}, while {_wer(treffer)} lists at least {k.value}. "
+                       f"Which strength class is to be priced? Source: {_kurzquelle(treffer)}. {KEIN_NORMGUTACHTEN}"),
             quelle="regel", regel_id=NORM_KENNWERT_ABWEICHUNG, euro_wirkung=None,
         ))
     return findings
@@ -766,24 +806,29 @@ def pruefe_status(verweise: list[NormVerweis], register: Register, lv: LV | None
     return sorted(findings, key=lambda f: reihenfolge.get(f.oz, len(reihenfolge)))  # stable: rule order per OZ
 
 
-def pruefe_normen(lv: LV, register: Register | None = None) -> list[Finding]:
+def pruefe_normen(lv: LV, register: Register | None = None,
+                  vorgaben: "Regelwerksvorgaben | None" = None) -> list[Finding]:
     """N1 extraction + curated register + `pruefe_status` (N2), followed by the N3 key-value
-    findings of `pruefe_kennwerte`, in position order (stable: N2 before N3 on the same OZ)."""
+    findings of `pruefe_kennwerte`, the N6 list checks and the B2 severity cases (bigger, missing,
+    extra), in position order (stable: N2 before N3 on the same OZ). `vorgaben` are the optional
+    requirements of the user's uploaded regulation document (B3), default none."""
     register = register or lade_register()
     from .normen_listen import pruefe_listen  # late import: normen_listen builds on this module
-    findings = (pruefe_status(extrahiere_normverweise(lv), register, lv) + pruefe_kennwerte(lv, register)
-                + pruefe_listen(lv))
+    findings = (pruefe_status(extrahiere_normverweise(lv), register, lv) + pruefe_kennwerte(lv, register, vorgaben)
+                + pruefe_listen(lv) + pruefe_kennwerte_hoeher(lv, register, vorgaben)
+                + pruefe_pflichtpositionen(lv, register, vorgaben))
     reihenfolge = {oz: i for i, oz in enumerate(dict.fromkeys(p.oz for p in lv.positionen))}
     return sorted(findings, key=lambda f: reihenfolge.get(f.oz, len(reihenfolge)))
 
 
-def pruefe_normen_sicher(lv: LV) -> list[Finding]:
+def pruefe_normen_sicher(lv: LV, vorgaben: "Regelwerksvorgaben | None" = None) -> list[Finding]:
     """Hook for `pruefen()` (N2 + N3 findings, then the N5 AI hints): [] when NORMPRUEFUNG is off or
-    the norm check fails (the error is logged). N5 has its own switch and guard in `normen_ki`."""
+    the norm check fails (the error is logged). N5 has its own switch and guard in `normen_ki`.
+    `vorgaben`: optional requirements of the uploaded regulation document (B3), default none."""
     if not normpruefung_aktiv():
         return []
     try:
-        findings = pruefe_normen(lv)
+        findings = pruefe_normen(lv) if vorgaben is None else pruefe_normen(lv, vorgaben=vorgaben)
     except Exception:
         logger.exception("Norm check failed; the report is returned without norm findings.")
         return []
@@ -793,3 +838,268 @@ def pruefe_normen_sicher(lv: LV) -> list[Finding]:
     except Exception:
         logger.exception("Norm check N5 failed; the report is returned without N5 hints.")
         return findings
+
+
+# ---------------------------------------------------------------------------
+# Check 1 severity rules (B2, issue #95, epic #93): lower, bigger, missing, extra.
+#
+# | case                                  | regel_id                   | schwere            |
+# |---------------------------------------|----------------------------|--------------------|
+# | stated value lower than the key value | NORM_KENNWERT_ABWEICHUNG   | hoch (else mittel) |
+# | stated value bigger than the key value| NORM_KENNWERT_HOEHER       | mittel             |
+# | required item missing                 | NORM_POSITION_FEHLT        | hoch (else mittel) |
+# | item listed as not required           | NORM_EXTRA                 | niedrig            |
+#
+# Sources: the curated register (only `geprueft: true` entries may give `hoch`) and the optional
+# requirements of the user's uploaded regulation document (`Regelwerksvorgaben`, B3). Transparent
+# assumption: the user's own regulation document is a source the user supplied for this project,
+# so it counts like a person-checked entry.
+#
+# "Missing" and "extra" fire only for `gueltig` register entries (or the uploaded document) that
+# explicitly list required items (`pflichtpositionen`) or items that are not required as separate
+# items (`nicht_erforderlich`) for a work type, and only when that work type is found in the LV:
+# an item whose short or long text contains one of the `gewerk_merkmale`. An item counts as present
+# when its text contains one of the `merkmale` (case-insensitive substring). No guessing beyond that.
+# ---------------------------------------------------------------------------
+from .mengen import UNITS
+
+NORM_KENNWERT_HOEHER = "NORM_KENNWERT_HOEHER"
+NORM_POSITION_FEHLT = "NORM_POSITION_FEHLT"
+NORM_EXTRA = "NORM_EXTRA"
+PFLICHT_LISTEN = ("pflichtpositionen", "nicht_erforderlich")
+
+
+@dataclass(frozen=True)
+class Pflichtposition:
+    """A register or regulation statement that a work type needs (or does not need) a separate item.
+
+    How much is missing: `menge` (absolute) or `faktor` × the summed quantity of the work-type items
+    in `einheit`; neither means the source states no quantity."""
+    id: str
+    gewerk: str  # work type, e.g. "concrete floor slab"
+    gewerk_merkmale: tuple[str, ...]  # an LV item containing one of these words shows the work type
+    position: str  # what is (not) required, e.g. "blinding layer"
+    merkmale: tuple[str, ...]  # an LV item containing one of these words is that item
+    fundstelle: str  # where the source says so
+    quelle: dict  # register: {url, abgerufen}; uploaded document: {datei}
+    menge: float | None = None
+    faktor: float | None = None
+    einheit: str | None = None
+
+
+@dataclass(frozen=True)
+class Regelwerksvorgaben:
+    """Requirements extracted from the user's uploaded regulation document (B3); optional input."""
+    dateiname: str
+    kennwerte: tuple[Kennwert, ...] = ()
+    pflichtpositionen: tuple[Pflichtposition, ...] = ()
+    nicht_erforderlich: tuple[Pflichtposition, ...] = ()
+
+
+def _text_liste(roh, schluessel: str, name: str) -> tuple[str, ...]:
+    werte = roh.get(schluessel)
+    if not (isinstance(werte, list) and werte and all(isinstance(w, str) and w.strip() for w in werte)):
+        raise ValueError(f"Norm register: {name} needs a non-empty list of strings in '{schluessel}'.")
+    return tuple(w.strip() for w in werte)
+
+
+def _pruefe_pflichtposition(roh, name: str, liste: str, register: bool = True) -> Pflichtposition:
+    if not isinstance(roh, dict):
+        raise ValueError(f"Norm register: {name} '{liste}' entries must be objects.")
+    pflicht = {"id": str, "gewerk": str, "gewerk_merkmale": list, "position": str, "merkmale": list,
+               "fundstelle": str, "quelle": dict}
+    optional = {"menge", "faktor", "einheit"}
+    for schluessel, typ in pflicht.items():
+        if not (isinstance(roh.get(schluessel), typ) and roh[schluessel]):
+            raise ValueError(f"Norm register: {name} '{liste}' entry needs '{schluessel}' of type {typ.__name__}.")
+    unbekannt = set(roh) - set(pflicht) - optional
+    if unbekannt:
+        raise ValueError(f"Norm register: {name} '{liste}' entry has unknown fields {sorted(unbekannt)}.")
+    menge, faktor, einheit = roh.get("menge"), roh.get("faktor"), roh.get("einheit")
+    for zahl in (menge, faktor):
+        if zahl is not None and not (isinstance(zahl, (int, float)) and not isinstance(zahl, bool) and zahl > 0):
+            raise ValueError(f"Norm register: {name} '{liste}' entry needs a positive 'menge'/'faktor'.")
+    if liste == "nicht_erforderlich" and (menge, faktor, einheit) != (None, None, None):
+        raise ValueError(f"Norm register: {name} 'nicht_erforderlich' entries take no 'menge', 'faktor' or 'einheit'.")
+    if menge is not None and faktor is not None:
+        raise ValueError(f"Norm register: {name} '{liste}' entry takes either 'menge' or 'faktor', not both.")
+    if (menge is not None or faktor is not None) and not (isinstance(einheit, str) and einheit.strip()):
+        raise ValueError(f"Norm register: {name} '{liste}' entry needs 'einheit' with 'menge' or 'faktor'.")
+    if einheit is not None and menge is None and faktor is None:
+        raise ValueError(f"Norm register: {name} '{liste}' entry has 'einheit' without 'menge' or 'faktor'.")
+    if register:
+        url = roh["quelle"].get("url")
+        if not (isinstance(url, str) and url.startswith("https://")):
+            raise ValueError(f"Norm register: {name} '{liste}' entry needs 'quelle.url' (https).")
+        try:
+            date.fromisoformat(roh["quelle"].get("abgerufen", ""))
+        except (TypeError, ValueError):
+            raise ValueError(f"Norm register: {name} '{liste}' entry needs 'quelle.abgerufen' as YYYY-MM-DD.") from None
+    return Pflichtposition(
+        id=roh["id"], gewerk=roh["gewerk"], gewerk_merkmale=_text_liste(roh, "gewerk_merkmale", name),
+        position=roh["position"], merkmale=_text_liste(roh, "merkmale", name), fundstelle=roh["fundstelle"],
+        quelle=roh["quelle"], menge=None if menge is None else float(menge),
+        faktor=None if faktor is None else float(faktor), einheit=einheit.strip() if einheit else None,
+    )
+
+
+def _pruefe_pflichtliste(roh, name: str, liste: str) -> tuple[Pflichtposition, ...]:
+    if not isinstance(roh, list):
+        raise ValueError(f"Norm register: {name} needs a list in '{liste}'.")
+    eintraege = tuple(_pruefe_pflichtposition(r, name, liste) for r in roh)
+    ids = [e.id for e in eintraege]
+    if len(set(ids)) != len(ids):
+        raise ValueError(f"Norm register: {name} has duplicate ids in '{liste}'.")
+    return eintraege
+
+
+def _feld(objekt, schluessel: str):
+    return objekt.get(schluessel) if isinstance(objekt, dict) else getattr(objekt, schluessel, None)
+
+
+def vorgaben_aus_regelwerk(regelwerk) -> Regelwerksvorgaben | None:
+    """Optional B3 input: map an uploaded `Regelwerk` (dict or model, shared contract of epic #93) to
+    `Regelwerksvorgaben`. Key values `{norm, kennwert, wert, einheit, fundstelle[, bedingung]}` count
+    when `wert` is a strength class (e.g. "C30/37") and `bedingung` or `kennwert` names exposure
+    classes (e.g. "minimum strength class XC4"); anything else is ignored, never guessed. Optional
+    `pflichtpositionen` / `nicht_erforderlich` lists use the register schema without `quelle`."""
+    if regelwerk is None:
+        return None
+    datei = str(_feld(regelwerk, "dateiname") or "regulation document")
+    kennwerte = []
+    for roh in _feld(regelwerk, "kennwerte") or []:
+        wert = re.sub(r"\s", "", str(_feld(roh, "wert") or ""))
+        text = f"{_feld(roh, 'bedingung') or ''} {_feld(roh, 'kennwert') or ''}"
+        if not _FESTIGKEIT.fullmatch(wert) or re.search(r"max|höchst|hoechst", text, re.IGNORECASE):
+            continue
+        norm = _feld(roh, "norm")
+        fundstelle = str(_feld(roh, "fundstelle") or "location not stated")
+        if norm:
+            fundstelle = f"{norm}, {fundstelle}"
+        for bedingung in dict.fromkeys(_EXPOSITION.findall(text.upper())):
+            kennwerte.append(Kennwert("min_strength_class", bedingung, wert, fundstelle, {"datei": datei}))
+    listen = {}
+    for liste in PFLICHT_LISTEN:
+        eintraege = []
+        for roh in _feld(regelwerk, liste) or []:
+            roh = roh if isinstance(roh, dict) else getattr(roh, "model_dump", lambda: {})()
+            try:
+                eintraege.append(_pruefe_pflichtposition({**roh, "quelle": {"datei": datei}}, datei, liste,
+                                                         register=False))
+            except ValueError as fehler:
+                logger.warning("Regulation document %s: %s entry skipped (%s).", datei, liste, fehler)
+        listen[liste] = tuple(eintraege)
+    return Regelwerksvorgaben(datei, tuple(kennwerte), **listen)
+
+
+def pruefe_kennwerte_hoeher(lv: LV, register: Register,
+                            vorgaben: Regelwerksvorgaben | None = None) -> list[Finding]:
+    """NORM_KENNWERT_HOEHER (`mittel`, warning): the stated strength class is above the strictest key
+    value for its exposure class. Allowed, but the difference is worth noting for the price."""
+    findings = []
+    for position in lv.positionen:
+        treffer = _vergleich(position, register, vorgaben)
+        if treffer is None or treffer.richtung != "hoeher":
+            continue
+        k = treffer.kennwert
+        titel_quelle = "register key value" if treffer.eintrag else "regulation document key value"
+        findings.append(Finding(
+            id=f"{NORM_KENNWERT_HOEHER}:{position.oz}", oz=position.oz, kategorie="risiko", schwere="mittel",
+            titel=f"Strength class {treffer.gegeben} above {titel_quelle} {k.value} for {k.bedingung}",
+            begruendung=(f"OZ {position.oz} states {treffer.gegeben} together with exposure class {k.bedingung}; "
+                         f"{_wer(treffer)} lists at least {k.value} for {k.bedingung}. A higher class is allowed "
+                         f"but may cost more; note the difference. Source: {_quellenangabe(treffer)}. "
+                         f"{KEIN_NORMGUTACHTEN}"),
+            vorschlag=(f"Bidder question (Bieterfrage): for OZ {position.oz} the LV specifies {treffer.gegeben} "
+                       f"with exposure class {k.bedingung}, above the minimum {k.value} listed by {_wer(treffer)}. "
+                       f"Is {treffer.gegeben} intended (e.g. for other requirements), or is {k.value} to be priced? "
+                       f"Source: {_kurzquelle(treffer)}. {KEIN_NORMGUTACHTEN}"),
+            quelle="regel", regel_id=NORM_KENNWERT_HOEHER, euro_wirkung=None,
+        ))
+    return findings
+
+
+def _enthaelt(position: Position, woerter: tuple[str, ...]) -> bool:
+    text = f"{position.kurztext}\n{position.langtext}".casefold()
+    return any(wort.casefold() in text for wort in woerter)
+
+
+def _einheit(einheit: str | None) -> tuple[str, float] | None:
+    return UNITS.get((einheit or "").strip().lower())
+
+
+def _fehlmenge(pflicht: Pflichtposition, gewerk: list[Position]) -> str:
+    """How much is missing, in words; never invented when the source states no quantity."""
+    if pflicht.menge is not None:
+        return f"{_zahl(pflicht.menge)} {pflicht.einheit} (quantity stated by the source)"
+    if pflicht.faktor is None:
+        return "quantity not stated by the source; to be determined"
+    ziel = _einheit(pflicht.einheit)
+    summe, oz_liste = 0.0, []
+    for position in gewerk:
+        basis = _einheit(position.einheit)
+        if ziel and basis and basis[0] == ziel[0] and position.menge:
+            summe += position.menge * basis[1] / ziel[1]
+            oz_liste.append(position.oz)
+    if not oz_liste:
+        return (f"{_zahl(pflicht.faktor)} × the work-type quantity in {pflicht.einheit}; no work-type item is "
+                f"measured in {pflicht.einheit}, so the quantity is to be determined")
+    menge = round(pflicht.faktor * summe, 3)
+    return (f"{_zahl(menge)} {pflicht.einheit} ({_zahl(pflicht.faktor)} × {_zahl(round(summe, 3))} "
+            f"{pflicht.einheit} of OZ {', '.join(oz_liste)})")
+
+
+def _pflicht_quellen(register: Register, vorgaben: Regelwerksvorgaben | None, liste: str):
+    """(Pflichtposition, source text, may give a big problem) for every applicable source entry."""
+    for p in (getattr(vorgaben, liste) if vorgaben else ()):
+        yield p, f"uploaded regulation document {vorgaben.dateiname} ({p.fundstelle}); supplied by the user", True
+    for e in register.eintraege:
+        if e.status != "gueltig":
+            continue
+        status = "checked by a person" if e.geprueft else "not yet checked by a person (geprueft: false)"
+        for p in getattr(e, liste):
+            yield p, (f"norm register {e.norm_id} ({p.fundstelle}); {p.quelle['url']} (retrieved "
+                      f"{p.quelle['abgerufen']}); register entry {status}"), e.geprueft
+
+
+def pruefe_pflichtpositionen(lv: LV, register: Register,
+                             vorgaben: Regelwerksvorgaben | None = None) -> list[Finding]:
+    """NORM_POSITION_FEHLT (`hoch` for a checked source, else `mittel`) once per required item that no
+    LV item covers while its work type is in the LV; NORM_EXTRA (`niedrig`, notice) per LV item that a
+    source lists as not required as a separate item for a work type found in the LV."""
+    ids, findings = _Ids(), []
+    for pflicht, quelle, belastbar in _pflicht_quellen(register, vorgaben, "pflichtpositionen"):
+        gewerk = [p for p in lv.positionen if _enthaelt(p, pflicht.gewerk_merkmale)]
+        if not gewerk or any(_enthaelt(p, pflicht.merkmale) for p in lv.positionen):
+            continue
+        oz, gewerk_oz = gewerk[0].oz, ", ".join(p.oz for p in gewerk)
+        fehlt = _fehlmenge(pflicht, [p for p in gewerk if not _enthaelt(p, pflicht.merkmale)])
+        findings.append(_finding(
+            ids(NORM_POSITION_FEHLT, oz), oz, "nachtrag", "hoch" if belastbar else "mittel",
+            f"Required item missing for {pflicht.gewerk}: {pflicht.position}",
+            (f"The LV contains {pflicht.gewerk} (OZ {gewerk_oz}) but no item for {pflicht.position}; the source "
+             f"lists it as a required item for this work type. Missing: {pflicht.position}, {fehlt}. Nachtrag "
+             f"potential is possible if the item is needed; this does not establish an entitlement to "
+             f"additional payment. Source: {quelle}. {HINWEIS}"),
+            (f"OZ {oz}: The LV contains {pflicht.gewerk} but no item for {pflicht.position} ({fehlt}). Is it to "
+             f"be added, or is it covered by another item? Please confirm."),
+            NORM_POSITION_FEHLT,
+        ))
+    for pflicht, quelle, _ in _pflicht_quellen(register, vorgaben, "nicht_erforderlich"):
+        if not any(_enthaelt(p, pflicht.gewerk_merkmale) for p in lv.positionen):
+            continue
+        for position in lv.positionen:
+            if not _enthaelt(position, pflicht.merkmale):
+                continue
+            findings.append(_finding(
+                ids(NORM_EXTRA, position.oz), position.oz, "risiko", "niedrig",
+                f"Item not required for {pflicht.gewerk}: {pflicht.position}",
+                (f"OZ {position.oz} is a separate item for {pflicht.position}; the source lists it as not "
+                 f"required as a separate item for {pflicht.gewerk}. For awareness only. Source: {quelle}. "
+                 f"{HINWEIS}"),
+                (f"OZ {position.oz}: The item covers {pflicht.position}, which the source lists as not required "
+                 f"as a separate item for {pflicht.gewerk}. Is it intended? Please confirm."),
+                NORM_EXTRA,
+            ))
+    reihenfolge = {oz: i for i, oz in enumerate(p.oz for p in lv.positionen)}
+    return sorted(findings, key=lambda f: reihenfolge.get(f.oz, len(reihenfolge)))
