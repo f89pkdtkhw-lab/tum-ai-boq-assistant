@@ -8,9 +8,9 @@ from app.pruefung.mengen import RatioRule, pruefe_mengen
 SLAB = ["Rohbau", "Bodenplatte"]
 
 
-def _pos(oz, kurztext, menge, einheit="m²", titel=SLAB, typ="normal"):
-    return Position(oz=oz, kurztext=kurztext, langtext=kurztext, menge=menge,
-                    einheit=einheit, titel_pfad=list(titel), typ=typ)
+def _pos(oz, kurztext, menge, einheit="m²", titel=SLAB, typ="normal", langtext=None):
+    return Position(oz=oz, kurztext=kurztext, langtext=kurztext if langtext is None else langtext,
+                    menge=menge, einheit=einheit, titel_pfad=list(titel), typ=typ)
 
 
 def _lv(*positionen):
@@ -111,6 +111,56 @@ def test_concrete_reinforcement_not_compared_across_titles_or_when_ambiguous():
                     _pos("03.02", "Beton Decke", 10, einheit="m³", titel=["Rohbau"]),
                     _pos("03.03", "Bewehrung", 9000, einheit="kg", titel=["Rohbau"]))
     assert pruefe_mengen(ambiguous) == []
+
+
+# Synthetic layer items whose component is named only in the long text, split over trade sections.
+SEALING, INSULATION = ["Rohbau", "Abdichtungsarbeiten"], ["Rohbau", "Dämmarbeiten"]
+
+
+def _longtext_layers(*mengen):
+    specs = (("A.01", "Voranstrich", "Kaltbitumen für Stahlbetonbodenplatte", SEALING),
+             ("A.02", "Schweißbahn", "Abdichtung der Bodenplatte, vollflächig", SEALING),
+             ("B.01", "Dämmung XPS", "Perimeterdämmung unter Bodenplatte", INSULATION),
+             ("B.02", "PE-Folie", "Trennlage zwischen Bodenplatte und Dämmung", INSULATION))
+    return [_pos(oz, kurz, m, titel=titel, langtext=lang)
+            for (oz, kurz, lang, titel), m in zip(specs, mengen)]
+
+
+def test_component_from_long_text_groups_layers_across_trade_sections():
+    lv = _lv(*_longtext_layers(120, 120, 118, 95))
+    [finding] = pruefe_mengen(lv)
+    assert finding.oz == "B.02" and finding.regel_id == "MENGE_SCHICHTEN_ABWEICHUNG"
+    assert finding.quelle == "regel" and finding.euro_wirkung is None
+    assert "floor slab" in finding.titel and "median 119 m²" in finding.begruendung
+    for oz, menge in (("A.01", 120), ("A.02", 120), ("B.01", 118), ("B.02", 95)):
+        assert f"OZ {oz}" in finding.begruendung and f"{menge} m²" in finding.begruendung
+    assert "Abdichtungsarbeiten" in finding.begruendung and "Dämmarbeiten" in finding.begruendung
+
+
+def test_component_from_long_text_with_consistent_areas_gives_no_hint():
+    assert pruefe_mengen(_lv(*_longtext_layers(120, 120, 118, 121))) == []
+
+
+def test_long_text_reference_on_other_unit_is_not_grouped():
+    reference = _pos("A.03", "Abdichtung Wandsockel", 30, einheit="m", titel=SEALING,
+                     langtext="Abdichtung Sockel, Anschluss an Bodenplatte")
+    [finding] = pruefe_mengen(_lv(*_longtext_layers(120, 120, 118, 95), reference))
+    assert finding.oz == "B.02" and "A.03" not in finding.begruendung
+    assert "median 119 m²" in finding.begruendung
+
+
+def test_long_text_connection_reference_does_not_name_the_component():
+    reference = _pos("A.03", "Abdichtung Wandsockel", 30, titel=SEALING,
+                     langtext="Abdichtung Sockel, Anschluss an die Bodenplatte")
+    assert pruefe_mengen(_lv(*_longtext_layers(120, 120, 118, 121), reference)) == []
+
+
+def test_short_text_component_wins_and_long_text_needs_word_boundary():
+    wall = _pos("A.04", "Abdichtung Kellerwand", 30, titel=SEALING,
+                langtext="Abdichtung Kellerwand bis Oberkante Bodenplatte")
+    smeared = [_pos(f"A.0{5 + i}", "Abdichtung Schacht", m, titel=SEALING,
+                    langtext="Bitumenmasse volldeckend auftragen") for i, m in enumerate((2, 40))]
+    assert pruefe_mengen(_lv(*_longtext_layers(120, 120, 118, 121), wall, *smeared)) == []
 
 
 def test_http_report_shows_rule_source_and_concrete_oz():
