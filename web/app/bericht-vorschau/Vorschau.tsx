@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type Example, type Pruefbericht as PruefberichtDaten } from "@/lib/api";
 import { Pruefbericht } from "@/components/Pruefbericht";
+import { demoKalkulation } from "@/lib/kalkulation";
 import styles from "./vorschau.module.css";
 
 type Zustand =
@@ -13,6 +14,7 @@ type Zustand =
 
 // Empty-state display test: /bericht-vorschau?zustand=ohne-befunde
 // hides all entries and clearly states this on the page.
+// Priced-bill display test (#116, until B6/B8 deliver prices): /bericht-vorschau?zustand=kalkulation
 function ohneBefunde(bericht: PruefberichtDaten): PruefberichtDaten {
   return { ...bericht, findings: [], kennzahlen: { ...bericht.kennzahlen, findings: 0, kritisch: 0 } };
 }
@@ -26,6 +28,7 @@ export function Vorschau() {
   const [zustand, setZustand] = useState<Zustand>({ phase: "beispiele" });
   const [beispiele, setBeispiele] = useState<Example[]>([]);
   const [leerTest, setLeerTest] = useState(false);
+  const [preisTest, setPreisTest] = useState(false);
 
   const pruefe = useCallback(async (beispiel: Example) => {
     setZustand({ phase: "pruefen", beispiel });
@@ -53,7 +56,9 @@ export function Vorschau() {
   }, [pruefe]);
 
   useEffect(() => {
-    setLeerTest(new URLSearchParams(window.location.search).get("zustand") === "ohne-befunde");
+    const testZustand = new URLSearchParams(window.location.search).get("zustand");
+    setLeerTest(testZustand === "ohne-befunde");
+    setPreisTest(testZustand === "kalkulation");
     void lade();
   }, [lade]);
 
@@ -94,6 +99,13 @@ export function Vorschau() {
         </p>
       )}
 
+      {preisTest && (
+        <p className={styles.testHinweis} role="note">
+          <strong>Display test:</strong> The priced bill uses invented demo prices and changes, not a price list or review result.{" "}
+          <a href="/bericht-vorschau">Show actual report</a>
+        </p>
+      )}
+
       <div aria-live="polite" aria-busy={zustand.phase === "beispiele" || zustand.phase === "pruefen"}>
         {zustand.phase === "beispiele" && <Laden text="Loading example BoQ …" />}
         {zustand.phase === "pruefen" && <Laden text={`Reviewing “${zustand.beispiel.titel}” …`} />}
@@ -111,8 +123,9 @@ export function Vorschau() {
 
       {zustand.phase === "fertig" && (
         <Pruefbericht
-          key={`${zustand.beispiel.id}-${leerTest}`}
-          bericht={leerTest ? ohneBefunde(zustand.bericht) : zustand.bericht}
+          key={`${zustand.beispiel.id}-${leerTest}-${preisTest}`}
+          bericht={leerTest ? ohneBefunde(zustand.bericht)
+            : preisTest ? { ...zustand.bericht, ...demoKalkulation(zustand.bericht.lv.positionen) } : zustand.bericht}
         />
       )}
     </main>
