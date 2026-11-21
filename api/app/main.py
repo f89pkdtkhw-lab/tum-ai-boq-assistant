@@ -11,7 +11,7 @@ from .ai.history_metadata import router as metadata_router
 from .lv.importer import importiere
 from .modelle import Beispiel, Beispiele, Kennzahlen, LV, Pruefbericht
 from .modelle import Preisliste  # B6 #112
-from .pruefung.preise import kalkuliere  # B6 #112
+from .pruefung.preise import kalkuliere_mit_preis_db  # B6 #112, B9 #133
 from .pruefung.regeln import pruefe_regeln
 from .pruefung.mengen import pruefe_mengen
 from .pruefung.llm_pruefung import pruefe_mit_llm
@@ -122,8 +122,8 @@ def analyse(anfrage: AnalyseAnfrage):
     the price list (B6); `regelwerk: null` and no `preisliste` = identical result."""
     vorgaben = vorgaben_aus_regelwerk(anfrage.regelwerk)  # B3 #96 -> B2 check 1 (lower/bigger/missing/extra)
     bericht = _pruefbericht(anfrage.lv, vorgaben)
-    if anfrage.preisliste is not None:  # B6 #112: no price list → no `kalkulation` field
-        bericht.kalkulation = kalkuliere(anfrage.lv, anfrage.preisliste)
+    # B6 #112 / B9 #133: upload first, price database fills the gaps; no price source → no `kalkulation` field
+    bericht.kalkulation = kalkuliere_mit_preis_db(anfrage.lv, anfrage.preisliste)
     return bericht
 
 

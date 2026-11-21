@@ -14,6 +14,7 @@ null and are counted in ``ohne_preis``.
 """
 import re
 import unicodedata
+from collections.abc import Callable
 from decimal import ROUND_HALF_UP, Decimal
 
 from ..modelle import LV, Kalkulation, KalkulationsPosition, Position, Preisliste, PreislistenEintrag
@@ -27,6 +28,10 @@ NICHT_IN_SUMME = frozenset({"bedarf", "alternativ"})
 # Unit spellings beyond the typo list in regeln.py that mean the same unit.
 WEITERE_EINHEITEN = {"m^2": "m²", "m^3": "m³", "std": "h", "std.": "h", "pauschal": "psch",
                      "stück": "St", "st.": "St", "lm": "m"}
+
+# B9 (#133): seam for the price database (D5 registers `als_preisliste()` here). None = today's behaviour.
+preis_service: Callable[[], Preisliste | None] | None = None
+PREIS_DB_ID = "preis-db"
 
 _TOKEN = re.compile(r"[^\W_]+")
 
@@ -99,13 +104,45 @@ def _differenz(a: Decimal | None, b: float | None) -> float | None:
     return None if a is None or b is None else float(_cent(a - _dez(b)))
 
 
-def kalkuliere(lv: LV, preisliste: Preisliste, mwst_satz: float = MWST_SATZ) -> Kalkulation:
+def hole_preis_db() -> tuple[Preisliste | None, list[str]]:
+    """Price database via the seam; an unreachable or failing service gives (None, warning), never an exception."""
+    if preis_service is None:
+        return None, []
+    try:
+        return preis_service(), []
+    except Exception:  # noqa: BLE001 - any failure of the price DB must not break the analysis
+        return None, ["Price database unreachable: prices come from the uploaded price list only."]
+
+
+def kalkuliere_mit_preis_db(lv: LV, preisliste: Preisliste | None, mwst_satz: float = MWST_SATZ) -> Kalkulation | None:
+    """Uploaded list first, the price database fills `kein_treffer`. None when there is no price source at all
+    (no upload, no database), so the report stays as without pricing. Also used for added items (B8)."""
+    datenbank, warnungen = hole_preis_db()
+    if preisliste is None and datenbank is None:
+        if not warnungen:
+            return None
+        preisliste = Preisliste(id=PREIS_DB_ID)  # DB failed and nothing uploaded: empty, marked, with the warning
+    kalkulation = kalkuliere(lv, preisliste, mwst_satz, ergaenzung=datenbank)
+    kalkulation.warnungen.extend(warnungen)
+    return kalkulation
+
+
+def kalkuliere(lv: LV, preisliste: Preisliste | None, mwst_satz: float = MWST_SATZ,
+               ergaenzung: Preisliste | None = None) -> Kalkulation:
+    """`ergaenzung` (price database) is only consulted for positions the main list does not match."""
+    haupt = preisliste if preisliste is not None else ergaenzung
+    if preisliste is None:
+        ergaenzung = None
     positionen: list[KalkulationsPosition] = []
     netto = Decimal("0")
     ohne_preis = ohne_menge = 0
     vollstaendig = True
     for pos in lv.positionen:
-        treffer, eintrag, wert = _finde_eintrag(pos, preisliste.eintraege)
+        treffer, eintrag, wert = _finde_eintrag(pos, haupt.eintraege)
+        quelle = haupt.id
+        if eintrag is None and ergaenzung is not None:
+            treffer, eintrag, wert = _finde_eintrag(pos, ergaenzung.eintraege)
+            quelle = ergaenzung.id
         ep = _dez(eintrag.ep) if eintrag else None
         gp = _cent(_dez(pos.menge) * ep) if ep is not None and pos.menge is not None else None
         in_summe = pos.typ not in NICHT_IN_SUMME
@@ -122,11 +159,12 @@ def kalkuliere(lv: LV, preisliste: Preisliste, mwst_satz: float = MWST_SATZ) -> 
             oz=pos.oz, kurztext=pos.kurztext, menge=pos.menge, einheit=pos.einheit,
             ep=float(ep) if ep is not None else None, gp=float(gp) if gp is not None else None,
             ep_lv=pos.ep, gp_lv=pos.gp, ep_differenz=_differenz(ep, pos.ep), gp_differenz=_differenz(gp, pos.gp),
-            treffer=treffer, preis_eintrag=eintrag.id if eintrag else None, aehnlichkeit=wert, in_summe=in_summe,
+            treffer=treffer, preis_eintrag=eintrag.id if eintrag else None,
+            preisliste_id=quelle if eintrag else None, aehnlichkeit=wert, in_summe=in_summe,
         ))
     netto = _cent(netto)
     return Kalkulation(
-        preisliste_id=preisliste.id, waehrung=preisliste.waehrung, mwst_satz=mwst_satz, positionen=positionen,
+        preisliste_id=haupt.id, waehrung=haupt.waehrung, mwst_satz=mwst_satz, positionen=positionen,
         summe_netto=float(netto), summe_brutto=float(_cent(netto * (1 + _dez(mwst_satz)))),
         ohne_preis=ohne_preis, ohne_menge=ohne_menge, vollstaendig=vollstaendig,
     )
