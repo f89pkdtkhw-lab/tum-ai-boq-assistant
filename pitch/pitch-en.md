@@ -29,7 +29,7 @@ OZ 5...3 is an optional item, a contingency. The tool treats it as a risk and tu
 The model part runs as an offline mock, and the report labels it as a demonstration. The tool prices nothing: where we have no basis for a euro value, it shows none.
 
 **[2:05 · What we measured]**
-On this one benchmark, the 25 findings a reviewer listed by hand, the tool finds [final recall from data/vergleich.md after the lead's rerun]. [Final false-alarm count from data/vergleich.md after the rerun] of its findings match nothing on that list. We have not timed a manual review, so I will not claim a time saving.
+On this one benchmark, the 25 findings a reviewer listed by hand, the tool finds 14 of them with fixed rules alone. Only 1 of its 31 counted findings (demo mock entries excluded) matches nothing on that list. We have not timed a manual review, so I will not claim a time saving.
 
 **[2:25 · Close]**
 The result is not a price. It is a shorter list of what to check before I bid. If the upload fails, the bundled example runs offline, and the report says it is a saved example.
@@ -43,7 +43,7 @@ The model review is a mock today, and the report marks those entries as demonstr
 No. It flags items and suggests questions. The price stays with the estimator, and we show no euro values without a basis.
 
 **Q3. How do we know it is right?**
-On one LV it finds [final recall from data/vergleich.md after the lead's rerun] of the 25 hand-listed findings, and [final false-alarm count from data/vergleich.md after the rerun] of its findings match nothing on that list. That is one document, so it does not prove the tool works on other LVs. The full run is in `data/vergleich.md` and can be reproduced with `tools/messe_demo.py`.
+On one LV it finds 14 of the 25 hand-listed findings (11 of the 13 the list marks as rule-findable), and 1 of its 31 counted findings matches nothing on that list. That is one document, so it does not prove the tool works on other LVs. The full run is in `data/vergleich.md` and can be reproduced with `tools/messe_demo.py`.
 
 **Q4. Which files does it read?**
 Text PDFs, GAEB X83 and X84, and our JSON format. Scanned PDFs are rejected with a clear message, because we do no OCR. Excel is not implemented yet and returns "not implemented", so we do not claim it.
@@ -57,7 +57,7 @@ The demo runs offline with no API keys. The partner dataset stays in our private
 ## Sources (real files)
 
 - `docs/demo.md`: the three-minute flow, the scenes above, the offline fallback (plans B and C) and the error messages.
-- `data/vergleich.md`: all measured numbers. The script's recall and false-alarm figures are placeholders until the lead's rerun is merged (main measured 9 of 25 with 18 false alarms; the file still shows 6 of 25 until updated). Manual time: not measured.
+- `data/vergleich.md`: all measured numbers (14 of 25 hit, 11 of 13 rule-findable, 1 of 31 findings unmatched, total runtime median 2.75 s). Manual time: not measured.
 - `data/testfaelle/rohbau_efh/erwartung.md`: the 25 hand-listed findings and the OZs used in the scenes.
 - `docs/case.md`: challenge brief and partner quotes, including the "9,000 items" and "100 most important" wording.
 - `api/app/main.py` (`pruefen`): the review that builds the report.

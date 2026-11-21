@@ -66,7 +66,7 @@ These stories exist in the product, but the pitch does not show them as evidence
 
 The partner will trust the tool only if it says what it cannot do.
 
-- **8.1 Show the measured result.** As a partner, I see how many documented findings the tool finds and how many findings match nothing. *Works*: the hit and unmatched counts come from `tools/messe_demo.py` and are quoted from `data/vergleich.md` once the lead's rerun is merged; the pitch leaves them as placeholders until then.
+- **8.1 Show the measured result.** As a partner, I see how many documented findings the tool finds and how many findings match nothing. *Works*: the hit and unmatched counts come from `tools/messe_demo.py` and are quoted from `data/vergleich.md` (14 of 25 hit, 1 of 31 unmatched).
 - **8.2 Reproduce the measurement.** As a reviewer, I can rerun the measurement on my laptop, so that I do not depend on the presenter. *Works*: `python3 tools/messe_demo.py`, offline and free.
 - **8.3 See known rule limits.** As a reviewer, I see where rules are weak. *Works*: the limits are written in `data/vergleich.md` (for example `TEXT_WIDERSPRUCH` compares only quantity and unit).
 - **8.4 No invented money.** As an estimator, I never see a euro value without a basis. *Works*: findings show "unknown" euro impact. *Not built*: any savings calculation. The pitch claims none.
