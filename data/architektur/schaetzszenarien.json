@@ -1,0 +1,641 @@
+{
+  "schema_version": "1",
+  "issue": 20,
+  "synthetic": true,
+  "notice": "Purely synthetic offline examples and expected results. No partner data, no real prices, no model calls. All case IDs, dates, values and descriptions are invented.",
+  "contract_doc": "docs/schaetzszenarien.md",
+  "rules": {
+    "target_cases": [10, 20],
+    "min_cases": 3,
+    "default_limit": 20,
+    "limit_range": [3, 20],
+    "ordering": "date descending, ties by case_id ascending",
+    "ratio_methods": ["median"],
+    "rounding": {"ratio": "0.0001", "estimated_value": "0.01", "euro_amount": "0.01", "mode": "ROUND_HALF_EVEN"},
+    "unit_aliases": {"h": ["h", "Std", "Std.", "hour", "hours"], "d": ["d", "day", "days", "Tag", "Tage"], "m2": ["m2", "m²", "qm"], "m3": ["m3", "m³", "cbm"]},
+    "exclusion_reasons": [
+      "work_mismatch",
+      "comparable_case",
+      "missing_estimated_value",
+      "ambiguous_measurement",
+      "missing_real_value",
+      "incompatible_unit",
+      "zero_estimated_value",
+      "negative_value",
+      "over_limit"
+    ],
+    "selection_statuses": [
+      "sufficient",
+      "small_dataset",
+      "insufficient_cases",
+      "no_qualifying_cases",
+      "no_history",
+      "invalid_limit"
+    ],
+    "missing_evidence_codes": [
+      "invalid_limit",
+      "no_history",
+      "no_qualifying_cases",
+      "insufficient_cases",
+      "below_target_case_count",
+      "ratio_method_not_selected",
+      "unsupported_ratio_method",
+      "ratio_method_not_approved",
+      "missing_baseline",
+      "incompatible_baseline_unit",
+      "missing_price",
+      "price_not_approved",
+      "incompatible_price_unit"
+    ],
+    "label": "Estimate – approval required"
+  },
+  "history_pools": {
+    "acceptance": [
+      {"case_id": "H1", "date": "2026-10-01", "description": "Synthetic: concrete repair on bridge cap", "tags": ["bridge", "concrete_repair"], "estimated_values": [{"oz": "01.001", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "01.001", "metric": "hours", "value": 120, "unit": "h"}]},
+      {"case_id": "H2", "date": "2026-09-15", "description": "Synthetic: concrete repair on bridge pier", "tags": ["bridge", "concrete_repair"], "estimated_values": [{"oz": "01.001", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "01.001", "metric": "hours", "value": 120, "unit": "h"}]},
+      {"case_id": "H3", "date": "2026-09-15", "description": "Synthetic: concrete repair on abutment", "tags": ["concrete_repair", "bridge"], "estimated_values": [{"oz": "01.001", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "01.001", "metric": "hours", "value": 120, "unit": "h"}]},
+      {"case_id": "W1", "date": "2026-11-10", "description": "Synthetic: bridge deck sealing", "tags": ["bridge", "sealing"], "estimated_values": [{"oz": "01.001", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "01.001", "metric": "hours", "value": 140, "unit": "h"}]},
+      {"case_id": "W2", "date": "2026-08-20", "description": "Synthetic: road surface renewal", "tags": ["road", "asphalt"], "estimated_values": [{"oz": "01.001", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "01.001", "metric": "hours", "value": 140, "unit": "h"}]},
+      {"case_id": "W3", "date": "2026-08-20", "description": "Synthetic: railing replacement", "tags": ["bridge", "steel"], "estimated_values": [{"oz": "01.001", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "01.001", "metric": "hours", "value": 140, "unit": "h"}]}
+    ],
+    "twenty_five": [
+      {"case_id": "C01", "date": "2026-03-02", "description": "Synthetic: concrete repair case C01", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 77, "unit": "h"}]},
+      {"case_id": "C02", "date": "2026-11-12", "description": "Synthetic: concrete repair case C02", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 110, "unit": "h"}]},
+      {"case_id": "C03", "date": "2025-12-01", "description": "Synthetic: concrete repair case C03", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 120, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 180, "unit": "h"}]},
+      {"case_id": "C04", "date": "2026-07-19", "description": "Synthetic: concrete repair case C04", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 74, "unit": "h"}]},
+      {"case_id": "C05", "date": "2025-09-30", "description": "Synthetic: concrete repair case C05", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 130, "unit": "h"}]},
+      {"case_id": "C06", "date": "2026-05-05", "description": "Synthetic: concrete repair case C06", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 120, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 149, "unit": "h"}]},
+      {"case_id": "C07", "date": "2025-11-03", "description": "Synthetic: concrete repair case C07", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 84, "unit": "h"}]},
+      {"case_id": "C08", "date": "2026-10-14", "description": "Synthetic: concrete repair case C08", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 118, "unit": "h"}]},
+      {"case_id": "C09", "date": "2026-01-20", "description": "Synthetic: concrete repair case C09", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 120, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 168, "unit": "h"}]},
+      {"case_id": "C10", "date": "2025-11-03", "description": "Synthetic: concrete repair case C10", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 81, "unit": "h"}]},
+      {"case_id": "C11", "date": "2026-06-11", "description": "Synthetic: concrete repair case C11", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 112, "unit": "h"}]},
+      {"case_id": "C12", "date": "2026-02-14", "description": "Synthetic: concrete repair case C12", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 120, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 162, "unit": "h"}]},
+      {"case_id": "C13", "date": "2025-11-03", "description": "Synthetic: concrete repair case C13", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 79, "unit": "h"}]},
+      {"case_id": "C14", "date": "2026-08-30", "description": "Synthetic: concrete repair case C14", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 126, "unit": "h"}]},
+      {"case_id": "C15", "date": "2025-08-01", "description": "Synthetic: concrete repair case C15", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 120, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 130, "unit": "h"}]},
+      {"case_id": "C16", "date": "2026-04-22", "description": "Synthetic: concrete repair case C16", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 116, "unit": "h"}]},
+      {"case_id": "C17", "date": "2025-12-24", "description": "Synthetic: concrete repair case C17", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 115, "unit": "h"}]},
+      {"case_id": "C18", "date": "2026-09-09", "description": "Synthetic: concrete repair case C18", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 120, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 146, "unit": "h"}]},
+      {"case_id": "C19", "date": "2025-11-03", "description": "Synthetic: concrete repair case C19", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 83, "unit": "h"}]},
+      {"case_id": "C20", "date": "2026-03-30", "description": "Synthetic: concrete repair case C20", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 138, "unit": "h"}]},
+      {"case_id": "C21", "date": "2026-10-14", "description": "Synthetic: concrete repair case C21", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 120, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 154, "unit": "h"}]},
+      {"case_id": "C22", "date": "2025-07-07", "description": "Synthetic: concrete repair case C22", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 89, "unit": "h"}]},
+      {"case_id": "C23", "date": "2026-06-30", "description": "Synthetic: concrete repair case C23", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 119, "unit": "h"}]},
+      {"case_id": "C24", "date": "2025-10-01", "description": "Synthetic: concrete repair case C24", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 120, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 160, "unit": "h"}]},
+      {"case_id": "C25", "date": "2026-01-05", "description": "Synthetic: concrete repair case C25", "tags": ["concrete_repair"], "estimated_values": [{"oz": "02.010", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "02.010", "metric": "hours", "value": 86, "unit": "h"}]}
+    ],
+    "exclusions": [
+      {"case_id": "E01", "date": "2026-11-01", "description": "Synthetic: valid comparable case", "tags": ["concrete_repair"], "estimated_values": [{"oz": "03.001", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "03.001", "metric": "hours", "value": 130, "unit": "h"}]},
+      {"case_id": "E02", "date": "2026-10-20", "description": "Synthetic: zero expected value", "tags": ["concrete_repair"], "estimated_values": [{"oz": "03.001", "metric": "hours", "value": 0, "unit": "h"}], "real_values": [{"oz": "03.001", "metric": "hours", "value": 40, "unit": "h"}]},
+      {"case_id": "E03", "date": "2026-10-10", "description": "Synthetic: expected value unknown", "tags": ["concrete_repair"], "estimated_values": [{"oz": "03.001", "metric": "hours", "value": null, "unit": "h"}], "real_values": [{"oz": "03.001", "metric": "hours", "value": 90, "unit": "h"}]},
+      {"case_id": "E04", "date": "2026-10-05", "description": "Synthetic: no expected values recorded", "tags": ["concrete_repair"], "estimated_values": [], "real_values": [{"oz": "03.001", "metric": "hours", "value": 90, "unit": "h"}]},
+      {"case_id": "E05", "date": "2026-09-30", "description": "Synthetic: recorded in days", "tags": ["concrete_repair"], "estimated_values": [{"oz": "03.001", "metric": "hours", "value": 10, "unit": "d"}], "real_values": [{"oz": "03.001", "metric": "hours", "value": 12, "unit": "d"}]},
+      {"case_id": "E06", "date": "2026-09-20", "description": "Synthetic: mixed hours and days", "tags": ["concrete_repair"], "estimated_values": [{"oz": "03.001", "metric": "hours", "value": 80, "unit": "h"}], "real_values": [{"oz": "03.001", "metric": "hours", "value": 11, "unit": "d"}]},
+      {"case_id": "E07", "date": "2026-09-10", "description": "Synthetic: actual value not yet entered", "tags": ["concrete_repair"], "estimated_values": [{"oz": "03.001", "metric": "hours", "value": 60, "unit": "h"}], "real_values": [{"oz": "03.001", "metric": "hours", "value": null, "unit": "h"}]},
+      {"case_id": "E08", "date": "2026-09-01", "description": "Synthetic: unit written as Std", "tags": ["concrete_repair"], "estimated_values": [{"oz": "03.001", "metric": "hours", "value": 80, "unit": "Std"}], "real_values": [{"oz": "03.001", "metric": "hours", "value": 100, "unit": "Std"}]},
+      {"case_id": "E09", "date": "2026-08-01", "description": "Synthetic: sealing work", "tags": ["sealing"], "estimated_values": [{"oz": "03.001", "metric": "hours", "value": 100, "unit": "h"}], "real_values": [{"oz": "03.001", "metric": "hours", "value": 150, "unit": "h"}]},
+      {
+        "case_id": "E10",
+        "date": "2026-07-01",
+        "description": "Synthetic: two hour estimates in one case",
+        "tags": ["concrete_repair"],
+        "estimated_values": [
+          {"oz": "03.001", "metric": "hours", "value": 50, "unit": "h"},
+          {"oz": "03.002", "metric": "hours", "value": 70, "unit": "h"}
+        ],
+        "real_values": [
+          {"oz": "03.001", "metric": "hours", "value": 60, "unit": "h"},
+          {"oz": "03.002", "metric": "hours", "value": 80, "unit": "h"}
+        ]
+      },
+      {"case_id": "E11", "date": "2026-06-01", "description": "Synthetic: negative actual value (entry error)", "tags": ["concrete_repair"], "estimated_values": [{"oz": "03.001", "metric": "hours", "value": 50, "unit": "h"}], "real_values": [{"oz": "03.001", "metric": "hours", "value": -5, "unit": "h"}]}
+    ],
+    "empty": []
+  },
+  "scenarios": [
+    {
+      "id": "acceptance_note3_comparable",
+      "description": "Acceptance: three comparable cases H1–H3 with expected 100 h and actual 120 h; estimator selects the median ratio; baseline 50 h.",
+      "fictional": true,
+      "history_pool": "acceptance",
+      "position": {"oz": "01.001", "kurztext": "Synthetic concrete repair", "title_path": ["Bridge"], "work_tags": ["concrete_repair"], "metric": "hours", "unit": "h"},
+      "mode": "comparable",
+      "limit": 20,
+      "assumptions": {"ratio_method": "median", "selected_by": "estimator", "baseline": {"value": 50, "unit": "h", "source": "estimator"}, "unit_price": null},
+      "expected_selection": {
+        "mode": "comparable",
+        "oz": "01.001",
+        "limit": 20,
+        "candidate_count": 6,
+        "selected": [
+          {"case_id": "H1", "date": "2026-10-01", "tags": ["bridge", "concrete_repair"], "description": "Synthetic: concrete repair on bridge cap", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2},
+          {"case_id": "H2", "date": "2026-09-15", "tags": ["bridge", "concrete_repair"], "description": "Synthetic: concrete repair on bridge pier", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2},
+          {"case_id": "H3", "date": "2026-09-15", "tags": ["concrete_repair", "bridge"], "description": "Synthetic: concrete repair on abutment", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2}
+        ],
+        "excluded": [
+          {"case_id": "W1", "date": "2026-11-10", "reason": "work_mismatch"},
+          {"case_id": "W2", "date": "2026-08-20", "reason": "work_mismatch"},
+          {"case_id": "W3", "date": "2026-08-20", "reason": "work_mismatch"}
+        ],
+        "status": "small_dataset",
+        "case_count": 3,
+        "selection_reason": "3 most recent comparable cases of 6: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: work_mismatch 3. Small dataset: below the target of 10 cases."
+      },
+      "expected_estimate": {"note_id": "Note3:01.001", "step": "historical_adjustment", "scenario": "comparable", "oz": "01.001", "status": "estimated", "case_ids": ["H1", "H2", "H3"], "case_count": 3, "selection_status": "small_dataset", "ratio_method": "median", "factor": 1.2, "ratio_range": [1.2, 1.2], "base_value": 50, "estimated_value": 60, "unit": "h", "unit_price": null, "euro_amount": null, "missing_evidence": ["below_target_case_count", "missing_price"], "approval_required": true, "label": "Estimate – approval required"},
+      "expected_note": {
+        "id": "Note3:01.001",
+        "step": "historical_adjustment",
+        "oz": "01.001",
+        "text": "Estimate – approval required. OZ 01.001: 3 comparable cases (H1, H2, H3); median actual/expected ratio 1.2 × baseline 50 h = 60 h. No euro amount. Missing evidence: below_target_case_count, missing_price.",
+        "manual_review": true,
+        "evidence": [
+          {"reference_id": "H1", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-10-01: expected 100 h / actual 120 h, ratio 1.2; tags bridge, concrete_repair"},
+          {"reference_id": "H2", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-09-15: expected 100 h / actual 120 h, ratio 1.2; tags bridge, concrete_repair"},
+          {"reference_id": "H3", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-09-15: expected 100 h / actual 120 h, ratio 1.2; tags concrete_repair, bridge"}
+        ],
+        "case_ids": ["H1", "H2", "H3"],
+        "case_count": 3,
+        "selection_reason": "3 most recent comparable cases of 6: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: work_mismatch 3. Small dataset: below the target of 10 cases.",
+        "base_value": 50,
+        "estimated_value": 60,
+        "unit": "h",
+        "assumption": "Estimator-selected median actual/expected ratio 1.2 applied to the baseline 50 h (estimator).",
+        "uncertainty": "Case ratios range 1.2–1.2 over 3 cases. Small dataset below the target of 10 cases. Past ratios do not prove future effort; no calibrated confidence.",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "acceptance_note4_what_if",
+      "description": "Acceptance: the broader recent pool W1–W3 (other work, same metric and unit) as a separate what-if with median 1.4.",
+      "fictional": true,
+      "history_pool": "acceptance",
+      "position": {"oz": "01.001", "kurztext": "Synthetic concrete repair", "title_path": ["Bridge"], "work_tags": ["concrete_repair"], "metric": "hours", "unit": "h"},
+      "mode": "what_if",
+      "limit": 20,
+      "assumptions": {"ratio_method": "median", "selected_by": "estimator", "baseline": {"value": 50, "unit": "h", "source": "estimator"}, "unit_price": null},
+      "expected_selection": {
+        "mode": "what_if",
+        "oz": "01.001",
+        "limit": 20,
+        "candidate_count": 6,
+        "selected": [
+          {"case_id": "W1", "date": "2026-11-10", "tags": ["bridge", "sealing"], "description": "Synthetic: bridge deck sealing", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 140, "unit": "h", "ratio": 1.4},
+          {"case_id": "W2", "date": "2026-08-20", "tags": ["road", "asphalt"], "description": "Synthetic: road surface renewal", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 140, "unit": "h", "ratio": 1.4},
+          {"case_id": "W3", "date": "2026-08-20", "tags": ["bridge", "steel"], "description": "Synthetic: railing replacement", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 140, "unit": "h", "ratio": 1.4}
+        ],
+        "excluded": [
+          {"case_id": "H1", "date": "2026-10-01", "reason": "comparable_case"},
+          {"case_id": "H2", "date": "2026-09-15", "reason": "comparable_case"},
+          {"case_id": "H3", "date": "2026-09-15", "reason": "comparable_case"}
+        ],
+        "status": "small_dataset",
+        "case_count": 3,
+        "selection_reason": "3 most recent broader what-if cases of 6: work other than concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: comparable_case 3. Small dataset: below the target of 10 cases."
+      },
+      "expected_estimate": {"note_id": "Note4:01.001", "step": "what_if", "scenario": "what_if", "oz": "01.001", "status": "estimated", "case_ids": ["W1", "W2", "W3"], "case_count": 3, "selection_status": "small_dataset", "ratio_method": "median", "factor": 1.4, "ratio_range": [1.4, 1.4], "base_value": 50, "estimated_value": 70, "unit": "h", "unit_price": null, "euro_amount": null, "missing_evidence": ["below_target_case_count", "missing_price"], "approval_required": true, "label": "Estimate – approval required"},
+      "expected_note": {
+        "id": "Note4:01.001",
+        "step": "what_if",
+        "oz": "01.001",
+        "text": "Estimate – approval required. What-if (hypothetical): OZ 01.001: 3 broader what-if cases (W1, W2, W3); median actual/expected ratio 1.4 × baseline 50 h = 70 h. No euro amount. Missing evidence: below_target_case_count, missing_price.",
+        "manual_review": true,
+        "evidence": [
+          {"reference_id": "W1", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-11-10: expected 100 h / actual 140 h, ratio 1.4; tags bridge, sealing"},
+          {"reference_id": "W2", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-08-20: expected 100 h / actual 140 h, ratio 1.4; tags road, asphalt"},
+          {"reference_id": "W3", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-08-20: expected 100 h / actual 140 h, ratio 1.4; tags bridge, steel"}
+        ],
+        "case_ids": ["W1", "W2", "W3"],
+        "case_count": 3,
+        "selection_reason": "3 most recent broader what-if cases of 6: work other than concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: comparable_case 3. Small dataset: below the target of 10 cases.",
+        "base_value": 50,
+        "estimated_value": 70,
+        "unit": "h",
+        "assumption": "Hypothetical: if this item behaved like broader recent cases of other work. Estimator-selected median actual/expected ratio 1.4 applied to the baseline 50 h (estimator).",
+        "uncertainty": "Hypothetical and less certain than Note 3: cases of other work. Case ratios range 1.4–1.4 over 3 cases. Small dataset below the target of 10 cases. Past ratios do not prove future effort; no calibrated confidence.",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "selection_25_cases_limit_20",
+      "description": "25 comparable cases and limit 20: the 20 most recent are selected; a date tie at the cut-off is broken by case_id.",
+      "fictional": true,
+      "history_pool": "twenty_five",
+      "position": {"oz": "01.001", "kurztext": "Synthetic concrete repair", "title_path": ["Bridge"], "work_tags": ["concrete_repair"], "metric": "hours", "unit": "h"},
+      "mode": "comparable",
+      "limit": 20,
+      "assumptions": {"ratio_method": "median", "selected_by": "estimator", "baseline": {"value": 50, "unit": "h", "source": "estimator"}, "unit_price": null},
+      "expected_selection": {
+        "mode": "comparable",
+        "oz": "01.001",
+        "limit": 20,
+        "candidate_count": 25,
+        "selected": [
+          {"case_id": "C02", "date": "2026-11-12", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C02", "case_oz": "02.010", "title_path": [], "estimated_value": 100, "real_value": 110, "unit": "h", "ratio": 1.1},
+          {"case_id": "C08", "date": "2026-10-14", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C08", "case_oz": "02.010", "title_path": [], "estimated_value": 100, "real_value": 118, "unit": "h", "ratio": 1.18},
+          {"case_id": "C21", "date": "2026-10-14", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C21", "case_oz": "02.010", "title_path": [], "estimated_value": 120, "real_value": 154, "unit": "h", "ratio": 1.2833},
+          {"case_id": "C18", "date": "2026-09-09", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C18", "case_oz": "02.010", "title_path": [], "estimated_value": 120, "real_value": 146, "unit": "h", "ratio": 1.2167},
+          {"case_id": "C14", "date": "2026-08-30", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C14", "case_oz": "02.010", "title_path": [], "estimated_value": 100, "real_value": 126, "unit": "h", "ratio": 1.26},
+          {"case_id": "C04", "date": "2026-07-19", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C04", "case_oz": "02.010", "title_path": [], "estimated_value": 80, "real_value": 74, "unit": "h", "ratio": 0.925},
+          {"case_id": "C23", "date": "2026-06-30", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C23", "case_oz": "02.010", "title_path": [], "estimated_value": 100, "real_value": 119, "unit": "h", "ratio": 1.19},
+          {"case_id": "C11", "date": "2026-06-11", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C11", "case_oz": "02.010", "title_path": [], "estimated_value": 100, "real_value": 112, "unit": "h", "ratio": 1.12},
+          {"case_id": "C06", "date": "2026-05-05", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C06", "case_oz": "02.010", "title_path": [], "estimated_value": 120, "real_value": 149, "unit": "h", "ratio": 1.2417},
+          {"case_id": "C16", "date": "2026-04-22", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C16", "case_oz": "02.010", "title_path": [], "estimated_value": 80, "real_value": 116, "unit": "h", "ratio": 1.45},
+          {"case_id": "C20", "date": "2026-03-30", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C20", "case_oz": "02.010", "title_path": [], "estimated_value": 100, "real_value": 138, "unit": "h", "ratio": 1.38},
+          {"case_id": "C01", "date": "2026-03-02", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C01", "case_oz": "02.010", "title_path": [], "estimated_value": 80, "real_value": 77, "unit": "h", "ratio": 0.9625},
+          {"case_id": "C12", "date": "2026-02-14", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C12", "case_oz": "02.010", "title_path": [], "estimated_value": 120, "real_value": 162, "unit": "h", "ratio": 1.35},
+          {"case_id": "C09", "date": "2026-01-20", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C09", "case_oz": "02.010", "title_path": [], "estimated_value": 120, "real_value": 168, "unit": "h", "ratio": 1.4},
+          {"case_id": "C25", "date": "2026-01-05", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C25", "case_oz": "02.010", "title_path": [], "estimated_value": 80, "real_value": 86, "unit": "h", "ratio": 1.075},
+          {"case_id": "C17", "date": "2025-12-24", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C17", "case_oz": "02.010", "title_path": [], "estimated_value": 100, "real_value": 115, "unit": "h", "ratio": 1.15},
+          {"case_id": "C03", "date": "2025-12-01", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C03", "case_oz": "02.010", "title_path": [], "estimated_value": 120, "real_value": 180, "unit": "h", "ratio": 1.5},
+          {"case_id": "C07", "date": "2025-11-03", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C07", "case_oz": "02.010", "title_path": [], "estimated_value": 80, "real_value": 84, "unit": "h", "ratio": 1.05},
+          {"case_id": "C10", "date": "2025-11-03", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C10", "case_oz": "02.010", "title_path": [], "estimated_value": 80, "real_value": 81, "unit": "h", "ratio": 1.0125},
+          {"case_id": "C13", "date": "2025-11-03", "tags": ["concrete_repair"], "description": "Synthetic: concrete repair case C13", "case_oz": "02.010", "title_path": [], "estimated_value": 80, "real_value": 79, "unit": "h", "ratio": 0.9875}
+        ],
+        "excluded": [
+          {"case_id": "C19", "date": "2025-11-03", "reason": "over_limit"},
+          {"case_id": "C24", "date": "2025-10-01", "reason": "over_limit"},
+          {"case_id": "C05", "date": "2025-09-30", "reason": "over_limit"},
+          {"case_id": "C15", "date": "2025-08-01", "reason": "over_limit"},
+          {"case_id": "C22", "date": "2025-07-07", "reason": "over_limit"}
+        ],
+        "status": "sufficient",
+        "case_count": 20,
+        "selection_reason": "20 most recent comparable cases of 25: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: over_limit 5. Target of 10–20 cases met."
+      },
+      "expected_estimate": {
+        "note_id": "Note3:01.001",
+        "step": "historical_adjustment",
+        "scenario": "comparable",
+        "oz": "01.001",
+        "status": "estimated",
+        "case_ids": [
+          "C02",
+          "C08",
+          "C21",
+          "C18",
+          "C14",
+          "C04",
+          "C23",
+          "C11",
+          "C06",
+          "C16",
+          "C20",
+          "C01",
+          "C12",
+          "C09",
+          "C25",
+          "C17",
+          "C03",
+          "C07",
+          "C10",
+          "C13"
+        ],
+        "case_count": 20,
+        "selection_status": "sufficient",
+        "ratio_method": "median",
+        "factor": 1.185,
+        "ratio_range": [0.925, 1.5],
+        "base_value": 50,
+        "estimated_value": 59.25,
+        "unit": "h",
+        "unit_price": null,
+        "euro_amount": null,
+        "missing_evidence": ["missing_price"],
+        "approval_required": true,
+        "label": "Estimate – approval required"
+      },
+      "expected_note": {
+        "id": "Note3:01.001",
+        "step": "historical_adjustment",
+        "oz": "01.001",
+        "text": "Estimate – approval required. OZ 01.001: 20 comparable cases (C02, C08, C21, C18, C14, C04, C23, C11, C06, C16, C20, C01, C12, C09, C25, C17, C03, C07, C10, C13); median actual/expected ratio 1.185 × baseline 50 h = 59.25 h. No euro amount. Missing evidence: missing_price.",
+        "manual_review": true,
+        "evidence": [
+          {"reference_id": "C02", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-11-12: expected 100 h / actual 110 h, ratio 1.1; tags concrete_repair"},
+          {"reference_id": "C08", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-10-14: expected 100 h / actual 118 h, ratio 1.18; tags concrete_repair"},
+          {"reference_id": "C21", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-10-14: expected 120 h / actual 154 h, ratio 1.2833; tags concrete_repair"},
+          {"reference_id": "C18", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-09-09: expected 120 h / actual 146 h, ratio 1.2167; tags concrete_repair"},
+          {"reference_id": "C14", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-08-30: expected 100 h / actual 126 h, ratio 1.26; tags concrete_repair"},
+          {"reference_id": "C04", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-07-19: expected 80 h / actual 74 h, ratio 0.925; tags concrete_repair"},
+          {"reference_id": "C23", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-06-30: expected 100 h / actual 119 h, ratio 1.19; tags concrete_repair"},
+          {"reference_id": "C11", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-06-11: expected 100 h / actual 112 h, ratio 1.12; tags concrete_repair"},
+          {"reference_id": "C06", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-05-05: expected 120 h / actual 149 h, ratio 1.2417; tags concrete_repair"},
+          {"reference_id": "C16", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-04-22: expected 80 h / actual 116 h, ratio 1.45; tags concrete_repair"},
+          {"reference_id": "C20", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-03-30: expected 100 h / actual 138 h, ratio 1.38; tags concrete_repair"},
+          {"reference_id": "C01", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-03-02: expected 80 h / actual 77 h, ratio 0.9625; tags concrete_repair"},
+          {"reference_id": "C12", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-02-14: expected 120 h / actual 162 h, ratio 1.35; tags concrete_repair"},
+          {"reference_id": "C09", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-01-20: expected 120 h / actual 168 h, ratio 1.4; tags concrete_repair"},
+          {"reference_id": "C25", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2026-01-05: expected 80 h / actual 86 h, ratio 1.075; tags concrete_repair"},
+          {"reference_id": "C17", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2025-12-24: expected 100 h / actual 115 h, ratio 1.15; tags concrete_repair"},
+          {"reference_id": "C03", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2025-12-01: expected 120 h / actual 180 h, ratio 1.5; tags concrete_repair"},
+          {"reference_id": "C07", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2025-11-03: expected 80 h / actual 84 h, ratio 1.05; tags concrete_repair"},
+          {"reference_id": "C10", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2025-11-03: expected 80 h / actual 81 h, ratio 1.0125; tags concrete_repair"},
+          {"reference_id": "C13", "oz": "01.001", "source": "history", "detail": "case OZ 02.010, 2025-11-03: expected 80 h / actual 79 h, ratio 0.9875; tags concrete_repair"}
+        ],
+        "case_ids": [
+          "C02",
+          "C08",
+          "C21",
+          "C18",
+          "C14",
+          "C04",
+          "C23",
+          "C11",
+          "C06",
+          "C16",
+          "C20",
+          "C01",
+          "C12",
+          "C09",
+          "C25",
+          "C17",
+          "C03",
+          "C07",
+          "C10",
+          "C13"
+        ],
+        "case_count": 20,
+        "selection_reason": "20 most recent comparable cases of 25: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: over_limit 5. Target of 10–20 cases met.",
+        "base_value": 50,
+        "estimated_value": 59.25,
+        "unit": "h",
+        "assumption": "Estimator-selected median actual/expected ratio 1.185 applied to the baseline 50 h (estimator).",
+        "uncertainty": "Case ratios range 0.925–1.5 over 20 cases. Past ratios do not prove future effort; no calibrated confidence.",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "selection_zero_cases",
+      "description": "No history at all: no factor, no estimate, missing evidence is listed.",
+      "fictional": true,
+      "history_pool": "empty",
+      "position": {"oz": "01.001", "kurztext": "Synthetic concrete repair", "title_path": ["Bridge"], "work_tags": ["concrete_repair"], "metric": "hours", "unit": "h"},
+      "mode": "comparable",
+      "limit": 20,
+      "assumptions": {"ratio_method": "median", "selected_by": "estimator", "baseline": {"value": 50, "unit": "h", "source": "estimator"}, "unit_price": null},
+      "expected_selection": {"mode": "comparable", "oz": "01.001", "limit": 20, "candidate_count": 0, "selected": [], "excluded": [], "status": "no_history", "case_count": 0, "selection_reason": "0 most recent comparable cases of 0: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. No history records supplied; no factor."},
+      "expected_estimate": {"note_id": "Note3:01.001", "step": "historical_adjustment", "scenario": "comparable", "oz": "01.001", "status": "no_factor", "case_ids": [], "case_count": 0, "selection_status": "no_history", "ratio_method": "median", "factor": null, "ratio_range": null, "base_value": 50, "estimated_value": null, "unit": "h", "unit_price": null, "euro_amount": null, "missing_evidence": ["no_history", "missing_price"], "approval_required": true, "label": "Estimate – approval required"},
+      "expected_note": {"id": "Note3:01.001", "step": "historical_adjustment", "oz": "01.001", "text": "Estimate – approval required. OZ 01.001: 0 comparable cases (none); no historical factor. No euro amount. Missing evidence: no_history, missing_price.", "manual_review": true, "evidence": [], "case_ids": [], "case_count": 0, "selection_reason": "0 most recent comparable cases of 0: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. No history records supplied; no factor.", "base_value": 50, "estimated_value": null, "unit": "h", "assumption": "Estimator selected the median ratio, but the case pool does not support a factor.", "uncertainty": "No factor: no_history, missing_price. No case ratios.", "approval_required": true}
+    },
+    {
+      "id": "excluded_values_and_units",
+      "description": "Zero, missing and negative values, incompatible units, other work and ambiguous measurements are excluded; two cases remain, below the minimum of three.",
+      "fictional": true,
+      "history_pool": "exclusions",
+      "position": {"oz": "01.001", "kurztext": "Synthetic concrete repair", "title_path": ["Bridge"], "work_tags": ["concrete_repair"], "metric": "hours", "unit": "h"},
+      "mode": "comparable",
+      "limit": 20,
+      "assumptions": {"ratio_method": "median", "selected_by": "estimator", "baseline": {"value": 50, "unit": "h", "source": "estimator"}, "unit_price": null},
+      "expected_selection": {
+        "mode": "comparable",
+        "oz": "01.001",
+        "limit": 20,
+        "candidate_count": 11,
+        "selected": [
+          {"case_id": "E01", "date": "2026-11-01", "tags": ["concrete_repair"], "description": "Synthetic: valid comparable case", "case_oz": "03.001", "title_path": [], "estimated_value": 100, "real_value": 130, "unit": "h", "ratio": 1.3},
+          {"case_id": "E08", "date": "2026-09-01", "tags": ["concrete_repair"], "description": "Synthetic: unit written as Std", "case_oz": "03.001", "title_path": [], "estimated_value": 80, "real_value": 100, "unit": "h", "ratio": 1.25}
+        ],
+        "excluded": [
+          {"case_id": "E02", "date": "2026-10-20", "reason": "zero_estimated_value"},
+          {"case_id": "E03", "date": "2026-10-10", "reason": "missing_estimated_value"},
+          {"case_id": "E04", "date": "2026-10-05", "reason": "missing_estimated_value"},
+          {"case_id": "E05", "date": "2026-09-30", "reason": "incompatible_unit"},
+          {"case_id": "E06", "date": "2026-09-20", "reason": "incompatible_unit"},
+          {"case_id": "E07", "date": "2026-09-10", "reason": "missing_real_value"},
+          {"case_id": "E09", "date": "2026-08-01", "reason": "work_mismatch"},
+          {"case_id": "E10", "date": "2026-07-01", "reason": "ambiguous_measurement"},
+          {"case_id": "E11", "date": "2026-06-01", "reason": "negative_value"}
+        ],
+        "status": "insufficient_cases",
+        "case_count": 2,
+        "selection_reason": "2 most recent comparable cases of 11: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: ambiguous_measurement 1, incompatible_unit 2, missing_estimated_value 2, missing_real_value 1, negative_value 1, work_mismatch 1, zero_estimated_value 1. Below the minimum of 3 cases; no factor."
+      },
+      "expected_estimate": {"note_id": "Note3:01.001", "step": "historical_adjustment", "scenario": "comparable", "oz": "01.001", "status": "no_factor", "case_ids": ["E01", "E08"], "case_count": 2, "selection_status": "insufficient_cases", "ratio_method": "median", "factor": null, "ratio_range": [1.25, 1.3], "base_value": 50, "estimated_value": null, "unit": "h", "unit_price": null, "euro_amount": null, "missing_evidence": ["insufficient_cases", "missing_price"], "approval_required": true, "label": "Estimate – approval required"},
+      "expected_note": {
+        "id": "Note3:01.001",
+        "step": "historical_adjustment",
+        "oz": "01.001",
+        "text": "Estimate – approval required. OZ 01.001: 2 comparable cases (E01, E08); no historical factor. No euro amount. Missing evidence: insufficient_cases, missing_price.",
+        "manual_review": true,
+        "evidence": [
+          {"reference_id": "E01", "oz": "01.001", "source": "history", "detail": "case OZ 03.001, 2026-11-01: expected 100 h / actual 130 h, ratio 1.3; tags concrete_repair"},
+          {"reference_id": "E08", "oz": "01.001", "source": "history", "detail": "case OZ 03.001, 2026-09-01: expected 80 h / actual 100 h, ratio 1.25; tags concrete_repair"}
+        ],
+        "case_ids": ["E01", "E08"],
+        "case_count": 2,
+        "selection_reason": "2 most recent comparable cases of 11: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: ambiguous_measurement 1, incompatible_unit 2, missing_estimated_value 2, missing_real_value 1, negative_value 1, work_mismatch 1, zero_estimated_value 1. Below the minimum of 3 cases; no factor.",
+        "base_value": 50,
+        "estimated_value": null,
+        "unit": "h",
+        "assumption": "Estimator selected the median ratio, but the case pool does not support a factor.",
+        "uncertainty": "No factor: insufficient_cases, missing_price. Case ratios range 1.25–1.3 over 2 cases.",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "ratio_method_not_selected",
+      "description": "Same pool as the acceptance case, but the estimator has not selected a ratio method: no factor.",
+      "fictional": true,
+      "history_pool": "acceptance",
+      "position": {"oz": "01.001", "kurztext": "Synthetic concrete repair", "title_path": ["Bridge"], "work_tags": ["concrete_repair"], "metric": "hours", "unit": "h"},
+      "mode": "comparable",
+      "limit": 20,
+      "assumptions": {"ratio_method": null, "selected_by": null, "baseline": {"value": 50, "unit": "h", "source": "estimator"}, "unit_price": null},
+      "expected_selection": {
+        "mode": "comparable",
+        "oz": "01.001",
+        "limit": 20,
+        "candidate_count": 6,
+        "selected": [
+          {"case_id": "H1", "date": "2026-10-01", "tags": ["bridge", "concrete_repair"], "description": "Synthetic: concrete repair on bridge cap", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2},
+          {"case_id": "H2", "date": "2026-09-15", "tags": ["bridge", "concrete_repair"], "description": "Synthetic: concrete repair on bridge pier", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2},
+          {"case_id": "H3", "date": "2026-09-15", "tags": ["concrete_repair", "bridge"], "description": "Synthetic: concrete repair on abutment", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2}
+        ],
+        "excluded": [
+          {"case_id": "W1", "date": "2026-11-10", "reason": "work_mismatch"},
+          {"case_id": "W2", "date": "2026-08-20", "reason": "work_mismatch"},
+          {"case_id": "W3", "date": "2026-08-20", "reason": "work_mismatch"}
+        ],
+        "status": "small_dataset",
+        "case_count": 3,
+        "selection_reason": "3 most recent comparable cases of 6: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: work_mismatch 3. Small dataset: below the target of 10 cases."
+      },
+      "expected_estimate": {"note_id": "Note3:01.001", "step": "historical_adjustment", "scenario": "comparable", "oz": "01.001", "status": "no_factor", "case_ids": ["H1", "H2", "H3"], "case_count": 3, "selection_status": "small_dataset", "ratio_method": null, "factor": null, "ratio_range": [1.2, 1.2], "base_value": 50, "estimated_value": null, "unit": "h", "unit_price": null, "euro_amount": null, "missing_evidence": ["below_target_case_count", "ratio_method_not_selected", "missing_price"], "approval_required": true, "label": "Estimate – approval required"},
+      "expected_note": {
+        "id": "Note3:01.001",
+        "step": "historical_adjustment",
+        "oz": "01.001",
+        "text": "Estimate – approval required. OZ 01.001: 3 comparable cases (H1, H2, H3); no historical factor. No euro amount. Missing evidence: below_target_case_count, ratio_method_not_selected, missing_price.",
+        "manual_review": true,
+        "evidence": [
+          {"reference_id": "H1", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-10-01: expected 100 h / actual 120 h, ratio 1.2; tags bridge, concrete_repair"},
+          {"reference_id": "H2", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-09-15: expected 100 h / actual 120 h, ratio 1.2; tags bridge, concrete_repair"},
+          {"reference_id": "H3", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-09-15: expected 100 h / actual 120 h, ratio 1.2; tags concrete_repair, bridge"}
+        ],
+        "case_ids": ["H1", "H2", "H3"],
+        "case_count": 3,
+        "selection_reason": "3 most recent comparable cases of 6: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: work_mismatch 3. Small dataset: below the target of 10 cases.",
+        "base_value": 50,
+        "estimated_value": null,
+        "unit": "h",
+        "assumption": "No ratio method selected by the estimator; no factor applied.",
+        "uncertainty": "No factor: below_target_case_count, ratio_method_not_selected, missing_price. Case ratios range 1.2–1.2 over 3 cases.",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "price_not_approved",
+      "description": "A model-proposed hourly price that the estimator has not approved yields no euro amount.",
+      "fictional": true,
+      "history_pool": "acceptance",
+      "position": {"oz": "01.001", "kurztext": "Synthetic concrete repair", "title_path": ["Bridge"], "work_tags": ["concrete_repair"], "metric": "hours", "unit": "h"},
+      "mode": "comparable",
+      "limit": 20,
+      "assumptions": {"ratio_method": "median", "selected_by": "estimator", "baseline": {"value": 50, "unit": "h", "source": "estimator"}, "unit_price": {"value": 85, "currency": "EUR", "per_unit": "h", "source": "model", "approved": false}},
+      "expected_selection": {
+        "mode": "comparable",
+        "oz": "01.001",
+        "limit": 20,
+        "candidate_count": 6,
+        "selected": [
+          {"case_id": "H1", "date": "2026-10-01", "tags": ["bridge", "concrete_repair"], "description": "Synthetic: concrete repair on bridge cap", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2},
+          {"case_id": "H2", "date": "2026-09-15", "tags": ["bridge", "concrete_repair"], "description": "Synthetic: concrete repair on bridge pier", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2},
+          {"case_id": "H3", "date": "2026-09-15", "tags": ["concrete_repair", "bridge"], "description": "Synthetic: concrete repair on abutment", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2}
+        ],
+        "excluded": [
+          {"case_id": "W1", "date": "2026-11-10", "reason": "work_mismatch"},
+          {"case_id": "W2", "date": "2026-08-20", "reason": "work_mismatch"},
+          {"case_id": "W3", "date": "2026-08-20", "reason": "work_mismatch"}
+        ],
+        "status": "small_dataset",
+        "case_count": 3,
+        "selection_reason": "3 most recent comparable cases of 6: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: work_mismatch 3. Small dataset: below the target of 10 cases."
+      },
+      "expected_estimate": {"note_id": "Note3:01.001", "step": "historical_adjustment", "scenario": "comparable", "oz": "01.001", "status": "estimated", "case_ids": ["H1", "H2", "H3"], "case_count": 3, "selection_status": "small_dataset", "ratio_method": "median", "factor": 1.2, "ratio_range": [1.2, 1.2], "base_value": 50, "estimated_value": 60, "unit": "h", "unit_price": null, "euro_amount": null, "missing_evidence": ["below_target_case_count", "price_not_approved"], "approval_required": true, "label": "Estimate – approval required"},
+      "expected_note": {
+        "id": "Note3:01.001",
+        "step": "historical_adjustment",
+        "oz": "01.001",
+        "text": "Estimate – approval required. OZ 01.001: 3 comparable cases (H1, H2, H3); median actual/expected ratio 1.2 × baseline 50 h = 60 h. No euro amount. Missing evidence: below_target_case_count, price_not_approved.",
+        "manual_review": true,
+        "evidence": [
+          {"reference_id": "H1", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-10-01: expected 100 h / actual 120 h, ratio 1.2; tags bridge, concrete_repair"},
+          {"reference_id": "H2", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-09-15: expected 100 h / actual 120 h, ratio 1.2; tags bridge, concrete_repair"},
+          {"reference_id": "H3", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-09-15: expected 100 h / actual 120 h, ratio 1.2; tags concrete_repair, bridge"}
+        ],
+        "case_ids": ["H1", "H2", "H3"],
+        "case_count": 3,
+        "selection_reason": "3 most recent comparable cases of 6: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: work_mismatch 3. Small dataset: below the target of 10 cases.",
+        "base_value": 50,
+        "estimated_value": 60,
+        "unit": "h",
+        "assumption": "Estimator-selected median actual/expected ratio 1.2 applied to the baseline 50 h (estimator).",
+        "uncertainty": "Case ratios range 1.2–1.2 over 3 cases. Small dataset below the target of 10 cases. Past ratios do not prove future effort; no calibrated confidence.",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "approved_price",
+      "description": "An estimator-approved hourly price of 80 EUR/h turns the 60 h estimate into a euro amount; approval is still required.",
+      "fictional": true,
+      "history_pool": "acceptance",
+      "position": {"oz": "01.001", "kurztext": "Synthetic concrete repair", "title_path": ["Bridge"], "work_tags": ["concrete_repair"], "metric": "hours", "unit": "h"},
+      "mode": "comparable",
+      "limit": 20,
+      "assumptions": {"ratio_method": "median", "selected_by": "estimator", "baseline": {"value": 50, "unit": "h", "source": "estimator"}, "unit_price": {"value": 80, "currency": "EUR", "per_unit": "h", "source": "estimator", "approved": true}},
+      "expected_selection": {
+        "mode": "comparable",
+        "oz": "01.001",
+        "limit": 20,
+        "candidate_count": 6,
+        "selected": [
+          {"case_id": "H1", "date": "2026-10-01", "tags": ["bridge", "concrete_repair"], "description": "Synthetic: concrete repair on bridge cap", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2},
+          {"case_id": "H2", "date": "2026-09-15", "tags": ["bridge", "concrete_repair"], "description": "Synthetic: concrete repair on bridge pier", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2},
+          {"case_id": "H3", "date": "2026-09-15", "tags": ["concrete_repair", "bridge"], "description": "Synthetic: concrete repair on abutment", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 120, "unit": "h", "ratio": 1.2}
+        ],
+        "excluded": [
+          {"case_id": "W1", "date": "2026-11-10", "reason": "work_mismatch"},
+          {"case_id": "W2", "date": "2026-08-20", "reason": "work_mismatch"},
+          {"case_id": "W3", "date": "2026-08-20", "reason": "work_mismatch"}
+        ],
+        "status": "small_dataset",
+        "case_count": 3,
+        "selection_reason": "3 most recent comparable cases of 6: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: work_mismatch 3. Small dataset: below the target of 10 cases."
+      },
+      "expected_estimate": {"note_id": "Note3:01.001", "step": "historical_adjustment", "scenario": "comparable", "oz": "01.001", "status": "estimated", "case_ids": ["H1", "H2", "H3"], "case_count": 3, "selection_status": "small_dataset", "ratio_method": "median", "factor": 1.2, "ratio_range": [1.2, 1.2], "base_value": 50, "estimated_value": 60, "unit": "h", "unit_price": 80, "euro_amount": 4800, "missing_evidence": ["below_target_case_count"], "approval_required": true, "label": "Estimate – approval required"},
+      "expected_note": {
+        "id": "Note3:01.001",
+        "step": "historical_adjustment",
+        "oz": "01.001",
+        "text": "Estimate – approval required. OZ 01.001: 3 comparable cases (H1, H2, H3); median actual/expected ratio 1.2 × baseline 50 h = 60 h. Estimator-approved price 80 EUR/h: 4800 EUR. Missing evidence: below_target_case_count.",
+        "manual_review": true,
+        "evidence": [
+          {"reference_id": "H1", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-10-01: expected 100 h / actual 120 h, ratio 1.2; tags bridge, concrete_repair"},
+          {"reference_id": "H2", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-09-15: expected 100 h / actual 120 h, ratio 1.2; tags bridge, concrete_repair"},
+          {"reference_id": "H3", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-09-15: expected 100 h / actual 120 h, ratio 1.2; tags concrete_repair, bridge"}
+        ],
+        "case_ids": ["H1", "H2", "H3"],
+        "case_count": 3,
+        "selection_reason": "3 most recent comparable cases of 6: tags include concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: work_mismatch 3. Small dataset: below the target of 10 cases.",
+        "base_value": 50,
+        "estimated_value": 60,
+        "unit": "h",
+        "assumption": "Estimator-selected median actual/expected ratio 1.2 applied to the baseline 50 h (estimator).",
+        "uncertainty": "Case ratios range 1.2–1.2 over 3 cases. Small dataset below the target of 10 cases. Past ratios do not prove future effort; no calibrated confidence.",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "what_if_missing_baseline",
+      "description": "What-if pool without a baseline: the factor is reported, no hours estimate is made.",
+      "fictional": true,
+      "history_pool": "acceptance",
+      "position": {"oz": "01.001", "kurztext": "Synthetic concrete repair", "title_path": ["Bridge"], "work_tags": ["concrete_repair"], "metric": "hours", "unit": "h"},
+      "mode": "what_if",
+      "limit": 20,
+      "assumptions": {"ratio_method": "median", "selected_by": "estimator", "baseline": null, "unit_price": null},
+      "expected_selection": {
+        "mode": "what_if",
+        "oz": "01.001",
+        "limit": 20,
+        "candidate_count": 6,
+        "selected": [
+          {"case_id": "W1", "date": "2026-11-10", "tags": ["bridge", "sealing"], "description": "Synthetic: bridge deck sealing", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 140, "unit": "h", "ratio": 1.4},
+          {"case_id": "W2", "date": "2026-08-20", "tags": ["road", "asphalt"], "description": "Synthetic: road surface renewal", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 140, "unit": "h", "ratio": 1.4},
+          {"case_id": "W3", "date": "2026-08-20", "tags": ["bridge", "steel"], "description": "Synthetic: railing replacement", "case_oz": "01.001", "title_path": [], "estimated_value": 100, "real_value": 140, "unit": "h", "ratio": 1.4}
+        ],
+        "excluded": [
+          {"case_id": "H1", "date": "2026-10-01", "reason": "comparable_case"},
+          {"case_id": "H2", "date": "2026-09-15", "reason": "comparable_case"},
+          {"case_id": "H3", "date": "2026-09-15", "reason": "comparable_case"}
+        ],
+        "status": "small_dataset",
+        "case_count": 3,
+        "selection_reason": "3 most recent broader what-if cases of 6: work other than concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: comparable_case 3. Small dataset: below the target of 10 cases."
+      },
+      "expected_estimate": {"note_id": "Note4:01.001", "step": "what_if", "scenario": "what_if", "oz": "01.001", "status": "factor_only", "case_ids": ["W1", "W2", "W3"], "case_count": 3, "selection_status": "small_dataset", "ratio_method": "median", "factor": 1.4, "ratio_range": [1.4, 1.4], "base_value": null, "estimated_value": null, "unit": "h", "unit_price": null, "euro_amount": null, "missing_evidence": ["below_target_case_count", "missing_baseline", "missing_price"], "approval_required": true, "label": "Estimate – approval required"},
+      "expected_note": {
+        "id": "Note4:01.001",
+        "step": "what_if",
+        "oz": "01.001",
+        "text": "Estimate – approval required. What-if (hypothetical): OZ 01.001: 3 broader what-if cases (W1, W2, W3); median actual/expected ratio 1.4; no baseline, no hours estimate. No euro amount. Missing evidence: below_target_case_count, missing_baseline, missing_price.",
+        "manual_review": true,
+        "evidence": [
+          {"reference_id": "W1", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-11-10: expected 100 h / actual 140 h, ratio 1.4; tags bridge, sealing"},
+          {"reference_id": "W2", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-08-20: expected 100 h / actual 140 h, ratio 1.4; tags road, asphalt"},
+          {"reference_id": "W3", "oz": "01.001", "source": "history", "detail": "case OZ 01.001, 2026-08-20: expected 100 h / actual 140 h, ratio 1.4; tags bridge, steel"}
+        ],
+        "case_ids": ["W1", "W2", "W3"],
+        "case_count": 3,
+        "selection_reason": "3 most recent broader what-if cases of 6: work other than concrete_repair; metric hours, unit compatible with h; ordered by date descending, ties by case_id; limit 20. Excluded: comparable_case 3. Small dataset: below the target of 10 cases.",
+        "base_value": null,
+        "estimated_value": null,
+        "unit": "h",
+        "assumption": "Hypothetical: if this item behaved like broader recent cases of other work. Estimator-selected median actual/expected ratio 1.4; no baseline supplied.",
+        "uncertainty": "Hypothetical and less certain than Note 3: cases of other work. Case ratios range 1.4–1.4 over 3 cases. Small dataset below the target of 10 cases. Past ratios do not prove future effort; no calibrated confidence.",
+        "approval_required": true
+      }
+    }
+  ]
+}

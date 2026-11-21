@@ -5,3 +5,5 @@ pydantic==2.14.3
 python-dotenv==1.2.4
 python-multipart==0.0.34
 pypdf==7.1.1
+pdfplumber==0.11.10
+Pillow==13.0.0
