@@ -1,0 +1,4 @@
+osifont.ttf – technical lettering after DIN EN ISO 3098.
+Source: https://github.com/hikikomori82/osifont (file osifont-lgpl3fe.ttf, downloaded 2026-11-21).
+License: GNU LGPL v3 with font exception – the font may be embedded in documents and web pages
+without those becoming subject to the LGPL. See the source repository for the full license text.

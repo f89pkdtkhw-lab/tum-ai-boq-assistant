@@ -5,18 +5,23 @@
 }
 .eingerueckt { padding: 10px 14px; border-top: 1px solid var(--pb-line); }
 .knoepfe { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.knoepfe { flex-wrap: nowrap; }
 .knopf {
-  font: inherit; padding: 6px 12px; border-radius: 10px; cursor: pointer; min-height: 36px;
+  font: inherit; font-size: 13.5px; line-height: 1; padding: 0; width: 32px; border-radius: var(--r-md); cursor: pointer; min-height: 32px;
   border: 1px solid var(--pb-line); color: inherit; background: var(--pb-card);
 }
 .knopf:hover:not(:disabled) { border-color: var(--pb-accent); }
 .knopf:disabled { cursor: default; color: var(--pb-muted); opacity: .6; }
-.stand { color: var(--pb-muted); font-variant-numeric: tabular-nums; padding: 0 4px; }
-.groesse { display: flex; align-items: center; gap: 8px; color: var(--pb-muted); }
+.stand { color: var(--pb-muted); font-variant-numeric: tabular-nums; padding: 0 6px; white-space: nowrap; }
+.groesse { display: flex; align-items: center; gap: 8px; color: var(--pb-muted); white-space: nowrap; }
 .groesse select {
-  font: inherit; color: var(--pb-ink); background: var(--pb-card); min-height: 36px;
-  border: 1px solid var(--pb-line); border-radius: 10px; padding: 4px 8px;
+  font: inherit; color: var(--pb-ink); background: var(--pb-card); min-height: 32px;
+  border: 1px solid var(--pb-line); border-radius: var(--r-md); padding: 4px 8px;
 }
 @media (max-width: 600px) {
   .stand { flex-basis: 100%; order: -1; padding: 0; }
 }
+
+/* Larger paging controls (team feedback). */
+.knopf { width: 38px; min-height: 38px; font-size: 17px; border-width: 1.5px; }
+.groesse select { min-height: 38px; font-size: 14px; }

@@ -1,0 +1,48 @@
+.karte {
+  display: grid; gap: 14px; padding: 16px; border-radius: var(--r-lg); min-width: 0;
+  background: var(--glass); border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-light), 0 8px 24px -14px var(--shadow);
+}
+.oben { display: grid; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); gap: 28px; align-items: center; }
+.kreisSpalte { display: grid; gap: 12px; justify-items: center; }
+.legende { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; width: 100%; }
+.legende button {
+  width: 100%; display: flex; align-items: center; gap: 8px; font: inherit; font-size: 14px; color: inherit; text-align: left;
+  background: none; border: 0; padding: 6px 8px; border-radius: var(--r-md); cursor: pointer;
+}
+.legende button:hover { background: var(--fill); }
+.legende strong { margin-left: auto; font-variant-numeric: tabular-nums; }
+.punkt { width: 12px; height: 12px; border-radius: 50%; flex: none; display: inline-block; }
+
+.urteilSpalte { display: grid; gap: 12px; min-width: 0; }
+.kicker { margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); }
+.urteil { margin: 0; font-size: clamp(24px, 3vw, 34px); line-height: 1.15; letter-spacing: -.02em; }
+.faktoren { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.faktoren li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); background: var(--fill); font-size: 13.5px; }
+.faktoren strong { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+.block { display: grid; gap: 10px; min-width: 0; }
+.abschnitt { margin: 0; font-size: 13.5px; }
+.balkenListe { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.balkenListe li { display: grid; grid-template-columns: minmax(150px, 280px) minmax(0, 1fr) minmax(90px, auto); gap: 12px; align-items: center; }
+.balkenName { font-size: 14.5px; }
+.quelle { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 6px; margin-left: 4px; }
+.balkenSpur { height: 14px; border-radius: var(--r-sm); background: var(--fill); overflow: hidden; }
+.balkenWert { display: block; height: 100%; border-radius: var(--r-sm); }
+.q_extracted { background: var(--accent); }
+.q_rules { background: var(--sev-mittel); }
+.q_history { background: var(--sev-hoch); }
+.betrag { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; font-size: 13.5px; }
+.leer .betrag { font-weight: 400; font-size: 13px; color: var(--muted); text-align: left; }
+.leer .balkenSpur { background: repeating-linear-gradient(45deg, var(--fill), var(--fill) 6px, transparent 6px, transparent 12px); }
+
+.empfehlungen { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: schritt; }
+.empfehlungen li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; line-height: 1.45; }
+.empfehlungen .punkt { margin-top: 5px; }
+
+@media (max-width: 720px) {
+  .oben { grid-template-columns: 1fr; }
+  .balkenListe li { grid-template-columns: 1fr auto; }
+  .balkenSpur { grid-column: 1 / -1; grid-row: 2; }
+}
+.q_model { background: var(--accent-2); }

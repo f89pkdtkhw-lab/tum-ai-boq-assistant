@@ -1,41 +1,57 @@
-/* Apple HIG system colors + Liquid Glass material. Components read these tokens. */
+/* osifont: free DIN EN ISO 3098 lettering, bundled so it works offline (public/fonts/OSIFONT-LICENSE.txt). */
+@font-face { font-family: osifont; src: url("/fonts/osifont.ttf") format("truetype"); font-display: swap; }
+/* Construction-industry look after German site software (SYFIT Baugerätemanager): deep navy, one orange
+   signal colour, cool grey page, square corners, bold condensed headings. Components read these tokens;
+   --glass* are kept as aliases of flat surfaces. */
 :root {
-  --bg: #f2f2f7; --ink: #000000; --muted: rgba(60, 60, 67, .6); --line: rgba(60, 60, 67, .18); --card: #ffffff;
-  --accent: #007aff; --accent-2: #5ac8fa; --good: #34c759; --warn: #ff9500; --bad: #ff3b30;
-  --fill: rgba(120, 120, 128, .12); --fill-strong: rgba(120, 120, 128, .2);
-  --button: #000000; --button-ink: #ffffff;
-  --glass: rgba(255, 255, 255, .62); --glass-edge: rgba(255, 255, 255, .85); --glass-light: rgba(255, 255, 255, .9);
-  --glass-line: rgba(0, 0, 0, .06); --shadow: rgba(0, 0, 0, .08);
-  --glow-a: rgba(255, 255, 255, .95); --glow-b: rgba(209, 213, 224, .7); --glow-c: rgba(0, 122, 255, .07);
+  --bg: #f0f0f5; --ink: #0a234b; --muted: #565969; --line: #d9dbe3; --card: #ffffff;
+  --accent: #0a234b; --accent-2: #3b4f6f; --brand: #ff5000; --good: #12a150; --warn: #d97706; --bad: #d92d20;
+  --fill: #f3f3f5; --fill-strong: #e4e5eb;
+  --button: #0a234b; --button-ink: #ffffff;
+  --glass: var(--card); --glass-edge: var(--line); --glass-light: transparent;
+  --glass-line: transparent; --shadow: rgba(16, 24, 40, .06);
+  --glow-a: transparent; --glow-b: transparent; --glow-c: transparent;
+  --r-sm: 0; --r-md: 2px; --r-lg: 2px;
+  /* DIN EN ISO 3098 technical lettering (as on construction drawings) for all text: osifont is the free
+     ISO 3098 font, ISOCPEUR/ISOCP the CAD ones; others fall back to a plain sans-serif. */
+  --font-iso: osifont, ISOCPEUR, ISOCP, "ISO 3098", "Open Sans", Arial, sans-serif;
+  --font-head: var(--font-iso);
+  /* Danger scale, red (critical) → green (no findings). */
+  --sev-kritisch: #d92d20; --sev-hoch: #f08c00; --sev-mittel: #f5c518; --sev-niedrig: #8cc63f; --sev-ok: #22a356;
+  --sev-mittel-text: #9a6b00; /* yellow readable as text on light backgrounds */
+  --logo-tile: #ffffff;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #000000; --ink: #ffffff; --muted: rgba(235, 235, 245, .6); --line: rgba(84, 84, 88, .55); --card: #1c1c1e;
-    --accent: #0a84ff; --accent-2: #64d2ff; --good: #30d158; --warn: #ff9f0a; --bad: #ff453a;
-    --fill: rgba(120, 120, 128, .24); --fill-strong: rgba(120, 120, 128, .36);
-    --button: #ffffff; --button-ink: #000000;
-    --glass: rgba(30, 30, 32, .58); --glass-edge: rgba(255, 255, 255, .1); --glass-light: rgba(255, 255, 255, .16);
-    --glass-line: rgba(255, 255, 255, .06); --shadow: rgba(0, 0, 0, .5);
-    --glow-a: rgba(58, 58, 64, .55); --glow-b: rgba(28, 28, 32, .9); --glow-c: rgba(10, 132, 255, .1);
-    color-scheme: dark;
-  }
+/* Dark: chosen in settings, or automatically from 19:00 to 07:00 (see lib/einstellungen.tsx). */
+:root[data-theme="dark"] {
+  --bg: #07142b; --ink: #e8ebf2; --muted: #9aa3b5; --line: #22324f; --card: #0d1d38;
+  --accent: #ff6a1f; --accent-2: #8ea2c4; --brand: #ff5000; --good: #3ccf7a; --warn: #f5a524; --bad: #f04438;
+  --fill: #12244a; --fill-strong: #1a2f5a;
+  --button: #ff5000; --button-ink: #ffffff;
+  --shadow: rgba(0, 0, 0, .4);
+  --sev-kritisch: #f04438; --sev-hoch: #f79009; --sev-mittel: #f5c518; --sev-niedrig: #9ad04f; --sev-ok: #32c26d;
+  --sev-mittel-text: #f5c518;
+  --logo-tile: #0f0f0f;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
+/* Collapsible panels: content opens on click instead of showing everything at once. */
+summary { cursor: pointer; }
+summary > h3, summary > div { display: inline-flex; vertical-align: middle; }
 body {
-  margin: 0; min-height: 100vh; color: var(--ink); letter-spacing: -.01em; -webkit-font-smoothing: antialiased;
-  font: 17px/1.41 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, "Segoe UI", system-ui, sans-serif;
-  /* soft ambient light so the glass surfaces have something to refract */
-  background:
-    radial-gradient(40% 35% at 15% 8%, var(--glow-a), transparent 70%),
-    radial-gradient(45% 40% at 90% 18%, var(--glow-c), transparent 70%),
-    radial-gradient(60% 50% at 50% 100%, var(--glow-b), transparent 70%) fixed,
-    var(--bg);
+  margin: 0; min-height: 100vh; color: var(--ink); -webkit-font-smoothing: antialiased; background: var(--bg);
+  font: 14px/1.5 var(--font-iso);
+  font-feature-settings: "tnum" 0, "cv11" 1;
 }
+/* App frame: top bar, then the page. */
+.app { min-height: 100vh; }
+.app > main { min-width: 0; }
+/* Page grids stack from the top; never stretch rows to fill the window (caused huge gaps). */
+.app > main { align-content: start; }
 .shell { max-width: 1040px; margin: 0 auto; padding: 24px 20px 64px; }
 .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .brand { font-weight: 700; letter-spacing: .02em; }
-.status { font: 12px ui-monospace, Menlo, monospace; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
+.status { font: 12px var(--font-iso); padding: 4px 10px; border-radius: var(--r-md); border: 1px solid var(--line); }
 .status.live { color: var(--good); border-color: currentColor; }
 .status.mock { color: var(--warn); border-color: currentColor; }
 .status.off { color: var(--bad); border-color: currentColor; }
@@ -43,18 +59,133 @@ body {
 .kicker { color: var(--accent); font-weight: 600; margin: 0 0 8px; }
 .hero h1 { font-size: clamp(30px, 5vw, 52px); line-height: 1.08; letter-spacing: -.03em; margin: 0 0 14px; max-width: 18ch; }
 .lead { color: var(--muted); font-size: 18px; max-width: 60ch; margin: 0; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; }
 .ask label { display: block; font-weight: 600; margin-bottom: 8px; }
 .row { display: flex; gap: 10px; }
-.row input { flex: 1; min-width: 0; font: inherit; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: inherit; }
-.row button { font: inherit; font-weight: 600; padding: 12px 18px; border: 0; border-radius: 10px; color: #fff; cursor: pointer;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.row input { flex: 1; min-width: 0; font: inherit; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: transparent; color: inherit; }
+.row button { font: inherit; font-weight: 600; padding: 12px 18px; border: 0; border-radius: var(--r-md); color: #fff; cursor: pointer;
+  background: var(--button); }
 .row button:disabled { opacity: .6; cursor: wait; }
 .error { color: var(--bad); margin: 12px 0 0; }
 .answer { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
 .answer p { margin: 0 0 6px; white-space: pre-wrap; }
-.answer small { color: var(--muted); font: 12px ui-monospace, Menlo, monospace; }
+.answer small { color: var(--muted); font: 12px var(--font-iso); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 18px; }
 .grid h2 { font-size: 17px; margin: 0 0 6px; }
 .grid p { color: var(--muted); margin: 0; }
 @media (max-width: 560px) { .row { flex-direction: column; } }
+/* Compact density (settings page): everything a little smaller, so more rows fit on screen. */
+html[data-dichte="kompakt"] body { zoom: .88; }
+/* Info tooltip (components/info/Info.tsx): short explanations live here instead of paragraphs. */
+.info { position: relative; display: inline-grid; place-items: center; margin-left: 6px; color: var(--muted); cursor: help; vertical-align: middle; font-weight: 400; }
+.info:hover, .info:focus-visible { color: var(--accent); outline: none; }
+.info::after {
+  content: attr(data-tip); position: absolute; z-index: 50; left: 50%; top: calc(100% + 8px); transform: translateX(-50%);
+  width: max-content; max-width: 300px; padding: 8px 10px; border-radius: var(--r-md); background: var(--ink); color: var(--bg);
+  font-size: 12.5px; line-height: 1.45; font-weight: 400; letter-spacing: 0; text-transform: none; white-space: normal; text-align: left;
+  opacity: 0; pointer-events: none; transition: opacity .12s ease;
+}
+.info:hover::after, .info:focus-visible::after { opacity: 1; }
+
+/* Headings: bold Roboto-style, navy; page titles uppercase like construction-industry sites. */
+h1, h2, h3 { font-family: var(--font-head); color: var(--ink); letter-spacing: 0; }
+main h1 { font-weight: 900; text-transform: uppercase; letter-spacing: .01em; }
+/* Orange is the one signal colour: focus rings and the active state. */
+:focus-visible { outline-color: var(--brand); }
+a { color: var(--accent); }
+/* ISO 3098 everywhere: form controls and SVG text don't inherit the body font by default. */
+button, input, select, textarea, svg text { font-family: var(--font-iso); }
+
+/* Apple Liquid Glass, after the iDrive app (SwiftUI .glassEffect(.regular.interactive()), .buttonStyle(.glass / .glassProminent)):
+   a thin, clear material – strong background blur and saturation, a specular sheen from the top left, a bright rim,
+   continuous rounded corners (capsule buttons, 22 px panels) and a soft lift. Matched by CSS-module class name,
+   so every page follows without touching each module. Colours, ISO lettering and the 3D ring stay as they are. */
+:root {
+  --lg-tint: rgba(255, 255, 255, .46); --lg-tint-hover: rgba(255, 255, 255, .64); --lg-rand: rgba(255, 255, 255, .7);
+  --lg-glanz: linear-gradient(155deg, rgba(255, 255, 255, .78) 0%, rgba(255, 255, 255, .22) 34%, rgba(255, 255, 255, 0) 58%, rgba(255, 255, 255, .14) 100%);
+  --lg-innen: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -1px 1px rgba(255, 255, 255, .4), inset 0 0 0 1px rgba(255, 255, 255, .28);
+  --lg-schatten: 0 1px 2px rgba(10, 35, 75, .06), 0 10px 30px -8px rgba(10, 35, 75, .18);
+  --lg-prominent: #34465f;
+  --raster: rgba(10, 35, 75, .035); --raster-gross: rgba(10, 35, 75, .065);
+}
+:root[data-theme="dark"] {
+  --lg-tint: rgba(255, 255, 255, .08); --lg-tint-hover: rgba(255, 255, 255, .14); --lg-rand: rgba(255, 255, 255, .2);
+  --lg-glanz: linear-gradient(155deg, rgba(255, 255, 255, .22) 0%, rgba(255, 255, 255, .06) 34%, rgba(255, 255, 255, 0) 58%, rgba(255, 255, 255, .05) 100%);
+  --lg-innen: inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -1px 1px rgba(255, 255, 255, .08), inset 0 0 0 1px rgba(255, 255, 255, .08);
+  --lg-schatten: 0 1px 2px rgba(0, 0, 0, .3), 0 14px 34px -10px rgba(0, 0, 0, .55);
+  --lg-prominent: #c2521f;
+  --raster: rgba(255, 255, 255, .028); --raster-gross: rgba(255, 255, 255, .055);
+}
+/* Page: drafting-paper grid plus soft colour fields – glass needs something behind it to bend. */
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 10% 6%, color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 38%),
+    radial-gradient(circle at 92% 24%, color-mix(in srgb, var(--brand) 10%, transparent), transparent 34%),
+    radial-gradient(circle at 45% 96%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 42%),
+    linear-gradient(var(--raster-gross) 1px, transparent 1px), linear-gradient(90deg, var(--raster-gross) 1px, transparent 1px),
+    linear-gradient(var(--raster) 1px, transparent 1px), linear-gradient(90deg, var(--raster) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  background-attachment: fixed;
+}
+
+/* Panels: cards, tiles, tables, forms */
+:is([class*="_karte"], [class*="_preisKachel"], [class*="_zaehler"], [class*="_zahlKachel"], [class*="_angebot"], [class*="_glas"],
+    [class*="_kacheln"] > div, [class*="_rahmen"], [class*="_tabelleRahmen"], [class*="_formular"], [class*="_werkzeuge"], [class*="_empfehlung"],
+    [class*="_hochladen"], [class*="_dateiListe"], [class*="_zusammenfassung"], [class*="_ablage"]):not(button:not([class*="_zaehler"]):not([class*="_preisKachel"]):not([class*="_zahlKachel"]):not([class*="_zusammenfassung"])) {
+  background: var(--lg-glanz), var(--lg-tint) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid var(--lg-rand) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--lg-innen), var(--lg-schatten);
+}
+/* Counter tiles keep their colour as a slim inner bar instead of a square stripe. */
+[class*="_zaehler"]:is(button) { border-top-width: 1px !important; position: relative; overflow: hidden; }
+[class*="_zaehler"]:is(button)::before { content: ""; position: absolute; left: 18px; right: 18px; top: 0; height: 3px; border-radius: 0 0 3px 3px; background: var(--balken, transparent); }
+:is([class*="_karte"], [class*="_preisKachel"], [class*="_zaehler"], [class*="_zahlKachel"]):is(button):hover { background: var(--lg-glanz), var(--lg-tint-hover) !important; }
+
+/* Buttons: clear glass capsules */
+:is([class*="_knopfZweit"], [class*="_knopfLeise"], [class*="_leise"], [class*="_mehrLeise"], [class*="_weniger"], [class*="_speichern"],
+    [class*="_beispielChip"], [class*="_chip"], [class*="_weg"]):is(button, a, label, select),
+:is([class*="_knopf"], [class*="_primaer"], [class*="_mehr"], [class*="_zurUebersicht"], [class*="_auswerten"]):is(button, a) {
+  border-radius: 999px !important;
+  -webkit-backdrop-filter: blur(20px) saturate(190%); backdrop-filter: blur(20px) saturate(190%);
+  transition: transform .22s cubic-bezier(.3, 1.6, .5, 1), background-color .15s ease, box-shadow .15s ease;
+}
+:is([class*="_knopfZweit"], [class*="_knopfLeise"], [class*="_leise"], [class*="_mehrLeise"], [class*="_weniger"], [class*="_speichern"],
+    [class*="_beispielChip"], [class*="_chip"]):is(button, a, label, select) {
+  background: var(--lg-glanz), var(--lg-tint) !important; border: 1px solid var(--lg-rand) !important; color: var(--ink);
+  box-shadow: var(--lg-innen), var(--lg-schatten);
+}
+:is([class*="_knopfZweit"], [class*="_knopfLeise"], [class*="_leise"], [class*="_mehrLeise"], [class*="_weniger"], [class*="_speichern"],
+    [class*="_beispielChip"], [class*="_chip"]):is(button, a, label, select):hover { background: var(--lg-glanz), var(--lg-tint-hover) !important; }
+[class*="_chip"][aria-pressed="true"]:is(button) {
+  background: var(--lg-glanz), color-mix(in srgb, var(--f, var(--accent)) 22%, var(--lg-tint)) !important;
+  border-color: color-mix(in srgb, var(--f, var(--accent)) 45%, var(--lg-rand)) !important;
+}
+/* Prominent glass: tinted navy by day, orange at night */
+:is([class*="_knopf"], [class*="_primaer"], [class*="_mehr"], [class*="_zurUebersicht"], [class*="_auswerten"]):not([class*="_knopfZweit"]):not([class*="_knopfLeise"]):not([class*="_mehrLeise"]):is(button, a) {
+  /* One solid colour (the top bar's navy), only a faint top edge – no sheen running across the button. */
+  background: var(--lg-prominent) !important; border: 1px solid rgba(255, 255, 255, .14) !important; color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 1px 2px rgba(10, 35, 75, .12), 0 6px 16px -8px rgba(10, 35, 75, .3);
+}
+:is([class*="_knopf"], [class*="_primaer"], [class*="_mehr"], [class*="_zurUebersicht"], [class*="_leise"], [class*="_weniger"], [class*="_chip"],
+    [class*="_speichern"], [class*="_beispielChip"], [class*="_zaehler"], [class*="_preisKachel"]):is(button, a):active { transform: scale(.96); }
+:is([class*="_knopf"], [class*="_leise"], [class*="_chip"]):is(button, a, select):disabled { opacity: .5; transform: none; }
+/* Top bar: navy glass */
+header[class*="_leiste"] { background: rgba(10, 35, 75, .82) !important; -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); }
+/* Text fields: rounded like iOS fields, on a light glass fill */
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select:not([class*="_leise"]):not([class*="_knopfZweit"]), textarea) {
+  border-radius: 12px !important; background: color-mix(in srgb, var(--card) 70%, transparent) !important;
+}
+main [class*="_eingabe"] { border-radius: 12px !important; overflow: hidden; }
+main [class*="_eingabe"] input { border-radius: 0 !important; background: transparent !important; }
+main :is([class*="_knopf"], [class*="_primaer"], [class*="_mehr"], [class*="_zurUebersicht"], [class*="_auswerten"]):not([class*="_knopfZweit"]):not([class*="_knopfLeise"]):not([class*="_mehrLeise"]):is(button, a):hover {
+  background: color-mix(in srgb, var(--lg-prominent) 90%, #fff) !important;
+}
+/* Text inside glass boxes keeps clear of the rounded rim: boxes that had no inner spacing get some, tables clip to the curve. */
+main [class*="_formular"] { padding: 14px 18px 16px !important; }
+main :is([class*="_rahmen"], [class*="_tabelleRahmen"]) { overflow: hidden; padding: 4px 6px !important; }
+main :is([class*="_rahmen"], [class*="_tabelleRahmen"]) > table { border-radius: 16px; overflow: hidden; }
+main [class*="_karte"] { padding: 18px 20px !important; }
+main [class*="_kacheln"] > div, main :is([class*="_preisKachel"], [class*="_zaehler"], [class*="_zahlKachel"]) { padding: 14px 18px !important; }

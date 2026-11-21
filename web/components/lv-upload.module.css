@@ -1,15 +1,13 @@
 /* Upload page in Apple Liquid Glass style: tokens from globals.css, 8-pt grid, 44-pt targets,
    floating glass header, inset-grouped step list, capsule buttons. */
 .seite {
-  max-width: 1080px; margin: 0 auto; display: grid; gap: 24px; color: var(--ink);
+  max-width: 1280px; margin: 0 auto; display: grid; gap: 14px; color: var(--ink);
   padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(64px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
 }
 .seite :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 .kopf, .karte {
   background: var(--glass);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid var(--glass-edge);
   box-shadow: inset 0 1px 0 var(--glass-light), 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow);
 }
@@ -17,14 +15,14 @@
   .kopf, .karte { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
+/* Slim page bar: the app name lives in the sidebar, so this only carries the page name and backend status. */
 .kopf {
-  position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); z-index: 10;
-  min-height: 56px; border-radius: 28px; padding: 6px 8px 6px 20px;
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 0 0 12px; border: 0 !important; background: none !important; box-shadow: none !important; border-bottom: 1px solid var(--line) !important; border-radius: 0;
 }
-.marke { font-size: 17px; font-weight: 600; }
+.marke { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .status {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: 16px;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: var(--r-lg);
   font-size: 13px; font-weight: 500; color: var(--muted); background: var(--fill);
 }
 .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
@@ -34,20 +32,20 @@
 
 .einleitung { padding: 24px 0 0; text-align: center; display: grid; gap: 8px; justify-items: center; }
 .kicker { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
-.titel { margin: 0; font-size: clamp(34px, 5.4vw, 48px); line-height: 1.08; font-weight: 700; letter-spacing: -.025em; max-width: 20ch; text-wrap: balance; }
-.lead { margin: 0; font-size: 17px; color: var(--muted); max-width: 52ch; text-wrap: pretty; }
+.titel { margin: 0; font-size: clamp(24px, 3vw, 30px); line-height: 1.2; font-weight: 700; letter-spacing: -.015em; max-width: 34ch; text-wrap: balance; }
+.lead { margin: 0; font-size: 13.5px; color: var(--muted); max-width: 64ch; text-wrap: pretty; }
 
-.karte { border-radius: 28px; padding: 24px; display: grid; gap: 16px; width: 100%; max-width: 720px; margin: 0 auto; }
+.karte { border-radius: var(--r-lg); padding: 16px; display: grid; gap: 16px; width: 100%; max-width: 720px; margin: 0 auto; }
 .abschnitt { margin: 0; font-size: 13px; font-weight: 400; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); overflow-wrap: anywhere; }
 
 .ablage {
   position: relative; display: grid; gap: 4px; justify-items: center; text-align: center; cursor: pointer;
-  padding: 88px 16px 28px; border-radius: 22px; background: var(--fill);
+  padding: 62px 16px 16px; border-radius: var(--r-lg); background: var(--fill);
   transition: transform .2s ease, background .15s ease, box-shadow .2s ease;
 }
 /* Round upload glyph drawn in CSS, so the component markup stays unchanged. */
 .ablage::before {
-  content: ""; position: absolute; top: 20px; left: 50%; width: 52px; height: 52px; margin-left: -26px; border-radius: 50%;
+  content: ""; position: absolute; top: 14px; left: 50%; width: 40px; height: 40px; margin-left: -20px; border-radius: 50%;
   background: var(--card); box-shadow: 0 0 0 .5px var(--glass-line), 0 4px 12px -4px var(--shadow);
 }
 .ablage::after {
@@ -62,28 +60,28 @@
 .dateiEingabe { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: inherit; z-index: 1; }
 .dateiEingabe:focus-visible { outline: none; }
 .ablageTitel { font-size: 22px; line-height: 1.27; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere; }
-.ablageText { font-size: 15px; color: var(--muted); }
+.ablageText { font-size: 13.5px; color: var(--muted); }
 
 .regeln { margin: 0; padding: 0 4px; font-size: 13px; line-height: 1.38; color: var(--muted); }
-.dateiFehler { margin: 0; padding: 12px 16px; border-radius: 14px; font-size: 15px; font-weight: 500; color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+.dateiFehler { margin: 0; padding: 12px 16px; border-radius: var(--r-lg); font-size: 13.5px; font-weight: 500; color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
 
 /* Capsule buttons: pressed state shrinks slightly, every target at least 44 pt. */
 .aktionen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .knopf, .knopfZweit, .knopfLeise {
-  font: inherit; font-size: 17px; font-weight: 600; min-height: 50px; padding: 0 24px; border-radius: 999px; border: 0; cursor: pointer;
+  font: inherit; font-size: 13.5px; font-weight: 600; min-height: 32px; padding: 0 24px; border-radius: var(--r-sm); border: 0; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
   transition: transform .12s ease, opacity .12s ease, background .12s ease; -webkit-tap-highlight-color: transparent;
 }
 .knopf { color: var(--button-ink); background: var(--button); }
 .knopfZweit { color: var(--ink); background: var(--fill); }
-.knopfLeise { min-height: 44px; padding: 0 12px; font-size: 15px; font-weight: 500; color: var(--accent); background: transparent; }
+.knopfLeise { min-height: 34px; padding: 0 12px; font-size: 13.5px; font-weight: 500; color: var(--accent); background: transparent; }
 .knopf:hover:not(:disabled) { opacity: .86; }
 .knopfZweit:hover:not(:disabled) { background: var(--fill-strong); }
 .knopf:active:not(:disabled), .knopfZweit:active:not(:disabled), .knopfLeise:active { transform: scale(.97); }
 .knopf:disabled, .knopfZweit:disabled { opacity: .35; cursor: not-allowed; }
 
 /* Steps as an inset-grouped list with hairline separators. */
-.schritte { list-style: none; margin: 0; padding: 0; border-radius: 18px; background: var(--fill); overflow: hidden; }
+.schritte { list-style: none; margin: 0; padding: 0; border-radius: var(--r-lg); background: var(--fill); overflow: hidden; }
 .schritt {
   position: relative; display: grid; grid-template-columns: 24px 88px 120px minmax(0, 1fr); align-items: center; gap: 12px;
   min-height: 52px; padding: 12px 16px;
@@ -91,7 +89,7 @@
 .schritt + .schritt::before { content: ""; position: absolute; top: 0; left: 52px; right: 0; height: .5px; background: var(--line); }
 .schrittName { font-weight: 600; }
 .schrittStatus { font-size: 13px; font-weight: 600; color: var(--muted); }
-.schrittText { font-size: 15px; color: var(--muted); overflow-wrap: anywhere; }
+.schrittText { font-size: 13.5px; color: var(--muted); overflow-wrap: anywhere; }
 .symbol { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); justify-self: center; }
 
 .schritt_entfaellt .symbol { border-style: dashed; }
@@ -112,21 +110,21 @@
 
 .ansage { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.fehler { padding: 16px; border-radius: 18px; background: color-mix(in srgb, var(--bad) 12%, transparent); display: grid; gap: 8px; }
-.fehler h3 { margin: 0; font-size: 17px; font-weight: 600; color: var(--bad); }
-.fehler p { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+.fehler { padding: 16px; border-radius: var(--r-lg); background: color-mix(in srgb, var(--bad) 12%, transparent); display: grid; gap: 8px; }
+.fehler h3 { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--bad); }
+.fehler p { margin: 0; font-size: 13.5px; overflow-wrap: anywhere; }
 .tipp { color: var(--muted); }
 .erfolg {
   display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
-  padding: 12px 12px 12px 16px; border-radius: 18px; background: color-mix(in srgb, var(--good) 14%, transparent);
+  padding: 12px 12px 12px 16px; border-radius: var(--r-lg); background: color-mix(in srgb, var(--good) 14%, transparent);
 }
-.erfolg p { margin: 0; font-size: 15px; }
+.erfolg p { margin: 0; font-size: 13.5px; }
 .fehler:focus, .erfolg:focus { outline: none; }
 .fehler:focus-visible, .erfolg:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 @media (max-width: 640px) {
   .kopf { padding-left: 16px; }
-  .karte { padding: 16px; border-radius: 24px; }
+  .karte { padding: 16px; border-radius: var(--r-lg); }
   .schritt { grid-template-columns: 24px minmax(0, 1fr) auto; }
   .schrittText { grid-column: 2 / -1; }
   .aktionen > .knopf, .aktionen > .knopfZweit { flex: 1 1 100%; }
@@ -138,3 +136,48 @@
 .beilage { display: grid; gap: 4px; min-width: 0; }
 .beilage input { font: inherit; font-size: 14px; max-width: 100%; }
 .beilageName { font-weight: 600; font-size: 14.5px; }
+/* Example picker and the compact "loaded" bar that replaces the upload form once a report is shown. */
+.beispiele { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.beispiel {
+  font: inherit; color: inherit; text-align: left; cursor: pointer; display: grid; gap: 4px;
+  padding: 14px 16px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--fill);
+}
+.beispiel:hover:not(:disabled) { background: var(--fill-strong); }
+.beispiel:disabled { opacity: .6; cursor: wait; }
+.beispielZahl { color: var(--accent); font-weight: 600; font-size: 14px; }
+.geladen { max-width: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 14px 20px; border-radius: var(--r-lg); }
+.geladen p { margin: 0; }
+.haken { color: var(--sev-ok); font-weight: 700; }
+
+/* Two numbered inputs (team spec): 1 bill of quantities, 2 optional regulation document. */
+.schrittTitel { margin: 0; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.schrittTitel small { font-weight: 400; color: var(--muted); font-size: 12.5px; }
+.schrittNr { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--button); color: var(--button-ink); font-size: 12px; font-weight: 700; }
+.zweiteDatei {
+  position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; font-size: 13.5px; color: var(--muted);
+  border: 1px dashed var(--line); border-radius: var(--r-md); background: var(--fill);
+}
+.zweiteDatei:hover { border-color: var(--accent); color: var(--ink); }
+.zweiteDatei > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.knopf { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Start screen (team sketch): big upload button, list of current files, Evaluate. */
+.start { width: 100%; max-width: 640px; margin: 24px auto 0; display: grid; gap: 14px; justify-items: center; text-align: center; }
+.startTitel { margin: 0; font-size: 22px; }
+.hochladen {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-width: 260px; padding: 22px 40px;
+  border-radius: var(--r-md); border: 2px solid var(--button); background: var(--card); color: var(--ink); font-size: 18px; font-weight: 700; cursor: pointer;
+}
+.hochladen:hover, .hochladen.ablageAktiv { background: var(--button); color: var(--button-ink); }
+.dateiListe { width: 100%; display: grid; gap: 6px; padding: 10px; border: 1px dashed var(--line); border-radius: var(--r-lg); background: var(--card); text-align: left; }
+.leerListe { margin: 6px 0; text-align: center; color: var(--muted); font-size: 13px; }
+.dateiZeile { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto 28px; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--r-md); background: var(--fill); }
+.dateiName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+.dateiName small { color: var(--muted); margin-left: 6px; }
+.dateiZeile select { font: inherit; font-size: 12.5px; padding: 3px 6px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); color: var(--ink); }
+.entfernen { border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; border-radius: var(--r-md); }
+.entfernen:hover { background: var(--fill-strong); color: var(--ink); }
+.auswerten { min-width: 200px; justify-content: center; font-size: 15px; min-height: 40px; }
+.beispielZeile { margin: 0; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; }
+.beispielChip { font: inherit; font-size: 12.5px; padding: 4px 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); color: var(--ink); cursor: pointer; }
+.beispielChip:hover { border-color: var(--accent); }

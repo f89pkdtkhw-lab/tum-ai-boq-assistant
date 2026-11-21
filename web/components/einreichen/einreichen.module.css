@@ -1,0 +1,38 @@
+.seite { max-width: 960px; margin: 0 auto; padding: 20px 20px 40px; display: grid; gap: 14px; }
+.titel { margin: 0; font-size: 22px; }
+.karte { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); scroll-margin-top: 70px; }
+.abschnittBlock { scroll-margin-top: 70px; }
+.abschnitt { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.ablage { position: relative; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: var(--r-md); background: var(--fill); cursor: pointer; font-weight: 600; }
+.ablage:hover { border-color: var(--accent); }
+.ablage input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ablage small { color: var(--muted); font-weight: 400; }
+.ok { margin: 0; color: var(--good); }
+.fehler { margin: 0; color: var(--bad); }
+.rahmen { overflow: auto; max-height: 340px; border: 1px solid var(--line); border-radius: var(--r-md); }
+.tabelle { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tabelle th { position: sticky; top: 0; background: var(--fill); text-align: left; font-size: 12px; color: var(--muted); padding: 6px 10px; }
+.tabelle td { padding: 6px 10px; border-top: 1px solid var(--line); }
+.rechts { text-align: right !important; font-variant-numeric: tabular-nums; }
+.zeile { display: flex; justify-content: space-between; align-items: center; }
+.klein { color: var(--muted); font-size: 12.5px; }
+.leise { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: var(--r-md); padding: 4px 10px; cursor: pointer; }
+
+/* Tabs: unit prices | closed project */
+.reiter { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.reiter button { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px; font: inherit; font-size: 15px; font-weight: 600; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; cursor: pointer; }
+.reiter button:hover { color: var(--ink); }
+.reiter button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.knoepfe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.knoepfe .ablage { flex: 1 1 260px; }
+/* Own price form */
+.formular { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; align-items: end; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--fill); }
+.formular h3 { grid-column: 1 / -1; margin: 0; font-size: 14px; }
+.formular label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.formular .breit { grid-column: span 2; }
+.formular input { font: inherit; font-size: 14px; color: var(--ink); min-height: 38px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); }
+.primaer { min-height: 38px; font: inherit; font-weight: 600; color: #fff; background: var(--accent); border: 0; border-radius: var(--r-md); padding: 0 14px; cursor: pointer; }
+.leise { min-height: 34px; display: inline-flex; align-items: center; gap: 6px; }
+.weg { font: inherit; font-size: 16px; line-height: 1; width: 26px; height: 26px; border: 1px solid transparent; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+.weg:hover { border-color: var(--line); color: var(--bad); }
+@media (max-width: 600px) { .formular .breit { grid-column: 1 / -1; } }

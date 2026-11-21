@@ -3,8 +3,8 @@
 .label { font-size: 13px; font-weight: 600; color: var(--pb-muted); }
 .feld { position: relative; flex: 1 1 260px; min-width: 0; max-width: 520px; }
 .eingabe {
-  width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; min-height: 40px; padding: 8px 40px 8px 14px;
-  border-radius: 999px; border: 1px solid var(--pb-line); background: var(--pb-card); color: inherit;
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 13.5px; min-height: 34px; padding: 8px 40px 8px 14px;
+  border-radius: var(--r-sm); border: 1px solid var(--pb-line); background: var(--pb-card); color: inherit;
 }
 .eingabe:hover, .eingabe:focus { border-color: var(--pb-accent); }
 .eingabe::-webkit-search-cancel-button { display: none; }
