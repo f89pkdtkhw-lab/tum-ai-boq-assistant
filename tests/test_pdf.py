@@ -5,7 +5,7 @@ from api.app.lv.pdf import import_with_blocks
 
 
 def dump_pdf_result():
-    pdf_path = Path(r"C:\Users\darme\Desktop\tum-ai-boq-assistant\dataset\HEM2301-2_Gesamt-LV.pdf")
+    pdf_path = Path(r"C:\Users\darme\Desktop\tum-ai-boq-assistant\dataset\LV_00_Roh_und_Erdauarbeiten.pdf")
     result = import_with_blocks(pdf_path.name, pdf_path.read_bytes())
 
     total_gp = round(sum(p.gp or 0.0 for p in result.lv.positionen), 2)

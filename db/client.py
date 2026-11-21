@@ -7,8 +7,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import duckdb
-from fastapi import APIRouter, FastAPI, HTTPException, Query
-from pydantic import BaseModel, Field, field_validator
+from fastapi import APIRouter, FastAPI, File, Form, HTTPException, Query, UploadFile
+from pydantic import BaseModel, Field
+
+from api.app.lv.pdf import import_with_blocks
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_DB_PATH = BASE_DIR / "database.duckdb"
@@ -83,6 +85,36 @@ def normalize_tag(raw: str) -> str:
     return tag
 
 
+def _extract_tags_from_filename(filename: Optional[str]) -> List[str]:
+    """Extract normalized tags from a filename matching 'estimated_tag1_tag2_tag3.pdf'."""
+    if not filename:
+        return []
+
+    stem = Path(filename).stem
+    parts = stem.split("_")
+
+    if parts and parts[0].lower() == "estimated":
+        tags: List[str] = []
+        for raw_tag in parts[1:]:
+            if raw_tag.strip():
+                tags.append(normalize_tag(raw_tag))
+        return tags
+
+    return []
+
+
+def _parse_pdf_to_dict(filename: str, content: bytes) -> Dict[str, Any]:
+    """Parse PDF content and return the output structure up to the warnings key."""
+    result = import_with_blocks(filename, content)
+    total_gp = round(sum(p.gp or 0.0 for p in result.lv.positionen), 2)
+    lv_dict = result.lv.model_dump() if hasattr(result.lv, "model_dump") else result.lv.dict()
+
+    return {
+        "total_gp_calculated": total_gp,
+        "lv": lv_dict,
+    }
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     with _connect_history(read_only=False):
@@ -98,21 +130,6 @@ app = FastAPI(title="DuckDB Test Results & Price API", lifespan=lifespan)
 
 
 # --- Pydantic Models (Database 1: Records) ---
-
-class RecordCreate(BaseModel):
-    id: Optional[int] = Field(default=None, description="Auto-generated if omitted")
-    date: Optional[str] = Field(default=None, description="Format: YYYY-MM-DD HH:MM:SS. Auto-generated if omitted")
-    description: str
-    tags: List[str] = []
-    expected_json: Union[Dict[str, Any], List[Any]]
-    actual_json: Union[Dict[str, Any], List[Any]]
-    note: str = ""
-
-    @field_validator("tags")
-    @classmethod
-    def validate_and_normalize_tags(cls, values: List[str]) -> List[str]:
-        return [normalize_tag(v) for v in values]
-
 
 class RecordResponse(BaseModel):
     id: int
@@ -197,10 +214,29 @@ def get_all_tags():
 
 
 @router.post("/records", response_model=RecordResponse, status_code=201)
-def insert_record(record: RecordCreate):
-    """Insert a new test result record into the database."""
-    record_id = record.id if record.id is not None else int(time.time() * 1000)
-    record_date = record.date if record.date else datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+async def insert_record(
+    estimated_file: UploadFile = File(..., description="Estimated PDF file (e.g., estimated_tag1_tag2.pdf)"),
+    real_file: UploadFile = File(..., description="Ground-truth / real PDF file"),
+    description: str = Form(default=""),
+    note: str = Form(default=""),
+):
+    """Parse two PDF files, extract tags from the estimated filename, and insert a record."""
+    record_id = int(time.time() * 1000)
+    record_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        tags = _extract_tags_from_filename(estimated_file.filename)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    try:
+        estimated_bytes = await estimated_file.read()
+        real_bytes = await real_file.read()
+
+        actual_data = _parse_pdf_to_dict(estimated_file.filename or "estimated.pdf", estimated_bytes)
+        expected_data = _parse_pdf_to_dict(real_file.filename or "real.pdf", real_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"PDF parsing error: {str(e)}")
 
     try:
         with _connect_history(read_only=False) as conn:
@@ -212,11 +248,11 @@ def insert_record(record: RecordCreate):
                 [
                     record_id,
                     record_date,
-                    record.description,
-                    record.tags,
-                    json.dumps(record.expected_json),
-                    json.dumps(record.actual_json),
-                    record.note,
+                    description,
+                    tags,
+                    json.dumps(expected_data, ensure_ascii=False),
+                    json.dumps(actual_data, ensure_ascii=False),
+                    note,
                 ],
             )
     except Exception as e:
@@ -225,11 +261,11 @@ def insert_record(record: RecordCreate):
     return RecordResponse(
         id=record_id,
         date=record_date,
-        description=record.description,
-        tags=record.tags,
-        expected_json=record.expected_json,
-        actual_json=record.actual_json,
-        note=record.note,
+        description=description,
+        tags=tags,
+        expected_json=expected_data,
+        actual_json=actual_data,
+        note=note,
     )
 
 
