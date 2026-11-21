@@ -1,7 +1,7 @@
 // Optional price list next to the bill (issue #115, epic #93 D4/B6).
 import type { Preisliste } from "./api";
 
-export const PREISLISTE_FORMATE = [".csv", ".xlsx", ".x84", ".d84", ".json"];
+export const PREISLISTE_FORMATE = [".csv", ".xlsx", ".x84", ".d84", ".x86", ".d86", ".json"];
 
 export function preislisteText(p: Preisliste): string {
   const n = p.eintraege.length;

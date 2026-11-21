@@ -358,7 +358,7 @@ export function LvUpload() {
           <legend>Optional attachments</legend>
           {([
             ["regelwerk", "Regulation / specification document", REGELWERK_FORMATE, "PDF, TXT or MD: its norm references and key values are checked against the bill."],
-            ["preisliste", "Price list", PREISLISTE_FORMATE, "CSV, XLSX, GAEB X84/D84 or JSON: prices every item and shows the estimated bill."],
+            ["preisliste", "Price list", PREISLISTE_FORMATE, "CSV, XLSX, GAEB X84/D84/X86/D86 or JSON: prices every item and shows the estimated bill."],
           ] as const).map(([feld, name, formate, text]) => (
             <div key={feld} className={styles.beilage}>
               <label htmlFor={`beilage-${feld}`} className={styles.beilageName}>{name}</label>

@@ -291,9 +291,9 @@ def lies_preisliste(dateiname: str, inhalt: bytes) -> Preisliste:
         waehrung = "EUR"
     elif endung == ".pdf":
         raise ValueError("PDF price lists are not read (prices are never inferred from prose). "
-                         "Please upload CSV, XLSX, GAEB X84/D84 or JSON.")
+                         "Please upload CSV, XLSX, GAEB X84/D84/X86/D86 or JSON.")
     else:
-        raise ValueError("Unsupported price list format. Allowed: CSV, XLSX, GAEB X84/D84, JSON.")
+        raise ValueError("Unsupported price list format. Allowed: CSV, XLSX, GAEB X84/D84/X86/D86, JSON.")
     if not eintraege:
         warnungen.append("The price list contains no usable entries.")
     return Preisliste(id=pid, dateiname=dateiname, waehrung=waehrung, eintraege=eintraege, warnungen=warnungen)

@@ -180,3 +180,27 @@ def test_unreadable_db_gives_503_on_get(temp_price_db):
     temp_price_db.write_bytes(b"not a duckdb file")
     r = client.get("/api/db/preise")
     assert r.status_code == 503 and "cannot be read" in r.json()["detail"]
+
+
+def _d86_bytes():
+    def record(kind, fields):
+        line = list(" " * 80)
+        line[:2] = kind
+        for start, text in fields:
+            line[start:start + len(text)] = text
+        return "".join(line)
+    return "\r\n".join([
+        record("00", [(10, "86"), (62, "1122PPPPI"), (72, "90")]),
+        record("21", [(2, "01010001 "), (11, "NN"), (23, "00000002000"), (34, "m2")]),
+        record("23", [(2, "01010001 "), (12, "00000012500"), (24, "000000002500")]),
+        record("25", [(2, "Synthetic wall")]),
+        record("99", []),
+    ]).encode("cp850")
+
+
+@pytest.mark.parametrize("name", ["preise.d86", "PREISE.D86"])
+def test_priced_d86_import_returns_price_list(name):
+    r = upload(name, _d86_bytes())
+    assert r.status_code == 200, r.text
+    liste = r.json()
+    assert [(e["oz"], e["einheit"], e["ep"]) for e in liste["eintraege"]] == [("01.01.0001", "m²", 12.5)]
