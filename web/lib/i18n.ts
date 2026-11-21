@@ -63,6 +63,10 @@ export const DE: Record<string, string> = {
   "failed": "fehlgeschlagen",
   "skipped": "übersprungen",
   "{step} is running.": "{step} läuft.",
+  // #165: progress bar of the background analysis
+  "Step {n} of {total}": "Schritt {n} von {total}",
+  "Analysis progress": "Analysefortschritt",
+  "Finished steps": "Erledigte Schritte",
   "Starts after import.": "Startet nach dem Import.",
   "Not started.": "Nicht gestartet.",
   "Running review rules …": "Prüfregeln laufen …",

@@ -112,6 +112,14 @@ export type AiEvaluation = {
   reason?: string | null; // D #168: why a configured model did not answer
 };
 
+// Background analysis job with progress (#165): POST /api/lv/analyse/start, then poll GET /api/lv/analyse/status/{job_id}.
+export type AnalyseJobAnfrage = { lv: LV; regelwerk: Regelwerk | null; preisliste: Preisliste | null; nur_pruefen?: boolean };
+export type AnalyseStatus = {
+  job_id: string; status: "laeuft" | "fertig" | "fehler"; schritt: number; schritte_gesamt: number; prozent: number;
+  meldung: string; fertige_schritte: { schritt: number; meldung: string; sekunden: number }[]; fehler: string[];
+  sekunden: number; ergebnis?: Pruefbericht | null;
+};
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/backend${path}`, init);
   const body = await response.json().catch(() => ({}));
@@ -148,6 +156,10 @@ export const api = {
   pruefen: (lv: LV) => call<Pruefbericht>("/api/lv/pruefen", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(lv),
   }),
+  starteAnalyse: (body: AnalyseJobAnfrage) => call<{ job_id: string }>("/api/lv/analyse/start", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  }),
+  analyseStatus: (jobId: string) => call<AnalyseStatus>(`/api/lv/analyse/status/${encodeURIComponent(jobId)}`),
   keyState: () => call<KeyState>("/api/ai/key"),
   setKey: (body: { key: string; model?: string; persist?: boolean }) => call<KeyState>("/api/ai/key", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
