@@ -776,12 +776,18 @@ def pruefe_normen(lv: LV, register: Register | None = None) -> list[Finding]:
 
 
 def pruefe_normen_sicher(lv: LV) -> list[Finding]:
-    """Hook for `pruefen()` (N2 + N3 findings): [] when NORMPRUEFUNG is off or the norm check fails
-    (the error is logged)."""
+    """Hook for `pruefen()` (N2 + N3 findings, then the N5 AI hints): [] when NORMPRUEFUNG is off or
+    the norm check fails (the error is logged). N5 has its own switch and guard in `normen_ki`."""
     if not normpruefung_aktiv():
         return []
     try:
-        return pruefe_normen(lv)
+        findings = pruefe_normen(lv)
     except Exception:
         logger.exception("Norm check failed; the report is returned without norm findings.")
         return []
+    try:
+        from .normen_ki import recherchiere_normen_sicher  # late import: normen_ki builds on this module
+        return findings + recherchiere_normen_sicher(lv)
+    except Exception:
+        logger.exception("Norm check N5 failed; the report is returned without N5 hints.")
+        return findings
