@@ -14,7 +14,7 @@ The tool imports the PDF with `app.lv.importer.importiere` and reviews it with `
 
 | | |
 | --- | --- |
-| Run on | 21 November 2026, Python 3.12.0, `main` at `9c83448` plus the `ACCEPTED` update of this change (#89–#92 rule IDs for gold #7, #9, #10, #14) |
+| Run on | 21 November 2026, Python 3.12.0, `main` at `953fa5f` plus the `ACCEPTED` update of this change (#143 rule IDs for gold #6, #8) |
 | LV file | `lv_rohbau_efh.pdf`, SHA-256 prefix `959ef674843a484d` |
 | Gold file | `erwartung.md`, SHA-256 prefix `ed098fba8aa4f274` |
 | Repeatability | Three separate invocations (three timing runs each) gave identical hits and findings; only the timing varies |
@@ -31,16 +31,16 @@ The tool imports the PDF with `app.lv.importer.importiere` and reviews it with `
 
 | Metric | Value |
 | --- | --- |
-| Gold entries hit | 14 of 25 |
-| Gold entries missed | 11 of 25 |
+| Gold entries hit | 16 of 25 |
+| Gold entries missed | 9 of 25 |
 | Hits only by a generic rule (position type, not the specific point) | 1 |
-| Entries the gold marks as fixed-rule findable, hit | 11 of 13 |
-| Hits by gold category | F 7/11, N 0/2, P 3/4, R 4/8 |
-| Findings considered (MOCK_* excluded: 1) | 31 |
-| Findings matching a gold entry | 30 |
+| Entries the gold marks as fixed-rule findable, hit | 12 of 13 |
+| Hits by gold category | F 9/11, N 0/2, P 3/4, R 4/8 |
+| Findings considered (MOCK_* excluded: 1) | 34 |
+| Findings matching a gold entry | 33 |
 | False alarms (findings matching no gold entry) | 1 |
 | Items imported from the PDF | 100 |
-| Runtime, median of 3 runs (min–max) | import 2.72 s, review 0.020 s, total 2.75 s (2.74–2.80 s) |
+| Runtime, median of 3 runs (min–max) | import 2.65 s, review 0.067 s, total 2.70 s (2.56–2.95 s) |
 
 | # | Cat. | Gold OZ | Finding type | Result | Matched findings (OZ rule) / why missed |
 | --- | --- | --- | --- | --- | --- |
@@ -49,9 +49,9 @@ The tool imports the PDF with `app.lv.importer.importiere` and reviews it with `
 | 3 | F | 9...3 | missing quantity/unit (standard citation needs the model) | HIT | 9...3 EINHEIT_FEHLT; 9...3 MENGE_FEHLT |
 | 4 | F | 6...39 | short text contradicts long text | HIT | 6...39 TEXT_WIDERSPRUCH |
 | 5 | F | 6...40 | short text contradicts long text | HIT | 6...40 TEXT_WIDERSPRUCH |
-| 6 | F | 5...15, 5...16 | implausible dimension / unit error | missed | no fixed rule implements this finding type |
+| 6 | F | 5...15, 5...16 | implausible dimension / unit error | HIT | 5...15 MASS_EINHEIT_UNPLAUSIBEL; 5...16 MASS_EINHEIT_UNPLAUSIBEL |
 | 7 | F | 6...21 | typo in exposure classes | HIT | 6...21 NORM_KLASSE_UNGUELTIG |
-| 8 | F | 4...3 | contradictory manufacturer (model) | missed | no fixed rule implements this finding type |
+| 8 | F | 4...3 | contradictory manufacturer | HIT | 4...3 FABRIKAT_WIDERSPRUCH |
 | 9 | F | 4...1–4...4 | wrong standard for material | HIT | 4...1 NORM_PRODUKTNORM_WIDERSPRUCH; 4...2 NORM_PRODUKTNORM_WIDERSPRUCH; 4...3 NORM_PRODUKTNORM_WIDERSPRUCH; 4...4 NORM_PRODUKTNORM_WIDERSPRUCH |
 | 10 | P | 4...4 | deviating insulation grade | HIT | 4...4 BEZEICHNUNG_ABWEICHUNG |
 | 11 | P | 3...1 / 3...2 / 4...4 / 4...5 | inconsistent layer areas | HIT | 3...1 MENGE_SCHICHTEN_ABWEICHUNG; 4...4 MENGE_SCHICHTEN_ABWEICHUNG |
@@ -76,10 +76,10 @@ False alarms by rule:
 
 ## What this says
 
-- The fixed rules find **14 of 25** documented findings and **11 of the 13** that the gold list itself marks as findable by a fixed rule. That is not a 100 % result and is not presented as one.
-- **1 of 31** non-mock findings matches no gold entry (false alarm by the definition above): `RISK_ZULAGE` on 5...2. The 16 `EINHEIT_TIPPFEHLER` false alarms of the first run are gone since #89 reports unit spellings only on mixed spellings.
-- **9** of the 11 missed entries are marked in the gold list as needing the model (four of them concern the preamble, which has no item OZ). The model review is an offline mock here, so the tool cannot find them in this run.
-- Runtime: import of the 40-page PDF dominates (median 2.7 s); the review itself takes about 20 ms. Total median 2.75 s on this machine.
+- The fixed rules find **16 of 25** documented findings and **12 of the 13** that the gold list itself marks as findable by a fixed rule. That is not a 100 % result and is not presented as one.
+- **1 of 34** non-mock findings matches no gold entry (false alarm by the definition above): `RISK_ZULAGE` on 5...2. The 16 `EINHEIT_TIPPFEHLER` false alarms of the first run are gone since #89 reports unit spellings only on mixed spellings.
+- **8** of the 9 missed entries are marked in the gold list as needing the model (four of them concern the preamble, which has no item OZ). The model review is an offline mock here, so the tool cannot find them in this run. The ninth is #25 (spelling errors), for which no rule exists.
+- Runtime: import of the 40-page PDF dominates (median 2.65 s); the review itself takes about 70 ms. Total median 2.70 s on this machine.
 
 ## Change since the first run (6 of 25, 18 false alarms)
 
@@ -88,11 +88,12 @@ Every gain comes from a new or changed rule on `main`; `ACCEPTED` was extended o
 - **#4, #5:** `TEXT_WIDERSPRUCH` now also compares designations (#73).
 - **#11, #12:** `MENGE_SCHICHTEN_ABWEICHUNG` takes the component from the long text and covers small layer areas (#74, #91).
 - **#7:** `NORM_KLASSE_UNGUELTIG` (#90). **#9:** `NORM_PRODUKTNORM_WIDERSPRUCH` (#90). **#10:** `BEZEICHNUNG_ABWEICHUNG` (#91). **#14:** `NORM_ZURUECKGEZOGEN` (#92).
+- **#6:** `MASS_EINHEIT_UNPLAUSIBEL` and **#8:** `FABRIKAT_WIDERSPRUCH`, the text plausibility rules (#143). Before `ACCEPTED` listed them, they counted as 3 false alarms.
 - False alarms 18 → 1: `EINHEIT_TIPPFEHLER` no longer fires on single consistent spellings (#89).
 
 ## Why the rule-findable entries are still missed
 
-- **#6 (implausible dimension / unit error)** and **#25 (spelling errors):** no rule exists for dimension/unit plausibility or spelling.
+- **#25 (spelling errors):** no spelling rule exists.
 
 After a rule changes, rerun the command and update this file; extend `ACCEPTED` only together with a new rule.
 
@@ -110,6 +111,6 @@ After a rule changes, rerun the command and update this file; extend `ACCEPTED` 
 
 | Placeholder in `pitch/pitch-en.md` | Value from this run |
 | --- | --- |
-| recall from `data/vergleich.md` | 14 of 25 documented findings (11 of 13 rule-findable) |
-| false alarms from `data/vergleich.md` | 1 of 31 non-mock findings matches no documented finding |
-| manual versus tool time per LV | not measured; tool total median 2.75 s for import plus review, no manual figure |
+| recall from `data/vergleich.md` | 16 of 25 documented findings (12 of 13 rule-findable) |
+| false alarms from `data/vergleich.md` | 1 of 34 non-mock findings matches no documented finding |
+| manual versus tool time per LV | not measured; tool total median 2.70 s for import plus review, no manual figure |
