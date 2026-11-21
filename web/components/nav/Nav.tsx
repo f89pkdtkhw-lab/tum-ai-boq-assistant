@@ -19,6 +19,7 @@ const HAUPT: Eintrag[] = [
 const WEITERE: Eintrag[] = [
   { href: "/history", label: "History", icon: "history" },
   { href: "/wettbewerb", label: "Competitors", icon: "chart" },
+  { href: "/marge", label: "Margin", icon: "gauge" },
   { href: "/preise", label: "Price database", icon: "euro" },
   { href: "/schritte", label: "Step reports", icon: "steps" },
   { href: "/export", label: "Export", icon: "download" },
