@@ -1,0 +1,605 @@
+{
+  "stand": "2026-11-21",
+  "hinweis": "Curated metadata only, no standard text. Status from public catalogue pages on the retrieval date; geprueft stays false until a person checks the entry.",
+  "eintraege": [
+    {
+      "norm_id": "ATV DIN 18300",
+      "familie": "ATV DIN 18300",
+      "titel": "VOB/C ATV Erdarbeiten (earthworks)",
+      "status": "gueltig",
+      "aktuelle_ausgabe": "2019-09",
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Erdarbeiten"
+      ],
+      "kalkulationsrelevant": true,
+      "kennwerte": [
+        "Since VOB/C 2015/2016 the subsoil is described in Homogenbereiche instead of Boden- und Felsklassen (Bodenklassen)",
+        "Editions before 2015 (e.g. 2012-09) still use Bodenklassen; quantities and prices per Bodenklasse need a Homogenbereich description"
+      ],
+      "quelle": {
+        "url": "https://www.vob-online.de/de/vob-gesamtausgaben/vob-2019/vob-2019-teil-c",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://www.dinmedia.de/en/standard/din-18300/310840319"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "VOB online lists the 2019-09 edition as current; DIN Media lists 2019-09 as replacing 2016-09. Edition 2012-09 is outdated."
+    },
+    {
+      "norm_id": "DIN 4094",
+      "familie": "DIN 4094",
+      "titel": "Baugrund – Felduntersuchungen (series)",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Baugrunderkundung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-4094/1636432",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Parts 1 to 3 are replaced by parts of DIN EN ISO 22476 (see the part entries). A reference without a part number is not assessed."
+    },
+    {
+      "norm_id": "DIN 4094-1",
+      "familie": "DIN 4094",
+      "titel": "Baugrund – Felduntersuchungen – Drucksondierungen (cone penetration tests)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [
+        "DIN EN ISO 22476-1"
+      ],
+      "gewerke": [
+        "Baugrunderkundung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-4094-1/46892709",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://www.dinmedia.de/en/standard/din-en-iso-22476-1/356647766"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media: 2002-06 edition replaced by DIN EN ISO 22476-1:2013-10, which is replaced by DIN EN ISO 22476-1:2023-04."
+    },
+    {
+      "norm_id": "DIN 4094-2",
+      "familie": "DIN 4094",
+      "titel": "Baugrund – Felduntersuchungen – Bohrlochrammsondierung (borehole dynamic probing)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [
+        "DIN EN ISO 22476-14"
+      ],
+      "gewerke": [
+        "Baugrunderkundung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-4094-2/60981862",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://www.dinmedia.de/en/standard/din-en-iso-22476-14/316990824"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media: 2003-05 edition replaced by DIN EN ISO 22476-14:2020-08."
+    },
+    {
+      "norm_id": "DIN 4094-3",
+      "familie": "DIN 4094",
+      "titel": "Baugrund – Felduntersuchungen – Rammsondierungen (dynamic probing)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [
+        "DIN EN ISO 22476-2"
+      ],
+      "gewerke": [
+        "Baugrunderkundung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-4094-3/43793012",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://www.dinmedia.de/en/standard/din-en-iso-22476-2/148305895"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media: 2002-01 edition replaced by DIN EN ISO 22476-2:2005-04, which is replaced by DIN EN ISO 22476-2:2012-03."
+    },
+    {
+      "norm_id": "DIN 1055",
+      "familie": "DIN 1055",
+      "titel": "Einwirkungen auf Tragwerke (actions on structures, series)",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Tragwerksplanung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-1055-3/85968298",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Parts 3 and 4 are replaced by Eurocode 1 (DIN EN 1991, see the part entries); the other parts are not checked yet. A reference without a checked part is not assessed."
+    },
+    {
+      "norm_id": "DIN 1055-3",
+      "familie": "DIN 1055",
+      "titel": "Einwirkungen auf Tragwerke – Eigen- und Nutzlasten (self-weight and imposed loads)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [
+        "DIN EN 1991-1-1",
+        "DIN EN 1991-1-1/NA"
+      ],
+      "gewerke": [
+        "Tragwerksplanung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-1055-3/85968298",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media: 2006-03 edition replaced by DIN EN 1991-1-1:2010-12 and DIN EN 1991-1-1/NA:2010-12."
+    },
+    {
+      "norm_id": "DIN 1055-4",
+      "familie": "DIN 1055",
+      "titel": "Einwirkungen auf Tragwerke – Windlasten (wind loads)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [
+        "DIN EN 1991-1-4",
+        "DIN EN 1991-1-4/NA"
+      ],
+      "gewerke": [
+        "Tragwerksplanung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-1055-4/76762731",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://www.dinmedia.de/en/standard/din-en-1991-1-4-na/134751904"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media: 2005-03 edition replaced by DIN EN 1991-1-4:2010-12 and DIN EN 1991-1-4/NA:2010-12; the national annex is replaced by DIN EN 1991-1-4/NA:2024-08."
+    },
+    {
+      "norm_id": "DIN 1045",
+      "familie": "DIN 1045",
+      "titel": "Tragwerke aus Beton, Stahlbeton und Spannbeton (series)",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Betonarbeiten"
+      ],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://gueteschutz-beton.de/infoblatt-zu-neuer-din-1045/",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "The parts were reissued in 2023-08 (see the part entries). A reference without a part number is not assessed."
+    },
+    {
+      "norm_id": "DIN 1045-1",
+      "familie": "DIN 1045",
+      "titel": "Tragwerke aus Beton – Planung, Bemessung und Konstruktion (design)",
+      "status": "gueltig",
+      "aktuelle_ausgabe": "2023-08",
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Betonarbeiten",
+        "Tragwerksplanung"
+      ],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-1045-1/369667655",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://www.dinmedia.de/en/standard/din-1045-1/104466534"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media: edition 2008-08 replaced by DIN 1045-1:2023-08 together with DIN EN 1992-1-1 + /NA documents. References to an edition before 2023-08 are outdated."
+    },
+    {
+      "norm_id": "DIN 1045-2",
+      "familie": "DIN 1045",
+      "titel": "Tragwerke aus Beton – Beton (concrete specification, national application of DIN EN 206)",
+      "status": "gueltig",
+      "aktuelle_ausgabe": "2023-08",
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Betonarbeiten"
+      ],
+      "kalkulationsrelevant": true,
+      "kennwerte": [
+        "New edition introduces Betonbauqualitätsklassen (BBQ) and the concrete classes BK-N, BK-E and BK-S",
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XC1",
+          "value": "C16/20",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XC2",
+          "value": "C16/20",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XC3",
+          "value": "C20/25",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XC4",
+          "value": "C25/30",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XD1",
+          "value": "C30/37",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XF1",
+          "value": "C25/30",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        }
+      ],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-1045-2/369550272",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://gueteschutz-beton.de/infoblatt-zu-neuer-din-1045/"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media: 2023-08 replaces 2008-08. References to an edition before 2023-08 are outdated."
+    },
+    {
+      "norm_id": "DIN 1053",
+      "familie": "DIN 1053",
+      "titel": "Mauerwerk (masonry, series)",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Mauerarbeiten"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dgfm.de/mauerwerksbau/nationale-normung",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Part 1 is withdrawn (see the part entry); the other parts are not checked yet. A reference without a part number is not assessed."
+    },
+    {
+      "norm_id": "DIN 1053-1",
+      "familie": "DIN 1053",
+      "titel": "Mauerwerk – Berechnung und Ausführung (design and execution)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [
+        "DIN EN 1996"
+      ],
+      "gewerke": [
+        "Mauerarbeiten",
+        "Tragwerksplanung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dgfm.de/mauerwerksbau/nationale-normung",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "DGfM: DIN 1053-1:1996-11 was withdrawn at the turn of 2012/2013; design and execution of masonry now follow DIN EN 1996 with national annexes."
+    },
+    {
+      "norm_id": "DIN 1988-2",
+      "familie": "DIN 1988",
+      "titel": "Technische Regeln für Trinkwasser-Installationen – Planung und Ausführung",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [
+        "DIN EN 806-2",
+        "DIN 1988-200"
+      ],
+      "gewerke": [
+        "Sanitär"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-1988-2/1405458",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://www.dinmedia.de/en/standard/din-1988-200/151775404"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media: 1988-12 edition replaced by DIN 1988-200:2012-05 and DIN EN 806-2:2005-06."
+    },
+    {
+      "norm_id": "DIN VDE 0675-6",
+      "familie": "DIN VDE 0675",
+      "titel": "Überspannungsableiter für Wechselspannungsnetze 100 V bis 1000 V (surge arresters)",
+      "status": "zurueckgezogen",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [
+        "DIN EN IEC 61643-11"
+      ],
+      "gewerke": [
+        "Elektro"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/draft-standard/din-vde-0675-6/1493882",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://www.dke.de/de/normen-standards/dokument?id=7120467&type=dke%7Cdokument"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media lists the 1989-11 document as withdrawn and points to DIN EN 61643-11 (VDE 0675-6-11); that line continues to DIN EN 61643-11:2019-03, partly replaced by DIN EN IEC 61643-11 (VDE 0675-6-11):2026-10."
+    },
+    {
+      "norm_id": "DIN 18196",
+      "familie": "DIN 18196",
+      "titel": "Erd- und Grundbau – Bodenklassifikation für bautechnische Zwecke",
+      "status": "gueltig",
+      "aktuelle_ausgabe": "2023-02",
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Erdarbeiten",
+        "Baugrunderkundung"
+      ],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18196/360893361",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "DIN Media: 2023-02 is current and replaces 2011-05."
+    },
+    {
+      "norm_id": "DIN 18195",
+      "familie": "DIN 18195",
+      "titel": "Abdichtung von Bauwerken – Begriffe (waterproofing terminology)",
+      "status": "teilweise_ersetzt",
+      "aktuelle_ausgabe": "2025-12",
+      "ersetzt_durch": [
+        "DIN 18531",
+        "DIN 18532",
+        "DIN 18533",
+        "DIN 18534",
+        "DIN 18535"
+      ],
+      "gewerke": [
+        "Abdichtung"
+      ],
+      "kalkulationsrelevant": true,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18195/391977614",
+        "abgerufen": "2026-11-21",
+        "weitere_urls": [
+          "https://www.dinmedia.de/en/standard/din-18533-1/272716073"
+        ]
+      },
+      "geprueft": false,
+      "hinweis": "Only outdated as waterproofing execution standard: the former parts DIN 18195-1 to -10 were replaced in 2017-07 by DIN 18531 to DIN 18535 (see docs/domaene.md). DIN 18195 itself still exists as terminology standard (2017-07, now 2025-12)."
+    },
+    {
+      "norm_id": "DIN 4020",
+      "familie": "DIN 4020",
+      "titel": "Geotechnische Untersuchungen für bautechnische Zwecke",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Baugrunderkundung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-4020/65230325",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Status not checked yet; a person must review it before the tool may use it. The URL is the catalogue entry to start from."
+    },
+    {
+      "norm_id": "DIN 4124",
+      "familie": "DIN 4124",
+      "titel": "Baugruben und Gräben – Böschungen, Verbau, Arbeitsraumbreiten",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Erdarbeiten",
+        "Verbau"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-4124/147362129",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Status not checked yet; a person must review it before the tool may use it. The URL is the catalogue entry to start from."
+    },
+    {
+      "norm_id": "DIN EN ISO 14688-1",
+      "familie": "DIN EN ISO 14688",
+      "titel": "Geotechnische Erkundung – Benennung und Beschreibung von Boden",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Baugrunderkundung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/resource/blob/1093348/33b1d856e1cf4361df8c9495d36c8d92/inhalt-tiefbau-normen-data.pdf",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Status not checked yet; a person must review it before the tool may use it. The URL is the catalogue entry to start from."
+    },
+    {
+      "norm_id": "DIN EN 1610",
+      "familie": "DIN EN 1610",
+      "titel": "Einbau und Prüfung von Abwasserleitungen und -kanälen",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Kanalbau"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-en-1610/231570542",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Status not checked yet; a person must review it before the tool may use it. The URL is the catalogue entry to start from."
+    },
+    {
+      "norm_id": "DIN EN 206",
+      "familie": "DIN EN 206",
+      "titel": "Beton – Festlegung, Eigenschaften, Herstellung und Konformität",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Betonarbeiten"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-en-206/329082925",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Status not checked yet; a person must review it before the tool may use it. The URL is the catalogue entry to start from."
+    },
+    {
+      "norm_id": "DIN 4109",
+      "familie": "DIN 4109",
+      "titel": "Schallschutz im Hochbau",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Hochbau"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/technical-rule/din-4109-beiblatt-2/1496097",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Status not checked yet; a person must review it before the tool may use it. The URL is the catalogue entry to start from. The URL is a supplement of the series, not the main part."
+    },
+    {
+      "norm_id": "DIN 4102-1",
+      "familie": "DIN 4102",
+      "titel": "Brandverhalten von Baustoffen und Bauteilen – Baustoffe",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Brandschutz"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-4102-1/5241696",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Status not checked yet; a person must review it before the tool may use it. The URL is the catalogue entry to start from."
+    },
+    {
+      "norm_id": "DIN 18533",
+      "familie": "DIN 18533",
+      "titel": "Abdichtung von erdberührten Bauteilen",
+      "status": "unklar",
+      "aktuelle_ausgabe": null,
+      "ersetzt_durch": [],
+      "gewerke": [
+        "Abdichtung"
+      ],
+      "kalkulationsrelevant": false,
+      "kennwerte": [],
+      "quelle": {
+        "url": "https://www.dinmedia.de/en/standard/din-18533-1/399850897",
+        "abgerufen": "2026-11-21"
+      },
+      "geprueft": false,
+      "hinweis": "Status not checked yet; a person must review it before the tool may use it. The URL is the catalogue entry to start from."
+    }
+  ]
+}

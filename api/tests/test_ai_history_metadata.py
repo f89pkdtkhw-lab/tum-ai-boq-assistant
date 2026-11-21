@@ -88,3 +88,22 @@ def test_metadata_openapi_exposes_request_and_response_examples():
     assert schema['components']['schemas']['MetadataRequest']['examples'][0]['lv']['name']
     success = schema['paths']['/api/history/metadata']['post']['responses']['200']
     assert success['content']['application/json']['example']['source'] == 'model_mock'
+
+
+def test_metadata_stays_mock_and_round_trips_all_user_values_unchanged():
+    request = {
+        'lv': {'name': 'Synthetic Brücke', 'quelle': 'synthetic',
+               'positionen': [{'oz': '01.001'}, {'oz': '01.002'}]},
+        'estimated_values': [{'oz': '01.001', 'title_path': ['Bridge'], 'metric': 'hours',
+                              'value': 100, 'unit': 'h'}],
+        'real_values': [{'oz': '01.001', 'title_path': ['Bridge'], 'metric': 'hours',
+                         'value': 140, 'unit': 'h'}],
+        'comments': ['Access scaffold took longer', ''],
+        'marks': [{'oz': '01.002', 'status': 'rejected estimate', 'reason': 'user text',
+                   'what_happened': None}],
+    }
+    body = client.post('/api/history/metadata', json=request).json()
+    assert body['source'] == 'model_mock' and body['tags'] == ['bridge']
+    for field in ('estimated_values', 'real_values', 'comments', 'marks'):
+        assert body[field] == request[field]
+    assert 'scaffold' not in body['description'] and 'user text' not in body['description']

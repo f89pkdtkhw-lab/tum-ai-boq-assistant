@@ -13,6 +13,7 @@ from .modelle import Beispiel, Beispiele, Kennzahlen, LV, Pruefbericht
 from .pruefung.regeln import pruefe_regeln
 from .pruefung.mengen import pruefe_mengen
 from .pruefung.llm_pruefung import pruefe_mit_llm
+from .pruefung.normen import pruefe_normen_sicher
 from .risiko.scoring import bewerte
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -72,7 +73,7 @@ async def import_lv(datei: UploadFile):
 
 @app.post("/api/lv/pruefen", response_model=Pruefbericht)
 def pruefen(lv: LV):
-    findings = bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + pruefe_mit_llm(lv))
+    findings = bewerte(lv, pruefe_regeln(lv) + pruefe_mengen(lv) + pruefe_mit_llm(lv)) + pruefe_normen_sicher(lv)
     return Pruefbericht(lv=lv, findings=findings, kennzahlen=Kennzahlen(
         positionen=len(lv.positionen), findings=len(findings),
         kritisch=sum(f.schwere == "kritisch" for f in findings), modell_mock=True,
