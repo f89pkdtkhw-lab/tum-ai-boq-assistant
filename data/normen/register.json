@@ -238,7 +238,67 @@
       ],
       "kalkulationsrelevant": true,
       "kennwerte": [
-        "New edition introduces Betonbauqualitätsklassen (BBQ) and the concrete classes BK-N, BK-E and BK-S"
+        "New edition introduces Betonbauqualitätsklassen (BBQ) and the concrete classes BK-N, BK-E and BK-S",
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XC1",
+          "value": "C16/20",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XC2",
+          "value": "C16/20",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XC3",
+          "value": "C20/25",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XC4",
+          "value": "C25/30",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XD1",
+          "value": "C30/37",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        },
+        {
+          "parameter": "min_strength_class",
+          "bedingung": "XF1",
+          "value": "C25/30",
+          "fundstelle": "DIN 1045-2:2008-08, Tabelle F.2.1 (minimum strength class per exposure class); whether DIN 1045-2:2023-08 changed this value is not verified",
+          "quelle": {
+            "url": "https://heidelbergmaterials.de/sites/default/files/2024-09/flyer_beton_bestellen_nach_norm.pdf",
+            "abgerufen": "2026-11-21"
+          }
+        }
       ],
       "quelle": {
         "url": "https://www.dinmedia.de/en/standard/din-1045-2/369550272",
