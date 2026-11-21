@@ -6,8 +6,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import main
+from app.pruefung import preise
 from app.modelle import LV, Position, Preisliste, PreislistenEintrag, Pruefbericht
-from app.pruefung.preise import AEHNLICHKEIT_MIN, MWST_SATZ, aehnlichkeit, kalkuliere
+from app.pruefung.preise import AEHNLICHKEIT_MIN, MWST_SATZ, aehnlichkeit, kalkuliere, kalkuliere_mit_preis_db
 
 DATA = Path(__file__).resolve().parents[2] / "data"
 client = TestClient(main.app)
@@ -167,3 +168,78 @@ def test_pruefen_route_is_unchanged():
 def test_invalid_price_list_is_rejected_with_422():
     antwort = client.post("/api/lv/analyse", json={"lv": LV_TEST.model_dump(), "preisliste": {"id": "x", "eintraege": [{"id": "a"}]}})
     assert antwort.status_code == 422
+
+
+# --- B9 (#133): price database seam (faked; D5 registers the real one) ---
+@pytest.fixture
+def preis_db(monkeypatch):
+    def setze(dienst):
+        monkeypatch.setattr(preise, "preis_service", dienst)
+    return setze
+
+
+DB_LISTE = Preisliste(id="preis-db", eintraege=[
+    _e("7", "Schalung Wand", "m", 31.0),
+    _e("8", "Beliebiger Text", "m²", 99.0, oz="01.01"),   # also matches 01.01 — the upload must win
+])
+
+
+def test_seam_default_is_none_and_changes_nothing():
+    assert preise.preis_service is None
+    assert kalkuliere_mit_preis_db(LV_TEST, None) is None
+    k = kalkuliere_mit_preis_db(LV_TEST, PREISLISTE)
+    assert k.model_dump() == kalkuliere(LV_TEST, PREISLISTE).model_dump()
+    assert k.warnungen == []
+
+
+def test_db_fills_kein_treffer_and_upload_wins_for_the_same_item(preis_db):
+    preis_db(lambda: DB_LISTE)
+    k = kalkuliere_mit_preis_db(LV_TEST, PREISLISTE)
+    pos = _nach_oz(k)
+    assert (pos["01.01"].ep, pos["01.01"].preisliste_id) == (12.5, "pl-test")        # upload wins
+    assert (pos["01.04"].treffer, pos["01.04"].ep, pos["01.04"].preis_eintrag, pos["01.04"].preisliste_id) \
+        == ("text", 31.0, "7", "preis-db")                                           # gap filled by the DB
+    assert pos["01.03"].preisliste_id == "pl-test"
+    assert k.preisliste_id == "pl-test" and k.ohne_preis == 0 and k.warnungen == []
+
+
+def test_db_only_gives_a_complete_kalkulation(preis_db):
+    preis_db(lambda: DB_LISTE)
+    lv = LV(name="Synthetisch", quelle="synthetisch", positionen=[_pos("02.01", "Schalung Wand", 4, "m"),
+                                                                  _pos("01.01", "Anderer Text", 2)])
+    k = kalkuliere_mit_preis_db(lv, None)
+    assert k.vollstaendig and k.ohne_preis == 0 and k.preisliste_id == "preis-db"
+    assert {p.preisliste_id for p in k.positionen} == {"preis-db"}
+    assert k.summe_netto == 4 * 31.0 + 2 * 99.0
+
+
+def test_unmatched_by_upload_and_db_stays_marked(preis_db):
+    preis_db(lambda: DB_LISTE)
+    lv = LV(name="Synthetisch", quelle="synthetisch", positionen=[_pos("09.01", "Gar nichts passend", 1, "kg")])
+    k = kalkuliere_mit_preis_db(lv, PREISLISTE)
+    assert (k.positionen[0].treffer, k.positionen[0].preisliste_id, k.ohne_preis) == ("kein_treffer", None, 1)
+
+
+def test_failing_service_equals_no_db_plus_warning(preis_db):
+    def kaputt():
+        raise ConnectionError("db down")
+    preis_db(kaputt)
+    k = kalkuliere_mit_preis_db(LV_TEST, PREISLISTE)
+    ohne = kalkuliere(LV_TEST, PREISLISTE)
+    assert k.warnungen and "Price database" in k.warnungen[0]
+    assert k.model_dump(exclude={"warnungen"}) == ohne.model_dump(exclude={"warnungen"})
+
+
+def test_failing_service_without_upload_does_not_crash(preis_db):
+    preis_db(lambda: (_ for _ in ()).throw(RuntimeError("x")))
+    k = kalkuliere_mit_preis_db(LV_TEST, None)
+    assert k.warnungen and k.ohne_preis == len(LV_TEST.positionen) and not k.vollstaendig
+
+
+def test_analyse_route_uses_the_price_db_without_upload(preis_db):
+    preis_db(lambda: DB_LISTE)
+    antwort = client.post("/api/lv/analyse", json={"lv": LV_TEST.model_dump(mode="json")})
+    assert antwort.status_code == 200
+    kal = antwort.json()["kalkulation"]
+    assert kal["preisliste_id"] == "preis-db" and kal["warnungen"] == []
+    assert any(p["preisliste_id"] == "preis-db" for p in kal["positionen"])

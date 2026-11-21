@@ -100,6 +100,7 @@ class KalkulationsPosition(Vertrag):
     gp_differenz: float | None = None  # gp - gp_lv, only when both exist
     treffer: Literal["oz", "text", "aehnlich", "kein_treffer"]
     preis_eintrag: str | None = None   # PreislistenEintrag.id
+    preisliste_id: str | None = None   # B9 (#133): source of the price, upload id or "preis-db"
     aehnlichkeit: float | None = None  # short-text token similarity 0–1
     in_summe: bool
 
@@ -114,6 +115,7 @@ class Kalkulation(Vertrag):
     ohne_preis: int = Field(ge=0)      # positions without a price-list match
     ohne_menge: int = Field(ge=0)      # matched positions whose quantity is unknown (gp null)
     vollstaendig: bool                 # every summed position has a gp
+    warnungen: list[str] = Field(default_factory=list)  # B9 (#133): e.g. price database unreachable
 
 
 # --- B5 (#98): three reports, final report and what-if list (epic #93 contract; optional) ---
