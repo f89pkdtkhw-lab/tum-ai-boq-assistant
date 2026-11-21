@@ -226,3 +226,14 @@ def test_alle_befunde_haben_echte_oz_stabile_id_und_regelquelle():
     for f in befunde_a:
         assert f.quelle == "regel"
         assert f.oz in {p.oz for p in lv.positionen}
+
+
+def test_text_widerspruch_erkennt_festigkeitsklasse_mit_leerzeichen():
+    befunde = _text_widersprueche("Beton C 25/30", "Beton C30/37")
+    assert len(befunde) == 1
+    assert "C 25/30" in befunde[0].begruendung and "C30/37" in befunde[0].begruendung  # as written
+    assert len(_text_widersprueche("Beton C 25 / 30", "Beton LC 25/28")) == 1
+
+
+def test_text_widerspruch_gleiche_festigkeitsklasse_mit_und_ohne_leerzeichen():
+    assert _text_widersprueche("Beton C 25/30", "Beton C25/30") == []

@@ -131,7 +131,7 @@ _MASS_FAKTOR_MM = {"mm": Decimal(1), "cm": Decimal(10), "m": Decimal(1000)}
 
 
 def _bezeichnung_beton(m: re.Match) -> tuple[str, str]:
-    return "concrete strength class", m.group(1).upper()
+    return "concrete strength class", re.sub(r"\s+", "", m.group(1)).upper()
 
 
 def _bezeichnung_betonstahl(m: re.Match) -> tuple[str, str]:
@@ -162,7 +162,7 @@ def _bezeichnung_nennweite(m: re.Match) -> tuple[str, str]:
 # Designation kinds compared between short and long text. Each pattern yields
 # (kind, normalized token); only tokens of the same kind can contradict.
 BEZEICHNUNG_MUSTER = (
-    (re.compile(r"\b(L?C\d{1,3}/\d{1,3})\b", re.IGNORECASE), _bezeichnung_beton),
+    (re.compile(r"\b(L?C\s?\d{1,3}\s?/\s?\d{1,3})\b", re.IGNORECASE), _bezeichnung_beton),
     (re.compile(r"\bB\s?St\s*(\d{3})\s*([SM])\b", re.IGNORECASE), _bezeichnung_betonstahl),
     (re.compile(r"\bX([CDFASM])\d\b"), _bezeichnung_exposition),
     (re.compile(r"\b([dhbt])\s*=\s*(\d+(?:[.,]\d+)?)\s*(mm|cm|m)\b"), _bezeichnung_mass),
