@@ -1,5 +1,5 @@
 .seite { max-width: 860px; margin: 0 auto; padding: 20px 20px 40px; display: grid; gap: 12px; }
-.kicker { margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); }
+.kicker { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
 .titel { margin: 4px 0 8px; font-size: clamp(28px, 4.4vw, 42px); line-height: 1.1; letter-spacing: -.02em; }
 .lead { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 60ch; }
 .karte {

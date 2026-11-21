@@ -47,7 +47,7 @@
 .ablage small { color: var(--muted); font-weight: 400; }
 .rat2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; align-items: start; }
 .empfehlung { display: grid; gap: 4px; padding: 14px; border: 2px solid var(--sev-ok); }
-.empfehlung > span { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.empfehlung > span { font-size: 12px; font-weight: 700; letter-spacing: 0; color: var(--muted); }
 .empfehlung strong { font-size: 28px; font-variant-numeric: tabular-nums; }
 .empfehlung small { color: var(--muted); font-size: 13px; }
 .empfehlung dl { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 6px 0 0; }

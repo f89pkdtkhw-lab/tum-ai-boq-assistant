@@ -24,7 +24,7 @@
 .text { overflow-wrap: anywhere; min-width: 0; }
 .merkmale { grid-column: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; color: var(--pb-muted); }
 .marke, .markeMock { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: var(--r-sm); border: 1px solid var(--pb-line); line-height: 1.5; }
-.markeMock { color: var(--pb-warn); border-color: currentColor; text-transform: uppercase; letter-spacing: .04em; }
+.markeMock { color: var(--pb-warn); border-color: currentColor; letter-spacing: 0; }
 .euro { font-variant-numeric: tabular-nums; color: var(--pb-ink); }
 .unbekannt { color: var(--pb-muted); font-style: italic; }
 @media (max-width: 600px) { .merkmale { grid-column: 1 / -1; } }

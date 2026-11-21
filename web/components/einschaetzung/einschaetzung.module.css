@@ -15,7 +15,7 @@
 .punkt { width: 12px; height: 12px; border-radius: 50%; flex: none; display: inline-block; }
 
 .urteilSpalte { display: grid; gap: 12px; min-width: 0; }
-.kicker { margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); }
+.kicker { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
 .urteil { margin: 0; font-size: clamp(24px, 3vw, 34px); line-height: 1.15; letter-spacing: -.02em; }
 .faktoren { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .faktoren li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); background: var(--fill); font-size: 13.5px; }
@@ -26,7 +26,7 @@
 .balkenListe { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .balkenListe li { display: grid; grid-template-columns: minmax(150px, 280px) minmax(0, 1fr) minmax(90px, auto); gap: 12px; align-items: center; }
 .balkenName { font-size: 14.5px; }
-.quelle { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 6px; margin-left: 4px; }
+.quelle { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0; color: var(--muted); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 6px; margin-left: 4px; }
 .balkenSpur { height: 14px; border-radius: var(--r-sm); background: var(--fill); overflow: hidden; }
 .balkenWert { display: block; height: 100%; border-radius: var(--r-sm); }
 .q_extracted { background: var(--accent); }

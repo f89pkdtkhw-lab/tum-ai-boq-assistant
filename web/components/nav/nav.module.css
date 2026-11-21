@@ -1,12 +1,13 @@
 /* Slim top bar with ≡ menu (team sketch); the drawer slides in from the left. */
 .leiste {
   position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; height: 52px;
-  padding: 0 16px; background: #0a234b; border-bottom: 3px solid var(--brand); color: #fff;
+  padding: 0 16px; background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--line); color: var(--ink);
 }
 .burger { display: grid; gap: 4px; width: 36px; height: 36px; place-content: center; border: 0; border-radius: var(--r-md); background: transparent; cursor: pointer; }
-.burger span { display: block; width: 18px; height: 2px; border-radius: 0; background: #fff; }
-.burger:hover { background: rgba(255, 255, 255, .12); }
-.marke { display: flex; align-items: center; gap: 8px; font-family: var(--font-head); font-weight: 900; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: #fff; text-decoration: none; white-space: nowrap; }
+.burger span { display: block; width: 18px; height: 2px; border-radius: 1px; background: var(--ink); }
+.burger:hover { background: var(--fill); }
+.marke { display: flex; align-items: center; gap: 8px; font-family: var(--font-head); font-weight: 700; font-size: 15px; letter-spacing: -.01em; color: var(--ink); text-decoration: none; white-space: nowrap; }
 .platz { flex: 1; }
 .thema {
   position: relative; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: var(--r-md);
@@ -23,7 +24,7 @@
 }
 .offen { transform: none; visibility: visible; }
 .kopf { display: flex; align-items: center; gap: 10px; padding: 4px 6px 12px; font-size: 15px; }
-.gruppe { margin: 10px 0 2px; padding: 0 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.gruppe { margin: 10px 0 2px; padding: 0 10px; font-size: 11px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
 .liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .link { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: var(--r-md); color: var(--ink); text-decoration: none; font-size: 14px; }
 .link:hover { background: var(--fill); }
@@ -35,6 +36,3 @@
 @media (prefers-reduced-motion: reduce) { .schublade { transition: none; } }
 @media print { .leiste, .schublade { display: none; } }
 
-/* Theme switch on the navy bar */
-.leiste .thema { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .25); color: rgba(255, 255, 255, .7); }
-.leiste .thema .an { background: #fff; color: #0a234b; }

@@ -15,6 +15,6 @@
 .merkmale { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13.5px; color: var(--pb-muted); overflow-wrap: anywhere; }
 .oz { font-family: var(--font-iso); color: var(--pb-ink); font-weight: 600; }
 .marke, .markeMock { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: var(--r-sm); border: 1px solid var(--pb-line); line-height: 1.5; }
-.markeMock { color: var(--pb-warn); border-color: currentColor; text-transform: uppercase; letter-spacing: .04em; }
+.markeMock { color: var(--pb-warn); border-color: currentColor; letter-spacing: 0; }
 .finding { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 .frage { margin: 0; overflow-wrap: anywhere; }

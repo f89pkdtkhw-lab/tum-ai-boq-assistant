@@ -99,7 +99,7 @@
   font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: var(--r-sm); border: 1px solid var(--pb-line); line-height: 1.5;
 }
 .marke { color: var(--pb-muted); }
-.markeMock { color: var(--pb-warn); border-color: currentColor; text-transform: uppercase; letter-spacing: .04em; }
+.markeMock { color: var(--pb-warn); border-color: currentColor; letter-spacing: 0; }
 .schwere { color: #fff; border-color: transparent; }
 .schwere_kritisch { background: var(--sev-kritisch); color: var(--sev-kritisch); }
 .schwere_hoch { background: var(--sev-hoch); color: var(--sev-hoch); }

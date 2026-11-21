@@ -17,10 +17,10 @@
 .tabelle td:last-child { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tabelle small { color: var(--muted); }
 .zwischen td { font-weight: 600; }
-.summe td { font-weight: 800; font-size: 16px; border-bottom: 2px solid var(--ink); }
+.summe td { font-weight: 700; font-size: 16px; border-bottom: 2px solid var(--ink); }
 .empfehlung { display: grid; gap: 4px; padding: 14px; border: 2px solid var(--sev-ok); background: color-mix(in srgb, var(--sev-ok) 7%, var(--card)); }
 .empfehlung[data-ok="false"] { border-color: var(--sev-hoch); background: color-mix(in srgb, var(--sev-hoch) 7%, var(--card)); }
-.empfehlung > span { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.empfehlung > span { font-size: 12px; font-weight: 700; letter-spacing: 0; color: var(--muted); }
 .empfehlung strong { font-size: 28px; font-variant-numeric: tabular-nums; }
 .empfehlung small { color: var(--muted); font-size: 13px; }
 .empfehlung dl { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 6px 0 0; }

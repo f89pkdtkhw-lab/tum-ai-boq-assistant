@@ -34,7 +34,7 @@
 
 .blatt { background: var(--card); border-radius: var(--r-lg); padding: 32px; display: grid; gap: 16px; box-shadow: 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow); min-width: 0; }
 .kopf { display: grid; gap: 4px; }
-.eyebrow { margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); }
+.eyebrow { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
 .kopf h1 { margin: 0; font-size: 34px; line-height: 1.12; letter-spacing: -.025em; }
 .quelle { margin: 0; color: var(--muted); font-size: 13.5px; }
 .blatt h2 { margin: 8px 0 0; font-size: 22px; letter-spacing: -.02em; }
