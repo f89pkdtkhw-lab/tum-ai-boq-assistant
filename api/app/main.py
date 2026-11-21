@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+from starlette.concurrency import run_in_threadpool
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ValidationError
@@ -95,7 +96,8 @@ async def import_lv(datei: UploadFile):
             raise HTTPException(413, "File is too large (maximum 10 MiB).")
         if not inhalt:
             raise HTTPException(422, "The uploaded file is empty.")
-        return importiere(datei.filename or "", inhalt)
+        # Synchronous parsers (PDF especially) must not block the event loop.
+        return await run_in_threadpool(importiere, datei.filename or "", inhalt)
     except ValidationError:
         raise HTTPException(422, "Invalid BoQ JSON. Please use the documented BoQ contract.") from None
     except NotImplementedError as exc:
