@@ -588,6 +588,7 @@ export const DE: Record<string, string> = {
   "Mark one file as the bill of quantities.": "Markiere eine Datei als Leistungsverzeichnis.",
   "Evaluate": "Auswerten",
   "No file at hand?": "Keine Datei zur Hand?",
+  "{name} with demo price list": "{name} mit Demo-Preisliste",
   "Upload a price list (CSV or JSON with item, unit and price). It is kept in this browser as the price database and used in the full price report until the shared price database is connected.": "Preisliste hochladen (CSV oder JSON mit Bezeichnung, Einheit und Preis). Sie wird bis zur Anbindung der gemeinsamen Preisdatenbank in diesem Browser gespeichert und im vollständigen Preisbericht verwendet.",
   "Choose price list": "Preisliste wählen",
   "No prices found in this file.": "In dieser Datei wurden keine Preise gefunden.",
