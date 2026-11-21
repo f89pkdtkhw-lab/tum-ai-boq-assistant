@@ -59,3 +59,29 @@ test("Findings sheet carries review status and comment, Open when not reviewed",
   assert.deepEqual(tabellen(b)[0].zeilen[2].slice(-2), ["Open", ""], "no decisions means all Open");
   assert.match(xlsxDateien(b, { "01.01-R1": { status: "bestaetigt", kommentar: "" } })["xl/worksheets/sheet1.xml"], /<c r="K2" t="inlineStr" s="1"><is><t xml:space="preserve">Confirmed<\/t>/);
 });
+
+test("PDF content (#105): same rows as the XLSX, summary and reports when present, safe text and file name", async () => {
+  const { pdfInhalt, pdfDateiname, pdfText } = await import("./export.ts");
+  const b = bericht([p("01.01", "Excavation", 10, "m³")], [f("01.01", "fehler", "hoch", "Check it")]);
+  b.kennzahlen = { positionen: 1, findings: 1, kritisch: 0, modell_mock: false };
+  const ohne = pdfInhalt(b);
+  const xlsxBlaetter = tabellen(b);
+  assert.deepEqual(ohne.abschnitte.map((a) => a.name), xlsxBlaetter.map((t) => t.name));
+  ohne.abschnitte.forEach((a, i) => {
+    assert.equal(a.zeilen.length, xlsxBlaetter[i].zeilen.length - 1, a.name);
+    assert.equal(a.kopf.length, xlsxBlaetter[i].zeilen[0].length);
+  });
+  assert.equal(ohne.zusammenfassung.length, 1);
+
+  const mit = pdfInhalt({ ...b,
+    zusammenfassung: { score: 8.5, score_abzuege: [{ grund: "Report 1: 1 big problem", punkte: -1, bericht: "regelwerk" }], schaetzung_abweichung_eur: null, grosse_probleme: 1, warnungen: 0, hinweise: 0, empfehlungen: 0 },
+    berichte: [{ titel: "Report 1", status: "ok", meldung: "", finding_ids: ["x"] }, { titel: "Report 2", status: "nicht_verbunden", meldung: "DB offline", finding_ids: [] }] });
+  assert.match(mit.zusammenfassung[1], /Score: 8\.5 \/ 10/);
+  assert.match(mit.zusammenfassung[2], /not connected/);
+  assert.match(mit.zusammenfassung[3], /Deduction -1\.0/);
+  assert.equal(mit.abschnitte[0].name, "Reports");
+  assert.deepEqual(mit.abschnitte[0].zeilen[1], ["Report 2", "not connected", "0", "DB offline"]);
+
+  assert.equal(pdfText("10 → 12 · −5 € m³ Ä ✓"), "10 -> 12 · -5 € m³ Ä ?");
+  assert.equal(pdfDateiname("Synthetic House Ü", new Date("2026-11-21T10:00:00Z")), "review-report-synthetic-house-u-2026-11-21.pdf");
+});
