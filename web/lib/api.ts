@@ -74,6 +74,9 @@ export type Preisliste = {
   id: string; dateiname: string; waehrung: string; warnungen: string[];
   eintraege: { id: string; oz: string | null; kurztext: string; einheit: string; ep: number; quelle: string }[];
 };
+// Price database (epic #93 D5): unit prices kept across projects.
+export type PreisEintrag = { id: number; item: string; unit: string; price_per_unit: number };
+export type NeuerPreis = { item: string; unit: string; price_per_unit: number };
 /** Error from the backend; `status` lets callers tell a missing route (404) from other failures. */
 export type ApiFehler = Error & { status?: number };
 
@@ -103,6 +106,10 @@ export const api = {
   },
   importiereRegelwerk: (datei: File) => upload<Regelwerk>("/api/regelwerk/import", datei),
   importierePreisliste: (datei: File) => upload<Preisliste>("/api/preisliste/import", datei),
+  preise: (query: string) => call<PreisEintrag[]>(`/api/db/preise${query}`),
+  speicherePreise: (preise: NeuerPreis[]) => call<PreisEintrag[]>("/api/db/preise", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(preise),
+  }),
   analyse: (body: { lv: LV; regelwerk: Regelwerk | null; preisliste: Preisliste | null }) => call<Pruefbericht>("/api/lv/analyse", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   }),
