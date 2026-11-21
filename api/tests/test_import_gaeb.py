@@ -108,3 +108,43 @@ def test_every_partner_gaeb_file_in_place_has_expected_count_and_raw_roundtrip()
         assert all(p.oz.sources for p in doc.positions)
         if "leer" in path.stem or path.suffix.lower() == ".x83":
             assert all(p.unit_price is None and p.total_price is None for p in doc.positions)
+
+
+def _legacy_bytes():
+    def record(kind, fields):
+        line = list(" " * 80)
+        line[:2] = kind
+        for start, text in fields:
+            line[start:start + len(text)] = text
+        return "".join(line)
+    return "\r\n".join([
+        record("00", [(10, "83"), (62, "1122PPPPI"), (72, "90")]),
+        record("21", [(2, "01010001 "), (11, "NN"), (23, "00000002000"), (34, "m2")]),
+        record("25", [(2, "Synthetic wall")]),
+        record("99", []),
+    ]).encode("cp850")
+
+
+def test_d83_and_d86_are_accepted_by_dispatcher_and_http_route():
+    raw = _legacy_bytes()
+    client = TestClient(app)
+    for name in ("offer.d83", "OFFER.D86"):
+        lv = importiere(name, raw)
+        assert [p.oz for p in lv.positionen] == ["01.01.0001"]
+        result = client.post("/api/lv/import", files={"datei": (name, raw)})
+        assert result.status_code == 200
+        assert result.json()["positionen"][0]["oz"] == "01.01.0001"
+
+
+def test_import_route_runs_importer_in_threadpool(monkeypatch):
+    import threading
+    import app.main as main
+    seen = {}
+    real = main.importiere
+    def spy(name, content):
+        seen["thread"] = threading.current_thread()
+        return real(name, content)
+    monkeypatch.setattr(main, "importiere", spy)
+    result = TestClient(app).post("/api/lv/import", files={"datei": ("a.d83", _legacy_bytes())})
+    assert result.status_code == 200
+    assert seen["thread"] is not threading.main_thread()

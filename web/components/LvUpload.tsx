@@ -17,6 +17,8 @@ const FORMATS: { endung: string; name: string }[] = [
   { endung: ".json", name: "LV-JSON" },
   { endung: ".x83", name: "GAEB X83" },
   { endung: ".x84", name: "GAEB X84" },
+  { endung: ".d83", name: "GAEB 90 D83" },
+  { endung: ".d86", name: "GAEB 90 D86" },
   { endung: ".xlsx", name: "Excel" },
   { endung: ".pdf", name: "PDF" },
 ];
