@@ -7,6 +7,7 @@ import { ActionSheet } from "../ui/ActionSheet";
 import { TYP_LABEL, datumText, vaultApi, type VaultEintrag } from "@/lib/vault";
 import { useEinstellungen } from "@/lib/einstellungen";
 import { api } from "@/lib/api";
+import { xlsxAusMargeAntwort } from "@/lib/marge-pdf";
 import { auswerten, bieterFarben, bieterFarbHue, leseGebote, leseXlsx, markerVersatz, sliderMarker, type Bieter, type Gebot } from "@/lib/marge";
 import { speichereMargeStand } from "@/lib/wizard";
 import { Icon } from "../icon/Icon";
@@ -95,8 +96,7 @@ export function Marge() {
     setKiLaeuft(true);
     try {
       const antwort = await api.margePdf(file);
-      const roh = Uint8Array.from(atob(antwort.xlsx_base64), (c) => c.charCodeAt(0));
-      const xlsx = new File([roh], antwort.dateiname, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const xlsx = xlsxAusMargeAntwort(antwort);
       await laden(xlsx, true);
       setDownload((alt) => {
         if (alt) URL.revokeObjectURL(alt.url);
