@@ -71,7 +71,7 @@ The app looks prices up by lookup key, so no price IDs need to be configured.
 
 ## Activate
 
-Put the values in `.env.local` in the repository root (or `web/.env.local`), never in commits, issues or chat:
+Google login and the Stripe test key also live in committed `web/.env.shared` (loaded by `web/next.config.mjs` when the name is not already set; `web/.env.local` still overrides). Put other secrets only in `.env.local` in the repository root or `web/.env.local`, never in commits, issues or chat:
 
 1. **Google login** (step by step):
    1. Open <https://console.cloud.google.com/>, pick or create a project (e.g. "LV Scout").
