@@ -33,6 +33,7 @@ export type ScoreAbzug = { grund: string; punkte: number; bericht: "regelwerk" |
 export type Bewertungsmodell = "streng" | "gestaffelt" | "anteil" | "fehler_klaerung" | "ausgewogen";
 export type Zusammenfassung = {
   score: number; score_abzuege: ScoreAbzug[]; schaetzung_abweichung_eur: number | null;
+  schaetzung_von?: number | null; schaetzung_bis?: number | null;
   grosse_probleme: number; warnungen: number; hinweise: number; empfehlungen: number;
   bewertungsmodell?: Bewertungsmodell;
 };
@@ -60,10 +61,12 @@ export type GeschaetztePosition = {
   oz: string; status: AenderungsStatus; kurztext: string; einheit: string | null;
   menge_alt: number | null; menge_neu: number | null; ep: number | null; gp_alt: number | null; gp_neu: number | null;
   anpassung_ids: string[]; grund: string; freigabe_noetig: boolean;
+  ep_von?: number | null; ep_bis?: number | null; gp_von?: number | null; gp_bis?: number | null;
 };
 export type GeschaetztesLv = {
   positionen: GeschaetztePosition[]; summe_netto: number; summe_brutto: number;
   differenz_netto: number; differenz_prozent: number; anzahl: Record<AenderungsStatus, number>;
+  summe_netto_von?: number | null; summe_netto_bis?: number | null;
 };
 export type Pruefbericht = {
   lv: LV; findings: Finding[]; kennzahlen: Kennzahlen; zusammenfassung?: Zusammenfassung;

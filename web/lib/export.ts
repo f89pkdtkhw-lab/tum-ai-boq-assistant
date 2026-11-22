@@ -43,12 +43,13 @@ function kalkulationsTabellen(bericht: Pruefbericht): Tabelle[] {
     blaetter.push({
       name: "Priced bill",
       zeilen: [
-        ["OZ", "Short description", "Quantity", "Unit", "Unit price (EUR)", "Total (EUR)", "Price-list match", "BoQ unit price (EUR)", "BoQ total (EUR)"],
+        ["OZ", "Short description", "Quantity", "Unit", "Unit price (EUR)", "Total (EUR)", "Price-list match", "BoQ unit price (EUR)", "BoQ total (EUR)", "Range low (EUR)", "Range high (EUR)"],
         ...k.positionen.map((p) => [p.oz, p.kurztext || kurztext.get(p.oz) || "", p.menge, p.einheit, p.ep, p.gp,
-          p.treffer === "kein_treffer" ? "no price" : p.treffer === "index" ? "estimated (index)" : p.treffer === "recherche" ? "estimated (research)" : p.treffer, p.ep_lv, p.gp_lv]),
-        ["Net", "", null, "", null, k.summe_netto, "", null, null],
-        [`Gross (VAT ${mwst})`, "", null, "", null, k.summe_brutto, "", null, null],
-        ["Without price", "", k.ohne_preis, "items", null, null, "", null, null],
+          p.treffer === "kein_treffer" ? "no price" : p.treffer === "index" ? "estimated (index)" : p.treffer === "recherche" ? "estimated (research)" : p.treffer, p.ep_lv, p.gp_lv,
+          p.ep_von ?? null, p.ep_bis ?? null]),
+        ["Net", "", null, "", null, k.summe_netto, "", null, null, null, null],
+        [`Gross (VAT ${mwst})`, "", null, "", null, k.summe_brutto, "", null, null, null, null],
+        ["Without price", "", k.ohne_preis, "items", null, null, "", null, null, null, null],
       ],
       stile: [undefined, ...k.positionen.map(() => undefined), "summe", "summe", "summe"],
     });
@@ -58,12 +59,12 @@ function kalkulationsTabellen(bericht: Pruefbericht): Tabelle[] {
     blaetter.push({
       name: "Estimated bill",
       zeilen: [
-        ["Status", "OZ", "Short description", "Unit", "Quantity old", "Quantity new", "Unit price (EUR)", "Total old (EUR)", "Total new (EUR)", "Reason", "Approval required"],
+        ["Status", "OZ", "Short description", "Unit", "Quantity old", "Quantity new", "Unit price (EUR)", "Total old (EUR)", "Total new (EUR)", "Reason", "Approval required", "Range low (EUR)", "Range high (EUR)"],
         ...g.positionen.map((p) => [statusInfo(p.status).marke, p.oz, p.kurztext, p.einheit, p.menge_alt, p.menge_neu, p.ep, p.gp_alt, p.gp_neu,
-          p.grund, p.freigabe_noetig ? "yes" : ""]),
-        ["Net", "", "", "", null, null, null, g.summe_netto - g.differenz_netto, g.summe_netto, "", ""],
-        ["Gross", "", "", "", null, null, null, null, g.summe_brutto, "", ""],
-        ["Difference net", "", `${g.differenz_prozent > 0 ? "+" : ""}${g.differenz_prozent} %`, "", null, null, null, null, g.differenz_netto, "", ""],
+          p.grund, p.freigabe_noetig ? "yes" : "", p.gp_von ?? null, p.gp_bis ?? null]),
+        ["Net", "", "", "", null, null, null, g.summe_netto - g.differenz_netto, g.summe_netto, "", "", g.summe_netto_von ?? null, g.summe_netto_bis ?? null],
+        ["Gross", "", "", "", null, null, null, null, g.summe_brutto, "", "", null, null],
+        ["Difference net", "", `${g.differenz_prozent > 0 ? "+" : ""}${g.differenz_prozent} %`, "", null, null, null, null, g.differenz_netto, "", "", null, null],
       ],
       stile: [undefined, ...g.positionen.map((p) => (p.status === "unchanged" ? undefined : p.status)), "summe", "summe", "summe"],
     });
@@ -104,12 +105,14 @@ export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}, p
     ["Measure", "Value"],
     ["Score (out of 10)", z?.score ?? null], ["Big problems", z?.grosse_probleme ?? null], ["Warnings", z?.warnungen ?? null],
     ["Recommendations", z?.empfehlungen ?? null], ["Items", bericht.lv.positionen.length],
-    ...(preis ? [["Total in the bill, was (EUR)", preis.war], ["Final estimated price (EUR)", preis.geschaetzt], ["Difference (EUR)", preis.diff], ["Items with a changed price", preis.geaendert]] as Zelle[][] : []),
+    ...(preis ? [["Total in the bill, was (EUR)", preis.war], ["Final estimated price (EUR)", preis.geschaetzt],
+      ...(preis.von != null && preis.bis != null ? [["Estimate range (EUR)", `${preis.von} – ${preis.bis}`]] as Zelle[][] : []),
+      ["Difference (EUR)", preis.diff], ["Items with a changed price", preis.geaendert]] as Zelle[][] : []),
   ];
   const preise: Zelle[][] = preis ? [
-    ["OZ", "Item", "Quantity", "Unit", "Was (EUR)", "Estimated (EUR)", "Difference (EUR)", "Why"],
-    ...preis.zeilen.map((r) => [r.oz, r.kurztext, r.menge, r.einheit, r.war, r.geschaetzt, r.diff, grundText(r)]),
-    ["Total", "", null, "", preis.war, preis.geschaetzt, preis.diff, ""],
+    ["OZ", "Item", "Quantity", "Unit", "Was (EUR)", "Estimated (EUR)", "Difference (EUR)", "Why", "Range low (EUR)", "Range high (EUR)", "Source"],
+    ...preis.zeilen.map((r) => [r.oz, r.kurztext, r.menge, r.einheit, r.war, r.geschaetzt, r.diff, grundText(r), r.von ?? null, r.bis ?? null, r.quelle ?? ""]),
+    ["Total", "", null, "", preis.war, preis.geschaetzt, preis.diff, "", preis.von ?? null, preis.bis ?? null, ""],
   ] : [];
   return [
     ...(preis ? [{ name: "Summary", zeilen: zusammenfassung }, { name: "Estimated prices", zeilen: preise }] : []),
@@ -247,7 +250,7 @@ export function pdfInhalt(bericht: MitBerichten, bewertungen: Bewertungen = {}):
     `Items: ${pdfZahl.format(bericht.lv.positionen.length)} · Entries: ${pdfZahl.format(bericht.findings.filter((f) => !istMock(f)).length)} · Critical: ${pdfZahl.format(k.kritisch)}`,
     ...(z ? [
       `Score: ${z.score.toFixed(1)} / 10 · Big problems: ${z.grosse_probleme} · Warnings: ${z.warnungen} · Notices: ${z.hinweise} · Recommendations: ${z.empfehlungen}`,
-      `Estimate deviation: ${z.schaetzung_abweichung_eur === null ? "not connected" : `${pdfZahl.format(z.schaetzung_abweichung_eur)} EUR`}`,
+      `Estimate deviation: ${z.schaetzung_abweichung_eur === null ? "not connected" : `${pdfZahl.format(z.schaetzung_abweichung_eur)} EUR`}${z.schaetzung_von != null && z.schaetzung_bis != null ? ` · Range: ${pdfZahl.format(z.schaetzung_von)}–${pdfZahl.format(z.schaetzung_bis)} EUR` : ""}`,
       ...z.score_abzuege.map((a) => `Deduction ${a.punkte.toFixed(1)}: ${a.grund}`),
     ] : []),
   ];

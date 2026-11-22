@@ -118,7 +118,15 @@ export function similarPositions(cases: HistoryCase[], kurztext: string | null |
   return found.slice(0, limit);
 }
 
-export type TradeStat = { trade: string; projects: number; withActual: number; avgDeviation: number | null };
+export type TradeStat = { trade: string; projects: number; withActual: number; avgDeviation: number | null; deviationSpread?: number | null };
+
+/** Sample standard deviation of percentage deviations; null with fewer than two observations. */
+function streuung(devs: number[]): number | null {
+  if (devs.length < 2) return null;
+  const mean = devs.reduce((a, b) => a + b, 0) / devs.length;
+  const varianz = devs.reduce((s, x) => s + (x - mean) ** 2, 0) / (devs.length - 1);
+  return Math.sqrt(varianz);
+}
 
 /** Average actual-vs-estimate deviation (%) per work type (first word of the short text), worst first. */
 export function deviationByTrade(cases: HistoryCase[]): TradeStat[] {
@@ -139,5 +147,6 @@ export function deviationByTrade(cases: HistoryCase[]): TradeStat[] {
   return [...stats].map(([trade, s]) => ({
     trade, projects: s.projects.size, withActual: s.devs.length,
     avgDeviation: s.devs.length ? s.devs.reduce((a, b) => a + b, 0) / s.devs.length : null,
+    deviationSpread: streuung(s.devs),
   })).sort((a, b) => Math.abs(b.avgDeviation ?? 0) - Math.abs(a.avgDeviation ?? 0) || a.trade.localeCompare(b.trade));
 }

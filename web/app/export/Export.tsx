@@ -15,7 +15,8 @@ import { berichtPdf } from "@/lib/berichtpdf";
 import { Icon } from "@/components/icon/Icon";
 import { deviationByTrade, historyApi, type TradeStat } from "@/lib/history-api";
 import { ladePreisliste, type Preis } from "@/lib/preisliste";
-import { preisbericht, type Preisbericht } from "@/lib/preisbericht";
+import { preisbericht, QUELLE_NAME, type Preisbericht } from "@/lib/preisbericht";
+import { berichtMitAnpassungen, evalIdFuerPreise, ladePreisAnpassungen } from "@/lib/preis-anpassung";
 import { GAEB_PHASEN, gaebXml, type GaebPhase } from "@/lib/gaeb";
 
 const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 3 });
@@ -132,23 +133,25 @@ export function Export() {
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
   const { lv, kennzahlen } = bericht;
+  const anpassungen = ladePreisAnpassungen(evalIdFuerPreise());
+  const berichtExport = berichtMitAnpassungen(bericht, anpassungen);
+  const preis = preisbericht(lv.positionen, gewerke, preisliste, berichtExport.kalkulation?.positionen ?? null, anpassungen);
   // Same reader texts as the report: German when chosen, technical ranking tail removed.
   const findings = bericht.findings.filter((f) => !istMock(f)).map((f) => befundAnzeige(f, sprache));
-  const alleBlaetter = tabellen(bericht, bewertungen);
+  const alleBlaetter = tabellen(berichtExport, bewertungen, preis);
   const blaetter = Object.fromEntries(alleBlaetter.map((b) => [b.name, b.zeilen]));
   // Priced / estimated bill from the backend price database (#117, #158); only when the report has them.
   const preisBlaetter = alleBlaetter.filter((b) => b.name === "Priced bill" || b.name === "Estimated bill");
-  const preis = preisbericht(lv.positionen, gewerke, preisliste);
   const euroGanz = new Intl.NumberFormat(sprache === "de" ? "de-DE" : "en-GB", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   const geaendert = preis.zeilen.filter((r) => r.war && r.diff && Math.abs(r.diff) / Math.abs(r.war) >= .02).sort((a, b) => Math.abs(b.diff ?? 0) - Math.abs(a.diff ?? 0));
 
   function csvPreis() {
-    const kopf = ["OZ", t("Item"), t("Quantity"), t("Was"), t("Estimated"), "±", t("Why")];
+    const kopf = ["OZ", t("Item"), t("Quantity"), t("Unit"), t("Was"), t("Unit price"), t("Estimated"), t("Range from"), t("Range to"), "±", t("Source"), t("Why"), t("References")];
     const zelle = (w: string | number | null) => {
       const s = w == null ? "" : String(w);
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
-    const zeilen = [kopf, ...preis.zeilen.map((r) => [r.oz, r.kurztext, r.menge, r.war, r.geschaetzt, r.diff, t(r.grund, r.werte)])];
+    const zeilen = [kopf, ...preis.zeilen.map((r) => [r.oz, r.kurztext, r.menge, r.einheit, r.war, r.epGeschaetzt, r.geschaetzt, r.von, r.bis, r.diff, t(QUELLE_NAME[r.quelle]), t(r.grund, r.werte), (r.verweise ?? []).map((v) => v.url ? `${v.titel} ${v.url}` : v.titel).join(" | ")])];
     const blob = new Blob(["\uFEFF" + zeilen.map((z) => z.map(zelle).join(";")).join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = Object.assign(document.createElement("a"), { href: url, download: dateiname(bericht.lv.name, "csv") });
@@ -184,8 +187,8 @@ export function Export() {
         <div className={styles.aktionen}>
           {/* Print opens the printer dialog; Save PDF downloads a real file without any dialog (lib/berichtpdf.ts). */}
           <button type="button" className={styles.knopfZweit} onClick={() => window.print()}><Icon name="report" /> {t("Print")}</button>
-          <button type="button" className={styles.knopf} onClick={() => pdfSpeichern(bericht, bewertungen, preis)}><Icon name="download" /> {t("Save PDF")}</button>
-          <button type="button" className={styles.knopf} onClick={() => excel(bericht, bewertungen, preis)}><Icon name="download" /> {t("Download Excel")}</button>
+          <button type="button" className={styles.knopf} onClick={() => pdfSpeichern(berichtExport, bewertungen, preis)}><Icon name="download" /> {t("Save PDF")}</button>
+          <button type="button" className={styles.knopf} onClick={() => excel(berichtExport, bewertungen, preis)}><Icon name="download" /> {t("Download Excel")}</button>
           <button type="button" className={styles.knopf} onClick={() => csvPreis()}><Icon name="download" /> {t("Price list as CSV")}</button>
         </div>
         {/* GAEB DA XML (lib/gaeb.ts): the bill in the chosen phase, and the estimated bill as an offer (X84). */}

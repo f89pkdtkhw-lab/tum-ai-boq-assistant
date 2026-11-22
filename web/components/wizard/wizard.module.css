@@ -43,7 +43,7 @@
 .knopf:disabled, .knopfZweit:disabled { opacity: .45; cursor: default; box-shadow: none; }
 .knopfZweit { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
 
-/* Four-stage loading bar (no percent, no "step x of y"). */
+/* Loading box: four-stage overview, plus live job percent and finished steps when a stand is present. */
 .lade { padding: 18px 16px; }
 .ladeKopf { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; gap: 12px; }
 .ladeJetzt { font-weight: 600; font-size: 14.5px; }
@@ -65,6 +65,16 @@
 .stufen li.an .st { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
 .stufen li.erledigt { color: var(--ink); }
 .stufen li.erledigt .st { background: var(--good); border-color: var(--good); color: var(--button-ink); }
+
+.prozent { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 650; }
+.balkenGestoppt .balkenFuellung { background: var(--bad); }
+.fortschrittText { margin: 10px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }
+.fertigListe { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.fertigListe li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+.fertigListe small { font-variant-numeric: tabular-nums; }
+.haken { font-weight: 700; color: var(--good); }
+.fortschrittFehler { margin: 12px 0 0; padding: 8px 12px 8px 28px; border-radius: var(--r-lg); font-size: 13px; color: var(--ink); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+@media (prefers-reduced-motion: reduce) { .balkenFuellung { transition: none; } .balkenFuellung.puls::after { animation: none; } }
 
 /* iOS action sheet (export). */
 .sheetBg { position: fixed; inset: 0; background: rgba(0, 0, 0, .25); display: none;

@@ -137,3 +137,15 @@ button.preisKachel:hover .oeffnen { color: inherit; }
 .abzuege { font-size: 13px; color: var(--muted); text-align: center; }
 .abzuege ul { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 3px; text-align: left; color: var(--ink); }
 .abzuege li span { display: inline-block; min-width: 3ch; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Full editable price table at the bottom of the price step */
+.allePreise { overflow-x: auto; }
+.allePreise .tabelle { min-width: 1080px; }
+.epFeld { width: 7.5rem; font: inherit; font-variant-numeric: tabular-nums; text-align: right; padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card); color: var(--ink); }
+.epFeld:focus { outline: 2px solid var(--accent, var(--ink)); outline-offset: 1px; }
+.manuell .epFeld { border-color: var(--accent, var(--ink)); }
+.verweise { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12.5px; }
+.verweise a { color: var(--accent, var(--ink)); }
+.verweisText { color: var(--muted); }
+.resetKnopf { font: inherit; font-size: 12.5px; padding: 2px 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card); color: var(--ink); cursor: pointer; }
+.resetKnopf:hover { border-color: var(--accent); }

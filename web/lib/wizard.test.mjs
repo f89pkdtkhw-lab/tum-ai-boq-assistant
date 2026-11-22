@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  effektiverSchritt, ladeStufe, leseSchritt, maxSchritt, rechercheZumBefund, wizardPfad, wizardSichtbar, wizardUmleitung,
+  effektiverSchritt, ladeStufe, leseSchritt, liveFortschritt, maxSchritt, rechercheZumBefund, wizardPfad, wizardSichtbar, wizardUmleitung,
 } from "./wizard.ts";
 
 test("leseSchritt reads the query or infers from the path", () => {
@@ -57,4 +57,12 @@ test("wizardUmleitung clamps the URL, but waits while an evaluation link is bein
   // Running evaluation chip: /?schritt=pruefen&eval=<id>&job=<id> before the page has reported its status.
   assert.equal(wizardUmleitung("pruefen", "hochladen", q("schritt=pruefen&eval=j1&job=j1")), null);
   assert.equal(wizardUmleitung("preis", "hochladen", q("schritt=preis&eval=lokal-3")), null);
+});
+
+test("liveFortschritt clamps step and percent for the review box", () => {
+  assert.equal(liveFortschritt(null), null);
+  assert.equal(liveFortschritt({ schritt: 3, schritte_gesamt: 0, prozent: 10 }), null);
+  assert.deepEqual(liveFortschritt({ schritt: 3, schritte_gesamt: 8, prozent: 25 }), { schritt: 3, gesamt: 8, prozent: 25 });
+  assert.deepEqual(liveFortschritt({ schritt: 0, schritte_gesamt: 8, prozent: -5 }), { schritt: 1, gesamt: 8, prozent: 0 });
+  assert.deepEqual(liveFortschritt({ schritt: 99, schritte_gesamt: 8, prozent: 140.6 }), { schritt: 8, gesamt: 8, prozent: 100 });
 });

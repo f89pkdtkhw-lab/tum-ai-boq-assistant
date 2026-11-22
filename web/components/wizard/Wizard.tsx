@@ -3,9 +3,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useT } from "@/lib/einstellungen";
+import type { AnalyseStatus } from "@/lib/api";
 import {
   LADE_STUFEN, WIZARD_IDS, WIZARD_SCHRITTE, WIZARD_WEITER,
-  effektiverSchritt, istWizardSchritt, ladeStufe, leseSchritt, maxSchritt, schrittIndex, wizardPfad, wizardSichtbar, wizardUmleitung,
+  effektiverSchritt, istWizardSchritt, ladeStufe, leseSchritt, liveFortschritt, maxSchritt, schrittIndex, wizardPfad, wizardSichtbar, wizardUmleitung,
   type WizardSchritt,
 } from "@/lib/wizard";
 import { setzeEvaluationSchritt } from "@/lib/evaluation-session";
@@ -153,24 +154,44 @@ export function WizardFuss() {
   );
 }
 
-export function Ladeanzeige({ phase, importFertig, standStatus, dateiname }: {
+const zahl = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
+
+export function Ladeanzeige({ phase, importFertig, standStatus, dateiname, stand }: {
   phase: "leer" | "laeuft" | "fertig" | "fehler";
   importFertig?: boolean;
   standStatus?: "laeuft" | "fertig" | "fehler" | null;
   dateiname?: string;
+  stand?: AnalyseStatus | null;
 }) {
   const t = useT();
   const { stufe, aktiv } = ladeStufe({ phase, importFertig, standStatus });
   const jetzt = t(LADE_STUFEN[stufe - 1]);
+  const live = (phase === "laeuft" || phase === "fehler") ? liveFortschritt(stand) : null;
+  const meldung = (stand?.meldung ?? "").trim();
+  const gestoppt = phase === "fehler" || stand?.status === "fehler";
+  const balkenWert = live ? live.prozent : (stufe / 4) * 100;
   return (
     <div className={styles.lade} aria-busy={aktiv} aria-live="polite">
       <div className={styles.ladeKopf}>
-        <span className={styles.ladeJetzt}>{jetzt}</span>
-        <span className={styles.ladeWait}>{aktiv ? t("Just a moment …") : (dateiname ?? "")}</span>
+        <span className={styles.ladeJetzt}>
+          {live ? t("Step {n} of {total}", { n: live.schritt, total: live.gesamt }) : jetzt}
+        </span>
+        <span className={styles.ladeWait}>
+          {live ? <span className={styles.prozent}>{live.prozent} %</span>
+            : (aktiv ? t("Just a moment …") : (dateiname ?? ""))}
+        </span>
       </div>
-      <div className={styles.balken} role="progressbar" aria-label={t("Review")} aria-valuemin={1} aria-valuemax={4} aria-valuenow={stufe} aria-valuetext={jetzt}>
-        <span className={`${styles.balkenFuellung} ${aktiv && stufe < 4 ? styles.puls : ""}`} style={{ width: `${(stufe / 4) * 100}%` }} />
+      <div className={`${styles.balken} ${gestoppt ? styles.balkenGestoppt : ""}`}
+        role="progressbar"
+        aria-label={live ? t("Analysis progress") : t("Review")}
+        aria-valuemin={live ? 0 : 1}
+        aria-valuemax={live ? 100 : 4}
+        aria-valuenow={live ? live.prozent : stufe}
+        aria-valuetext={meldung || jetzt}>
+        <span className={`${styles.balkenFuellung} ${aktiv && !live && stufe < 4 ? styles.puls : ""}`}
+          style={{ width: `${balkenWert}%` }} />
       </div>
+      {live && meldung ? <p className={styles.fortschrittText}>{meldung}</p> : null}
       <ol className={styles.stufen}>
         {LADE_STUFEN.map((name, i) => {
           const n = i + 1;
@@ -184,6 +205,22 @@ export function Ladeanzeige({ phase, importFertig, standStatus, dateiname }: {
           );
         })}
       </ol>
+      {live && stand && stand.fertige_schritte.length > 0 && (
+        <ol className={styles.fertigListe} aria-label={t("Finished steps")}>
+          {stand.fertige_schritte.map((s) => (
+            <li key={s.schritt}>
+              <span className={styles.haken} aria-hidden="true">✓</span>
+              <span>{s.meldung}</span>
+              <small>{zahl.format(Math.round(s.sekunden * 10) / 10)} s</small>
+            </li>
+          ))}
+        </ol>
+      )}
+      {stand && stand.fehler.length > 0 && (
+        <ul className={styles.fortschrittFehler} role="note">
+          {stand.fehler.map((f) => <li key={f}>{f}</li>)}
+        </ul>
+      )}
     </div>
   );
 }

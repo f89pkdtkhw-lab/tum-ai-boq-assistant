@@ -209,11 +209,14 @@ def _findings_abzuege(findings: Sequence[Finding], bericht_von: Callable[[Findin
 def zusammenfassen(findings: Sequence[Finding], notes: Iterable[Any] = (),
                    bericht_von: Callable[[Finding], str] | None = None,
                    n_positionen: int | None = None,
-                   modell: Bewertungsmodell | str | None = None) -> Zusammenfassung:
+                   modell: Bewertungsmodell | str | None = None,
+                   schaetzung_von: float | None = None,
+                   schaetzung_bis: float | None = None) -> Zusammenfassung:
     """`bericht_von` maps a finding to its report id (B5); default: every finding is Report 1.
 
     `n_positionen` is the BoQ size (used by Share and Balanced). `modell` selects the formula;
-    unknown values fall back to the default (Balanced).
+    unknown values fall back to the default (Balanced). `schaetzung_von` / `schaetzung_bis`
+    are the optional total estimate range (#225); usually filled later from the estimated bill.
     """
     notes = list(notes)
     gewaehlt: Bewertungsmodell = modell if ist_modell(modell) else DEFAULT_MODELL  # type: ignore[arg-type]
@@ -234,6 +237,7 @@ def zusammenfassen(findings: Sequence[Finding], notes: Iterable[Any] = (),
     return Zusammenfassung(
         score=score, score_abzuege=abzuege,
         schaetzung_abweichung_eur=round(sum(eur), 2) if eur else None,
+        schaetzung_von=schaetzung_von, schaetzung_bis=schaetzung_bis,
         grosse_probleme=sum(f.schwere in GROSS for f in findings),
         warnungen=sum(f.schwere == "mittel" for f in findings),
         hinweise=sum(f.schwere == "niedrig" for f in findings),

@@ -27,6 +27,7 @@ from ..modelle import (LV, Anpassung, GeschaetztePosition, GeschaetztesLv, Kalku
                        Preisliste, Pruefbericht, StatusAnzahl)
 from .anpassungen import anpassungen_ableiten
 from .preise import NICHT_IN_SUMME, _cent, _dez, kalkuliere_mit_preis_db
+from .spannen import preis_spanne, quelle_von_treffer, summe_gp_spannen
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +54,20 @@ def _gp(menge: float | None, ep: float | None) -> Decimal | None:
 
 def _float(wert: Decimal | None) -> float | None:
     return None if wert is None else float(wert)
+
+
+def _mit_spanne(k, ep: float | None, menge_neu: float | None, status: str) -> dict:
+    """Optional low/high fields for one estimated-bill row (#225)."""
+    quelle = quelle_von_treffer(getattr(k, "treffer", None), ep)
+    ev, eb, gv, gb = preis_spanne(
+        ep=ep, menge=menge_neu, quelle=quelle,
+        ep_von=getattr(k, "ep_von", None) if k is not None else None,
+        ep_bis=getattr(k, "ep_bis", None) if k is not None else None)
+    if ev is None:
+        return {}
+    if status == "removed":
+        gv, gb = 0.0, 0.0
+    return {"ep_von": ev, "ep_bis": eb, "gp_von": gv, "gp_bis": gb}
 
 
 def _passende_kalkulation(lv: LV, preisliste: Preisliste | None, kalkulation: Kalkulation | None
@@ -114,7 +129,7 @@ def geschaetztes_lv(lv: LV, anpassungen: Sequence[Anpassung], preisliste: Preisl
             oz=pos.oz, status=status, kurztext=pos.kurztext, einheit=pos.einheit, menge_alt=pos.menge,
             menge_neu=menge_neu, ep=ep, gp_alt=_float(gp_alt), gp_neu=_float(gp_neu),
             anpassung_ids=[a.id for a in angewandt], grund=_grund(angewandt),
-            freigabe_noetig=_freigabe(angewandt), in_summe=in_summe))
+            freigabe_noetig=_freigabe(angewandt), in_summe=in_summe, **_mit_spanne(k, ep, menge_neu, status)))
 
     neu = [_hinzugefuegte_position(a) for a in hinzufuegen]
     preise_neu = (kalkuliere_mit_preis_db(LV(name=lv.name, quelle=lv.quelle, positionen=neu), preisliste,
@@ -126,7 +141,8 @@ def geschaetztes_lv(lv: LV, anpassungen: Sequence[Anpassung], preisliste: Preisl
             oz=pos.oz, status="added", kurztext=pos.kurztext, einheit=pos.einheit, menge_alt=None,
             menge_neu=pos.menge, ep=ep, gp_alt=None, gp_neu=_float(_gp(pos.menge, ep)),
             anpassung_ids=[a.id], grund=_grund([a]), freigabe_noetig=_freigabe([a]),
-            in_summe=k.in_summe if k is not None else pos.typ not in NICHT_IN_SUMME))
+            in_summe=k.in_summe if k is not None else pos.typ not in NICHT_IN_SUMME,
+            **_mit_spanne(k, ep, pos.menge, "added")))
 
     anzahl = StatusAnzahl(**Counter(z.status for z in zeilen))
     ohne_preis = sum(z.ep is None and z.status != "removed" for z in zeilen)
@@ -139,11 +155,13 @@ def geschaetztes_lv(lv: LV, anpassungen: Sequence[Anpassung], preisliste: Preisl
     basis = _dez(alt.summe_netto)
     differenz = _cent(netto - basis)
     prozent = None if basis == 0 else float((differenz / basis * 100).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+    von, bis = summe_gp_spannen(summiert)
     return GeschaetztesLv(
         preisliste_id=alt.preisliste_id, waehrung=alt.waehrung, mwst_satz=alt.mwst_satz, positionen=zeilen,
         summe_netto=float(netto), summe_brutto=float(_cent(netto * (1 + _dez(alt.mwst_satz)))),
         differenz_netto=float(differenz), differenz_prozent=prozent, ohne_preis=ohne_preis,
-        vollstaendig=all(z.gp_neu is not None for z in summiert), anzahl=anzahl)
+        vollstaendig=all(z.gp_neu is not None for z in summiert), anzahl=anzahl,
+        summe_netto_von=von, summe_netto_bis=bis)
 
 
 def _notes(bericht: Pruefbericht) -> list[step_api.Note]:
@@ -171,8 +189,11 @@ def ergaenze_geschaetztes_lv(bericht: Pruefbericht, preisliste: Preisliste | Non
         geschaetzt = geschaetztes_lv(bericht.lv, anpassungen, preisliste, bericht.kalkulation)
         teile = {"anpassungen": anpassungen, "geschaetztes_lv": geschaetzt}
         if bericht.zusammenfassung is not None and geschaetzt.differenz_netto is not None:
-            teile["zusammenfassung"] = bericht.zusammenfassung.model_copy(
-                update={"schaetzung_abweichung_eur": geschaetzt.differenz_netto})
+            z_update = {"schaetzung_abweichung_eur": geschaetzt.differenz_netto}
+            if geschaetzt.summe_netto_von is not None and geschaetzt.summe_netto_bis is not None:
+                z_update["schaetzung_von"] = geschaetzt.summe_netto_von
+                z_update["schaetzung_bis"] = geschaetzt.summe_netto_bis
+            teile["zusammenfassung"] = bericht.zusammenfassung.model_copy(update=z_update)
         return bericht.model_copy(update=teile)
     except Exception:
         log.exception("B8 estimated bill failed; review report returned without it")

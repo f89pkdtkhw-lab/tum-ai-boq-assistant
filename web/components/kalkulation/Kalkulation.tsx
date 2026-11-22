@@ -71,7 +71,7 @@ export function Kalkulation({ bericht, ozBekannt, onWaehle }: {
         <div className={styles.kachel}><dt>Original net</dt><dd>{betrag(k.originalNetto)}</dd>
           <small>gross {betrag(k.bruttoOriginal)}</small></div>
         <div className={styles.kachel}><dt>Estimated net</dt><dd>{betrag(k.geschaetztNetto)}</dd>
-          <small>{geschaetztes_lv ? <>gross {betrag(k.bruttoGeschaetzt)}</> : "no estimated bill yet"}</small></div>
+          <small>{k.von !== null && k.bis !== null ? <>{t("Range")}: {euro.format(k.von)} – {euro.format(k.bis)}</> : geschaetztes_lv ? <>gross {betrag(k.bruttoGeschaetzt)}</> : "no estimated bill yet"}</small></div>
         <div className={styles.kachel}><dt>Difference</dt>
           <dd>{k.differenz === null ? <Unbekannt /> : mitVorzeichen(k.differenz, f)}</dd>
           <small>{k.prozent === null ? "–" : `${k.prozent > 0 ? "+" : k.prozent < 0 ? "−" : ""}${prozent.format(Math.abs(k.prozent))} %`}</small></div>
