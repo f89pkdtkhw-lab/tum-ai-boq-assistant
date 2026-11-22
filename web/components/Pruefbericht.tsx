@@ -29,6 +29,7 @@ import { kiHinweise } from "@/lib/kischritte";
 import { Preisspiegel } from "./preise/Preisspiegel";
 import { liesJetzt, useEinstellungen, useT } from "@/lib/einstellungen";
 import { befundAnzeige } from "@/lib/befundtext";
+import { filtereNormen, istNormFinding, quellenUrls } from "@/lib/normen"; // N4-UI #83
 import { Fundstelle } from "./fundstelle/Fundstelle";
 import { RechercheHinweis, RechercheQuellen } from "./recherche/Recherche"; // E #169
 import type { RechercheErgebnis } from "@/lib/api";
@@ -142,6 +143,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
   });
   const setReiter = (r: Reiter) => { setReiterState(r); try { window.sessionStorage.setItem(REITER_SCHLUESSEL, r); } catch { /* not kept */ } };
   const [kategorie, setKategorie] = useState<Kategorie | null>(null);
+  const [nurNormen, setNurNormen] = useState(false); // #83: "Standards" chip
   const [schwere, setSchwere] = useState<Schwere | null>(null);
   const [gruppe, setGruppe] = useState<Gruppe | null>(null);
   const [auswahl, setAuswahl] = useState<Auswahl | null>(null);
@@ -189,8 +191,9 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
     () => filtereFindings(sortiert, lv.positionen, { suche, kategorie, schwere })
       .filter((f) => status === null || bewertungVon(bewertungen, f.id).status === status)
       .filter((f) => ozImTitel === null || ozImTitel.has(f.oz))
-      .filter((f) => inGruppe(f, gruppe)),
-    [sortiert, lv.positionen, suche, kategorie, schwere, status, bewertungen, ozImTitel, gruppe],
+      .filter((f) => inGruppe(f, gruppe))
+      .filter((f) => filtereNormen([f], nurNormen).length > 0),
+    [sortiert, lv.positionen, suche, kategorie, schwere, status, bewertungen, ozImTitel, gruppe, nurNormen],
   );
 
   // Load after mount: localStorage does not exist during server rendering.
@@ -273,13 +276,13 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
   }
 
   const sucheAktiv = normalisiere(suche) !== "";
-  const filterAktiv = kategorie !== null || schwere !== null || gruppe !== null || status !== null || titel !== null || sucheAktiv;
+  const filterAktiv = kategorie !== null || schwere !== null || gruppe !== null || status !== null || titel !== null || sucheAktiv || nurNormen;
   const sichtbarePositionen = lv.positionen.filter(
     (p) => (einheit === null || mengenSchluessel(p) === einheit) && (titel === null || imTeilbaum(p, titel)) && positionTrifft(p, suche),
   );
 
   // Paging runs after every filter; a changed filter key shows page 1 again (issue #67).
-  const findingSchluessel = JSON.stringify([kategorie, schwere, gruppe, status, titel, suche]);
+  const findingSchluessel = JSON.stringify([kategorie, schwere, gruppe, status, titel, suche, nurNormen]);
   const findingSeite = seiteVon(gefiltert.length, aktuelleSeite(findingBlatt, findingSchluessel), findingGroesse);
   const sichtbareFindings = ausschnitt(gefiltert, findingSeite);
   const positionSchluessel = JSON.stringify([einheit, titel, suche]);
@@ -506,6 +509,12 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
             </FilterKnopf>
           ))}
         </fieldset>
+        <fieldset className={styles.filterGruppe}>
+          <legend>{t("Standards")}</legend>
+          <FilterKnopf aktiv={nurNormen} onClick={() => setNurNormen(!nurNormen)}>
+            {t("Standards")} <span className={styles.anzahl}>{findings.filter(istNormFinding).length}</span>
+          </FilterKnopf>
+        </fieldset>
       </div>
       </details>
       )}
@@ -525,7 +534,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
             <div className={styles.leer}>
               <p>{t("No findings match this filter.")}</p>
               {filterAktiv && (
-                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setGruppe(null); setStatus(null); setTitel(null); setSuche(""); }}>
+                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setGruppe(null); setStatus(null); setTitel(null); setSuche(""); setNurNormen(false); }}>
                   {t("Reset filters")}
                 </button>
               )}
@@ -648,6 +657,7 @@ function Merkmale({ finding }: { finding: Finding }) {
       <span className={styles.marke}>{t(kategorieName(finding.kategorie))}</span>
       <span className={styles.marke}>{t(finding.quelle === "regel" ? "Rule" : "Model")} · {finding.regel_id}</span>
       {istMock(finding) && <span className={styles.markeMock}>{t("Demonstration")}</span>}
+      {istNormFinding(finding) && <span className={styles.markeNorm}>{t("Standards hint, not an expert opinion")}</span>}
     </span>
   );
 }
@@ -664,7 +674,8 @@ function FindingKarte({ finding, gewaehlt, ozBekannt, onWaehle }: {
       <span className={styles.zeileText}>
         <span className={styles.karteTitel}>{finding.titel}</span>
         <span className={styles.zeileMeta}>{t(kategorieName(finding.kategorie))} · {t(finding.quelle === "regel" ? "Rule" : "Model")} · {finding.regel_id}
-          {istMock(finding) && <> · <b className={styles.markeMock}>{t("Demonstration")}</b></>}</span>
+          {istMock(finding) && <> · <b className={styles.markeMock}>{t("Demonstration")}</b></>}
+          {istNormFinding(finding) && <> · <b className={styles.markeNorm}>{t("Standards hint, not an expert opinion")}</b></>}</span>
       </span>
       <span className={styles.zeileEuro}><Euro wert={finding.euro_wirkung} /></span>
     </button>
@@ -708,6 +719,12 @@ function Detail({ oz, findingId, positionen, datei, originalUrl, findings, onWae
             <dt>{t("Euro impact")}</dt><dd><Euro wert={gewaehlt.euro_wirkung} /></dd>
             <dt>{t("Source")}</dt><dd>{t(gewaehlt.quelle === "regel" ? "Fixed review rule" : "Model")} ({gewaehlt.regel_id})</dd>
             <RechercheQuellen ergebnisse={recherche.filter((r) => r.finding_id === gewaehlt.id)} />
+            {istNormFinding(gewaehlt) && quellenUrls(gewaehlt.begruendung).length > 0 && (<>
+              <dt>{t("Standards source")}</dt>
+              <dd>{quellenUrls(gewaehlt.begruendung).map((u) => (
+                <a key={u} className={styles.normLink} href={u} target="_blank" rel="noopener noreferrer">{u}</a>
+              ))}</dd>
+            </>)}
           </dl>
           <Bewertung key={gewaehlt.id} bewertung={bewertungVon(bewertungen, gewaehlt.id)}
             onAendern={(a) => onBewerte(gewaehlt.id, a)} speicherFehler={speicherFehler} />
