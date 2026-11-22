@@ -4,7 +4,7 @@
 // slider (red at the cost floor → green at/above the competitor median). Logic in lib/marge.ts.
 import { useEffect, useMemo, useState } from "react";
 import { AuswahlMenue } from "../ui/AuswahlMenue";
-import { TYP_LABEL, datumText, vaultApi, type VaultEintrag } from "@/lib/vault";
+import { TYP_LABEL, datumText, sollStandardMargeLaden, vaultApi, type VaultEintrag } from "@/lib/vault";
 import { useEinstellungen } from "@/lib/einstellungen";
 import { api } from "@/lib/api";
 import { xlsxAusMargeAntwort } from "@/lib/marge-pdf";
@@ -112,12 +112,20 @@ export function Marge() {
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("vault");
-    if (!id) return;
-    window.history.replaceState(null, "", "/marge");
-    vaultApi.liste(["wettbewerb"]).then((liste) => {
-      const treffer = liste.find((x) => x.id === id);
-      if (treffer) void ausVaultWaehlen(treffer);
-    }).catch(() => setFehler(t("The vault is unreachable.")));
+    if (id) {
+      window.history.replaceState(null, "", "/marge");
+      vaultApi.liste(["wettbewerb"]).then((liste) => {
+        const treffer = liste.find((x) => x.id === id);
+        if (treffer) void ausVaultWaehlen(treffer);
+      }).catch(() => setFehler(t("The vault is unreachable.")));
+      return;
+    }
+    // Fresh clone / empty vault: listing seeds the bundled demo, then load it. Fallback fetches the repo copy.
+    vaultApi.liste(["wettbewerb"]).then(async (liste) => {
+      const wahl = sollStandardMargeLaden(liste);
+      if (wahl === "fallback") await laden(await vaultApi.standardMarge());
+      else if (wahl) await ausVaultWaehlen(wahl);
+    }).catch(() => { /* leave the page empty; the user can still pick a file */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

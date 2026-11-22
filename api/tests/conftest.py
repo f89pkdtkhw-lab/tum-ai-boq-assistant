@@ -29,4 +29,6 @@ def offline_model_env(monkeypatch):
 def vault_tmp(monkeypatch, tmp_path):
     """t243: imports and analyses file documents in the vault; tests never write into data/vault/."""
     monkeypatch.setenv("LV_SCOUT_VAULT_DIR", str(tmp_path / "vault"))
+    # Default competitor Excel is only seeded in tests that opt in.
+    monkeypatch.setenv("LV_SCOUT_SEED_DEFAULTS", "0")
     return tmp_path / "vault"

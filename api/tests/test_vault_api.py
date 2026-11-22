@@ -95,3 +95,48 @@ def test_wettbewerb_manual_upload_is_deduped_ki_versions_are_not():
     assert neu1 and neu2 and erste.id != zweite.id
     assert erste.version == 1 and zweite.version == 2
     assert len(client.get("/api/vault?typ=wettbewerb").json()) == 3  # one manual + two KI versions
+
+
+
+def test_default_margin_excel_is_seeded_once_into_empty_vault(monkeypatch, vault_tmp):
+    monkeypatch.setenv("LV_SCOUT_SEED_DEFAULTS", "1")
+    erste = client.get("/api/vault?typ=wettbewerb")
+    assert erste.status_code == 200
+    liste = erste.json()
+    assert len(liste) == 1
+    e = liste[0]
+    assert e["dateiname"] == "margin-demo.xlsx" and e["quelle"] == "default" and e["typ"] == "wettbewerb"
+    assert e["projekt"] == "Kindertagesstätte Nord" and "demo" in e["tags"]
+    bundled = (ROOT / "data" / "defaults" / "margin-demo.xlsx").read_bytes()
+    assert client.get(f"/api/vault/{e['id']}/datei").content == bundled
+    zweite = client.get("/api/vault?typ=wettbewerb").json()
+    assert [x["id"] for x in zweite] == [e["id"]]  # no duplicate
+
+
+def test_default_margin_is_not_reseeded_after_delete(monkeypatch, vault_tmp):
+    monkeypatch.setenv("LV_SCOUT_SEED_DEFAULTS", "1")
+    e = client.get("/api/vault?typ=wettbewerb").json()[0]
+    assert client.delete(f"/api/vault/{e['id']}").status_code == 204
+    assert client.get("/api/vault?typ=wettbewerb").json() == []
+    assert client.get("/api/vault").json() == []
+
+
+def test_default_margin_dedupes_an_already_uploaded_copy(monkeypatch, vault_tmp):
+    monkeypatch.setenv("LV_SCOUT_SEED_DEFAULTS", "1")
+    inhalt = (ROOT / "data" / "defaults" / "margin-demo.xlsx").read_bytes()
+    hoch = _hoch(name="meine-marge.xlsx", inhalt=inhalt, typ="wettbewerb").json()
+    liste = client.get("/api/vault?typ=wettbewerb").json()
+    assert len(liste) == 1 and liste[0]["id"] == hoch["id"]
+    # Already stored by the user: keep their name and source, only mark the seed as done.
+    assert liste[0]["dateiname"] == "meine-marge.xlsx" and liste[0]["quelle"] == "upload"
+
+
+def test_default_margin_endpoint_serves_the_bundled_excel(vault_tmp):
+    datei = client.get("/api/vault/defaults/margin-demo")
+    assert datei.status_code == 200
+    bundled = (ROOT / "data" / "defaults" / "margin-demo.xlsx").read_bytes()
+    assert datei.content == bundled
+    assert "spreadsheet" in datei.headers.get("content-type", "")
+    # Listing LVs does not seed the competitor file while seeding is off (default in tests).
+    assert client.get("/api/vault?typ=lv").json() == []
+    assert client.get("/api/vault?typ=wettbewerb").json() == []

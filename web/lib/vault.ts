@@ -82,6 +82,24 @@ export function tagsAusText(text: string): string[] {
   return [...new Set(text.split(",").map((t) => t.trim()).filter(Boolean))];
 }
 
+export const DEFAULT_MARGIN_NAME = "margin-demo.xlsx";
+
+/** Bundled demo competitor Excel in a vault list (seeded as quelle=default, or the same file under another name). */
+export function defaultWettbewerb(liste: readonly VaultEintrag[]): VaultEintrag | null {
+  const demo = liste.filter((e) => e.typ === "wettbewerb" && !e.dateiname.toLowerCase().endsWith(".pdf"));
+  return demo.find((e) => e.quelle === "default")
+    ?? demo.find((e) => e.dateiname.toLowerCase() === DEFAULT_MARGIN_NAME)
+    ?? null;
+}
+
+/** Auto-load the bundled demo only when the vault has no other competitor Excel. */
+export function sollStandardMargeLaden(liste: readonly VaultEintrag[]): VaultEintrag | "fallback" | null {
+  const xlsx = liste.filter((e) => e.typ === "wettbewerb" && !e.dateiname.toLowerCase().endsWith(".pdf"));
+  const demo = defaultWettbewerb(xlsx);
+  if (xlsx.some((e) => e.id !== demo?.id)) return null;
+  return demo ?? "fallback";
+}
+
 // Signed-in e-mail, sent as X-LV-Scout-User so the backend records the owner (set by the account chip).
 let besitzer: string | null = null;
 export function setzeBesitzer(email: string | null | undefined) { besitzer = email || null; }
@@ -124,5 +142,13 @@ export const vaultApi = {
     const response = await fetch(vaultApi.dateiUrl(e.id));
     if (!response.ok) throw new Error(`The stored file could not be loaded (${response.status}).`);
     return response.json() as Promise<T>;
+  },
+  /** Bundled demo competitor Excel from the repo, used when the vault has no seeded copy. */
+  standardMarge: async (): Promise<File> => {
+    const response = await fetch("/backend/api/vault/defaults/margin-demo", { cache: "no-store" });
+    if (!response.ok) throw new Error(`The default competitor file could not be loaded (${response.status}).`);
+    return new File([await response.blob()], DEFAULT_MARGIN_NAME, {
+      type: response.headers.get("content-type") ?? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
   },
 };
