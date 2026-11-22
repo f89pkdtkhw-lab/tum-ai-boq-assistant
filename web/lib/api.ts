@@ -199,7 +199,13 @@ export const api = {
     return call<LV>("/api/lv/import", { method: "POST", body: form });
   },
   importiereRegelwerk: (datei: File) => upload<Regelwerk>("/api/regelwerk/import", datei),
-  importierePreisliste: (datei: File) => upload<Preisliste>("/api/preisliste/import", datei),
+  /** `lv`: optional tender bill (D83/X83/…) that gives a D84 offer its item texts. */
+  importierePreisliste: (datei: File, lv?: File | null) => {
+    const form = new FormData();
+    form.append("datei", datei);
+    if (lv) form.append("lv", lv);
+    return call<Preisliste>("/api/preisliste/import", { method: "POST", body: form });
+  },
   preise: (query: string) => call<PreisEintrag[]>(`/api/db/preise${query}`),
   speicherePreise: (preise: NeuerPreis[]) => call<PreisEintrag[]>("/api/db/preise", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(preise),

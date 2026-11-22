@@ -122,6 +122,8 @@ type Rolle = "lv" | "regel" | "preise";
 function rolleRaten(datei: File, hatLv: boolean): Rolle {
   const n = datei.name.toLowerCase();
   if (/preis|price|kosten|tarif/.test(n) || n.endsWith(".csv")) return "preise";
+  // A priced GAEB offer (X84/D84) next to an already chosen bill is its price list.
+  if (hatLv && /\.(x84|d84)$/.test(n)) return "preise";
   if (/\.(x8[1-6]|d8[1-6]|xlsx|xls)$/.test(n)) return "lv";
   if (/\.(docx|txt)$/.test(n) || /norm|regel|spezif|spec|anforder|vorgabe|din/.test(n)) return "regel";
   return hatLv ? "regel" : "lv";

@@ -1,7 +1,7 @@
 // Run: node --test web/lib/preisliste.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { PREISLISTE_FORMATE, preislisteText, eintragHinzu, findePreis, lesePreisliste, preislisteCsv } from "./preisliste.ts";
+import { PREIS_LV_FORMATE, PREISLISTE_FORMATE, preislisteText, eintragHinzu, findePreis, lesePreisliste, preislisteCsv } from "./preisliste.ts";
 import { beilageFehler } from "./regelwerk.ts";
 
 test("price list formats and summary", () => {
@@ -42,4 +42,9 @@ test("own entry: material + hours × rate, replaces the same item and reads back
 
 test("CSV with only material and labour columns sums them", () => {
   assert.deepEqual(lesePreisliste("item;unit;material;labour\nPutz;m²;8;12,5"), [{ item: "Putz", unit: "m²", preis: 20.5, material: 8, lohn: 12.5 }]);
+});
+
+test("a D84 offer can bring its tender bill (D83/X83/D86/X86) for the item texts", () => {
+  for (const name of ["lv.d83", "LV.X83", "lv.D86", "lv.x86"]) assert.equal(beilageFehler({ name, size: 1 }, PREIS_LV_FORMATE, "Matching bill"), null);
+  assert.match(beilageFehler({ name: "lv.pdf", size: 1 }, PREIS_LV_FORMATE, "Matching bill"), /Allowed: X83, D83, X86, D86/);
 });
