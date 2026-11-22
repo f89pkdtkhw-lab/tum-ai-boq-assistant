@@ -34,6 +34,11 @@ ANTHROPIC_API_KEY=your-key-here
 
 Keep keys in `.env.local` or environment variables, never in Git. All other settings, with defaults, are listed in [`.env.example`](.env.example).
 
+### API keys today, subscription later
+
+- **Today: bring your own API key.** LV Scout works with your own model provider key (Claude by default; OpenAI, Azure OpenAI and Gemini are also supported). Put it in `.env.local` as shown above, or enter the Claude key in the app via the key button in the top bar. Usage is billed by your provider to your own account; LV Scout adds no charges. Without a key, everything except the model features runs offline for free.
+- **Later: subscription-based operation.** A hosted version with plans is planned, so teams can use LV Scout without managing their own keys. The groundwork (sign-in, a **Plans** page and payment in Stripe test mode) is in the app, but no live billing is active yet.
+
 ## Walkthrough: from bill to bid in six steps
 
 The app guides you through six steps; the bar at the top always shows where you are. The screenshots below follow one run on synthetic data from start to finish, so you can repeat it yourself after the [quick start](#quick-start): the six-item LV [`data/demo/workshop-foundation.json`](data/demo/workshop-foundation.json), the price list [`data/preisliste_beispiel.csv`](data/preisliste_beispiel.csv) and the competitor bids [`data/testfaelle/marge/competitor_bids_synthetic.xlsx`](data/testfaelle/marge/competitor_bids_synthetic.xlsx). No real partner data is shown.
