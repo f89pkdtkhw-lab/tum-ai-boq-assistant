@@ -6,6 +6,7 @@ import { abschliessen, lvAusJson } from "@/lib/abschluss";
 import { historyApi, type HistoryCase } from "@/lib/history-api";
 import { useT } from "@/lib/einstellungen";
 import { Icon } from "../icon/Icon";
+import { DateiWahl } from "../ui/DateiWahl";
 import styles from "./history.module.css";
 
 /** Reads our estimate or the final bill: JSON directly (report or BoQ), anything else through the backend importer. */
@@ -56,15 +57,23 @@ export function ProjektAbschluss({ onFertig, offen = false }: { onFertig: (fall:
     <details className={`${styles.glas} ${styles.abschluss}`} open={offen || undefined}>
       <summary><Icon name="folder" /> {t("Close a finished project")} <small>{t("our estimate + real final bill → history")}</small></summary>
       <form className={styles.abschlussForm} onSubmit={absenden}>
-        <label className={styles.feld}>
-          <span>{t("1 · Our estimate")} <i>{t("report JSON or the BoQ")}</i></span>
-          <input type="file" accept=".json,.x83,.x84,.xlsx,.pdf" onChange={(e) => setSchaetzung(e.target.files?.[0] ?? null)} />
-        </label>
-        <label className={styles.feld}>
-          <span>{t("2 · Real final bill")} <i>{t("GAEB, Excel, PDF or JSON")}</i></span>
-          <input type="file" accept=".json,.x83,.x84,.x86,.xlsx,.pdf" onChange={(e) => setRechnung(e.target.files?.[0] ?? null)} />
-        </label>
-        <label className={styles.feld}>
+        <DateiWahl
+          label={t("1 · Our estimate")}
+          hint={t("report JSON or the BoQ")}
+          accept=".json,.x83,.x84,.xlsx,.pdf"
+          file={schaetzung}
+          chooseLabel={t("Choose file")}
+          onChange={setSchaetzung}
+        />
+        <DateiWahl
+          label={t("2 · Real final bill")}
+          hint={t("GAEB, Excel, PDF or JSON")}
+          accept=".json,.x83,.x84,.x86,.xlsx,.pdf"
+          file={rechnung}
+          chooseLabel={t("Choose file")}
+          onChange={setRechnung}
+        />
+        <label className={`${styles.feld} ${styles.datum}`}>
           <span>{t("Finished on")}</span>
           <input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
         </label>

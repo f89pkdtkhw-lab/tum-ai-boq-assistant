@@ -1,12 +1,13 @@
 .abschluss { display: grid; gap: 10px; padding: 18px 20px; min-width: 0; }
 .abschluss h2 { margin: 0; font-size: 18px; }
-.formular { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); align-items: start; }
+.formular { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.formular .breit, .formular .aktionen { grid-column: 1 / -1; }
+@media (max-width: 700px) { .formular { grid-template-columns: 1fr; } }
 .feld { display: grid; gap: 4px; min-width: 0; }
 .feld label { font-weight: 600; font-size: 14px; }
 .feld input[type="text"], .feld textarea {
   font: inherit; font-size: 14.5px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: inherit; min-width: 0;
 }
-.feld input[type="file"] { font: inherit; font-size: 14px; max-width: 100%; }
 .hinweis { margin: 0; color: var(--muted); font-size: 13px; font-weight: 400; }
 .fehler { margin: 0; color: var(--bad); font-size: 13.5px; font-weight: 500; }
 .ergebnis { display: grid; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--good); }
