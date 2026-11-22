@@ -33,7 +33,7 @@ export function berichtPdf(bericht: Pruefbericht, opt: { t: Uebersetzer; sprache
   const pdf = new PdfSchreiber();
   let seite = 1;
   let y = RAND;
-  const fuss = () => pdf.text(RAND, A4.hoehe - 20, `BoQ Review · ${(opt.datum ?? new Date()).toLocaleDateString(loc)} · ${t("Page")} ${seite}`, 8, false, GRAU);
+  const fuss = () => pdf.text(RAND, A4.hoehe - 20, `LV Scout · ${(opt.datum ?? new Date()).toLocaleDateString(loc)} · ${t("Page")} ${seite}`, 8, false, GRAU);
 
   // Title and source
   pdf.text(RAND, y + 14, opt.titel || bericht.lv.name, 18, true);

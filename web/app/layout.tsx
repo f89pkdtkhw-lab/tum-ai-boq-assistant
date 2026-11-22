@@ -14,7 +14,8 @@ const geist = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "BoQ Review Assistant",
+  title: { default: "LV Scout", template: "%s · LV Scout" },
+  applicationName: "LV Scout",
   description: "Our team's prototype for TUM.ai Construction Hackathon 2026",
 };
 
