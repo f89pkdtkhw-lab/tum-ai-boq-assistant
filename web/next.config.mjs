@@ -26,6 +26,7 @@ const api = (process.env.API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  devIndicators: false,
   // Default proxy buffer is 10 MB; uploads may be up to 10 MiB plus multipart overhead (backend answers 413 above that).
   // Grok Bot queue jobs can take up to GROKBOT_TIMEOUT (900 s). The rewrite proxy otherwise
   // cuts the connection after 30 s (socket hang up / ECONNRESET) and the UI retries,
