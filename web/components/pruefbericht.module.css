@@ -297,3 +297,11 @@
 .chip { font-size: 14px; min-height: 38px; padding: 0 14px; }
 .filterKlappe > summary { font-size: 15px; padding: 6px 0; }
 .schrittKnopf { width: 38px; height: 38px; }
+
+/* Norm check N4-UI (#83): badge for NORM_* findings and their source links. */
+.markeNorm {
+  font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: var(--r-sm); line-height: 1.5;
+  color: var(--pb-muted); border: 1px dashed currentColor;
+}
+.zeileMeta .markeNorm { padding: 0; border: 0; font-weight: 600; }
+.normLink { display: block; overflow-wrap: anywhere; color: inherit; text-decoration: underline; }

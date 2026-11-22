@@ -48,6 +48,7 @@ from ..modelle import LV, Position, PositionQuelle
 Bbox = tuple[float, float, float, float]
 
 HEADER_BAND = 0.22        # share of page height at the top that may hold repeated headers
+REPEATED_TITLE_BAND = 0.3  # share of page height in which an already seen OZ line is a repeated title
 FOOTER_BAND = 0.12        # share of page height at the bottom that may hold repeated footers
 PRICE_X_SHARE = 0.6       # price fields of a quantity line start right of this share of page width
 LINE_TOLERANCE = 3.0      # points; words whose tops differ less belong to one line
@@ -61,9 +62,11 @@ MAX_IMAGE_BLOCKS = 500
 MAX_DRAWINGS_PER_PAGE = 400   # beyond this (plans, CAD exports) a page's drawings form one region
 
 OZ_PATTERN = re.compile(r"^\d{1,9}(?:\.{1,3}\d{1,9})*\.?$")
+DOT_OZ_PATTERN = re.compile(r"^\.\d{1,4}$")  # #192: AVA prints with the title prefix cut off (LV_14a/b/c: ".1", ".10")
 QUANTITY_PATTERN = re.compile(r"^(?:\d{1,3}(?:\.\d{3})+|\d+)(?:,\d+)?$")
-UNIT_PATTERN = re.compile(r"^[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß²³/.]{0,5}$|^m[²³23]$")
-PLACEHOLDER_PATTERN = re.compile(r"^(?:_{2,}|\.{3,}|\*NEP\*)$", re.I)
+UNIT_PATTERN = re.compile(r"^[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß²³/.]{0,5}$|^m[²³23][A-Za-z]{0,2}$")  # m2d, m3Wo
+PLACEHOLDER_PATTERN = re.compile(r"^(?:_{2,}|(?:EP|GP)?\.{3,}|\*NEP\*)$", re.I)
+MARKER_HEAD_PATTERN = re.compile(r"^\*+\s*(bedarfs?|eventual|alternativ|wahl|grund)\w*", re.I)  # "*** Bedarfsposition ohne GB"
 TOTAL_PATTERN = re.compile(r"^(summe|gesamtsumme|zwischensumme|titelsumme|endsumme|gesamtbetrag|zusammenstellung|zusammenfassung)\b", re.I)
 CARRY_PATTERN = re.compile(r"^(übertrag|uebertrag)\b", re.I)
 PAGE_NUMBER_PATTERN = re.compile(r"\bseite\b\s*:?\s*\d+", re.I)
@@ -182,6 +185,8 @@ class _Entry:
     unit_price: float | None = None
     total_price: float | None = None
     has_quantity_line: bool = False
+    quantity_on_head: bool = False                    # #187: quantity/prices printed on the OZ line itself
+    title_below: bool = False                         # #187: OZ line held only a marker; title is the next line
     markers: set[str] = field(default_factory=set)
     role: str = ""                                    # "position", "title" or "text" after classification
     short_lines: set[int] = field(default_factory=set)  # ids of lines that form the short text
@@ -360,7 +365,9 @@ def _remove_headers_and_footers(page_lines: list[list[_Line]]) -> list[list[_Lin
     for lines in page_lines:
         kept = []
         for line in lines:
-            if CARRY_PATTERN.match(line.text):
+            # #187: letter-spaced "Ü bertrag:" and "- Fortsetzung auf nächster Seite - Übertrag: ..." too
+            compact = re.sub(r"[\s\-]", "", line.text).lower()
+            if CARRY_PATTERN.match(line.text) or re.match(r"(fortsetzungaufnächsterseite)?(übertrag|uebertrag)", compact):
                 continue
             if _in_band(line.top, line.bottom, line.page_height):
                 if PAGE_NUMBER_PATTERN.search(line.text):
@@ -427,8 +434,13 @@ def _render_regions(pages, regions: list[list[_Region]], warnings: list[str]) ->
                             "image blocks (not read, no OCR).")
 
 
+def _is_oz(text: str) -> bool:
+    return bool(OZ_PATTERN.match(text) or DOT_OZ_PATTERN.match(text))
+
+
 def _oz_column(lines: list[_Line]) -> float | None:
-    starts = Counter(round(l.x0) for l in lines if OZ_PATTERN.match(l.words[0].text) and "." in l.words[0].text.strip("."))
+    starts = Counter(round(l.x0) for l in lines if (OZ_PATTERN.match(l.words[0].text) and "." in l.words[0].text.strip("."))
+                     or DOT_OZ_PATTERN.match(l.words[0].text))
     if not starts:
         return None
     column, _ = max(starts.items(), key=lambda kv: (kv[1], -kv[0]))
@@ -439,10 +451,55 @@ def _is_price_word(word: _Word) -> bool:
     return bool(PLACEHOLDER_PATTERN.match(word.text) or re.fullmatch(r"-?\d{1,3}(?:\.\d{3})*,\d{2,}|-?\d+,\d{2,}", word.text))
 
 
+def _merged(first: _Word, last: _Word, text: str) -> _Word:
+    return _Word(text=text, x0=first.x0, x1=last.x1, top=first.top, bottom=first.bottom, font=first.font, size=first.size)
+
+
+def _clean_quantity_words(words: list[_Word]) -> tuple[list[_Word], bool]:
+    """#187: normalise quantity lines as AVA printouts produce them.
+
+    Drops lone punctuation between fields (``1,000 PSCH . ...... . ......``), joins digits the PDF
+    split by letter spacing (``3 5,000 St`` -> ``35,000 St``), splits a unit glued to the quantity
+    (``2St``), and removes a trailing "Nur Einh.-Pr." / "nur EP" note, which marks an item
+    without total price (Bedarf). Returns the cleaned words and whether such a note was found."""
+    nep = False
+    text = " ".join(w.text for w in words)
+    compact = re.sub(r"[\s.\-]", "", text).lower()
+    if re.search(r"nureinh(eits)?pr|nurep$|nurep\b", compact):
+        nep = True
+        cut = next((i for i, w in enumerate(words) if w.text.lower().startswith("n") and
+                    re.sub(r"[\s.\-]", "", " ".join(x.text for x in words[i:])).lower().startswith("nur")), None)
+        if cut is not None:
+            words = words[:cut]
+    words = [w for w in words if not re.fullmatch(r"[.\-–·]", w.text)]
+    # #192: "200St EP.......... GP ..........": a bare "EP"/"GP" label in front of its dotted field
+    words = [w for i, w in enumerate(words) if not (re.fullmatch(r"(?:EP|GP)", w.text) and i + 1 < len(words)
+                                                    and PLACEHOLDER_PATTERN.match(words[i + 1].text))]
+    if len(words) >= 2 and re.fullmatch(r"\d{1,3}", words[0].text) and QUANTITY_PATTERN.match(words[1].text) \
+            and words[1].x0 - words[0].x1 < 2 * max(words[0].size, 1):
+        words = [_merged(words[0], words[1], words[0].text + words[1].text), *words[2:]]
+    if words:
+        glued = re.fullmatch(r"((?:\d{1,3}(?:\.\d{3})+|\d+)(?:,\d+)?)([A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß²³/.]{0,5})", words[0].text)
+        if glued:
+            head = words[0]
+            words = [_merged(head, head, glued.group(1)), _merged(head, head, glued.group(2)), *words[1:]]
+    return words, nep
+
+
 def _quantity_line(words: list[_Word], width: float) -> dict | None:
     """Parse ``<quantity> [<unit>] <price fields>`` or an empty ``___ ____`` quantity line."""
     if not words or not any(_is_price_word(w) and w.x0 >= width * PRICE_X_SHARE for w in words):
         return None
+    words, nep_note = _clean_quantity_words(words)
+    if not words:
+        return None
+    parsed = _parse_quantity_words(words)
+    if parsed is not None and nep_note:
+        parsed["nep"] = True
+    return parsed
+
+
+def _parse_quantity_words(words: list[_Word]) -> dict | None:
     if all(PLACEHOLDER_PATTERN.match(w.text) for w in words):
         return {"quantity": None, "unit": None, "prices": [], "nep": any(w.text.upper() == "*NEP*" for w in words)}
     if not QUANTITY_PATTERN.match(words[0].text):
@@ -451,6 +508,9 @@ def _quantity_line(words: list[_Word], width: float) -> dict | None:
     unit_words = []
     while rest and not _is_price_word(rest[0]):
         unit_words.append(rest.pop(0))
+    if len(unit_words) > 2 and all(len(w.text) <= 3 for w in unit_words) \
+            and len("".join(w.text for w in unit_words)) <= 6:  # #192: letter-spaced unit "m2 W o" -> "m2Wo"
+        unit_words = [_merged(unit_words[0], unit_words[-1], "".join(w.text for w in unit_words))]
     if len(unit_words) > 2 or any(len(w.text) > 10 for w in unit_words):
         return None
     if not all(_is_price_word(w) for w in rest):
@@ -501,27 +561,41 @@ def _segment(items: list, oz_column: float) -> list[tuple[str, object, _Entry | 
         at_oz_column = abs(line.x0 - oz_column) <= OZ_COLUMN_TOLERANCE
         if current is not None and current.kind == "oz" and not current.has_quantity_line:
             quantity = _quantity_line(line.words, line.page_width)
-            if quantity is not None and not (at_oz_column and OZ_PATTERN.match(first.text)):
+            if quantity is not None and not (at_oz_column and _is_oz(first.text)):
                 _apply_quantity(current, quantity)
                 events.append(("quantity", line, current))
                 current = None
                 continue
-        if at_oz_column and OZ_PATTERN.match(first.text):
+        if at_oz_column and _is_oz(first.text):
+            dot_oz = bool(DOT_OZ_PATTERN.match(first.text))
             rest = line.words[1:]
             quantity = _quantity_line(rest, line.page_width) if rest else None
             priced = quantity is None and any(_is_price_word(w) and w.x0 >= line.page_width * PRICE_X_SHARE for w in rest)
-            if priced and (first.text in seen_oz or "." not in first.text.strip(".")):
+            if not priced and first.text in seen_oz and line.top < line.page_height * REPEATED_TITLE_BAND:
+                # #192: section titles repeated at the top of every page ("03.02 Bereich ...") are page
+                # furniture; the position running over the page break keeps its quantity line.
+                events.append(("text", line, None))
+                continue
+            if priced and (first.text in seen_oz or ("." not in first.text.strip(".") and not dot_oz)):
                 close()
                 events.append(("total", line, None))  # summary line such as "1 Earthworks ____"
                 current = None
                 continue
             close()
             seen_oz.add(first.text)
-            current = _Entry(kind="oz", oz=first.text, head_line=line)
+            current = _Entry(kind="oz", oz=first.text.lstrip(".") if dot_oz else first.text, head_line=line)
             if quantity is not None:
                 _apply_quantity(current, quantity)
+                current.quantity_on_head = True
             else:
                 current.head = [w for w in rest if not (priced and _is_price_word(w))]
+                marker = MARKER_HEAD_PATTERN.match(" ".join(w.text for w in current.head))
+                if marker:  # #187: the OZ line only carries the marker; the real title is the next line
+                    word = marker.group(1).lower()
+                    if not word.startswith("grund"):  # "*** Grundposition 1.0" is a normal position
+                        current.markers.add("alternativ" if word.startswith(("alternativ", "wahl")) else "bedarf")
+                    current.head = []
+                    current.title_below = True
             events.append(("head", line, current))
             continue
         if TOTAL_PATTERN.match(line.text):
@@ -540,7 +614,12 @@ def _segment(items: list, oz_column: float) -> list[tuple[str, object, _Entry | 
             current = _Entry(kind="note")
             events.append(("note", line, current))
             continue
-        if current is not None and not current.has_quantity_line:
+        if current is not None and current.kind == "oz" and current.quantity_on_head and not at_oz_column:
+            # #187: offers print "<OZ> <qty> <unit> <EP> <GP>" first and the text below (AN24-0305)
+            current.lines.append(line)
+            line_event[id(line)] = len(events)
+            events.append(("line", line, current))
+        elif current is not None and not current.has_quantity_line:
             current.lines.append(line)
             line_event[id(line)] = len(events)
             events.append(("line", line, current))
@@ -555,7 +634,7 @@ def _apply_quantity(entry: _Entry, quantity: dict) -> None:
     entry.quantity, entry.unit = quantity["quantity"], quantity["unit"]
     if len(quantity["prices"]) == 2:
         entry.unit_price, entry.total_price = quantity["prices"]
-    if quantity["nep"]:
+    if quantity["nep"] and "alternativ" not in entry.markers:  # a Wahlposition also prints "Nur Einh.-Pr."
         entry.markers.add("bedarf")
 
 
@@ -575,10 +654,15 @@ def _classify(entries: list[_Entry], warnings: list[str]) -> None:
     if not shapes:
         depth = max((len(_segments(e.oz)) for e in entries), default=0)
         shapes = {_shape(e.oz) for e in entries if len(_segments(e.oz)) == depth}
+    # #192: when every priced position pads its OZ the same way ("01.01.1"), an unpriced "2.3.1" in a form
+    # bundle in front of the BoQ (HEM2301) is a numbered remark, not a position.
+    widths = {_widths(e.oz) for e in entries if e.has_quantity_line}
+    width = next(iter(widths)) if len(widths) == 1 and any(w > 1 for w in next(iter(widths))) else None
     for index, entry in enumerate(entries):
         following = entries[index + 1] if index + 1 < len(entries) else None
         parent_of_next = following is not None and _is_ancestor(entry.oz, following.oz)
-        if entry.has_quantity_line or (_shape(entry.oz) in shapes and not parent_of_next):
+        same_format = width is None or _widths(entry.oz) == width
+        if entry.has_quantity_line or (_shape(entry.oz) in shapes and same_format and not parent_of_next):
             entry.role = "position"
             if not entry.has_quantity_line:
                 warnings.append(f"OZ {entry.oz}: no quantity line found; quantity and unit stay empty.")
@@ -587,6 +671,11 @@ def _classify(entries: list[_Entry], warnings: list[str]) -> None:
         else:
             entry.role = "text"
         entry.short_lines = _short_lines(entry)
+
+
+def _widths(oz: str | None) -> tuple[int, ...]:
+    """Digit counts of the OZ levels above the position: ``01.01.7`` -> ``(2, 2)``."""
+    return tuple(len(s) for s in _segments(oz or "")[:-1])
 
 
 def _is_ancestor(parent: str | None, child: str | None) -> bool:
@@ -609,6 +698,8 @@ def _short_lines(entry: _Entry) -> set[int]:
         return chosen
     if entry.role != "position" or not lines:
         return set()
+    if entry.title_below:  # the line below "*** Bedarfsposition" is the title; the long text follows it
+        return {id(lines[0])}
     chosen, previous = {id(lines[0])}, lines[0]
     for line in lines[1:]:
         if line.page != previous.page or line.top - previous.top > 1.5 * max(previous.size, line.size):
