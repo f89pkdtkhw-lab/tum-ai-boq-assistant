@@ -33,6 +33,11 @@ import { Fundstelle } from "./fundstelle/Fundstelle";
 import { RechercheHinweis, RechercheQuellen } from "./recherche/Recherche"; // E #169
 import type { RechercheErgebnis } from "@/lib/api";
 import styles from "./pruefbericht.module.css";
+import { ActionSheet } from "@/components/ui/ActionSheet";
+import { SwipeToDone } from "@/components/ui/SwipeToDone";
+import { IosLeiste } from "@/components/pruefbericht/IosLeiste";
+import { liegtUeberSchwelle } from "@/lib/schwelle";
+import { excelHerunterladen, jsonHerunterladen, pdfHerunterladen } from "@/lib/bericht-download";
 
 /**
  * Handoff to the export page (/export, follow-up issue #15):
@@ -111,11 +116,6 @@ function Menge({ menge, einheit }: { menge: number | null; einheit: string | nul
   );
 }
 
-function dateiname(name: string) {
-  const basis = name.normalize("NFKD").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
-  return `pruefbericht-${basis || "lv"}.json`;
-}
-
 type Auswahl = { oz: string; findingId: string | null };
 type Reiter = "uebersicht" | "findings" | "positionen" | "preise" | "fragen" | "mengen";
 
@@ -128,7 +128,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
   springeZu?: { oz: string; n: number } | null; originalUrl?: string | null;
 }) {
   const d = useDok();
-  const { e: einstellungen, t } = useEinstellungen();
+  const { e: einstellungen, setze: setzeEinstellungen, t } = useEinstellungen();
   const { lv, kennzahlen } = bericht;
   const eigene = useEinschaetzung(bericht, !vonAussen);
   const bewertung = vonAussen ?? eigene;
@@ -144,6 +144,8 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
   const [kategorie, setKategorie] = useState<Kategorie | null>(null);
   const [schwere, setSchwere] = useState<Schwere | null>(null);
   const [gruppe, setGruppe] = useState<Gruppe | null>(null);
+  const [minSchwere, setMinSchwere] = useState<Schwere>("niedrig"); // iOS risk threshold
+  const [exportOffen, setExportOffen] = useState(false);
   const [auswahl, setAuswahl] = useState<Auswahl | null>(null);
   const [exportFehler, setExportFehler] = useState("");
   const [einheit, setEinheit] = useState<string | null>(null);
@@ -189,8 +191,9 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
     () => filtereFindings(sortiert, lv.positionen, { suche, kategorie, schwere })
       .filter((f) => status === null || bewertungVon(bewertungen, f.id).status === status)
       .filter((f) => ozImTitel === null || ozImTitel.has(f.oz))
-      .filter((f) => inGruppe(f, gruppe)),
-    [sortiert, lv.positionen, suche, kategorie, schwere, status, bewertungen, ozImTitel, gruppe],
+      .filter((f) => inGruppe(f, gruppe))
+      .filter((f) => liegtUeberSchwelle(f.schwere, minSchwere)), // iOS risk threshold
+    [sortiert, lv.positionen, suche, kategorie, schwere, status, bewertungen, ozImTitel, gruppe, minSchwere],
   );
 
   // Load after mount: localStorage does not exist during server rendering.
@@ -250,36 +253,51 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [springeZu?.n]);
 
-  function herunterladen() {
-    const blob = new Blob([JSON.stringify(bericht, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = dateiname(lv.name);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
-  }
 
-  function zumExport(event: React.MouseEvent<HTMLAnchorElement>) {
+  function zumExport(event?: React.MouseEvent<HTMLAnchorElement>) {
     try {
       window.sessionStorage.setItem(PRUEFBERICHT_SPEICHER_SCHLUESSEL, JSON.stringify(bericht));
       setExportFehler("");
+      return true;
     } catch {
-      event.preventDefault();
+      event?.preventDefault();
+      setExportFehler(t("Could not pass the report to the export page (browser storage blocked). Please use the JSON download."));
+      return false;
+    }
+  }
+
+  function nurKritischSetzen(an: boolean) {
+    setGruppe(an ? "gross" : null);
+    setMinSchwere(an ? "hoch" : "niedrig");
+  }
+
+  function minSchwereSetzen(s: Schwere) {
+    setMinSchwere(s);
+    setGruppe(s === "hoch" || s === "kritisch" ? "gross" : null);
+  }
+
+  function exportieren(art: "json" | "xlsx" | "pdf" | "seite") {
+    try {
+      if (art === "json") jsonHerunterladen(bericht);
+      else if (art === "xlsx") excelHerunterladen(bericht, bewertungen);
+      else if (art === "pdf") pdfHerunterladen(bericht, bewertungen, t, einstellungen.sprache);
+      else if (art === "seite") {
+        if (zumExport()) window.location.href = "/export";
+      }
+      setExportFehler("");
+    } catch {
       setExportFehler(t("Could not pass the report to the export page (browser storage blocked). Please use the JSON download."));
     }
   }
 
   const sucheAktiv = normalisiere(suche) !== "";
-  const filterAktiv = kategorie !== null || schwere !== null || gruppe !== null || status !== null || titel !== null || sucheAktiv;
+  const filterAktiv = kategorie !== null || schwere !== null || gruppe !== null || status !== null || titel !== null || sucheAktiv || minSchwere !== "niedrig";
   const sichtbarePositionen = lv.positionen.filter(
     (p) => (einheit === null || mengenSchluessel(p) === einheit) && (titel === null || imTeilbaum(p, titel)) && positionTrifft(p, suche),
   );
 
   // Paging runs after every filter; a changed filter key shows page 1 again (issue #67).
-  const findingSchluessel = JSON.stringify([kategorie, schwere, gruppe, status, titel, suche]);
+  const findingSchluessel = JSON.stringify([kategorie, schwere, gruppe, status, titel, suche, minSchwere]);
   const findingSeite = seiteVon(gefiltert.length, aktuelleSeite(findingBlatt, findingSchluessel), findingGroesse);
   const sichtbareFindings = ausschnitt(gefiltert, findingSeite);
   const positionSchluessel = JSON.stringify([einheit, titel, suche]);
@@ -353,8 +371,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
           <p className={styles.quelle}>{anzeigeName && anzeigeName !== lv.name && <>{t("File")}: {lv.name} · </>}{t("Source:")} {lv.quelle || <Unbekannt />}</p>
         </div>
         <div className={styles.aktionen}>
-          <button type="button" className={styles.knopf} onClick={herunterladen}>{t("Download JSON")}</button>
-          <a className={styles.knopfZweit} href="/export" onClick={zumExport}>{t("Export report")}</a>
+          <button type="button" className={styles.knopf} onClick={() => setExportOffen(true)}>{t("Export report")}</button>
         </div>
       </header>
       {exportFehler && <p className={styles.fehler} role="alert">{exportFehler}</p>}
@@ -407,6 +424,29 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
         </button>
       </div>
       </>)}
+
+      <IosLeiste
+        nurKritisch={gruppe === "gross"}
+        onNurKritisch={nurKritischSetzen}
+        mockAusblenden={einstellungen.mockAusblenden}
+        onMockAusblenden={(aus) => setzeEinstellungen({ mockAusblenden: aus })}
+        minSchwere={minSchwere}
+        onMinSchwere={minSchwereSetzen}
+        schwere={schwere}
+        onSchwere={setSchwere}
+      />
+      <ActionSheet
+        open={exportOffen}
+        onClose={() => setExportOffen(false)}
+        title={t("Export report")}
+        cancelLabel={t("Cancel")}
+        actions={[
+          { label: t("Save PDF"), onClick: () => exportieren("pdf") },
+          { label: t("Download Excel"), onClick: () => exportieren("xlsx") },
+          { label: t("Download JSON"), onClick: () => exportieren("json") },
+          { label: t("Open export page"), onClick: () => exportieren("seite") },
+        ]}
+      />
 
       <p className={styles.metaZeile}>
         {t("{n} items", { n: zahl.format(kennzahlen.positionen) })}{doppelteOz > 0 && <> · {t("{n} duplicate item numbers", { n: doppelteOz })}</>}
@@ -525,7 +565,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
             <div className={styles.leer}>
               <p>{t("No findings match this filter.")}</p>
               {filterAktiv && (
-                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setGruppe(null); setStatus(null); setTitel(null); setSuche(""); }}>
+                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setGruppe(null); setStatus(null); setTitel(null); setSuche(""); setMinSchwere("niedrig"); }}>
                   {t("Reset filters")}
                 </button>
               )}
@@ -534,19 +574,29 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
             <>
             {findingsSteuerung(t("Findings pages"), false)}
             <ul className={styles.findings}>
-              {sichtbareFindings.map((finding) => (
+              {sichtbareFindings.map((finding) => {
+                const status = bewertungVon(bewertungen, finding.id).status;
+                const erledigt = status === "bestaetigt";
+                return (
                 <li key={finding.id}>
-                  <MitStatus status={bewertungVon(bewertungen, finding.id).status} titel={finding.titel}
-                    onAendern={(s) => bewerte(finding.id, { status: s })}>
-                    <FindingKarte
-                      finding={finding}
-                      gewaehlt={auswahl?.findingId === finding.id}
-                      ozBekannt={positionenNachOz.has(finding.oz)}
-                      onWaehle={() => waehle(finding.oz, finding.id)}
-                    />
-                  </MitStatus>
+                  <SwipeToDone
+                    done={erledigt}
+                    doneLabel={t("Mark as done")}
+                    resetLabel={t("Reset to open")}
+                    onToggle={() => bewerte(finding.id, { status: erledigt ? "offen" : "bestaetigt" })}>
+                    <MitStatus status={status} titel={finding.titel}
+                      onAendern={(s) => bewerte(finding.id, { status: s })}>
+                      <FindingKarte
+                        finding={finding}
+                        gewaehlt={auswahl?.findingId === finding.id}
+                        ozBekannt={positionenNachOz.has(finding.oz)}
+                        onWaehle={() => waehle(finding.oz, finding.id)}
+                      />
+                    </MitStatus>
+                  </SwipeToDone>
                 </li>
-              ))}
+                );
+              })}
             </ul>
             {sichtbareFindings.length > 10 && findingsSteuerung(t("Findings pages, bottom"), true)}
             </>

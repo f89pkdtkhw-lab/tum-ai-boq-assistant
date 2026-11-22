@@ -1,0 +1,26 @@
+.zeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 0;
+}
+.lbl { display: grid; gap: 1px; min-width: 0; }
+.lbl b { font-weight: 500; font-size: 13.5px; }
+.lbl small { color: var(--muted); font-size: 11.5px; font-weight: 400; }
+.sw { position: relative; width: 51px; height: 31px; flex: none; }
+.sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.bahn {
+  position: absolute; inset: 0; background: #e9e9eb; border-radius: 16px; transition: background .2s;
+}
+[data-theme="dark"] .bahn { background: #39393d; }
+.bahn::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; background: #fff;
+  border-radius: 50%; box-shadow: 0 3px 8px rgba(0, 0, 0, .15), 0 1px 1px rgba(0, 0, 0, .1);
+  transition: transform .2s;
+}
+.sw input:checked + .bahn { background: #34c759; }
+.sw input:checked + .bahn::after { transform: translateX(20px); }
+.sw input:focus-visible + .bahn { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw input:disabled + .bahn { opacity: .5; }

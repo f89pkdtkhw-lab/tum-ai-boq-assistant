@@ -1,0 +1,21 @@
+.wrap { position: relative; overflow: hidden; }
+.aktionen { position: absolute; inset: 0 0 0 auto; display: flex; }
+.aktionen button {
+  border: 0; width: 88px; color: #fff; font: inherit; font-weight: 600; font-size: 12.5px;
+  background: #34c759; cursor: pointer;
+}
+.aktionen .undo { background: #8e8e93; }
+.front {
+  position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px;
+  align-items: center; background: var(--pb-card, var(--card, #fff));
+  transition: transform .2s ease, opacity .2s; will-change: transform;
+}
+.done { opacity: .72; }
+.chk {
+  width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #c5c5c7; background: #fff;
+  display: grid; place-items: center; padding: 0; flex: none; cursor: pointer; color: #fff;
+}
+.chk svg { opacity: 0; width: 12px; height: 12px; }
+.done .chk { background: #34c759; border-color: #34c759; }
+.done .chk svg { opacity: 1; }
+.content { min-width: 0; }
