@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  effektiverSchritt, ladeStufe, leseSchritt, maxSchritt, rechercheZumBefund, wizardPfad, wizardSichtbar,
+  effektiverSchritt, ladeStufe, leseSchritt, maxSchritt, rechercheZumBefund, wizardPfad, wizardSichtbar, wizardUmleitung,
 } from "./wizard.ts";
 
 test("leseSchritt reads the query or infers from the path", () => {
@@ -48,4 +48,13 @@ test("rechercheZumBefund prefers finding_id and falls back to the same OZ", () =
   assert.equal(rechercheZumBefund(rows, { ...finding, id: "missing" }).length, 1);
   assert.equal(rechercheZumBefund(rows, { ...finding, id: "missing" })[0].text, "price");
   assert.deepEqual(rechercheZumBefund([], finding), []);
+});
+
+test("wizardUmleitung clamps the URL, but waits while an evaluation link is being restored", () => {
+  const q = (s) => new URLSearchParams(s);
+  assert.equal(wizardUmleitung("pruefen", "pruefen", q("schritt=pruefen")), null);
+  assert.equal(wizardUmleitung("preis", "hochladen", q("schritt=preis")), "/?schritt=hochladen");
+  // Running evaluation chip: /?schritt=pruefen&eval=<id>&job=<id> before the page has reported its status.
+  assert.equal(wizardUmleitung("pruefen", "hochladen", q("schritt=pruefen&eval=j1&job=j1")), null);
+  assert.equal(wizardUmleitung("preis", "hochladen", q("schritt=preis&eval=lokal-3")), null);
 });

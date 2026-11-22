@@ -1,67 +1,69 @@
-/* API key control in the top utility bar: Stripe-style pill and popover. */
+/* #156: model chip in the global nav with a small panel to enter the Claude API key. */
 .wrapper { position: relative; }
 .chip {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 12px; border-radius: 99px;
-  font: 600 12.5px/1 var(--font-iso); color: var(--muted); cursor: pointer; white-space: nowrap;
-  background: var(--card); border: 1px solid var(--line);
-  box-shadow: 0 1px 2px var(--shadow);
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 22px;
+  font: 600 13px/1 ui-monospace, Menlo, monospace; color: var(--muted); cursor: pointer; white-space: nowrap;
+  background: var(--glass); border: 1px solid var(--glass-edge);
+  -webkit-backdrop-filter: blur(28px) saturate(180%); backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--glass-light), 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow);
 }
-.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 .live { color: var(--good); }
 .mock { color: var(--warn); border: 1px dashed currentColor; }
 .off { color: var(--bad); }
 .panel {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: min(380px, calc(100vw - 32px));
-  padding: 16px; border-radius: var(--r-lg); background: var(--card); border: 1px solid var(--line);
-  box-shadow: 0 12px 32px rgba(10, 37, 64, .12); font-size: 13.5px;
+  padding: 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--line);
+  box-shadow: 0 18px 40px -16px var(--shadow); font-size: 15px;
 }
 .status { margin: 0 0 10px; }
 .notice {
-  margin: 0 0 12px; padding: 10px 12px; border-radius: var(--r-md); font-size: 13.5px; color: var(--ink);
+  margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; font-size: 14px; color: var(--ink);
   background: color-mix(in srgb, var(--warn) 14%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
 }
 .notice small { color: var(--muted); }
 .note { margin: 0; color: var(--muted); }
 .form { display: grid; gap: 10px; }
-.label { display: grid; gap: 4px; font-weight: 600; font-size: 13.5px; }
+.label { display: grid; gap: 4px; font-weight: 600; font-size: 14px; }
 .optional { font-weight: 400; color: var(--muted); }
 .input {
-  font: 13.5px ui-monospace, Menlo, monospace; padding: 8px 12px; border-radius: var(--r-md); min-height: 32px;
-  border: 1px solid var(--line); background: var(--card); color: inherit; width: 100%;
+  font: 15px ui-monospace, Menlo, monospace; padding: 10px 12px; border-radius: 10px; min-height: 44px;
+  border: 1px solid var(--line); background: transparent; color: inherit; width: 100%;
 }
-.input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
 .check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--muted); }
 .check input { margin-top: 2px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .primary, .secondary {
-  font: inherit; font-weight: 600; min-height: 32px; padding: 0 14px; border-radius: var(--r-sm); cursor: pointer;
+  font: inherit; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 10px; cursor: pointer;
 }
-.primary { border: 0; background: var(--button); color: var(--button-ink); box-shadow: 0 1px 2px color-mix(in srgb, var(--button) 35%, transparent); }
-.secondary { border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.primary { border: 0; background: var(--button); color: var(--button-ink); }
+.secondary { border: 1px solid var(--line); background: var(--fill); color: var(--ink); }
 .primary:disabled, .secondary:disabled { opacity: .5; cursor: default; }
-.message { margin: 12px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }
+.message { margin: 12px 0 0; font-size: 14px; overflow-wrap: anywhere; }
 .ok { color: var(--good); }
 .error { color: var(--bad); }
 .info { color: var(--muted); }
-/* Compact key button next to the theme switch; the dot shows live / mock / offline. */
+/* Compact key button on the navy top bar (redesign): same look as the theme switch next to it; the dot shows live / mock / offline. */
 .keyButton {
-  position: relative; display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; cursor: pointer;
-  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card); color: var(--muted);
+  position: relative; display: inline-grid; place-items: center; width: 34px; height: 32px; padding: 0; cursor: pointer;
+  border: 1px solid var(--line); border-radius: var(--r-md, 8px); background: var(--fill); color: var(--muted);
 }
-.keyButton:hover { background: var(--fill); color: var(--ink); }
+.keyButton:hover { background: var(--fill-strong); color: var(--ink); }
 .keyButton:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.keyDot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 1.5px var(--card); }
+.keyDot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 1.5px var(--bg); }
 .keyButton.live, .keyButton.mock, .keyButton.off { border-style: solid; color: var(--muted); }
 .keyButton.live .keyDot { background: var(--good); }
 .keyButton.mock .keyDot { background: var(--warn); }
 .keyButton.off .keyDot { background: var(--bad); }
 .compactPanel {
-  width: min(340px, calc(100vw - 24px)); padding: 14px; font-size: 13.5px; color: var(--ink); border-radius: var(--r-lg);
-  background: var(--card); border: 1px solid var(--line);
-  box-shadow: 0 12px 32px rgba(10, 37, 64, .12);
+  width: min(340px, calc(100vw - 24px)); padding: 14px; font-size: 14px; color: var(--ink); border-radius: var(--r-md, 12px);
+  background: var(--glass); border-color: var(--glass-edge);
+  -webkit-backdrop-filter: blur(28px) saturate(180%); backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--glass-light), 0 0 0 .5px var(--glass-line), 0 18px 40px -16px var(--shadow);
 }
-.compactPanel .input, .compactPanel .primary, .compactPanel .secondary { min-height: 32px; }
+.compactPanel .input, .compactPanel .primary, .compactPanel .secondary { min-height: 36px; }
 @media (prefers-reduced-transparency: reduce) { .compactPanel { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 @media (max-width: 560px) { .panel { right: auto; left: 50%; transform: translateX(-50%); } }
 @media print { .wrapper { display: none; } }

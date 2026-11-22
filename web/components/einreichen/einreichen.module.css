@@ -1,6 +1,6 @@
-.seite { max-width: 960px; margin: 0 auto; padding: 16px var(--page-x, 28px) 40px; display: grid; gap: 14px; }
+.seite { max-width: 960px; margin: 0 auto; padding: 20px 20px 40px; display: grid; gap: 14px; }
 .titel { margin: 0; font-size: 22px; }
-.karte { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); box-shadow: 0 1px 2px var(--shadow); scroll-margin-top: 70px; }
+.karte { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); scroll-margin-top: 70px; }
 .abschnittBlock { scroll-margin-top: 70px; }
 .abschnitt { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 16px; }
 .ablage { position: relative; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: var(--r-md); background: var(--fill); cursor: pointer; font-weight: 600; }

@@ -1,6 +1,6 @@
 /* Progress bar and footer for the six-step review flow. Tokens from globals.css. */
 .leiste {
-  position: sticky; top: 0; z-index: 20;
+  position: sticky; top: 52px; z-index: 20;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: saturate(160%) blur(16px); -webkit-backdrop-filter: saturate(160%) blur(16px);
   border-bottom: 1px solid var(--line);
@@ -36,10 +36,10 @@
 .fussHint { color: var(--muted); font-size: 12.5px; }
 .fussPush { margin-left: auto; display: flex; gap: 8px; }
 .knopf, .knopfZweit {
-  font: inherit; font-weight: 600; font-size: 13px; height: 40px; padding: 0 16px; border-radius: 6px; cursor: pointer;
+  font: inherit; font-weight: 600; font-size: 13px; height: 40px; padding: 0 16px; border-radius: var(--r-md); cursor: pointer;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.knopf { background: var(--button); color: var(--button-ink); border: 0; box-shadow: 0 1px 2px color-mix(in srgb, var(--button) 35%, transparent); }
+.knopf { background: var(--button); color: var(--button-ink); border: 0; }
 .knopf:disabled, .knopfZweit:disabled { opacity: .45; cursor: default; box-shadow: none; }
 .knopfZweit { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
 
@@ -67,7 +67,7 @@
 .stufen li.erledigt .st { background: var(--good); border-color: var(--good); color: var(--button-ink); }
 
 /* iOS action sheet (export). */
-.sheetBg { position: fixed; inset: 0; background: color-mix(in srgb, var(--ink) 36%, transparent); display: none;
+.sheetBg { position: fixed; inset: 0; background: rgba(0, 0, 0, .25); display: none;
   z-index: 40; align-items: flex-end; justify-content: center; padding: 12px; }
 .sheetBg.an { display: flex; }
 .sheet { width: min(420px, 100%); display: flex; flex-direction: column; gap: 8px; animation: hoch .28s ease; }
@@ -86,7 +86,7 @@
   padding: 10px 16px; border-radius: 12px; font-size: 13px; opacity: 0; pointer-events: none; transition: .25s; z-index: 50; }
 .toast.an { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-.zusammenfassung { display: grid; grid-template-columns: 1.1fr .9fr; gap: 12px; margin-bottom: 16px; }
+.zusammenfassung { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-bottom: 16px; }
 @media (max-width: 800px) { .zusammenfassung { grid-template-columns: 1fr; } .stufen { grid-template-columns: 1fr 1fr; } }
 .hero { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; box-shadow: 0 1px 2px var(--shadow); }
 .heroLabel { color: var(--muted); font-size: 12.5px; font-weight: 500; }

@@ -2,7 +2,6 @@
 
 import { useDok } from "@/components/dok/useDok";
 import { type ChangeEvent, useEffect, useState } from "react";
-import { ActionSheet } from "@/components/ui/ActionSheet";
 import { ladeMargeStand } from "@/lib/wizard";
 import wStyles from "@/components/wizard/wizard.module.css";
 import type { Pruefbericht } from "@/lib/api";
@@ -55,7 +54,6 @@ export function Export() {
   // Inputs of the estimated price report: past projects per trade and the browser price list (same as the report, level 3).
   const [gewerke, setGewerke] = useState<TradeStat[] | null>(null);
   const [preisliste, setPreisliste] = useState<Preis[]>([]);
-  const [sheetAn, setSheetAn] = useState(false);
   const [marge, setMarge] = useState<ReturnType<typeof ladeMargeStand>>(null);
   useEffect(() => {
     setPreisliste(ladePreisliste());
@@ -179,21 +177,7 @@ export function Export() {
             <li><span>{t("Final offer")}</span><span>{euroGanz.format(angebot)}</span></li>
           </ul>
         </div>
-        <div>
-          <button type="button" className={styles.knopf} id="wizard-export" style={{ width: "100%", justifyContent: "center", minHeight: 48 }}
-            onClick={() => setSheetAn(true)}>
-            <Icon name="download" /> {t("Export offer")}
-          </button>
-        </div>
       </div>
-      <ActionSheet open={sheetAn} onClose={() => setSheetAn(false)} title={t("Export offer")} cancelLabel={t("Cancel")}
-        actions={[
-          { label: t("Save PDF"), onClick: () => pdfSpeichern(bericht, bewertungen, preis) },
-          { label: t("Download Excel"), onClick: () => excel(bericht, bewertungen, preis) },
-          { label: t("Price list as CSV"), onClick: () => csvPreis() },
-          { label: t("GAEB X84 · estimated bill"), onClick: () => gaeb(bericht, "84", preis) },
-        ]}
-      />
 
       <nav className={`${styles.glas} ${styles.leiste}`} aria-label={t("Export")}>
         <a className={styles.zurueck} href="/">{t("‹ Review")}</a>
@@ -202,6 +186,7 @@ export function Export() {
           <button type="button" className={styles.knopfZweit} onClick={() => window.print()}><Icon name="report" /> {t("Print")}</button>
           <button type="button" className={styles.knopf} onClick={() => pdfSpeichern(bericht, bewertungen, preis)}><Icon name="download" /> {t("Save PDF")}</button>
           <button type="button" className={styles.knopf} onClick={() => excel(bericht, bewertungen, preis)}><Icon name="download" /> {t("Download Excel")}</button>
+          <button type="button" className={styles.knopf} onClick={() => csvPreis()}><Icon name="download" /> {t("Price list as CSV")}</button>
         </div>
         {/* GAEB DA XML (lib/gaeb.ts): the bill in the chosen phase, and the estimated bill as an offer (X84). */}
         <div className={styles.aktionen} role="group" aria-label="GAEB">

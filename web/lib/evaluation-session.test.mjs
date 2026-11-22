@@ -6,7 +6,7 @@ import { registerHooks } from "node:module";
 registerHooks({ resolve(spec, ctx, next) { try { return next(spec, ctx); } catch (e) { if (spec.startsWith(".")) return next(`${spec}.ts`, ctx); throw e; } } });
 const {
   AKTUELL_SCHLUESSEL, MAX_HISTORIE, SITZUNG_SCHLUESSEL,
-  archiviereAktuelleEvaluation, evaluationListe, evaluationPfad, istNeuerAuftrag,
+  aktualisiereEvaluation, archiviereAktuelleEvaluation, beobachteSitzung, evaluationListe, evaluationPfad, fortzusetzenderJob, istNeuerAuftrag,
   ladeBericht, ladeSitzung, leseSitzung, leereSitzung, setzeAktuelleEvaluation, setzeEvaluationSchritt,
   speichereBericht,
 } = await import("./evaluation-session.ts");
@@ -86,4 +86,49 @@ test("reports are stored per evaluation and as the open session report", () => {
   assert.equal(JSON.parse(storage.getItem(AKTUELL_SCHLUESSEL)).titel, "Kita");
   assert.equal(ladeBericht("missing").titel, "Kita"); // falls back to the open report
   assert.ok(storage.getItem(SITZUNG_SCHLUESSEL) === null || ladeSitzung());
+});
+
+test("fortzusetzenderJob resumes running jobs, but opens a finished one from its stored report", () => {
+  const e = (id, status) => ({ id, jobId: id, titel: "LV", status, schritt: "pruefen", prozent: null, meldung: "", updatedAt: 1 });
+  const gespeichert = (ids) => (id) => ids.includes(id);
+  // Running evaluation chip: resume the job from the link.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "laeuft"), historie: [] }, "j1", "j1", gespeichert([])), "j1");
+  // No link params: resume the current running job of this tab.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "laeuft"), historie: [] }, null, null, gespeichert([])), "j1");
+  // Finished with a stored report: restore it, even if the backend has lost the job.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "fertig"), historie: [] }, "j1", "j1", gespeichert(["j1"])), null);
+  assert.equal(fortzusetzenderJob({ aktuell: null, historie: [e("j2", "fertig")] }, "j2", "j2", gespeichert(["j2"])), null);
+  // Finished but the report is gone (storage full): ask the backend again.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "fertig"), historie: [] }, "j1", "j1", gespeichert([])), "j1");
+  // Nothing running and no link: the start page.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "fertig"), historie: [] }, null, null, gespeichert(["j1"])), null);
+});
+
+test("the local placeholder of a run is replaced by its job id, not archived as a 0 % entry", () => {
+  mockStorage();
+  setzeAktuelleEvaluation({ id: "alt", jobId: "alt", titel: "Old", status: "fertig" });
+  setzeAktuelleEvaluation({ id: "lokal-2", jobId: null, titel: "LV", status: "laeuft", prozent: 0 });
+  setzeAktuelleEvaluation({ id: "job9", jobId: "job9", titel: "LV", status: "laeuft", prozent: 0 }, "lokal-2");
+  const s = ladeSitzung();
+  assert.equal(s.aktuell.id, "job9");
+  assert.deepEqual(s.historie.map((e) => e.id), ["alt"]);
+});
+
+test("aktualisiereEvaluation updates a job where it is, without making it current", () => {
+  mockStorage();
+  setzeAktuelleEvaluation({ id: "j1", jobId: "j1", titel: "A", status: "laeuft", prozent: 10 });
+  let gemeldet = 0;
+  const ab = beobachteSitzung(() => { gemeldet++; });
+  aktualisiereEvaluation("j1", { prozent: 55, meldung: "Step 4/8" });
+  assert.equal(ladeSitzung().aktuell.prozent, 55);
+  assert.equal(gemeldet, 1); // the menu chip re-renders
+  setzeAktuelleEvaluation({ id: "j2", jobId: "j2", titel: "B", status: "laeuft" });
+  aktualisiereEvaluation("j1", { status: "fertig", prozent: 100 });
+  const s = ladeSitzung();
+  assert.equal(s.aktuell.id, "j2");
+  assert.equal(s.historie[0].id, "j1");
+  assert.equal(s.historie[0].status, "fertig");
+  aktualisiereEvaluation("unbekannt", { status: "fehler" });
+  assert.equal(ladeSitzung().aktuell.id, "j2");
+  ab();
 });

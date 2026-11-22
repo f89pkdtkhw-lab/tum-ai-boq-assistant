@@ -53,6 +53,17 @@ export function wizardPfad(id: WizardSchritt): string {
   return `${s.href}?schritt=${id}`;
 }
 
+/**
+ * Where the wizard sends the URL when the requested step is ahead of the review, or null for no redirect.
+ * A link back to an evaluation (`eval` / `job`, lib/evaluation-session.ts) waits: the page first restores the
+ * report or job and reports its status. Redirecting earlier dropped those params and showed the start page.
+ */
+export function wizardUmleitung(gewuenscht: WizardSchritt, schritt: WizardSchritt, search: { has(name: string): boolean }): string | null {
+  if (gewuenscht === schritt) return null;
+  if (search.has("eval") || search.has("job")) return null;
+  return wizardPfad(schritt);
+}
+
 /** The progress bar is shown on the six flow pages; other menu pages stay as they are. */
 export function wizardSichtbar(pathname: string): boolean {
   return pathname === "/" || pathname === "/marge" || pathname === "/export"

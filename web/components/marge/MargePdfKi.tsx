@@ -6,7 +6,7 @@ import { useEinstellungen } from "@/lib/einstellungen";
 import { TYP_LABEL, datumText, vaultApi, type VaultEintrag } from "@/lib/vault";
 import { api, type MargePdfAntwort } from "@/lib/api";
 import { filtereVaultPdfs, istPdfName, margeVergleichHref, xlsxAusMargeAntwort } from "@/lib/marge-pdf";
-import { ActionSheet } from "../ui/ActionSheet";
+import { AuswahlMenue } from "../ui/AuswahlMenue";
 import { DateiWahl } from "../ui/DateiWahl";
 import seite from "../history/history.module.css";
 import eigene from "../preise/preise.module.css";
@@ -76,9 +76,14 @@ export function MargePdfKi({ onFertig }: { onFertig?: (xlsx: File, antwort: Marg
           onChange={(d) => { void starten(d); }} />
       </div>
       <div className={styles.kiAktionen}>
-        <button type="button" className={seite.knopfZweit} onClick={() => void vaultOeffnen()} disabled={laeuft}>
-          {t("Choose PDF from vault")}
-        </button>
+        <AuswahlMenue knopfKlasse={seite.knopfZweit} disabled={laeuft} label={t("Choose PDF from vault")}
+          knopfInhalt={t("Choose PDF from vault")} leerText={t("The vault has no PDF files yet.")}
+          onOeffnen={() => void vaultOeffnen()} onSchliessen={() => setVaultListe(null)}
+          eintraege={vaultListe && vaultListe.slice(0, 30).map((x) => ({
+            key: x.id,
+            label: `${x.dateiname} · ${t(TYP_LABEL[x.typ])} · ${datumText(x.hochgeladen_am, e.sprache)}`,
+            onClick: () => { setVaultListe(null); void vaultApi.alsDatei(x).then((d) => starten(d)); },
+          }))} />
         {download && (
           <a className={seite.knopfZweit + " " + styles.link} href={download.url} download={download.name}>{t("Download Excel")}</a>
         )}
@@ -86,12 +91,6 @@ export function MargePdfKi({ onFertig }: { onFertig?: (xlsx: File, antwort: Marg
           <a className={seite.knopfZweit + " " + styles.link} href={download.href}>{t("Open in margin comparison")}</a>
         )}
       </div>
-      <ActionSheet open={vaultListe !== null} onClose={() => setVaultListe(null)} cancelLabel={t("Cancel")}
-        title={vaultListe?.length ? t("Choose PDF from vault") : t("The vault has no PDF files yet.")}
-        actions={(vaultListe ?? []).slice(0, 30).map((x) => ({
-          label: `${x.dateiname} · ${t(TYP_LABEL[x.typ])} · ${datumText(x.hochgeladen_am, e.sprache)}`,
-          onClick: () => { setVaultListe(null); void vaultApi.alsDatei(x).then((d) => starten(d)); },
-        }))} />
       <div aria-live="polite">
         {ok && <p className={eigene.hinweis}>{ok}</p>}
         {hinweis && <p className={eigene.hinweis}>{t(hinweis)}</p>}

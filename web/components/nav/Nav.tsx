@@ -29,8 +29,6 @@ const WEITERE: Eintrag[] = [
   { href: "/start", label: "About LV Scout", icon: "lightbulb" },
 ];
 
-const MOBIL = "(max-width: 860px)";
-
 function statusText(e: EvaluationEintrag, t: (s: string) => string): string {
   if (e.status === "laeuft") return e.prozent != null ? `${e.prozent} %` : t("Running");
   if (e.status === "fehler") return t("Failed");
@@ -57,15 +55,7 @@ export function Nav() {
   const { aktuell, liste } = useEvaluationSitzung();
   const neu = istNeuerAuftrag(search);
   const [offen, setOffen] = useState(false);
-  const [mobil, setMobil] = useState(false);
   useEffect(() => { setOffen(false); }, [pathname, search]);
-  useEffect(() => {
-    const mq = window.matchMedia(MOBIL);
-    const sync = () => setMobil(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
   useEffect(() => {
     const zu = (ev: KeyboardEvent) => { if (ev.key === "Escape") setOffen(false); };
     document.addEventListener("keydown", zu);
@@ -92,8 +82,28 @@ export function Nav() {
 
   return (
     <>
-      <nav className={`app-sidebar ${styles.sidebar} ${offen ? styles.offen : ""}`} aria-label={t("Main")} aria-hidden={mobil && !offen}>
-        <Link href="/" className={styles.marke} onClick={() => setOffen(false)}><Logo size={32} />LV Scout</Link>
+      <header className={styles.leiste}>
+        <button type="button" className={styles.burger} aria-label={t("Menu")} aria-expanded={offen} onClick={() => setOffen(!offen)}>
+          <span /><span /><span />
+        </button>
+        <Link href="/" className={styles.marke}><Logo size={30} />LV Scout</Link>
+        <span className={styles.platz} />
+        {zurueck && (
+          <Link href={evaluationPfad(zurueck)} className={`${styles.evalChip} ${zurueck.status === "laeuft" ? styles.evalChipLaufend : ""}`}
+            title={t("Back to the evaluation")} onClick={() => setOffen(false)}>
+            <Icon name={zurueck.status === "laeuft" ? "steps" : "report"} />
+            <span className={styles.evalChipText}>
+              {t(zurueck.status === "laeuft" ? "Running evaluation" : "Last evaluation")}
+              {zurueck.status === "laeuft" && zurueck.prozent != null ? ` · ${zurueck.prozent} %` : ""}
+            </span>
+          </Link>
+        )}
+        <KontoChip />
+        <ThemaSchalter />
+      </header>
+      {offen && <div className={styles.schleier} onClick={() => setOffen(false)} aria-hidden="true" />}
+      <nav className={`${styles.schublade} ${offen ? styles.offen : ""}`} aria-label={t("Main")} aria-hidden={!offen}>
+        <div className={styles.kopf}><Logo size={34} /><strong>LV Scout</strong></div>
         {listeItems(HAUPT)}
         {liste.length > 0 && (
           <div className={styles.evalBlock}>
@@ -129,28 +139,9 @@ export function Nav() {
         {listeItems(WEITERE)}
         <div className={styles.fuss}>
           {listeItems([{ href: "/einstellungen", label: "Settings", icon: "settings" }])}
+          <div className={styles.themaZeile}><span>{t("Theme")}</span><ThemaSchalter /></div>
         </div>
       </nav>
-      {offen && <div className={styles.schleier} onClick={() => setOffen(false)} aria-hidden="true" />}
-      <header className={`app-topbar ${styles.topbar}`}>
-        <button type="button" className={styles.burger} aria-label={t("Menu")} aria-expanded={offen} onClick={() => setOffen(!offen)}>
-          <span /><span /><span />
-        </button>
-        <Link href="/" className={styles.markeMobil}><Logo size={32} />LV Scout</Link>
-        <span className={styles.platz} />
-        {zurueck && (
-          <Link href={evaluationPfad(zurueck)} className={`${styles.evalChip} ${zurueck.status === "laeuft" ? styles.evalChipLaufend : ""}`}
-            title={t("Back to the evaluation")} onClick={() => setOffen(false)}>
-            <Icon name={zurueck.status === "laeuft" ? "steps" : "report"} />
-            <span className={styles.evalChipText}>
-              {t(zurueck.status === "laeuft" ? "Running evaluation" : "Last evaluation")}
-              {zurueck.status === "laeuft" && zurueck.prozent != null ? ` · ${zurueck.prozent} %` : ""}
-            </span>
-          </Link>
-        )}
-        <KontoChip />
-        <ThemaSchalter />
-      </header>
     </>
   );
 }

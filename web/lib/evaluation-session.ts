@@ -85,8 +85,11 @@ function inHistorie(historie: EvaluationEintrag[], eintrag: EvaluationEintrag): 
   return [eintrag, ...historie.filter((x) => x.id !== eintrag.id)].slice(0, MAX_HISTORIE);
 }
 
-/** Start or update the current evaluation. A previous current item with a different id goes to the history. */
-export function setzeAktuelleEvaluation(teil: Partial<EvaluationEintrag> & Pick<EvaluationEintrag, "id" | "titel" | "status">): EvaluationEintrag {
+/**
+ * Start or update the current evaluation. A previous current item with a different id goes to the history,
+ * except `ersetzt`: the local placeholder of the same run that now has its backend job id.
+ */
+export function setzeAktuelleEvaluation(teil: Partial<EvaluationEintrag> & Pick<EvaluationEintrag, "id" | "titel" | "status">, ersetzt?: string): EvaluationEintrag {
   const sitzung = ladeSitzung();
   const vorher = sitzung.aktuell;
   const basis = vorher && vorher.id === teil.id ? vorher : {
@@ -106,9 +109,20 @@ export function setzeAktuelleEvaluation(teil: Partial<EvaluationEintrag> & Pick<
     updatedAt: teil.updatedAt ?? Date.now(),
   };
   let historie = sitzung.historie.filter((x) => x.id !== aktuell.id);
-  if (vorher && vorher.id !== aktuell.id) historie = inHistorie(historie, vorher);
+  if (vorher && vorher.id !== aktuell.id && vorher.id !== ersetzt) historie = inHistorie(historie, vorher);
   schreiben({ aktuell, historie });
   return aktuell;
+}
+
+/** Update an evaluation where it is (current or history) without making it current; unknown ids are ignored. */
+export function aktualisiereEvaluation(id: string, teil: Partial<Pick<EvaluationEintrag, "status" | "prozent" | "meldung">>): void {
+  const sitzung = ladeSitzung();
+  const neu = (e: EvaluationEintrag): EvaluationEintrag => ({ ...e, ...teil, updatedAt: Date.now() });
+  if (sitzung.aktuell?.id === id) {
+    schreiben({ ...sitzung, aktuell: neu(sitzung.aktuell) });
+  } else if (sitzung.historie.some((e) => e.id === id)) {
+    schreiben({ ...sitzung, historie: sitzung.historie.map((e) => (e.id === id ? neu(e) : e)) });
+  }
 }
 
 /** Keep the wizard step of the current evaluation, so a later return lands on the same step. */
@@ -141,6 +155,18 @@ export function evaluationPfad(eintrag: Pick<EvaluationEintrag, "id" | "jobId" |
   const teile = [wizardPfad(schritt), `eval=${encodeURIComponent(eintrag.id)}`];
   if (eintrag.jobId) teile.push(`job=${encodeURIComponent(eintrag.jobId)}`);
   return teile.join("&");
+}
+
+/**
+ * Job id to resume for a link back to an evaluation (`?eval=&job=`), or null. A finished evaluation whose report
+ * is stored in this session is restored from it instead, so it still opens after the backend lost the job.
+ */
+export function fortzusetzenderJob(
+  sitzung: EvaluationSitzung, jobId: string | null, evalId: string | null, berichtGespeichert: (id: string) => boolean,
+): string | null {
+  const eintrag = [sitzung.aktuell, ...sitzung.historie].find((e) => e && ((evalId && e.id === evalId) || (jobId && e.jobId === jobId)));
+  if (eintrag && eintrag.status === "fertig" && berichtGespeichert(eintrag.id)) return null;
+  return jobId || (sitzung.aktuell?.status === "laeuft" ? sitzung.aktuell.jobId : null);
 }
 
 export function istNeuerAuftrag(search: string | URLSearchParams): boolean {
