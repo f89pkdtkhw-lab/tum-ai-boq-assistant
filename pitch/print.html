@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LV Scout — Pitch</title>
+<style>
+@font-face {
+  font-family: "Inter";
+  src: url("assets/fonts/Inter-Variable.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("assets/fonts/SpaceGrotesk-Variable.ttf") format("truetype");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: block;
+}
+
+@page { size: 1440pt 810pt; margin: 0; }
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #0e1b33;
+  font-family: Inter, system-ui, sans-serif;
+}
+.page {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  background: #f6f7fb;
+}
+.page:last-child { page-break-after: auto; break-after: auto; }
+.slide {
+  width: 1440px;
+  height: 810px;
+  padding: 64px 96px 56px;
+  background: #f6f7fb;
+  position: relative;
+  overflow: hidden;
+  transform: scale(1.3333333333);
+  transform-origin: top left;
+}
+
+.kicker {
+  margin: 0 0 10px;
+  font-family: Inter, sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: 0.01em;
+  color: #1d6fe9;
+  line-height: 1.2;
+}
+h1, h2, h3 { margin: 0; font-family: "Space Grotesk", sans-serif; font-weight: 500; color: #0e1b33; letter-spacing: -0.03em; }
+.slide > h1, .title-block h1 {
+  font-size: 58px;
+  line-height: 1.05;
+  font-weight: 500;
+}
+.lede, .body, p, li { margin: 0; }
+.footer {
+  position: absolute;
+  left: 96px;
+  bottom: 36px;
+  font-size: 18px;
+  color: #4f596f;
+  font-weight: 500;
+}
+
+/* Title */
+.slide-title { display: flex; align-items: center; gap: 36px; padding-top: 24px; }
+.slide-title .copy { flex: 0 0 560px; min-width: 560px; }
+.slide-title h1 {
+  font-size: 120px;
+  line-height: 0.95;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  margin: 8px 0 22px;
+}
+.slide-title .kicker { white-space: nowrap; }
+.slide-title .tagline {
+  font-size: 34px;
+  line-height: 1.25;
+  color: #4f596f;
+  font-weight: 500;
+}
+.slide-title .names {
+  margin-top: 36px;
+  font-size: 21px;
+  font-weight: 600;
+  color: #1d6fe9;
+  line-height: 1.45;
+}
+.shot {
+  display: block;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(14, 27, 51, 0.12);
+  background: transparent;
+}
+.slide-title .visual { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: flex-end; }
+.slide-title .shot {
+  width: 100%;
+  height: auto;
+  max-height: 580px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Cards */
+.cards { display: flex; gap: 24px; }
+.card {
+  background: #fff;
+  border: 1px solid rgba(14, 27, 51, 0.10);
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(14, 27, 51, 0.06);
+  padding: 28px 28px 30px;
+}
+.card h2 {
+  font-size: 34px;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+.card p, .card li {
+  font-size: 22px;
+  line-height: 1.35;
+  color: #4f596f;
+  font-weight: 500;
+}
+
+/* Problem */
+.quote {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 500;
+  font-size: 52px;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: #0e1b33;
+  margin: 0 0 14px;
+  max-width: 1280px;
+}
+.attr { font-size: 22px; font-weight: 600; color: #1d6fe9; margin-bottom: 28px; }
+.slide-problem .cards { margin-top: 4px; }
+.slide-problem .card { flex: 1; min-height: 280px; }
+
+/* Solution */
+.slide-solution h1 { margin-bottom: 20px; }
+.solution-body { display: grid; grid-template-columns: 430px 1fr; gap: 28px; align-items: center; }
+.steps { display: flex; flex-direction: column; gap: 22px; }
+.step { display: grid; grid-template-columns: 48px 1fr; gap: 16px; align-items: start; }
+.num {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #1d6fe9; color: #fff;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600; font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+  margin-top: 2px;
+}
+.step h2 { font-size: 30px; line-height: 1.15; margin: 0 0 4px; font-family: Inter, sans-serif; font-weight: 650; letter-spacing: -0.02em; }
+.step p { font-size: 22px; line-height: 1.3; color: #4f596f; font-weight: 500; }
+.slide-solution .shot {
+  width: 100%;
+  height: 560px;
+  object-fit: contain;
+  object-position: center right;
+}
+
+/* Architecture */
+.stages { display: flex; align-items: stretch; gap: 0; margin: 28px 0 22px; }
+.stage {
+  flex: 1;
+  background: #fff;
+  border: 1px solid rgba(14, 27, 51, 0.10);
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(14, 27, 51, 0.06);
+  padding: 22px 16px 24px 20px;
+  min-height: 260px;
+}
+.stage .num { width: 38px; height: 38px; font-size: 18px; margin: 0 0 16px; }
+.stage h2 { font-size: 30px; margin: 0 0 10px; }
+.stage p { font-size: 20px; line-height: 1.3; color: #4f596f; font-weight: 500; }
+.arrow {
+  flex: 0 0 28px;
+  display: flex; align-items: center; justify-content: center;
+  color: #1d6fe9; font-size: 26px; font-weight: 700;
+}
+.pills { display: flex; gap: 16px; margin-bottom: 22px; }
+.pill {
+  flex: 1;
+  background: #e7f0fe;
+  color: #0e1b33;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 650;
+  padding: 14px 16px;
+  line-height: 1.2;
+}
+.offline { font-size: 24px; color: #4f596f; font-weight: 500; line-height: 1.35; }
+
+/* Table */
+table.stack {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 28px;
+  background: #fff;
+  border: 1px solid rgba(14, 27, 51, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(14, 27, 51, 0.05);
+}
+table.stack th, table.stack td {
+  text-align: left;
+  padding: 16px 22px;
+  font-size: 26px;
+  line-height: 1.25;
+  border-bottom: 1px solid rgba(14, 27, 51, 0.10);
+}
+table.stack th {
+  font-size: 20px;
+  font-weight: 600;
+  color: #4f596f;
+  background: #fff;
+}
+table.stack td { font-weight: 550; color: #0e1b33; }
+table.stack td:first-child { width: 250px; font-weight: 650; }
+table.stack tr:last-child td { border-bottom: 0; }
+
+/* Estimation */
+.slide-estimate .cards { margin: 28px 0 22px; }
+.slide-estimate .card { flex: 1; min-height: 300px; }
+.slide-estimate .card .num { margin-bottom: 18px; }
+.note { font-size: 24px; line-height: 1.4; color: #4f596f; font-weight: 500; }
+
+/* Vault */
+.slide-vault .grid {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 32px;
+  margin-top: 22px;
+  align-items: start;
+  height: 560px;
+}
+.points { display: flex; flex-direction: column; gap: 16px; }
+.point {
+  background: #fff;
+  border: 1px solid rgba(14, 27, 51, 0.10);
+  border-radius: 16px;
+  padding: 16px 18px 18px;
+  box-shadow: 0 6px 16px rgba(14, 27, 51, 0.05);
+}
+.point strong {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+  color: #0e1b33;
+}
+.point p { font-size: 18px; line-height: 1.35; color: #4f596f; font-weight: 500; }
+.slide-vault .shot {
+  width: 100%;
+  height: 560px;
+  object-fit: contain;
+  object-position: top center;
+}
+
+/* Plans */
+.plan-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.year-tag {
+  background: #e7f0fe;
+  color: #1d6fe9;
+  font-weight: 700;
+  font-size: 20px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  white-space: nowrap;
+  margin-bottom: 6px;
+}
+.plans { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; margin-top: 24px; }
+.plan {
+  background: #fff;
+  border: 1px solid rgba(14, 27, 51, 0.10);
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(14, 27, 51, 0.06);
+  padding: 26px 26px 28px;
+  min-height: 520px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.plan.popular {
+  border: 2px solid #1d6fe9;
+  box-shadow: 0 10px 28px rgba(29, 111, 233, 0.16);
+  background: #fff;
+}
+.badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: #1d6fe9;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+}
+.plan h2 { font-size: 32px; margin-bottom: 8px; }
+.price { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 16px; }
+.price strong {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 52px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #0e1b33;
+}
+.price span { font-size: 20px; color: #4f596f; font-weight: 550; }
+.plan ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.plan li {
+  font-size: 22px;
+  line-height: 1.3;
+  color: #0e1b33;
+  font-weight: 550;
+  padding-left: 22px;
+  position: relative;
+}
+.plan li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.48em;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #1d6fe9;
+}
+
+/* Status */
+.slide-status .cards { margin-top: 24px; }
+.slide-status .card { flex: 1; min-height: 480px; padding: 32px 36px; }
+.slide-status .card h2 { font-size: 36px; margin-bottom: 22px; }
+.slide-status ul { list-style: disc; padding-left: 22px; margin: 0; display: flex; flex-direction: column; gap: 16px; }
+.slide-status li { font-size: 24px; line-height: 1.4; color: #0e1b33; font-weight: 550; }
+</style>
+</head>
+<body>
+
+<div class="page"><section class="slide slide-title">
+  <div class="copy">
+    <p class="kicker">TUM.ai Construction Hackathon 2026 · Challenge A</p>
+    <h1>LV Scout</h1>
+    <p class="tagline">AI review and pricing assistant for<br>bills of quantities</p>
+    <p class="names">Christo Dontchev · Sparsh Roy · Alisher Darmenov ·<br>Raban Funk · Jan Kudaida</p>
+  </div>
+  <div class="visual"><img class="shot" src="assets/score.png" alt="LV Scout score view, 7.7 out of 10"></div>
+</section></div>
+
+<div class="page"><section class="slide slide-problem">
+  <p class="kicker">The problem</p>
+  <p class="quote">“The real task is not processing 9,000 items, but finding the 100 most important ones.”</p>
+  <p class="attr">Estimator at the project partner, pitch evening</p>
+  <div class="cards">
+    <article class="card">
+      <h2>Days, not weeks</h2>
+      <p>A tender arrives with hundreds to thousands of items and a few days to bid.</p>
+    </article>
+    <article class="card">
+      <h2>Small errors, big cost</h2>
+      <p>Typos, wrong totals and missed Nachtrag potential show up after the job is won.</p>
+    </article>
+    <article class="card">
+      <h2>Price decides</h2>
+      <p>Too high loses the job. Too low, because something was missed, loses money.</p>
+    </article>
+  </div>
+  <p class="footer">LV Scout · TUM.ai Construction Hackathon 2026</p>
+</section></div>
+
+<div class="page"><section class="slide slide-solution">
+  <p class="kicker">The solution</p>
+  <h1>Upload a bill, get a ranked review</h1>
+  <div class="solution-body">
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <div>
+          <h2>Upload</h2>
+          <p>GAEB, Excel, PDF or JSON, plus optional rules and price list</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div>
+          <h2>Review</h2>
+          <p>Fixed rules, standards register and optional AI review</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div>
+          <h2>Decide</h2>
+          <p>Ranked findings with OZ, source and next step; you confirm</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <div>
+          <h2>Price</h2>
+          <p>Estimate with range, margin against bids, export</p>
+        </div>
+      </div>
+    </div>
+    <img class="shot" src="assets/findings.png" alt="LV Scout findings review">
+  </div>
+  <p class="footer">LV Scout · TUM.ai Construction Hackathon 2026</p>
+</section></div>
+
+<div class="page"><section class="slide">
+  <p class="kicker">Architecture</p>
+  <h1>From upload to offer in six stages</h1>
+  <div class="stages">
+    <article class="stage"><div class="num">1</div><h2>Import</h2><p>GAEB, Excel, PDF, JSON</p></article>
+    <div class="arrow">→</div>
+    <article class="stage"><div class="num">2</div><h2>Review</h2><p>Rules, standards, AI model</p></article>
+    <div class="arrow">→</div>
+    <article class="stage"><div class="num">3</div><h2>Risk</h2><p>Risk and Nachtrag score</p></article>
+    <div class="arrow">→</div>
+    <article class="stage"><div class="num">4</div><h2>Report</h2><p>Score, findings, sources</p></article>
+    <div class="arrow">→</div>
+    <article class="stage"><div class="num">5</div><h2>Price</h2><p>Range, margin, history</p></article>
+    <div class="arrow">→</div>
+    <article class="stage"><div class="num">6</div><h2>Export</h2><p>PDF, Excel, CSV, GAEB</p></article>
+  </div>
+  <div class="pills">
+    <div class="pill">Every finding cites its source</div>
+    <div class="pill">No number without a basis</div>
+    <div class="pill">People decide</div>
+  </div>
+  <p class="offline">Connect your own AI model through an API key. Without a key, everything still works offline.</p>
+  <p class="footer">LV Scout · TUM.ai Construction Hackathon 2026</p>
+</section></div>
+
+<div class="page"><section class="slide">
+  <p class="kicker">Tech stack</p>
+  <h1>Python, Next.js, your AI model</h1>
+  <table class="stack">
+    <thead>
+      <tr><th>Layer</th><th>Technology</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Web UI</td><td>Next.js 16, React 19, TypeScript</td></tr>
+      <tr><td>API</td><td>FastAPI, Python 3.11+, pydantic</td></tr>
+      <tr><td>Import</td><td>GAEB XML and GAEB 90, Excel, PDF; optional Claude vision fallback</td></tr>
+      <tr><td>Review</td><td>Fixed rules, plausibility checks, standards register, optional AI review</td></tr>
+      <tr><td>Data</td><td>DuckDB price database and project history</td></tr>
+      <tr><td>Model access</td><td>Your own API key: Claude, OpenAI, Azure OpenAI or Gemini</td></tr>
+    </tbody>
+  </table>
+  <p class="footer">LV Scout · TUM.ai Construction Hackathon 2026</p>
+</section></div>
+
+<div class="page"><section class="slide slide-estimate">
+  <p class="kicker">Estimation</p>
+  <h1>Several ways to estimate, and you choose</h1>
+  <div class="cards">
+    <article class="card">
+      <div class="num">1</div>
+      <h2>Your price list</h2>
+      <p>Prices you load, matched item by item</p>
+    </article>
+    <article class="card">
+      <div class="num">2</div>
+      <h2>Past projects</h2>
+      <p>Similar closed projects shape the estimate</p>
+    </article>
+    <article class="card">
+      <div class="num">3</div>
+      <h2>Price indices</h2>
+      <p>Public construction price indices fill the gaps</p>
+    </article>
+  </div>
+  <p class="note">Every estimate comes with a range and its source, never one guessed number. You also choose how the readiness score is calculated: Strict, Graduated, Share, Errors/hints or Balanced.</p>
+  <p class="footer">LV Scout · TUM.ai Construction Hackathon 2026</p>
+</section></div>
+
+<div class="page"><section class="slide slide-vault">
+  <p class="kicker">Vault</p>
+  <h1>All documents and results in one place.</h1>
+  <div class="grid">
+    <div class="points">
+      <article class="point">
+        <p>Bills, regulations, price lists and competitor bid files from your analyses are filed here automatically, together with every report and research run.</p>
+      </article>
+      <article class="point">
+        <strong>Everything stays on this computer.</strong>
+      </article>
+      <article class="point">
+        <strong>Bills · Regulations · Price lists · Competition / margin · Price database · Research · History · Submit</strong>
+      </article>
+      <article class="point">
+        <p>The same file is stored only once. Use in analysis.</p>
+      </article>
+    </div>
+    <img class="shot" src="assets/vault-ui.png" alt="LV Scout vault with stored bills and Use in analysis">
+  </div>
+  <p class="footer">LV Scout · TUM.ai Construction Hackathon 2026</p>
+</section></div>
+
+<div class="page"><section class="slide slide-plans">
+  <div class="plan-head">
+    <div>
+      <p class="kicker">Plans / Upgrade</p>
+      <h1>Review every BoQ before you bid</h1>
+    </div>
+    <div class="year-tag">Yearly billing −17%</div>
+  </div>
+  <div class="plans">
+    <article class="plan">
+      <h2>Free</h2>
+      <p class="price"><strong>€0</strong> <span>forever</span></p>
+      <ul>
+        <li>3 evaluations per month</li>
+        <li>Rule and quantity checks</li>
+        <li>Excel export</li>
+      </ul>
+    </article>
+    <article class="plan popular">
+      <span class="badge">Most popular</span>
+      <h2>Pro</h2>
+      <p class="price"><strong>€29</strong> <span>per month</span></p>
+      <ul>
+        <li>50 evaluations per month</li>
+        <li>AI review with research and sources</li>
+        <li>Margin and competitor pages</li>
+        <li>PDF and Excel export</li>
+      </ul>
+    </article>
+    <article class="plan">
+      <h2>Company</h2>
+      <p class="price"><strong>€49</strong> <span>per seat / month</span></p>
+      <ul>
+        <li>200 evaluations per seat and month</li>
+        <li>Team seats, one invoice</li>
+        <li>Shared price database</li>
+        <li>Priority support</li>
+      </ul>
+    </article>
+  </div>
+  <p class="footer">LV Scout · TUM.ai Construction Hackathon 2026</p>
+</section></div>
+
+<div class="page"><section class="slide slide-status">
+  <p class="kicker">Status and next steps</p>
+  <h1>What works today, and what comes next</h1>
+  <div class="cards">
+    <article class="card">
+      <h2>Works today</h2>
+      <ul>
+        <li>Rule-based baseline: every finding cites its item number and source</li>
+        <li>Live AI review with a real model, tested end to end</li>
+        <li>Estimates from several sources, each with a range</li>
+      </ul>
+    </article>
+    <article class="card">
+      <h2>Next</h2>
+      <ul>
+        <li>Test on a large historical database to validate the baseline</li>
+        <li>Compare estimates with actual project costs</li>
+        <li>Learn from every closed project</li>
+      </ul>
+    </article>
+  </div>
+  <p class="footer">LV Scout · TUM.ai Construction Hackathon 2026</p>
+</section></div>
+
+</body>
+</html>
