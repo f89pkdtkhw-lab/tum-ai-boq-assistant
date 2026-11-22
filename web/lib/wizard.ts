@@ -87,7 +87,7 @@ export function effektiverSchritt(wunsch: WizardSchritt, status: { hatBericht: b
 /**
  * Map the import / analysis job to four plain-language stages.
  * Stage 1: the file is being read; 2: items are in; 3: the review job is running; 4: done.
- * Technical details (percent, "step 3 of 8", seconds) stay out of the UI.
+ * Live job details (percent, "step 3 of 8", finished steps) are shown in Ladeanzeige when a stand is present.
  */
 export function ladeStufe(input: {
   phase: "leer" | "laeuft" | "fertig" | "fehler";
@@ -105,6 +105,19 @@ export function ladeStufe(input: {
   if (input.importFertig) return { stufe: 2, aktiv: true };
   return { stufe: 1, aktiv: true };
 }
+
+/** Live job figures for the review progress box. Null until the analysis job has reported a step total. */
+export function liveFortschritt(stand: { schritt?: number; schritte_gesamt?: number; prozent?: number } | null | undefined): {
+  schritt: number; gesamt: number; prozent: number;
+} | null {
+  if (!stand || stand.schritte_gesamt == null || stand.schritte_gesamt < 1) return null;
+  const gesamt = stand.schritte_gesamt;
+  const schritt = Math.max(1, Math.min(Number(stand.schritt) || 1, gesamt));
+  const roh = Number(stand.prozent);
+  const prozent = Math.max(0, Math.min(100, Number.isFinite(roh) ? Math.round(roh) : 0));
+  return { schritt, gesamt, prozent };
+}
+
 
 /**
  * Research rows for one finding: prefer an exact `finding_id` match, otherwise rows for the same OZ

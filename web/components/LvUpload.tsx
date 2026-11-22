@@ -571,6 +571,7 @@ export function LvUpload() {
             phase={ergebnis.phase === "fertig" ? "fertig" : ergebnis.phase}
             importFertig={ergebnis.schritte.import.status === "fertig"}
             standStatus={ergebnis.phase === "fertig" ? "fertig" : (ergebnis.stand?.status ?? (ergebnis.schritte.pruefung.status === "laeuft" ? "laeuft" : null))}
+            stand={"stand" in ergebnis ? ergebnis.stand ?? null : null}
             dateiname={ergebnis.phase === "fertig" ? t("{n} items imported and reviewed.", { n: zahl.format(ergebnis.lv.positionen.length) }) : undefined}
           />
           {ergebnis.phase === "fertig" && ergebnis.bericht.zusammenfassung && (
