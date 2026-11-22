@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, type AiEvaluation, type Pruefbericht } from "@/lib/api";
 import { einschaetzen, type Ampel } from "@/lib/einschaetzung";
+import { BewertungsmodellWahl } from "@/components/bewertung/BewertungsmodellWahl";
+import { useBewertungsmodell } from "@/lib/useBewertungsmodell";
 import { deviationByTrade, historyApi, type HistoryCase } from "@/lib/history-api";
 import { useEinstellungen } from "@/lib/einstellungen";
 import { preisspiegel } from "@/lib/preise";
@@ -24,16 +26,17 @@ export type Bewertungsdaten = ReturnType<typeof useEinschaetzung>;
 /** `laden=false` skips loading (used when a parent already provides the data). */
 export function useEinschaetzung(bericht: Pruefbericht, laden = true) {
   const { e: einstellungen } = useEinstellungen();
+  const [modell] = useBewertungsmodell();
   const [faelle, setFaelle] = useState<HistoryCase[] | null>(null);
   const [ki, setKi] = useState<{ daten: AiEvaluation | null; fehler: string }>({ daten: null, fehler: "" });
   useEffect(() => { if (laden) historyApi.list(null, 100).then(setFaelle).catch(() => setFaelle([])); }, [laden]);
   const gewerke = useMemo(() => (faelle ? deviationByTrade(faelle) : null), [faelle]);
   const preise = useMemo(() => preisspiegel(bericht.lv.positionen, faelle), [bericht, faelle]);
   const preisSignal = { auffaellig: preise.zaehler.gelb + preise.zaehler.rot, verglichen: preise.zaehler.gruen + preise.zaehler.gelb + preise.zaehler.rot, rot: preise.zaehler.rot };
-  const e = useMemo(() => einschaetzen(bericht, gewerke, preisSignal),
+  const e = useMemo(() => einschaetzen(bericht, gewerke, preisSignal, modell),
     // preisSignal is derived from preise
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bericht, gewerke, preise]);
+    [bericht, gewerke, preise, modell]);
 
   // AI evaluation of the whole BoQ: evidence computed here, answer from the server's model boundary.
   useEffect(() => {
@@ -95,6 +98,7 @@ export function Einschaetzung({ daten, onAmpel }: { daten: Bewertungsdaten; onAm
         </div>
         <div className={styles.urteilSpalte}>
           <p className={styles.kicker}>{t("Assessment")} · {t("starts at 10, deductions below")}</p>
+          <BewertungsmodellWahl />
           <h3 id="urteil-titel" className={styles.urteil} style={{ color: TEXT[e.ampel] }}>{t(e.urteil)}</h3>
           <ul className={styles.faktoren}>
             {e.faktoren.map((f) => (

@@ -94,6 +94,7 @@ class Zusammenfassung(Vertrag):
     warnungen: int = Field(ge=0)
     hinweise: int = Field(ge=0)
     empfehlungen: int = Field(ge=0)
+    bewertungsmodell: Literal["streng", "gestaffelt", "anteil", "fehler_klaerung", "ausgewogen"] = "ausgewogen"
 
 
 # --- Price calculation (B6 #112, epic #93): optional, absent unless a price list is supplied ---

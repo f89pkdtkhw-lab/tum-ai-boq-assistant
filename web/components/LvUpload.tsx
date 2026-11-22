@@ -12,6 +12,8 @@ import { fuehreAnalyseAus } from "@/lib/analyse-job";
 import { Ladeanzeige, useWizard } from "@/components/wizard/Wizard";
 import { KontingentHinweis } from "@/components/saas/KontingentHinweis";
 import { zaehleAuswertung } from "@/lib/saas/client";
+import { BewertungsmodellWahl } from "@/components/bewertung/BewertungsmodellWahl";
+import { useBewertungsmodell } from "@/lib/useBewertungsmodell";
 import styles from "./lv-upload.module.css";
 
 // Same limit as MAX_UPLOAD_BYTES in api/app/main.py; checked locally so oversized files never leave the browser.
@@ -150,6 +152,7 @@ export function LvUpload() {
   const [beispiele, setBeispiele] = useState<Example[]>([]);
   const t = useT();
   const { schritt, setSchritt, setStatus } = useWizard();
+  const [bewertungsmodell] = useBewertungsmodell();
 
   useEffect(() => {
     setStatus({ hatBericht: ergebnis.phase === "fertig", laeuft: ergebnis.phase === "laeuft" });
@@ -322,11 +325,11 @@ export function LvUpload() {
     const job: { stand: AnalyseStatus | null } = { stand: null };
     try {
       // #167: always the full analysis, so the price database, calculation and estimated bill run without attachments too.
-      const anfrage = analyseAnfrage(lv, regelwerkDaten, preislisteDaten);
+      const anfrage = analyseAnfrage(lv, regelwerkDaten, preislisteDaten, bewertungsmodell);
       const synchron = () => api.analyse(anfrage).catch((fehler) => {
         if (!routeFehlt(fehler)) throw fehler;
         if (regelwerkDaten || preislisteDaten) hinweise.push("This backend has no combined analysis yet: the bill was reviewed without its attachments.");
-        return api.pruefen(lv);
+        return api.pruefen(lv, bewertungsmodell);
       });
       // #165: background job with progress; #167: always the full analysis (no `nur_pruefen`).
       try {
@@ -439,6 +442,7 @@ export function LvUpload() {
         {dateiFehler && <p className={styles.dateiFehler} role="alert">{dateiFehler}</p>}
         {dateien.length > 0 && !datei && <p className={styles.dateiFehler} role="alert">{t("Mark one file as the bill of quantities.")}</p>}
 
+        <BewertungsmodellWahl />
         <button type="submit" className={`${styles.knopf} ${styles.auswerten}`} disabled={!datei || !!dateiFehler || busy}>
           <Icon name="sparkles" /> {t("Evaluate")}
         </button>

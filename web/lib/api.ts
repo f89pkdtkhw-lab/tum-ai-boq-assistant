@@ -29,9 +29,11 @@ export type Kennzahlen = {
 export type KiSchrittStatus = "ok" | "mock" | "fehler" | "aus";
 export type KiSchritt = { schritt: string; titel: string; status: KiSchrittStatus; grund?: string | null; modell?: string | null };
 export type ScoreAbzug = { grund: string; punkte: number; bericht: "regelwerk" | "vergleich" | "was_wenn" };
+export type Bewertungsmodell = "streng" | "gestaffelt" | "anteil" | "fehler_klaerung" | "ausgewogen";
 export type Zusammenfassung = {
   score: number; score_abzuege: ScoreAbzug[]; schaetzung_abweichung_eur: number | null;
   grosse_probleme: number; warnungen: number; hinweise: number; empfehlungen: number;
+  bewertungsmodell?: Bewertungsmodell;
 };
 // Price calculation (epic #93, B6/B7/B8): optional, absent until the backend prices the bill.
 export type KalkulationPosition = {
@@ -146,7 +148,7 @@ export type AiEvaluation = {
 };
 
 // Background analysis job with progress (#165): POST /api/lv/analyse/start, then poll GET /api/lv/analyse/status/{job_id}.
-export type AnalyseJobAnfrage = { lv: LV; regelwerk: Regelwerk | null; preisliste: Preisliste | null; nur_pruefen?: boolean };
+export type AnalyseJobAnfrage = { lv: LV; regelwerk: Regelwerk | null; preisliste: Preisliste | null; nur_pruefen?: boolean; bewertungsmodell?: Bewertungsmodell };
 export type AnalyseStatus = {
   job_id: string; status: "laeuft" | "fertig" | "fehler"; schritt: number; schritte_gesamt: number; prozent: number;
   meldung: string; fertige_schritte: { schritt: number; meldung: string; sekunden: number }[]; fehler: string[];
@@ -205,7 +207,7 @@ export const api = {
   analyse: (body: { lv: LV; regelwerk: Regelwerk | null; preisliste: Preisliste | null }) => call<Pruefbericht>("/api/lv/analyse", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   }),
-  pruefen: (lv: LV) => call<Pruefbericht>("/api/lv/pruefen", {
+  pruefen: (lv: LV, bewertungsmodell: Bewertungsmodell = "ausgewogen") => call<Pruefbericht>(`/api/lv/pruefen?bewertungsmodell=${encodeURIComponent(bewertungsmodell)}`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(lv),
   }),
   starteAnalyse: (body: AnalyseJobAnfrage) => call<{ job_id: string }>("/api/lv/analyse/start", {

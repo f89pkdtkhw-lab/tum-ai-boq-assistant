@@ -9,10 +9,10 @@ const r = { id: "r1", dateiname: "spec.txt", warnungen: [], normverweise: [{ nor
 const p = { id: "p1", dateiname: "prices.csv", waehrung: "EUR", warnungen: [], eintraege: [] };
 
 test("request building: always /api/lv/analyse, also for a bill without attachments (#167)", () => {
-  assert.deepEqual(analyseAnfrage(lv, null, null), { lv, regelwerk: null, preisliste: null });
-  assert.deepEqual(analyseAnfrage(lv, r, null), { lv, regelwerk: r, preisliste: null });
-  assert.deepEqual(analyseAnfrage(lv, null, p), { lv, regelwerk: null, preisliste: p });
-  assert.deepEqual(analyseAnfrage(lv, r, p), { lv, regelwerk: r, preisliste: p });
+  assert.deepEqual(analyseAnfrage(lv, null, null), { lv, regelwerk: null, preisliste: null, bewertungsmodell: "ausgewogen" });
+  assert.deepEqual(analyseAnfrage(lv, r, null), { lv, regelwerk: r, preisliste: null, bewertungsmodell: "ausgewogen" });
+  assert.deepEqual(analyseAnfrage(lv, null, p), { lv, regelwerk: null, preisliste: p, bewertungsmodell: "ausgewogen" });
+  assert.deepEqual(analyseAnfrage(lv, r, p), { lv, regelwerk: r, preisliste: p, bewertungsmodell: "ausgewogen" });
 });
 
 test("fallback decision: only HTTP 404 means the route is missing", () => {

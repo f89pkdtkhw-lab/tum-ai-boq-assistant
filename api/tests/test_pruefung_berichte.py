@@ -227,8 +227,9 @@ def test_b1_summary_uses_the_three_report_grouping():
     ohne = ergaenze_berichte(bericht, db=None).zusammenfassung
     assert ohne == zusammenfassen(FINDINGS)  # no history: same as B1 alone
     mit = ergaenze_berichte(bericht, db=FakeDB(BRIDGE + ROAD)).zusammenfassung
-    # Report 1: F1 kritisch + F4 hoch → −4; Report 2: one approximation too big → −0.1
-    assert mit.score == 5.9 and [a.bericht for a in mit.score_abzuege] == ["regelwerk", "vergleich"]
+    # Report 1 (Balanced): F1 kritisch −2 + F4 hoch −1 + F2 warning (Nachtrag, half) −0.1 = −3.1;
+    # Report 2: one approximation too big → −0.1
+    assert mit.score == 6.8 and [a.bericht for a in mit.score_abzuege] == ["regelwerk", "vergleich"]
     # 2 approval-required approximations + 2 high-chance items in Report 2 + 2 in Report 3
     assert mit.empfehlungen == 6
     assert mit.schaetzung_abweichung_eur == 2020.0  # +2000 (concrete) + 20 (railing, EP 10)

@@ -24,7 +24,7 @@ Target concept: Epic #93 (`workflow-final.drawio`) and the team sketches. The UI
 | UI 6 export | `/export` | Excel + print-to-PDF. |
 
 ### Where numbers come from (never invent a price, item or standard)
-- **Score /10 and counters:** backend `Pruefbericht.zusammenfassung` (#94) is official. Until the backend sends Report 2 ("vergleich") deductions, `lib/einschaetzung.ts` adds the browser's Report 2 preview (price outliers, too-wide estimates) with the same constants as `api/app/pruefung/bewertung.py`. Colour bands: green ≥ 8.5, yellow ≥ 6.5, red below.
+- **Score /10 and counters:** five selectable models (`bewertungsmodell`, default Balanced) in `lib/bewertungsmodell.ts` / `api/app/pruefung/bewertung.py`, constants in `lib/bewertungsmodell-konstanten.json`. Chosen on the upload step and on the assessment view (`BewertungsmodellWahl`), persisted as `lv-bewertungsmodell-v1`. Backend `Pruefbericht.zusammenfassung` is official when it was computed with the same model. Until the backend sends Report 2 ("vergleich") deductions, `lib/einschaetzung.ts` adds the browser's Report 2 preview. Traffic light: Strict green ≥ 8.5 / yellow ≥ 6.5; the other models green ≥ 7.5 / yellow ≥ 5.
 - **Estimated bill:** `lib/preisbericht.ts`: price list match → past projects of the same trade (`deviationByTrade`) → unchanged. Replace with the backend's estimated bill (#113/#114) when it exists.
 - **Price outliers:** `lib/preise.ts` (Tukey fences on the same short text + unit). **AI evaluation:** `POST /api/lv/ai-evaluation` (offline mock, evidence only).
 - **History:** `/api/history` (Next route; mock in `app/api/history/store.ts` until `HISTORY_API_URL` points to the DB service).
