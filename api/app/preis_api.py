@@ -1,6 +1,6 @@
 """Price list upload and price database routes (issue #153, epic #93 D4/D5/B9).
 
-- ``POST /api/preisliste/import`` (multipart ``datei``): CSV, XLSX, GAEB X8x/D8x or JSON → ``Preisliste``;
+- ``POST /api/preisliste/import`` (multipart ``datei``, optional ``lv`` = tender bill for D84 texts): CSV, XLSX, GAEB X8x/D8x or JSON → ``Preisliste``;
   the entries are also stored in the price database (same item + unit = update).
 - ``GET``/``POST /api/db/preise``: the UI contract (field ``item``) on top of @Anatomik5's price table in
   ``db/client.py`` (field ``name``). The adapter only uses that module's connection helper, so its own
@@ -266,27 +266,79 @@ def _xlsx_zeilen(inhalt: bytes) -> list[list[str]]:
     return zeilen
 
 
-def _aus_gaeb(dateiname: str, inhalt: bytes) -> tuple[list[PreislistenEintrag], list[str]]:
-    """Priced GAEB bill (same rule as @Anatomik5's /prices/import-gaeb in db/client.py: items with EP + unit)."""
+LV_BEGLEIT_ENDUNGEN = (".x83", ".d83", ".x84", ".d84", ".x86", ".d86")
+
+
+def _gaeb_lv(dateiname: str, inhalt: bytes) -> LV:
     from .lv import gaeb  # noqa: PLC0415
     if Path(dateiname).suffix.lower().startswith(".d"):
         from .lv import gaeb90  # noqa: PLC0415
-        lv: LV = gaeb.to_lv(gaeb90.parse_legacy(dateiname, inhalt))
-    else:
-        lv = gaeb.importiere(dateiname, inhalt)
-    eintraege = [PreislistenEintrag(id=f"oz-{p.oz}", oz=p.oz, kurztext=p.kurztext.strip(),
-                                    einheit=_einheit(p.einheit), ep=p.ep, quelle=f"{dateiname}:{p.oz}")
-                 for p in lv.positionen if p.ep is not None and p.einheit and p.einheit.strip()]
+        return gaeb.to_lv(gaeb90.parse_legacy(dateiname, inhalt))
+    return gaeb.importiere(dateiname, inhalt)
+
+
+def _oz_schluessel(oz: str | None) -> str:
+    """OZ without padding, so "01.01.0010" (X83) and "1.1.10" (D84) are the same item."""
+    teile = [t.strip().lstrip("0") or "0" for t in re.split(r"[.\s]+", (oz or "").strip()) if t.strip()]
+    return ".".join(t.casefold() for t in teile)
+
+
+def _aus_gaeb(dateiname: str, inhalt: bytes, lv_name: str | None = None,
+              lv_inhalt: bytes | None = None) -> tuple[list[PreislistenEintrag], list[str]]:
+    """Priced GAEB bill (same rule as @Anatomik5's /prices/import-gaeb in db/client.py: items with EP + unit).
+
+    A DA84 offer usually carries only OZ, quantity, unit and unit price; the item texts are in the tender's
+    D83/X83. With that bill as second file, short text and missing units are taken from it by OZ."""
+    lv = _gaeb_lv(dateiname, inhalt)
+    warnungen: list[str] = []
+    texte: dict[str, tuple[str, str | None]] = {}
+    if lv_inhalt is not None:
+        name = lv_name or "bill"
+        if Path(name).suffix.lower() not in LV_BEGLEIT_ENDUNGEN:
+            raise ValueError("The matching bill must be a GAEB file (X83, D83, X84, D84, X86, D86).")
+        try:
+            begleit = _gaeb_lv(name, lv_inhalt)
+        except ValueError as exc:
+            raise ValueError(f"Could not read the matching bill {name}: {exc}") from None
+        texte = {_oz_schluessel(p.oz): (p.kurztext.strip(), p.einheit) for p in begleit.positionen}
+    eintraege, ohne_text, zugeordnet = [], 0, 0
+    for p in lv.positionen:
+        kurztext, einheit = p.kurztext.strip(), (p.einheit or "").strip()
+        if texte:
+            text, lv_einheit = texte.get(_oz_schluessel(p.oz), ("", None))
+            if text or (lv_einheit or "").strip():
+                zugeordnet += 1
+            kurztext = kurztext or text
+            einheit = einheit or (lv_einheit or "").strip()
+        if p.ep is None or not einheit:
+            continue
+        if not kurztext:
+            ohne_text += 1
+        eintraege.append(PreislistenEintrag(id=f"oz-{p.oz}", oz=p.oz, kurztext=kurztext, einheit=_einheit(einheit),
+                                            ep=p.ep, quelle=f"{dateiname}:{p.oz}"))
     ohne = len(lv.positionen) - len(eintraege)
-    warnungen = [f"{ohne} item(s) without unit price or unit were skipped."] if ohne else []
+    if ohne:
+        warnungen.append(f"{ohne} item(s) without unit price or unit were skipped.")
+    if texte and not zugeordnet:
+        warnungen.append(f"No item of {lv_name} matches the OZ of {dateiname}; is it the right bill?")
+    if ohne_text:
+        warnungen.append(f"{ohne_text} item(s) have no item text (a D84 offer usually carries prices only). "
+                         "Add the matching bill (D83/X83) to keep their prices in the price database; "
+                         "until then they are only matched by OZ.")
     if not eintraege:
+        if any(p.ep is not None for p in lv.positionen) and not texte:
+            raise ValueError("The GAEB file has unit prices but no units or item texts (price-only D84). "
+                             "Add the matching bill (D83/X83/D86) as second file.")
         raise ValueError("The GAEB file contains no items with unit price and unit.")
     return eintraege, warnungen
 
 
-def lies_preisliste(dateiname: str, inhalt: bytes) -> Preisliste:
+def lies_preisliste(dateiname: str, inhalt: bytes, lv_name: str | None = None,
+                    lv_inhalt: bytes | None = None) -> Preisliste:
     endung = Path(dateiname).suffix.lower()
-    pid = f"preisliste-{hashlib.sha256(inhalt).hexdigest()[:12]}"
+    pid = f"preisliste-{hashlib.sha256(inhalt + (lv_inhalt or b'')).hexdigest()[:12]}"
+    if lv_inhalt is not None and not re.fullmatch(r"\.[xd]8\d", endung):
+        raise ValueError("A matching bill only applies to GAEB price files (X84/D84/X86/D86).")
     if endung == ".json":
         try:
             liste = Preisliste.model_validate_json(inhalt)
@@ -297,7 +349,7 @@ def lies_preisliste(dateiname: str, inhalt: bytes) -> Preisliste:
         zeilen = _xlsx_zeilen(inhalt) if endung == ".xlsx" else _csv_zeilen(inhalt)
         eintraege, warnungen, waehrung = _aus_tabelle(dateiname, zeilen)
     elif re.fullmatch(r"\.[xd]8\d", endung):
-        eintraege, warnungen = _aus_gaeb(dateiname, inhalt)
+        eintraege, warnungen = _aus_gaeb(dateiname, inhalt, lv_name, lv_inhalt)
         waehrung = "EUR"
     elif endung == ".pdf":
         raise ValueError("PDF price lists are not read (prices are never inferred from prose). "
@@ -309,10 +361,15 @@ def lies_preisliste(dateiname: str, inhalt: bytes) -> Preisliste:
     return Preisliste(id=pid, dateiname=dateiname, waehrung=waehrung, eintraege=eintraege, warnungen=warnungen)
 
 
-def _als_neue_preise(liste: Preisliste) -> list[NeuerPreis]:
-    """Same mapping as the UI preview (web/lib/preis-db.ts): item falls back to the OZ."""
+def _als_neue_preise(liste: Preisliste, nur_mit_text: bool = False) -> list[NeuerPreis]:
+    """Same mapping as the UI preview (web/lib/preis-db.ts): item falls back to the OZ.
+
+    ``nur_mit_text``: GAEB items without a short text are not stored by OZ alone (an OZ only means something
+    inside its own bill); they stay in the returned list for this analysis."""
     neue = []
     for nummer, e in enumerate(liste.eintraege, start=1):
+        if nur_mit_text and not e.kurztext.strip():
+            continue
         try:
             neue.append(NeuerPreis(item=e.kurztext.strip() or e.oz or "", unit=e.einheit, price_per_unit=e.ep))
         except ValidationError as exc:
@@ -323,19 +380,30 @@ def _als_neue_preise(liste: Preisliste) -> list[NeuerPreis]:
 
 
 @router.post("/api/preisliste/import", response_model=Preisliste)
-async def import_preisliste(datei: UploadFile):
+async def import_preisliste(datei: UploadFile, lv: UploadFile | None = None):
+    """``lv`` (optional): the tender bill (D83/X83/…) that gives a D84 offer its item texts."""
     try:
         inhalt = await datei.read(MAX_UPLOAD_BYTES + 1)
         if len(inhalt) > MAX_UPLOAD_BYTES:
             raise HTTPException(413, "File is too large (maximum 10 MiB).")
         if not inhalt:
             raise HTTPException(422, "The uploaded file is empty.")
-        liste = lies_preisliste(datei.filename or "", inhalt)
+        lv_inhalt = None
+        if lv is not None:
+            lv_inhalt = await lv.read(MAX_UPLOAD_BYTES + 1)
+            if len(lv_inhalt) > MAX_UPLOAD_BYTES:
+                raise HTTPException(413, "The matching bill is too large (maximum 10 MiB).")
+            if not lv_inhalt:
+                raise HTTPException(422, "The matching bill is empty.")
+        liste = lies_preisliste(datei.filename or "", inhalt, lv.filename if lv else None, lv_inhalt)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from None
     finally:
         await datei.close()
-    neue = _als_neue_preise(liste)
+        if lv is not None:
+            await lv.close()
+    gaeb_datei = bool(re.fullmatch(r"\.[xd]8\d", Path(datei.filename or "").suffix.lower()))
+    neue = _als_neue_preise(liste, nur_mit_text=gaeb_datei)
     try:
         speichere_preise(neue)
     except Exception as exc:  # noqa: BLE001 - the parsed list is still usable for this analysis

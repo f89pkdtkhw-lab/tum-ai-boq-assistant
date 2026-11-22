@@ -2,6 +2,8 @@
 import type { Preisliste } from "./api";
 
 export const PREISLISTE_FORMATE = [".csv", ".xlsx", ".x84", ".d84", ".x86", ".d86", ".json"];
+/** Tender bill next to a D84 offer: the offer carries OZ and prices, the bill the item texts (api/app/preis_api.py). */
+export const PREIS_LV_FORMATE = [".x83", ".d83", ".x86", ".d86"];
 
 export function preislisteText(p: Preisliste): string {
   const n = p.eintraege.length;

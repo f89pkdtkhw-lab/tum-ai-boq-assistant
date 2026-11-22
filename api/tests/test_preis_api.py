@@ -254,3 +254,90 @@ def test_priced_d86_import_returns_price_list(name):
     assert r.status_code == 200, r.text
     liste = r.json()
     assert [(e["oz"], e["einheit"], e["ep"]) for e in liste["eintraege"]] == [("01.01.0001", "m²", 12.5)]
+
+
+# Synthetic GAEB 90 tender (D83) and offer (D84): a DA84 offer carries OZ, unit and unit price, the texts are in the D83.
+def _gaeb90(phase, records):
+    def record(kind, fields):
+        line = list(" " * 80)
+        line[:2] = kind
+        for start, text in fields:
+            line[start:start + len(text)] = text
+        return "".join(line)
+    kopf = record("00", [(10, phase), (62, "1122PPPPI"), (72, "90")])
+    return "\r\n".join([kopf, *(record(k, f) for k, f in records), record("99", [])]).encode("cp850")
+
+
+def _d83():
+    return _gaeb90("83", [
+        ("21", [(2, "01010001 "), (11, "NN"), (23, "00000002000"), (34, "m2")]),
+        ("25", [(2, "Synthetischer Schutzanstrich")]),
+        ("21", [(2, "01010002 "), (11, "NN"), (23, "00000001000"), (34, "St")]),
+        ("25", [(2, "Synthetische Tür")]),
+    ])
+
+
+def _d84_angebot():
+    return _gaeb90("84", [
+        ("21", [(2, "01010001 "), (11, "NN"), (23, "00000002000"), (34, "m2")]),
+        ("23", [(2, "01010001 "), (12, "00000012500"), (24, "000000002500")]),
+        ("21", [(2, "01010002 "), (11, "NN"), (23, "00000001000"), (34, "St")]),
+        ("23", [(2, "01010002 "), (12, "00000300000"), (24, "000000030000")]),
+    ])
+
+
+def _d84_nur_preise():
+    return _gaeb90("84", [
+        ("23", [(2, "01010001 "), (12, "00000012500"), (24, "000000002500")]),
+        ("23", [(2, "01010002 "), (12, "00000300000"), (24, "000000030000")]),
+    ])
+
+
+def upload_mit_lv(name, inhalt, lv_name, lv_inhalt):
+    return client.post("/api/preisliste/import", files={"datei": (name, inhalt), "lv": (lv_name, lv_inhalt)})
+
+
+@pytest.mark.parametrize("name", ["angebot.d84", "ANGEBOT.D84"])
+def test_d84_offer_without_texts_is_read_but_not_stored_by_oz(name):
+    r = upload(name, _d84_angebot())
+    assert r.status_code == 200, r.text
+    liste = r.json()
+    assert [(e["oz"], e["kurztext"], e["einheit"], e["ep"]) for e in liste["eintraege"]] == [
+        ("01.01.0001", "", "m²", 12.5), ("01.01.0002", "", "St", 300.0)]
+    assert any("no item text" in w for w in liste["warnungen"])
+    assert client.get("/api/db/preise").json() == []
+
+
+def test_d84_offer_with_matching_d83_gets_texts_and_is_stored():
+    r = upload_mit_lv("angebot.D84", _d84_angebot(), "ausschreibung.D83", _d83())
+    assert r.status_code == 200, r.text
+    liste = r.json()
+    assert [(e["kurztext"], e["einheit"], e["ep"]) for e in liste["eintraege"]] == [
+        ("Synthetischer Schutzanstrich", "m²", 12.5), ("Synthetische Tür", "St", 300.0)]
+    assert liste["warnungen"] == []
+    gespeichert = {(e["item"], e["unit"], e["price_per_unit"]) for e in client.get("/api/db/preise").json()}
+    assert gespeichert == {("Synthetischer Schutzanstrich", "m²", 12.5), ("Synthetische Tür", "St", 300.0)}
+
+
+def test_price_only_d84_needs_the_matching_bill():
+    r = upload("preise.d84", _d84_nur_preise())
+    assert r.status_code == 422 and "matching bill" in r.json()["detail"]
+    r = upload_mit_lv("preise.d84", _d84_nur_preise(), "lv.d83", _d83())
+    assert r.status_code == 200, r.text
+    assert [(e["kurztext"], e["einheit"]) for e in r.json()["eintraege"]] == [
+        ("Synthetischer Schutzanstrich", "m²"), ("Synthetische Tür", "St")]
+
+
+def test_matching_bill_errors_are_readable():
+    r = upload_mit_lv("preise.csv", CSV, "lv.d83", _d83())
+    assert r.status_code == 422 and "only applies to GAEB" in r.json()["detail"]
+    r = upload_mit_lv("angebot.d84", _d84_angebot(), "lv.pdf", b"%PDF")
+    assert r.status_code == 422 and "must be a GAEB file" in r.json()["detail"]
+    r = upload_mit_lv("angebot.d84", _d84_angebot(), "lv.d83", b"kaputt")
+    assert r.status_code == 422 and "Could not read the matching bill" in r.json()["detail"]
+    r = upload_mit_lv("angebot.d84", _d84_angebot(), "lv.d83", b"")
+    assert r.status_code == 422
+
+
+def test_oz_key_ignores_padding():
+    assert preis_api._oz_schluessel("01.01.0010") == preis_api._oz_schluessel("1.1.10") == "1.1.10"
