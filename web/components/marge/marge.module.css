@@ -1,6 +1,6 @@
-.seite { max-width: 1040px; margin: 0 auto; padding: 20px 20px 48px; display: grid; gap: 14px; }
+.seite { max-width: 1040px; margin: 0 auto; padding: 16px var(--page-x, 28px) 48px; display: grid; gap: 14px; }
 .titel { margin: 0; font-size: 22px; }
-.karte { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); min-width: 0; }
+.karte { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); box-shadow: 0 1px 2px var(--shadow); min-width: 0; }
 .abschnitt { margin: 0; display: flex; align-items: center; font-size: 16px; }
 .ablage { position: relative; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: var(--r-md); background: var(--fill); cursor: pointer; font-weight: 600; }
 .ablage:hover { border-color: var(--accent); }
@@ -28,7 +28,7 @@
 .versatz { display: grid; gap: 6px; max-width: 560px; font-size: 14px; }
 .versatz input { accent-color: var(--accent); }
 .kacheln { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.kacheln > div { display: grid; gap: 2px; align-content: start; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); }
+.kacheln > div { display: grid; gap: 2px; align-content: start; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); box-shadow: 0 1px 2px var(--shadow); }
 .kacheln span { font-size: 12.5px; color: var(--muted); }
 .kacheln strong { font-size: 24px; font-variant-numeric: tabular-nums; }
 .kacheln small { color: var(--muted); font-size: 12.5px; }

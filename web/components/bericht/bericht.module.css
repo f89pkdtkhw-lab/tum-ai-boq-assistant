@@ -1,6 +1,6 @@
 .bericht { display: grid; gap: 14px; min-width: 0; }
 .kopf { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px; }
-.titel { margin: 0; font-size: clamp(20px, 2.4vw, 26px); letter-spacing: -.015em; }
+.titel { margin: 0; font-size: clamp(20px, 2.4vw, 24px); letter-spacing: -.03em; }
 .quelle { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
 .mock { color: var(--warn); font-weight: 600; }
 .knopfLeise, .mehrLeise { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); color: var(--ink); text-decoration: none; cursor: pointer; }
@@ -13,7 +13,7 @@
 .stufe1 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-areas: "score score score score score score" "war war war schaetz schaetz schaetz" "z1 z1 z2 z2 z3 z3"; gap: 16px; align-items: stretch; }
 .stufe1 > :nth-child(1) { grid-area: war; } .stufe1 > :nth-child(2) { grid-area: score; } .stufe1 > :nth-child(3) { grid-area: schaetz; }
 .stufe1 > :nth-child(4) { grid-area: z1; } .stufe1 > :nth-child(5) { grid-area: z2; } .stufe1 > :nth-child(6) { grid-area: z3; }
-.preisKachel, .zaehler { display: grid; align-content: center; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); min-width: 0; }
+.preisKachel, .zaehler { display: grid; align-content: center; gap: 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); box-shadow: 0 1px 2px var(--shadow); min-width: 0; }
 .geschaetzt { border-color: color-mix(in srgb, var(--sev-ok) 50%, var(--line)); background: color-mix(in srgb, var(--sev-ok) 6%, var(--card)); }
 .label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
 .preis { font-size: clamp(20px, 2.4vw, 28px); letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -24,20 +24,20 @@
 .zaehler { font: inherit; color: inherit; text-align: left; cursor: pointer; border-top: 1px solid var(--line); }
 .zaehler:hover { background: var(--fill); }
 .zaehler strong { font-size: 26px; font-variant-numeric: tabular-nums; }
-.mehr { justify-self: center; font: inherit; font-size: 14px; font-weight: 600; padding: 9px 20px; border: 0; border-radius: var(--r-md); background: var(--button); color: var(--button-ink); cursor: pointer; }
+.mehr { justify-self: center; font: inherit; font-size: 13.5px; font-weight: 600; padding: 0 14px; min-height: 32px; border: 0; border-radius: var(--r-sm); background: var(--button); color: var(--button-ink); cursor: pointer; box-shadow: 0 1px 2px color-mix(in srgb, var(--button) 35%, transparent); }
 .mehr:hover { opacity: .88; }
 
 /* Level 2: filter + sort + expandable list */
 .stufe2, .stufe3 { display: grid; gap: 10px; scroll-margin-top: 64px; }
 .werkzeug { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
 .filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); }
-.chip { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; padding: 4px 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); color: var(--muted); cursor: pointer; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 99px; background: var(--card); color: var(--muted); cursor: pointer; }
 .chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--f); opacity: .35; }
 .chip[aria-pressed="true"] { color: var(--ink); border-color: var(--f); background: color-mix(in srgb, var(--f) 10%, var(--card)); }
 .chip[aria-pressed="true"] i { opacity: 1; }
 .sort { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
 .sort select { font: inherit; font-size: 13px; padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); color: var(--ink); }
-.liste { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--card); }
+.liste { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--card); box-shadow: 0 1px 2px var(--shadow); }
 .liste li { border-left: 4px solid var(--f); }
 .liste li + li { border-top: 1px solid var(--line); }
 .zeile { width: 100%; display: grid; grid-template-columns: 116px minmax(0, 1fr) 96px 104px 16px 16px; gap: 10px; align-items: center; padding: 8px 12px; font: inherit; font-size: 13.5px; color: inherit; background: transparent; border: 0; text-align: left; cursor: pointer; }
