@@ -86,8 +86,10 @@ export function glossar(text: string, ziel: DokSprache): string {
 const SCHLUESSEL = "lv-uebersetzung-v1";
 let cache: Record<string, string> | null = null;
 const offen = new Set<string>();
+const unterwegs = new Set<string>();
 const hoerer = new Set<() => void>();
 let timer: ReturnType<typeof setTimeout> | null = null;
+let laeuft = false;
 
 function ladeCache(): Record<string, string> {
   if (cache) return cache;
@@ -98,22 +100,34 @@ const key = (ziel: DokSprache, text: string) => `${ziel}|${text}`;
 
 /** Asks the server for model translations of the queued texts (batched); without a model key it answers null and the glossary stays. */
 function abholen(ziel: DokSprache) {
-  if (timer) return;
+  // One in-flight batch at a time: a remount during a long Grok Bot wait must not start a second job.
+  if (timer || laeuft) return;
   timer = setTimeout(async () => {
     timer = null;
-    const texte = [...offen].filter((k) => k.startsWith(`${ziel}|`)).map((k) => k.slice(3)).slice(0, 60);
-    texte.forEach((t) => offen.delete(key(ziel, t)));
+    const texte = [...offen]
+      .filter((k) => k.startsWith(`${ziel}|`) && !unterwegs.has(k))
+      .map((k) => k.slice(3))
+      .filter((t) => !ladeCache()[key(ziel, t)])
+      .slice(0, 60);
+    texte.forEach((t) => { const k = key(ziel, t); offen.delete(k); unterwegs.add(k); });
     if (!texte.length) return;
+    laeuft = true;
     try {
+      // No short AbortController: /api/uebersetzen may wait the full grokbot timeout (~15 min).
       const r = await fetch("/backend/api/uebersetzen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ texte, ziel }) });
-      if (!r.ok) return;
-      const { uebersetzungen } = await r.json() as { uebersetzungen: (string | null)[] };
-      const c = ladeCache();
-      let neu = false;
-      texte.forEach((t, i) => { if (uebersetzungen[i]) { c[key(ziel, t)] = uebersetzungen[i]!; neu = true; } });
-      if (neu) { try { window.localStorage.setItem(SCHLUESSEL, JSON.stringify(c)); } catch { /* memory only */ } hoerer.forEach((h) => h()); }
+      if (r.ok) {
+        const { uebersetzungen } = await r.json() as { uebersetzungen: (string | null)[] };
+        const c = ladeCache();
+        let neu = false;
+        texte.forEach((t, i) => { if (uebersetzungen[i]) { c[key(ziel, t)] = uebersetzungen[i]!; neu = true; } });
+        if (neu) { try { window.localStorage.setItem(SCHLUESSEL, JSON.stringify(c)); } catch { /* memory only */ } hoerer.forEach((h) => h()); }
+      }
     } catch { /* offline: glossary only */ }
-    if (offen.size) abholen(ziel);
+    finally {
+      texte.forEach((t) => unterwegs.delete(key(ziel, t)));
+      laeuft = false;
+    }
+    if ([...offen].some((k) => !unterwegs.has(k) && !ladeCache()[k])) abholen(ziel);
   }, 250);
 }
 

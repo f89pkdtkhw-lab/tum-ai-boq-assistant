@@ -20,7 +20,7 @@ Für eine Live-Demo im Pitch lieber **Mock** oder **Claude-API (Key)** nehmen: D
 | `outbox/<job_id>.json` | Antwort, sobald sie liegt |
 | `inbox/done/<job_id>.json` | Auftrag, nachdem eine Antwort übernommen wurde |
 
-Wartezeit: `GROKBOT_TIMEOUT` (Standard 900 s / 15 min), Prüfung alle `GROKBOT_POLL` (Standard 2 s). In der Analyse erscheint die Meldung **Wartet auf Grok Bot …**. Nach Ablauf der Zeit bricht der Aufruf mit einer klaren Fehlermeldung ab.
+Wartezeit: `GROKBOT_TIMEOUT` (Standard 900 s / 15 min), Prüfung alle `GROKBOT_POLL` (Standard 2 s). In der Analyse erscheint die Meldung **Wartet auf Grok Bot …**. Nach Ablauf der Zeit bricht der Aufruf mit einer klaren Fehlermeldung ab. Die Next.js-UI wartet über den `/backend`-Proxy ebenfalls lange genug (`experimental.proxyTimeout` 960 s in `web/next.config.mjs`), damit synchrone Aufrufe wie `/api/lv/ai-evaluation` und `/api/uebersetzen` nicht nach 30 s mit *socket hang up* abbrechen.
 
 ## Auftrag (Beispiel)
 
