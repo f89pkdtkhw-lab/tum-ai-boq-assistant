@@ -49,7 +49,9 @@ with a password (no takeover); an existing password account cannot be registered
   Without `SMTP_HOST` no mail is sent and the UI shows nothing special: the link is written to the server log only
   (`[mail] SMTP not configured …` in `/tmp/boq-app.log` when started with `tools/dev.py`).
 - **Fixed account:** `dummy@gmail.com` / `12345` always exists and is pre-confirmed (created at server start when
-  missing, `web/lib/saas/seed.ts`; the 8-character minimum does not apply to it). It uses the normal sign-in form.
+  missing, `web/lib/saas/seed.ts`; the 8-character minimum does not apply to it). It is always on the Company plan;
+  an existing local Free record is upgraded on the next server start (`web/.data` is local and not committed).
+  It uses the normal sign-in form.
 - **Google** stays in *Testing* mode (publishing needs a verified domain): only the test users entered on the
   consent screen can sign in with Google.
 

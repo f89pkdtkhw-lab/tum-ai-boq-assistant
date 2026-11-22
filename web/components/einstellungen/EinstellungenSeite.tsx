@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useEinstellungen, type Einstellungen } from "@/lib/einstellungen";
+import { KeySettings } from "@/components/schluessel/KeySettings";
 import { Entwickleroptionen } from "./Entwickleroptionen";
 import styles from "./einstellungen.module.css";
 
@@ -65,6 +66,11 @@ export function EinstellungenSeite() {
         <h2 className={styles.abschnitt}>{t("Review report")}</h2>
         <Wahl feld="startReiter" titel="Report opens on" optionen={START} />
         <Wahl feld="seitengroesse" titel="Rows per page" optionen={SEITEN} />
+      </section>
+      <section className={styles.karte}>
+        <h2 className={styles.abschnitt}>{t("API token")}</h2>
+        <p className={styles.hinweis}>{t("Enter your Claude API key here. It is sent to the backend once, never shown again, and never logged.")}</p>
+        <KeySettings embedded />
       </section>
       <Entwickleroptionen />
       <section className={styles.karte}>

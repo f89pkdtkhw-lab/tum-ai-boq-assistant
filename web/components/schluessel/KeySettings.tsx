@@ -5,12 +5,14 @@
 // answers "key set: yes/no".
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { api, type KeyState } from "@/lib/api";
+import { useT } from "@/lib/einstellungen";
 import styles from "./key-settings.module.css";
 
 type Message = { kind: "ok" | "error" | "info"; text: string } | null;
 
 /** `embedded`: form only, for the Settings page. `compact` keeps the old header popover (unused). */
 export function KeySettings({ compact = false, embedded = false }: { compact?: boolean; embedded?: boolean } = {}) {
+  const t = useT();
   const [state, setState] = useState<KeyState | null | "offline">(null);
   const [open, setOpen] = useState(embedded);
   const [key, setKey] = useState("");
@@ -59,7 +61,7 @@ export function KeySettings({ compact = false, embedded = false }: { compact?: b
       const next = await api.setKey({ key: key.trim(), model: model.trim() || undefined, persist });
       setKey("");
       setState(next);
-      setMessage({ kind: "ok", text: next.persisted ? "Key saved in memory and in .env.local." : "Key saved in memory until the backend restarts." });
+      setMessage({ kind: "ok", text: next.persisted ? t("Key saved in memory and in .env.local.") : t("Key saved in memory until the backend restarts.") });
       window.dispatchEvent(new Event("llm-config-changed"));
     });
   };
@@ -67,12 +69,12 @@ export function KeySettings({ compact = false, embedded = false }: { compact?: b
     const probe = await api.testKey();
     setMessage(probe.ok
       ? { kind: "ok", text: `OK · ${probe.provider} · ${probe.model} answered in ${probe.ms ?? 0} ms.` }
-      : { kind: "error", text: probe.error || "The test call failed." });
+      : { kind: "error", text: probe.error || t("Request failed.") });
   });
   const clear = () => run("clear", async () => {
     const next = await api.clearKey();
     setState(next);
-    setMessage({ kind: "info", text: next.key_set ? "UI key removed; a key from the environment or .env.local is still used." : "Key removed. AI steps run without a model." });
+    setMessage({ kind: "info", text: next.key_set ? t("UI key removed; a key from the environment or .env.local is still used.") : t("Key removed. AI steps run without a model.") });
     window.dispatchEvent(new Event("llm-config-changed"));
   });
 
@@ -86,26 +88,26 @@ export function KeySettings({ compact = false, embedded = false }: { compact?: b
     <div className={embedded ? styles.embedded : `${styles.panel} ${compact ? styles.compactPanel : ""}`}
       id={panelId} role={embedded ? "region" : "dialog"} aria-label="Claude API key">
       {state === "offline" || state === null ? (
-        <p className={styles.note}>The backend is not reachable. Start it with <code>python tools/dev.py</code>.</p>
+        <p className={styles.note}>{t("The backend is not reachable. Start it with python tools/dev.py.")}</p>
       ) : (
         <>
           <p className={styles.status}>
-            Key set: <b>{state.key_set ? "yes" : "no"}</b>
-            {state.key_source === "ui" && " (entered here)"}
-            {state.key_source === "env" && " (environment / .env.local)"}
-            {" · "}Model: <b>{state.model}</b>
+            {t("Key set")}: <b>{state.key_set ? t("yes") : t("no")}</b>
+            {state.key_source === "ui" && ` ${t("(entered here)")}`}
+            {state.key_source === "env" && ` ${t("(environment / .env.local)")}`}
+            {" · "}{t("Model")}: <b>{state.model}</b>
           </p>
           {state.mock && (
             <p className={styles.notice} role="status">
-              Without a Claude API key, AI steps run without a model.
+              {t("Without a Claude API key, AI steps run without a model.")}
               {state.reason && <><br /><small>{state.reason}</small></>}
             </p>
           )}
           {state.ui_enabled ? (
             <form onSubmit={save} className={styles.form}>
               <label className={styles.label}>
-                Claude API key
-                <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={live ? "Enter a new key to replace it" : "sk-ant-…"}
+                {t("Claude API key")}
+                <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={live ? t("Enter a new key to replace it") : "sk-ant-…"}
                   autoComplete="off" spellCheck={false} required minLength={20} className={styles.input} />
               </label>
               <label className={styles.label}>
@@ -115,24 +117,24 @@ export function KeySettings({ compact = false, embedded = false }: { compact?: b
               </label>
               <label className={styles.check}>
                 <input type="checkbox" checked={persist} onChange={(e) => setPersist(e.target.checked)} />
-                <span>Also save in <code>.env.local</code> on the server (kept after a restart, never committed)</span>
+                <span>{t("Also save in .env.local on the server (kept after a restart, never committed)")}</span>
               </label>
               <div className={styles.actions}>
                 <button type="submit" className={styles.primary} disabled={busy !== null || key.trim().length < 20}>
-                  {busy === "save" ? "Saving …" : "Save"}
+                  {busy === "save" ? t("Saving …") : t("Save")}
                 </button>
                 <button type="button" className={styles.secondary} onClick={test} disabled={busy !== null}>
-                  {busy === "test" ? "Testing …" : "Test"}
+                  {busy === "test" ? t("Testing …") : t("Test")}
                 </button>
                 {state.key_source === "ui" && (
                   <button type="button" className={styles.secondary} onClick={clear} disabled={busy !== null}>
-                    {busy === "clear" ? "Removing …" : "Remove"}
+                    {busy === "clear" ? t("Removing …") : t("Remove")}
                   </button>
                 )}
               </div>
             </form>
           ) : (
-            <p className={styles.note}>Changing the key is disabled on this server (LLM_KEY_UI=off).</p>
+            <p className={styles.note}>{t("Changing the key is disabled on this server (LLM_KEY_UI=off).")}</p>
           )}
           {message && (
             <p className={`${styles.message} ${styles[message.kind]}`} role={message.kind === "error" ? "alert" : "status"}>
