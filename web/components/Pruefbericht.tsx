@@ -31,8 +31,10 @@ import { liesJetzt, useEinstellungen, useT } from "@/lib/einstellungen";
 import { befundAnzeige } from "@/lib/befundtext";
 import { filtereNormen, istNormFinding, quellenUrls } from "@/lib/normen"; // N4-UI #83
 import { Fundstelle } from "./fundstelle/Fundstelle";
-import { RechercheHinweis, RechercheQuellen } from "./recherche/Recherche"; // E #169
+import { RechercheAbsatz, RechercheHinweis, RechercheQuellen } from "./recherche/Recherche"; // E #169
 import type { RechercheErgebnis } from "@/lib/api";
+import { rechercheZumBefund } from "@/lib/wizard";
+import { pdfLink } from "@/lib/fundstelle";
 import styles from "./pruefbericht.module.css";
 import { ActionSheet } from "@/components/ui/ActionSheet";
 import { SwipeToDone } from "@/components/ui/SwipeToDone";
@@ -255,6 +257,12 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
     // Runs once per click (n); the other values are read at that moment on purpose.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [springeZu?.n]);
+
+  function imLv(oz: string) {
+    setReiter("positionen");
+    setEinheit(null); setTitel(null); setSuche("");
+    setAuswahl({ oz, findingId: null });
+  }
 
 
   function zumExport(event?: React.MouseEvent<HTMLAnchorElement>) {
@@ -586,6 +594,8 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
               {sichtbareFindings.map((finding) => {
                 const status = bewertungVon(bewertungen, finding.id).status;
                 const erledigt = status === "bestaetigt";
+                const offen = auswahl?.findingId === finding.id;
+                const positionen = bericht.lv.positionen.filter((p) => p.oz === finding.oz);
                 return (
                 <li key={finding.id}>
                   <SwipeToDone
@@ -597,12 +607,22 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
                       onAendern={(s) => bewerte(finding.id, { status: s })}>
                       <FindingKarte
                         finding={finding}
-                        gewaehlt={auswahl?.findingId === finding.id}
+                        gewaehlt={offen}
                         ozBekannt={positionenNachOz.has(finding.oz)}
-                        onWaehle={() => waehle(finding.oz, finding.id)}
+                        onWaehle={() => offen ? waehle(finding.oz, null) : waehle(finding.oz, finding.id)}
                       />
                     </MitStatus>
                   </SwipeToDone>
+                  {offen && (
+                    <BefundDetails
+                      finding={finding}
+                      positionen={positionen}
+                      datei={bericht.lv.quelle}
+                      originalUrl={originalUrl}
+                      recherche={rechercheZumBefund(bericht.recherche?.ergebnisse, finding)}
+                      onImLv={() => imLv(finding.oz)}
+                    />
+                  )}
                 </li>
                 );
               })}
@@ -712,6 +732,57 @@ function Merkmale({ finding }: { finding: Finding }) {
   );
 }
 
+
+function BefundDetails({ finding, positionen, datei, originalUrl, recherche, onImLv }: {
+  finding: Finding; positionen: Position[]; datei: string; originalUrl: string | null;
+  recherche: RechercheErgebnis[]; onImLv?: () => void;
+}) {
+  const t = useT();
+  const d = useDok();
+  const position = positionen[0];
+  const link = pdfLink(originalUrl, position);
+  const seite = position?.quelle?.seite;
+  const text = [position?.kurztext, position?.langtext].filter(Boolean).join("\n\n");
+  return (
+    <div className={styles.befundAuf}>
+      {finding.titel && (
+        <section>
+          <h4>{t("The error")}</h4>
+          <p>{finding.titel}{finding.euro_wirkung != null && finding.euro_wirkung !== 0 ? ` · ${new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(finding.euro_wirkung)}` : ""}</p>
+        </section>
+      )}
+      {finding.begruendung && (
+        <section>
+          <h4>{t("Why this is flagged")}</h4>
+          <p>{finding.begruendung}</p>
+        </section>
+      )}
+      {finding.vorschlag && (
+        <section>
+          <h4>{t("Suggestion")}</h4>
+          <p>{finding.vorschlag}</p>
+        </section>
+      )}
+      {recherche.length > 0 && (
+        <section>
+          <h4>{t("Research")}</h4>
+          <RechercheAbsatz ergebnisse={recherche} />
+        </section>
+      )}
+      {(position?.quelle || text || link) && (
+        <section>
+          <h4>{t("In the document")}</h4>
+          <Fundstelle datei={datei} oz={finding.oz} position={position} originalUrl={originalUrl} onImLv={onImLv} />
+          {text ? <p className={styles.auszug}>{d(text)}</p> : null}
+          {link && seite ? (
+            <iframe className={styles.pdfVorschau} title={t("Open PDF at page {n}", { n: seite })} src={link} />
+          ) : null}
+        </section>
+      )}
+    </div>
+  );
+}
+
 function FindingKarte({ finding, gewaehlt, ozBekannt, onWaehle }: {
   finding: Finding; gewaehlt: boolean; ozBekannt: boolean; onWaehle: () => void;
 }) {
@@ -768,7 +839,7 @@ function Detail({ oz, findingId, positionen, datei, originalUrl, findings, onWae
             <dt>{t("Suggestion")}</dt><dd>{gewaehlt.vorschlag || <Unbekannt />}</dd>
             <dt>{t("Euro impact")}</dt><dd><Euro wert={gewaehlt.euro_wirkung} /></dd>
             <dt>{t("Source")}</dt><dd>{t(gewaehlt.quelle === "regel" ? "Fixed review rule" : "Model")} ({gewaehlt.regel_id})</dd>
-            <RechercheQuellen ergebnisse={recherche.filter((r) => r.finding_id === gewaehlt.id)} />
+            <RechercheQuellen ergebnisse={rechercheZumBefund(recherche, gewaehlt)} />
             {istNormFinding(gewaehlt) && quellenUrls(gewaehlt.begruendung).length > 0 && (<>
               <dt>{t("Standards source")}</dt>
               <dd>{quellenUrls(gewaehlt.begruendung).map((u) => (

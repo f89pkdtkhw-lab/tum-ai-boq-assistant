@@ -3,6 +3,10 @@
 .titel { margin: 0; font-size: clamp(20px, 2.4vw, 24px); letter-spacing: -.03em; }
 .quelle { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
 .mock { color: var(--warn); font-weight: 600; }
+.knopf { font: inherit; font-size: 14px; font-weight: 600; min-height: 40px; padding: 0 18px; border: 0; border-radius: var(--r-sm);
+  background: var(--button); color: var(--button-ink); cursor: pointer;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--button) 35%, transparent); }
+.wizardCta { display: flex; justify-content: flex-end; margin: 16px 0 8px; }
 .knopfLeise, .mehrLeise { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); color: var(--ink); text-decoration: none; cursor: pointer; }
 .knopfLeise:hover, .mehrLeise:hover { border-color: var(--accent); }
 .mehrLeise { justify-self: center; }

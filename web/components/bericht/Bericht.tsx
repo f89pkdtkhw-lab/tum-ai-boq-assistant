@@ -19,6 +19,8 @@ import { KiHinweis } from "../kihinweis/KiHinweis"; // D #168
 import { RechercheAbsatz, RechercheHinweis } from "../recherche/Recherche"; // E #169
 import { kiHinweise } from "@/lib/kischritte";
 import { Ring } from "../ring/Ring";
+import { useWizard } from "@/components/wizard/Wizard";
+import { rechercheZumBefund } from "@/lib/wizard";
 import styles from "./bericht.module.css";
 
 type Stufe = 1 | 2 | 3;
@@ -37,9 +39,13 @@ const SEITE = 30;
  * sortable list with details and comments) and level 3 (full estimated price report and all analysis tools) only when
  * they want more. Complexity grows on request, never all at once.
  */
-export function Bericht({ bericht, offline = false, anzeigeName, original = null }: { bericht: PruefberichtDaten; offline?: boolean; anzeigeName?: string; original?: File | null }) {
+export function Bericht({ bericht, offline = false, anzeigeName, original = null, ansicht = "voll" }: {
+  bericht: PruefberichtDaten; offline?: boolean; anzeigeName?: string; original?: File | null;
+  ansicht?: "voll" | "fehler" | "preis";
+}) {
   const d = useDok();
   const { e: einstellungen, t } = useEinstellungen();
+  const { setSchritt } = useWizard();
   const bewertung = useEinschaetzung(bericht);
   const { e } = bewertung;
   const zahl = useMemo(() => new Intl.NumberFormat(einstellungen.sprache === "de" ? "de-DE" : "en-GB"), [einstellungen.sprache]);
@@ -121,6 +127,11 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
   }, [original]);
   // "Show in BoQ": open level 3 and the analysis tools, then the BoQ view selects and highlights the OZ.
   const [sprung, setSprung] = useState<{ oz: string; n: number } | null>(null);
+  useEffect(() => {
+    if (ansicht === "preis") setStufe(3);
+    if (ansicht === "fehler") setStufe(2);
+  }, [ansicht]);
+
   const werkzeugeRef = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     if (!sprung || !werkzeugeRef.current) return;
@@ -182,13 +193,20 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
         ))}
       </div>
 
-      {stufe < 2 ? (
+      {ansicht === "fehler" && (
+        <Pruefbericht bericht={bericht} offline={offline} anzeigeName={anzeigeName} bewertung={bewertung} eingebettet springeZu={sprung} originalUrl={originalUrl} />
+      )}
+
+      {ansicht === "voll" && stufe < 2 ? (
         <button type="button" className={styles.mehr} onClick={() => setStufe(2)}>{t("Show details")} ▾</button>
-      ) : (<>
+      ) : ansicht === "fehler" ? null : (<>
+        {ansicht === "voll" && <>
         <button type="button" className={styles.weniger} onClick={() => zurueck(1)}>▴ {t("Hide details")}</button>
         {/* Always a way back to the summary circle while details are open. */}
         <button type="button" className={styles.zurUebersicht} onClick={() => zurueck(stufe)}>↑ {t("Summary")}</button>
+        </>}
         <section id="stufe-2" className={styles.stufe2} aria-label={t("Details")}>
+          {ansicht !== "preis" && <>
           <div className={styles.werkzeug}>
             <div className={styles.filter} role="group" aria-label={t("Filter")}>
               <Icon name="filter" />
@@ -229,7 +247,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
                       ))}
                       {x.text && <p><b>{t("Why")}:</b> {x.text}</p>}
                       {x.vorschlag && <p><b>{t("Suggestion")}:</b> {x.vorschlag}</p>}
-                      {x.finding && <RechercheAbsatz ergebnisse={(bericht.recherche?.ergebnisse ?? []).filter((r) => r.finding_id === x.finding!.id)} />}
+                      {x.finding && <RechercheAbsatz ergebnisse={rechercheZumBefund(bericht.recherche?.ergebnisse, x.finding)} />}
                       {x.finding && <Bewertung key={x.finding.id} bewertung={bewertungVon(bewertungen, x.finding.id)} onAendern={(a) => bewerte(x.finding!.id, a)} speicherFehler={false} />}
                     </div>
                   )}
@@ -242,12 +260,13 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
               {t("Show {n} more", { n: Math.min(SEITE, gezeigt.length - anzahl) })} · {t("{a} of {b}", { a: Math.min(anzahl, gezeigt.length), b: gezeigt.length })}
             </button>
           )}
+          </>}
 
-          {stufe < 3 ? (
+          {ansicht !== "preis" && stufe < 3 ? (
             <button type="button" className={styles.mehr} onClick={() => setStufe(3)}>{t("Show full estimated price report")} ▾</button>
           ) : (
             <section id="stufe-3" className={styles.stufe3} aria-label={t("Estimated price report")}>
-              <button type="button" className={styles.weniger} onClick={() => setStufe(2)}>▴ {t("Hide price report")}</button>
+              {ansicht !== "preis" && <button type="button" className={styles.weniger} onClick={() => setStufe(2)}>▴ {t("Hide price report")}</button>}
               <div className={styles.werkzeug}>
                 <h3 className={styles.abschnitt}>{t("Estimated price report")}
                   <Info text={t("Every bill item with the price in the bill (was), the estimate and why. Yellow rows changed; red numbers mean more expensive, green cheaper. The backend's estimated bill replaces this once it is connected.")} /></h3>
@@ -295,11 +314,19 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
 
               <Angebot ekt={preis.geschaetzt} projekt={anzeigeName || bericht.lv.name} />
 
+              <p className={styles.wizardCta}>
+                <button type="button" className={styles.knopf} onClick={() => { zumExport(); setSchritt("marge"); }}>
+                  {t("Continue to margin")}
+                </button>
+              </p>
+
+              {ansicht !== "preis" && <>
               <details ref={werkzeugeRef} className={styles.werkzeuge}>
                 <summary><Icon name="dashboard" /> {t("All analysis tools")} <small>{t("overview, findings, items, prices, bidder questions, quantities")}</small></summary>
                 <Pruefbericht bericht={bericht} offline={offline} anzeigeName={anzeigeName} bewertung={bewertung} eingebettet springeZu={sprung} originalUrl={originalUrl} />
               </details>
               <button type="button" className={styles.mehrLeise} onClick={() => zurueck(1)}>▴ {t("Show less")}</button>
+              </>}
             </section>
           )}
         </section>

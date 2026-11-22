@@ -9,6 +9,7 @@ import { Icon } from "./icon/Icon";
 import { Bericht } from "@/components/bericht/Bericht";
 import { bietetOffline, ladeOfflineBericht } from "@/lib/offline";
 import { fuehreAnalyseAus } from "@/lib/analyse-job";
+import { Ladeanzeige, useWizard } from "@/components/wizard/Wizard";
 import styles from "./lv-upload.module.css";
 
 // Same limit as MAX_UPLOAD_BYTES in api/app/main.py; checked locally so oversized files never leave the browser.
@@ -44,18 +45,6 @@ type Ergebnis =
   | { phase: "fertig"; lauf: Lauf; schritte: Schritte; lv: LV; bericht: PruefberichtDaten; nummer: number; offline: boolean; hinweise?: string[] }
   | { phase: "fehler"; lauf: Lauf; schritte: Schritte; titel: string; meldung: string; tipp: string | null; offline: boolean; stand?: AnalyseStatus | null };
 
-const SCHRITT_NAMEN: Record<SchrittId, string> = {
-  datei: "Upload",
-  import: "Import",
-  pruefung: "Review",
-};
-const STATUS_NAMEN: Record<SchrittStatus, string> = {
-  wartet: "waiting",
-  laeuft: "running",
-  fertig: "done",
-  fehler: "failed",
-  entfaellt: "skipped",
-};
 const BACKEND_TIPP = "Locally, python tools/dev.py starts the UI (port 3000) and backend (port 8000) together.";
 const zahl = new Intl.NumberFormat("en-GB");
 
@@ -143,40 +132,6 @@ async function backendErreichbar() {
   }
 }
 
-/** Progress bar of the background analysis (#165): percent, current step and the finished steps. */
-function AnalyseFortschritt({ stand, t }: { stand: AnalyseStatus; t: ReturnType<typeof useT> }) {
-  const schritt = Math.max(1, Math.min(stand.schritt, stand.schritte_gesamt));
-  return (
-    <div className={`${styles.fortschritt} ${stand.status === "fehler" ? styles.fortschrittGestoppt : ""}`}>
-      <div className={styles.fortschrittKopf}>
-        <span>{t("Step {n} of {total}", { n: schritt, total: stand.schritte_gesamt })}</span>
-        <span className={styles.prozent}>{stand.prozent} %</span>
-      </div>
-      <div className={styles.balken} role="progressbar" aria-label={t("Analysis progress")}
-        aria-valuemin={0} aria-valuemax={100} aria-valuenow={stand.prozent} aria-valuetext={stand.meldung}>
-        <span className={styles.balkenFuellung} style={{ width: `${stand.prozent}%` }} />
-      </div>
-      <p className={styles.fortschrittText}>{stand.meldung}</p>
-      {stand.fertige_schritte.length > 0 && (
-        <ol className={styles.fertigListe} aria-label={t("Finished steps")}>
-          {stand.fertige_schritte.map((s) => (
-            <li key={s.schritt}>
-              <span className={styles.haken} aria-hidden="true">✓</span>
-              <span>{s.meldung}</span>
-              <small>{zahl.format(Math.round(s.sekunden * 10) / 10)} s</small>
-            </li>
-          ))}
-        </ol>
-      )}
-      {stand.fehler.length > 0 && (
-        <ul className={styles.fortschrittFehler} role="note">
-          {stand.fehler.map((f) => <li key={f}>{f}</li>)}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 export function LvUpload() {
   const [health, setHealth] = useState<Health | null | "offline">(null);
   const [datei, setDatei] = useState<File | null>(null);
@@ -192,6 +147,15 @@ export function LvUpload() {
 
   const [beispiele, setBeispiele] = useState<Example[]>([]);
   const t = useT();
+  const { schritt, setSchritt, setStatus } = useWizard();
+
+  useEffect(() => {
+    setStatus({ hatBericht: ergebnis.phase === "fertig", laeuft: ergebnis.phase === "laeuft" });
+  }, [ergebnis.phase, setStatus]);
+
+  useEffect(() => {
+    if (ergebnis.phase === "laeuft" && (schritt === "hochladen" || !schritt)) setSchritt("pruefen");
+  }, [ergebnis.phase, schritt, setSchritt]);
 
   useEffect(() => {
     api.health().then(setHealth).catch(() => setHealth("offline"));
@@ -442,7 +406,7 @@ export function LvUpload() {
         <span className={`${styles.status} ${status.klasse}`}>{status.text}</span>
       </header>
 
-      {ergebnis.phase === "leer" && (<>
+      {(ergebnis.phase === "leer" || schritt === "hochladen") && (<>
       {/* Start screen from the team sketch: one upload button, the list of current files, Evaluate. */}
       <form className={styles.start} onSubmit={absenden} aria-describedby="upload-regeln"
         onDragOver={(e) => { e.preventDefault(); setZiehen(true); }} onDragLeave={() => setZiehen(false)} onDrop={aufAblegen}>
@@ -490,28 +454,23 @@ export function LvUpload() {
       </form>
       </>)}
 
-      {(ergebnis.phase === "laeuft" || ergebnis.phase === "fehler") && (
+      {(ergebnis.phase === "laeuft" || ergebnis.phase === "fehler" || (ergebnis.phase === "fertig" && schritt === "pruefen")) && (
         <section className={styles.karte} aria-labelledby="ablauf-titel" aria-busy={busy}>
           <h2 id="ablauf-titel" className={styles.abschnitt}>
-            {t("Progress for")} {ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei.name : t(ergebnis.lauf.titel)}
+            {ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei.name : t(ergebnis.lauf.titel)}
           </h2>
-          <ol className={styles.schritte}>
-            {(Object.keys(SCHRITT_NAMEN) as SchrittId[]).map((id) => {
-              const schritt = ergebnis.schritte[id];
-              return (
-                <li key={id} className={`${styles.schritt} ${styles[`schritt_${schritt.status}`]}`}>
-                  <span className={styles.symbol} aria-hidden="true" />
-                  <span className={styles.schrittName}>{t(SCHRITT_NAMEN[id])}</span>
-                  <span className={styles.schrittStatus}>{t(STATUS_NAMEN[schritt.status])}</span>
-                  <span className={styles.schrittText}>{t(schritt.text)}</span>
-                </li>
-              );
-            })}
-          </ol>
-          {ergebnis.stand && <AnalyseFortschritt stand={ergebnis.stand} t={t} />}
-          <div aria-live="polite" className={styles.ansage}>
-            {busy && t("{step} is running.", { step: t(SCHRITT_NAMEN[ergebnis.schritte.pruefung.status === "laeuft" ? "pruefung" : "import"]) })}
-          </div>
+          <Ladeanzeige
+            phase={ergebnis.phase === "fertig" ? "fertig" : ergebnis.phase}
+            importFertig={ergebnis.schritte.import.status === "fertig"}
+            standStatus={ergebnis.phase === "fertig" ? "fertig" : (ergebnis.stand?.status ?? (ergebnis.schritte.pruefung.status === "laeuft" ? "laeuft" : null))}
+            dateiname={ergebnis.phase === "fertig" ? t("{n} items imported and reviewed.", { n: zahl.format(ergebnis.lv.positionen.length) }) : undefined}
+          />
+          {ergebnis.phase === "fertig" && ergebnis.bericht.zusammenfassung && (
+            <p className={styles.ansage}>
+              {t("{n} items imported and reviewed.", { n: zahl.format(ergebnis.lv.positionen.length) })}
+              {ergebnis.bericht.zusammenfassung.grosse_probleme ? ` · ${ergebnis.bericht.zusammenfassung.grosse_probleme} ${t("Issues")}` : ""}
+            </p>
+          )}
           {ergebnis.phase === "fehler" && (
             <div ref={meldungRef} tabIndex={-1} className={styles.fehler} role="alert">
               <h3>{t(ergebnis.titel)}</h3>
@@ -533,7 +492,7 @@ export function LvUpload() {
         </section>
       )}
 
-      {ergebnis.phase === "fertig" && (
+      {ergebnis.phase === "fertig" && schritt !== "pruefen" && (
         <div ref={meldungRef} tabIndex={-1} className={`${styles.karte} ${styles.geladen}`}>
           <p>
             <span className={styles.haken} aria-hidden="true">✓</span>{" "}
@@ -550,10 +509,11 @@ export function LvUpload() {
         </div>
       )}
 
-      {ergebnis.phase === "fertig" && (
-        <Bericht key={ergebnis.nummer} bericht={ergebnis.bericht} offline={ergebnis.offline}
+      {ergebnis.phase === "fertig" && (schritt === "fehler" || schritt === "preis") && (
+        <Bericht key={`${ergebnis.nummer}-${schritt}`} bericht={ergebnis.bericht} offline={ergebnis.offline}
           anzeigeName={ergebnis.lauf.art === "datei" ? undefined : t(ergebnis.lauf.titel)}
-          original={ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei : null} />
+          original={ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei : null}
+          ansicht={schritt === "preis" ? "preis" : "fehler"} />
       )}
     </main>
   );
