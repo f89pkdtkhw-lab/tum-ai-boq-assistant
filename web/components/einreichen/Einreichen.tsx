@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { eintragHinzu, lesePreisliste, ladePreisliste, preislisteCsv, speicherePreisliste, type Preis } from "@/lib/preisliste";
 import { useT } from "@/lib/einstellungen";
+import { vaultApi } from "@/lib/vault";
 import { Icon } from "../icon/Icon";
 import { Info } from "../info/Info";
 import { ProjektAbschluss } from "../history/ProjektAbschluss";
@@ -36,6 +37,7 @@ export function Einreichen() {
       speicherePreisliste(neu);
       setListe(neu);
       setMeldung({ ok: true, text: t("{n} prices saved from {name}.", { n: neu.length, name: datei.name }) });
+      void vaultApi.hochladen(datei, "preisliste").catch(() => {});
     } catch (e) {
       setMeldung({ ok: false, text: e instanceof Error ? e.message : t("Unknown error.") });
     }

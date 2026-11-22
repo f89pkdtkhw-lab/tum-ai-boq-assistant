@@ -83,3 +83,15 @@ def test_ai_evaluation_is_archived_each_time():
         assert client.post("/api/lv/ai-evaluation", json=evidence).status_code == 200
     eintraege = client.get("/api/vault?typ=auswertung").json()
     assert len(eintraege) == 2 and all(e["lv_name"] == "LV15" for e in eintraege)
+
+
+def test_wettbewerb_manual_upload_is_deduped_ki_versions_are_not():
+    a = _hoch(name="a.xlsx", inhalt=b"xlsx-bytes", typ="wettbewerb").json()
+    b = _hoch(name="b.xlsx", inhalt=b"xlsx-bytes", typ="wettbewerb").json()
+    assert a["id"] == b["id"]
+    from app import vault
+    erste, neu1 = vault.speichere(b"xlsx-bytes", "ki-1.xlsx", "wettbewerb", quelle="ki", projekt="angebot.pdf")
+    zweite, neu2 = vault.speichere(b"xlsx-bytes", "ki-2.xlsx", "wettbewerb", quelle="ki", projekt="angebot.pdf")
+    assert neu1 and neu2 and erste.id != zweite.id
+    assert erste.version == 1 and zweite.version == 2
+    assert len(client.get("/api/vault?typ=wettbewerb").json()) == 3  # one manual + two KI versions

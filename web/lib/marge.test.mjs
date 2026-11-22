@@ -93,3 +93,18 @@ test("the synthetic Excel file is read in the browser way and fills every part o
   assert.ok(r.posten.find((p) => p.item.startsWith("Masonry")).schief);
   assert.ok(r.summe.uns < r.summe.konk && r.summe.gewinn < r.summe.gewinnKonk);
 });
+
+test("the margin demo Excel is read and fills the page, with an outlier and a skewed thin item", async () => {
+  const datei = readFileSync(new URL("../../docs/beispiele/margin-demo.xlsx", import.meta.url));
+  const zeilen = await leseXlsx(datei.buffer.slice(datei.byteOffset, datei.byteOffset + datei.byteLength));
+  assert.ok(zeilen.some((z) => z[0] === "Anbieter" || z.includes?.("Anbieter")));
+  const r = auswerten(leseGebote(zeilen));
+  assert.equal(r.posten.length, 22);
+  assert.equal(r.auswahl.vonBietern, 6);
+  assert.equal(r.liste.find((b) => b.name === "Blitzofferte Bau UG").ausreisser, true);
+  assert.equal(r.auswahl.bieter, 5);
+  const tueren = r.posten.find((p) => p.item.startsWith("Innentüren"));
+  assert.ok(tueren.wenig && tueren.schief);
+  assert.ok(r.posten.filter((p) => !p.item.startsWith("Innentüren")).every((p) => !p.wenig && p.median != null));
+  assert.ok(r.summe.uns < r.summe.konk);
+});

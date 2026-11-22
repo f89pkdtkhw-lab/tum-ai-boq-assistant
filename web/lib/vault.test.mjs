@@ -10,6 +10,7 @@ test("tab from the query falls back to bills; old routes map to real tabs", () =
   assert.equal(tabAusQuery("preisdatenbank"), "preisdatenbank");
   assert.equal(tabAusQuery("historie"), "historie");
   assert.equal(tabAusQuery("einreichen"), "einreichen");
+  assert.equal(tabAusQuery("wettbewerb"), "wettbewerb");
   assert.equal(tabAusQuery("quatsch"), "lvs");
   assert.equal(tabAusQuery(null), "lvs");
 });
@@ -19,6 +20,7 @@ test("wizard roles only for uploaded document types", () => {
   assert.equal(rolleFuerTyp("regelwerk"), "regel");
   assert.equal(rolleFuerTyp("preisliste"), "preise");
   assert.equal(rolleFuerTyp("bericht"), null);
+  assert.equal(rolleFuerTyp("wettbewerb"), null);
 });
 
 test("results are grouped per bill, versions newest first, groups by latest run", () => {

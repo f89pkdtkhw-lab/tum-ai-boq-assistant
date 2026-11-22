@@ -1,27 +1,28 @@
 // Local document vault (t243/t247/t248): every bill, regulation, price list and result in one place.
 // Backend: api/app/vault.py, files under data/vault/ on the machine that runs the API (git-ignored).
 
-export type VaultTyp = "lv" | "regelwerk" | "preisliste" | "bericht" | "recherche" | "preisrecherche" | "auswertung";
+export type VaultTyp = "lv" | "regelwerk" | "preisliste" | "wettbewerb" | "bericht" | "recherche" | "preisrecherche" | "auswertung";
 export type VaultEintrag = {
   id: string; typ: VaultTyp; dateiname: string; groesse: number; hash: string; hochgeladen_am: string;
   tags: string[]; projekt: string | null; besitzer: string | null; quelle: string;
   lv_schluessel: string | null; lv_name: string | null; version: number | null;
 };
-export type VaultTab = "lvs" | "regelwerke" | "preislisten" | "preisdatenbank" | "recherchen" | "historie" | "einreichen";
+export type VaultTab = "lvs" | "regelwerke" | "preislisten" | "wettbewerb" | "preisdatenbank" | "recherchen" | "historie" | "einreichen";
 
-export const DOKUMENT_TYPEN: VaultTyp[] = ["lv", "regelwerk", "preisliste"];
+export const DOKUMENT_TYPEN: VaultTyp[] = ["lv", "regelwerk", "preisliste", "wettbewerb"];
 export const ERGEBNIS_TYPEN: VaultTyp[] = ["bericht", "recherche", "preisrecherche", "auswertung"];
 export const TABS: { id: VaultTab; label: string; typen?: VaultTyp[] }[] = [
   { id: "lvs", label: "Bills", typen: ["lv"] },
   { id: "regelwerke", label: "Regulations", typen: ["regelwerk"] },
   { id: "preislisten", label: "Price lists", typen: ["preisliste"] },
+  { id: "wettbewerb", label: "Competition / margin", typen: ["wettbewerb"] },
   { id: "preisdatenbank", label: "Price database" },
   { id: "recherchen", label: "Research", typen: ERGEBNIS_TYPEN },
   { id: "historie", label: "History" },
   { id: "einreichen", label: "Submit" },
 ];
 export const TYP_LABEL: Record<VaultTyp, string> = {
-  lv: "Bill", regelwerk: "Regulation", preisliste: "Price list", bericht: "Analysis report",
+  lv: "Bill", regelwerk: "Regulation", preisliste: "Price list", wettbewerb: "Competitor bids", bericht: "Analysis report",
   recherche: "Web research", preisrecherche: "Price research", auswertung: "AI evaluation",
 };
 /** Formats per document type, same as the upload cards in the wizard and on the price database page. */
@@ -29,6 +30,7 @@ export const FORMATE: Partial<Record<VaultTyp, string[]>> = {
   lv: [".json", ".x83", ".x84", ".d83", ".d84", ".d86", ".x86", ".xlsx", ".pdf"],
   regelwerk: [".pdf", ".docx", ".txt", ".md"],
   preisliste: [".csv", ".xlsx", ".json", ".x83", ".x84", ".x86", ".d83", ".d84", ".d86"],
+  wettbewerb: [".xlsx"],
 };
 
 /** `?tab=` of /vault; the old routes (/preise, /history, /einreichen) redirect here. Unknown → bills. */
