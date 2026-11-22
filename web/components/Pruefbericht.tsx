@@ -20,6 +20,7 @@ import { Top } from "./top/Top";
 import { Seiten } from "./seiten/Seiten";
 import { Berichte } from "./berichte/Berichte";
 import { inGruppe, type Gruppe } from "@/lib/zusammenfassung";
+import { EINTRAG_TYPEN, TYP_NAME as EINTRAG_TYP_NAME, typFuerSchwere, type EintragTyp } from "@/lib/bericht-eintraege";
 import { Kalkulation } from "./kalkulation/Kalkulation";
 import { Historie } from "./historie/Historie";
 import { Einschaetzung, useEinschaetzung, type Bewertungsdaten } from "./einschaetzung/Einschaetzung";
@@ -120,14 +121,20 @@ function Menge({ menge, einheit }: { menge: number | null; einheit: string | nul
 
 type Auswahl = { oz: string; findingId: string | null };
 type Reiter = "uebersicht" | "findings" | "positionen" | "preise" | "fragen" | "mengen";
+/** Extra tile rows (price outliers, assessment/AI recommendations) from the levelled report. */
+type KachelEintrag = {
+  key: string; typ: EintragTyp; titel: string; oz?: string; text?: string; vorschlag?: string; euro?: number | null; finding?: Finding;
+};
 
 /** `anzeigeName`: the readable report name (e.g. the translated example title); the file's own name stays in the source line. */
 /** `bewertung` comes from the levelled report (components/bericht) when embedded; `eingebettet` hides header and summary there. */
 /** #170: `springeZu` (a new `n` per click) opens the items tab, selects the OZ and scrolls its highlighted row into view;
  *  `originalUrl` is the uploaded PDF in this tab (Blob URL), so the item detail can open it at the item's page. */
-export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung: vonAussen, eingebettet = false, springeZu = null, originalUrl = null }: {
+export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung: vonAussen, eingebettet = false, springeZu = null, originalUrl = null, anfangsReiter, kachel = null, onKachel, eintraege = [] }: {
   bericht: PruefberichtDaten; offline?: boolean; anzeigeName?: string; bewertung?: Bewertungsdaten; eingebettet?: boolean;
   springeZu?: { oz: string; n: number } | null; originalUrl?: string | null;
+  anfangsReiter?: Reiter; kachel?: EintragTyp | null; onKachel?: (typ: EintragTyp | null) => void;
+  eintraege?: KachelEintrag[];
 }) {
   const d = useDok();
   const { e: einstellungen, t } = useEinstellungen();
@@ -140,6 +147,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
     .map((f) => befundAnzeige(f, einstellungen.sprache)), [bericht.findings, einstellungen.sprache]);
   // The open tab survives page switches in this browser tab; a fresh report starts on the tab chosen in settings.
   const [reiter, setReiterState] = useState<Reiter>(() => {
+    if (anfangsReiter) return anfangsReiter;
     try { return (window.sessionStorage.getItem(REITER_SCHLUESSEL) as Reiter | null) ?? liesJetzt().startReiter; } catch { return "uebersicht"; }
   });
   const setReiter = (r: Reiter) => { setReiterState(r); try { window.sessionStorage.setItem(REITER_SCHLUESSEL, r); } catch { /* not kept */ } };
@@ -164,6 +172,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
   const detailRef = useRef<HTMLElement>(null);
   const positionenRef = useRef<HTMLElement>(null);
   const findingsAnfangRef = useRef<HTMLHeadingElement>(null);
+  const [zusatzOffen, setZusatzOffen] = useState<string | null>(null);
 
   const positionenNachOz = useMemo(() => {
     const karte = new Map<string, Position[]>();
@@ -202,6 +211,14 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
 
   // Load after mount: localStorage does not exist during server rendering.
   useEffect(() => { setBewertungen(ladeBewertungen(lv.name, findings)); }, [lv.name, findings]);
+
+  // Tile click (Issues / Warnings / Recommendations): open the findings tab and jump to that section.
+  useEffect(() => {
+    if (!kachel) return;
+    setReiter("findings");
+    const id = `befunde-${kachel}`;
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, [kachel]);
 
   function bewerte(id: string, aenderung: Partial<BewertungDaten>) {
     const neu = setze(bewertungen, id, aenderung);
@@ -300,7 +317,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
   }
 
   const sucheAktiv = normalisiere(suche) !== "";
-  const filterAktiv = kategorie !== null || schwere !== null || gruppe !== null || status !== null || titel !== null || sucheAktiv || minSchwere !== "niedrig" || nurNormen;
+  const filterAktiv = kategorie !== null || schwere !== null || gruppe !== null || status !== null || titel !== null || sucheAktiv || minSchwere !== "niedrig" || nurNormen || kachel !== null;
   const sichtbarePositionen = lv.positionen.filter(
     (p) => (einheit === null || mengenSchluessel(p) === einheit) && (titel === null || imTeilbaum(p, titel)) && positionTrifft(p, suche),
   );
@@ -315,8 +332,19 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
 
   // Step through the current list with the detail's ‹ › buttons or the arrow keys: findings when a finding
   // is open, otherwise the visible items.
+  const schrittFindings = kachel === "rec"
+    ? []
+    : gefiltert.filter((f) => kachel === null || typFuerSchwere(f.schwere) === kachel);
+  const qSuche = sucheAktiv ? normalisiere(suche) : "";
+  const extrasVon = (typ: EintragTyp) => eintraege.filter((x) => !x.finding && x.typ === typ
+    && (!qSuche || [x.titel, x.text, x.oz].some((s) => s && normalisiere(s).includes(qSuche))));
+  const findingsVon = (typ: EintragTyp) => typ === "rec" ? [] : gefiltert.filter((f) => typFuerSchwere(f.schwere) === typ);
+  const hatAbschnitte = EINTRAG_TYPEN.some((typ) => findingsVon(typ).length + extrasVon(typ).length > 0);
+  const typenSichtbar: EintragTyp[] = kachel
+    ? [kachel]
+    : EINTRAG_TYPEN.filter((typ) => findingsVon(typ).length + extrasVon(typ).length > 0);
   const schrittListe: { oz: string; id: string | null }[] = auswahl?.findingId
-    ? gefiltert.map((f) => ({ oz: f.oz, id: f.id }))
+    ? schrittFindings.map((f) => ({ oz: f.oz, id: f.id }))
     : sichtbarePositionen.map((p) => ({ oz: p.oz, id: null }));
   const schrittIndex = auswahl ? schrittListe.findIndex((x) => (auswahl.findingId ? x.id === auswahl.findingId : x.oz === auswahl.oz)) : -1;
   function schritt(delta: number) {
@@ -558,77 +586,104 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
           <h3 ref={findingsAnfangRef} className={styles.abschnitt}>
             {t("Findings")} <span className={styles.anzahl} aria-live="polite">{t("{a} of {b}", { a: gefiltert.length, b: findings.length })}</span>
           </h3>
-          {findings.length === 0 ? (
+          {findings.length === 0 && eintraege.every((x) => Boolean(x.finding)) && !kachel ? (
             <div className={styles.leer}>
               <p><strong>{t("No findings.")}</strong> {t("The review reported no issues for this BoQ.")}</p>
               <p>{t("This does not guarantee an error-free BoQ: only the available review rules were applied.")}</p>
             </div>
-          ) : gefiltert.length === 0 ? (
+          ) : !hatAbschnitte && !kachel ? (
             <div className={styles.leer}>
               <p>{t("No findings match this filter.")}</p>
               {filterAktiv && (
-                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setGruppe(null); setStatus(null); setTitel(null); setSuche(""); setMinSchwere("niedrig"); setNurNormen(false); }}>
+                <button type="button" className={styles.knopfZweit} onClick={() => { setKategorie(null); setSchwere(null); setGruppe(null); setStatus(null); setTitel(null); setSuche(""); setMinSchwere("niedrig"); setNurNormen(false); onKachel?.(null); }}>
                   {t("Reset filters")}
                 </button>
               )}
             </div>
           ) : (
-            <>
-            {findingsSteuerung(t("Findings pages"), false)}
-            <ul className={styles.findings}>
-              {sichtbareFindings.map((finding) => {
-                const status = bewertungVon(bewertungen, finding.id).status;
-                const erledigt = status === "bestaetigt";
-                const offen = auswahl?.findingId === finding.id;
-                const positionen = bericht.lv.positionen.filter((p) => p.oz === finding.oz);
-                const umschalten = () => offen ? setAuswahl(null) : waehle(finding.oz, finding.id);
-                const steuerung = (ziel: EventTarget | null) =>
-                  !!(ziel as HTMLElement | null)?.closest?.("button, a, select, input, textarea, label");
-                return (
-                <li key={finding.id}>
-                  <div
-                    className={`${styles.zeileKarte} ${offen ? styles.karteGewaehlt : ""}`}
-                    style={gefahr([finding])}
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={offen}
-                    aria-label={finding.titel}
-                    onClick={(e) => { if (!steuerung(e.target)) umschalten(); }}
-                    onKeyDown={(e) => {
-                      if (e.target !== e.currentTarget) return;
-                      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); umschalten(); }
-                    }}>
-                    <SwipeToDone
-                      done={erledigt}
-                      doneLabel={t("Mark as done")}
-                      resetLabel={t("Reset to open")}
-                      frontClassName={styles.zeileFront}
-                      onToggle={() => bewerte(finding.id, { status: erledigt ? "offen" : "bestaetigt" })}>
-                      <MitStatus status={status} titel={finding.titel}
-                        onAendern={(s) => bewerte(finding.id, { status: s })}>
-                        <FindingKarte
-                          finding={finding}
-                          ozBekannt={positionenNachOz.has(finding.oz)}
+            typenSichtbar.map((typ) => {
+              const gruppeFindings = findingsVon(typ);
+              const gruppeExtras = extrasVon(typ);
+              const anzahl = gruppeFindings.length + gruppeExtras.length;
+              return (
+                <section key={typ} id={`befunde-${typ}`} className={styles.befundGruppe} aria-label={t(EINTRAG_TYP_NAME[typ])}>
+                  <h4 className={styles.abschnitt}>
+                    {t(EINTRAG_TYP_NAME[typ])} <span className={styles.anzahl}>{zahl.format(anzahl)}</span>
+                  </h4>
+                  {anzahl === 0 ? (
+                    <div className={styles.leer}><p>{t("No findings match this filter.")}</p></div>
+                  ) : (
+                    <ul className={styles.findings}>
+                      {gruppeFindings.map((finding) => {
+                        const status = bewertungVon(bewertungen, finding.id).status;
+                        const erledigt = status === "bestaetigt";
+                        const offen = auswahl?.findingId === finding.id;
+                        const positionen = bericht.lv.positionen.filter((p) => p.oz === finding.oz);
+                        const umschalten = () => offen ? setAuswahl(null) : waehle(finding.oz, finding.id);
+                        const steuerung = (ziel: EventTarget | null) =>
+                          !!(ziel as HTMLElement | null)?.closest?.("button, a, select, input, textarea, label");
+                        return (
+                        <li key={finding.id}>
+                          <div
+                            className={`${styles.zeileKarte} ${offen ? styles.karteGewaehlt : ""}`}
+                            style={gefahr([finding])}
+                            role="button"
+                            tabIndex={0}
+                            aria-expanded={offen}
+                            aria-label={finding.titel}
+                            onClick={(e) => { if (!steuerung(e.target)) umschalten(); }}
+                            onKeyDown={(e) => {
+                              if (e.target !== e.currentTarget) return;
+                              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); umschalten(); }
+                            }}>
+                            <SwipeToDone
+                              done={erledigt}
+                              doneLabel={t("Mark as done")}
+                              resetLabel={t("Reset to open")}
+                              frontClassName={styles.zeileFront}
+                              onToggle={() => bewerte(finding.id, { status: erledigt ? "offen" : "bestaetigt" })}>
+                              <MitStatus status={status} titel={finding.titel}
+                                onAendern={(s) => bewerte(finding.id, { status: s })}>
+                                <FindingKarte
+                                  finding={finding}
+                                  ozBekannt={positionenNachOz.has(finding.oz)}
+                                />
+                              </MitStatus>
+                            </SwipeToDone>
+                          </div>
+                          {offen && (
+                            <BefundDetails
+                              finding={finding}
+                              positionen={positionen}
+                              datei={bericht.lv.quelle}
+                              originalUrl={originalUrl}
+                              recherche={rechercheZumBefund(bericht.recherche?.ergebnisse, finding)}
+                              onImLv={() => imLv(finding.oz)}
+                            />
+                          )}
+                        </li>
+                        );
+                      })}
+                      {gruppeExtras.map((eintrag) => (
+                        <ZusatzZeile
+                          key={eintrag.key}
+                          eintrag={eintrag}
+                          offen={zusatzOffen === eintrag.key}
+                          onToggle={() => {
+                            setZusatzOffen(zusatzOffen === eintrag.key ? null : eintrag.key);
+                            if (eintrag.oz && zusatzOffen !== eintrag.key) waehle(eintrag.oz, null, false);
+                          }}
+                          position={eintrag.oz ? positionenNachOz.get(eintrag.oz)?.[0] : undefined}
+                          datei={bericht.lv.quelle}
+                          originalUrl={originalUrl}
+                          onImLv={eintrag.oz ? () => imLv(eintrag.oz!) : undefined}
                         />
-                      </MitStatus>
-                    </SwipeToDone>
-                  </div>
-                  {offen && (
-                    <BefundDetails
-                      finding={finding}
-                      positionen={positionen}
-                      datei={bericht.lv.quelle}
-                      originalUrl={originalUrl}
-                      recherche={rechercheZumBefund(bericht.recherche?.ergebnisse, finding)}
-                      onImLv={() => imLv(finding.oz)}
-                    />
+                      ))}
+                    </ul>
                   )}
-                </li>
-                );
-              })}
-            </ul>
-            {sichtbareFindings.length > 10 && findingsSteuerung(t("Findings pages, bottom"), true)}
-            </>
+                </section>
+              );
+            })
           )}
 
           </>)}
@@ -779,6 +834,31 @@ function BefundDetails({ finding, positionen, datei, originalUrl, recherche, onI
         </section>
       )}
     </div>
+  );
+}
+
+function ZusatzZeile({ eintrag, offen, onToggle, position, datei, originalUrl, onImLv }: {
+  eintrag: KachelEintrag; offen: boolean; onToggle: () => void;
+  position?: Position; datei: string; originalUrl: string | null; onImLv?: () => void;
+}) {
+  const t = useT();
+  const typName = eintrag.typ === "issue" ? "Issue" : eintrag.typ === "warning" ? "Warning" : "Recommendation";
+  return (
+    <li>
+      <button type="button" className={`${styles.zeileKarte} ${styles.zusatzKarte} ${offen ? styles.karteGewaehlt : ""}`}
+        aria-expanded={offen} onClick={onToggle}>
+        <span className={styles.zusatzTyp}>{t(typName)}</span>
+        <span className={styles.karteTitel}>{eintrag.titel}</span>
+        {eintrag.oz ? <span className={styles.oz}>{eintrag.oz}</span> : <span />}
+      </button>
+      {offen && (
+        <div className={styles.befundAuf}>
+          {eintrag.text ? <p>{eintrag.text}</p> : null}
+          {eintrag.vorschlag ? <p>{eintrag.vorschlag}</p> : null}
+          {eintrag.oz ? <Fundstelle datei={datei} oz={eintrag.oz} position={position} originalUrl={originalUrl} onImLv={onImLv} /> : null}
+        </div>
+      )}
+    </li>
   );
 }
 

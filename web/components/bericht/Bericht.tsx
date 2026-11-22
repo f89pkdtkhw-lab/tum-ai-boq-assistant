@@ -22,10 +22,11 @@ import { kiHinweise } from "@/lib/kischritte";
 import { Ring } from "../ring/Ring";
 import { useWizard } from "@/components/wizard/Wizard";
 import { rechercheZumBefund } from "@/lib/wizard";
+import { typFuerPreisstufe, typFuerSchwere, type EintragTyp } from "@/lib/bericht-eintraege";
 import styles from "./bericht.module.css";
 
 type Stufe = 1 | 2 | 3;
-type Typ = "issue" | "warning" | "rec";
+type Typ = EintragTyp;
 type Eintrag = { key: string; typ: Typ; titel: string; oz?: string; text?: string; vorschlag?: string; euro?: number | null; rang: number; finding?: Finding };
 
 const STUFE_SCHLUESSEL = "lv-stufe-v1";
@@ -69,6 +70,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
   const [stufe, setStufeState] = useState<Stufe>(() => { try { return (Number(window.sessionStorage.getItem(STUFE_SCHLUESSEL)) || 1) as Stufe; } catch { return 1; } });
   const setStufe = (s: Stufe) => { setStufeState(s); try { window.sessionStorage.setItem(STUFE_SCHLUESSEL, String(s)); } catch { /* not kept */ } };
   const [filter, setFilter] = useState<Set<Typ>>(new Set(["issue", "warning", "rec"]));
+  const [kachel, setKachel] = useState<Typ | null>(null);
   const [sortierung, setSortierung] = useState<"wichtig" | "az" | "oz">("wichtig");
   const [offen, setOffen] = useState<string | null>(null);
   const [anzahl, setAnzahl] = useState(SEITE);
@@ -91,6 +93,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
   const [epEntwurf, setEpEntwurf] = useState<Record<string, string>>({});
   useEffect(() => { setAnpassungen(ladePreisAnpassungen(evalIdFuerPreise())); setEpEntwurf({}); }, [bericht]);
   const preis = useMemo(() => preisbericht(bericht.lv.positionen, bewertung.gewerke, preisliste, bericht.kalkulation?.positionen ?? null, anpassungen), [bericht, bewertung.gewerke, preisliste, anpassungen]);
+  const ohneLvPreise = !preis.zeilen.some((z) => z.war !== null);
 
   function uebernehmeEp(index: number) {
     const roh = epEntwurf[String(index)];
@@ -114,10 +117,10 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
     // Offline-model placeholders (MOCK_*) are not findings: lists and counts leave them out.
     const befunde = bericht.findings.filter((f) => !f.regel_id.startsWith("MOCK_"))
       .map((f) => befundAnzeige(f, einstellungen.sprache))
-      .map((f): Eintrag => ({ key: f.id, typ: RANG[f.schwere] <= 1 ? "issue" : "warning", titel: f.titel, oz: f.oz, text: f.begruendung, vorschlag: f.vorschlag, euro: f.euro_wirkung, rang: RANG[f.schwere], finding: f }));
+      .map((f): Eintrag => ({ key: f.id, typ: typFuerSchwere(f.schwere), titel: f.titel, oz: f.oz, text: f.begruendung, vorschlag: f.vorschlag, euro: f.euro_wirkung, rang: RANG[f.schwere], finding: f }));
     // Price outliers (unit price far from similar items or past projects) count in the tiles, so they are listed too.
-    const preisAuffaellig = bewertung.preise.gruppen.flatMap((g) => g.positionen.filter((p) => p.stufe !== "gruen").map((p): Eintrag => ({
-      key: `preis-${p.oz}`, typ: p.stufe === "rot" ? "issue" : "warning", oz: p.oz, rang: p.stufe === "rot" ? 1 : 2,
+    const preisAuffaellig = bewertung.preise.gruppen.flatMap((g) => g.positionen.filter((p) => typFuerPreisstufe(p.stufe)).map((p): Eintrag => ({
+      key: `preis-${p.oz}`, typ: typFuerPreisstufe(p.stufe)!, oz: p.oz, rang: p.stufe === "rot" ? 1 : 2,
       titel: t("Unusual unit price: {item}", { item: d(g.kurztext) }),
       text: t("{ep} per {unit}, {d} % from the median {median} of similar items.", { ep: euro2.format(p.ep), unit: g.einheit, d: `${p.abweichung > 0 ? "+" : ""}${Math.round(p.abweichung)}`, median: euro2.format(g.median) }),
     })));
@@ -130,10 +133,14 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
       : a.rang - b.rang || Math.abs(b.euro ?? 0) - Math.abs(a.euro ?? 0)), [eintraege, filter, sortierung]);
   const zaehler = (typ: Typ) => eintraege.filter((x) => x.typ === typ).length;
 
-  function zeige(typ: Typ | null) {
-    setFilter(new Set(typ ? [typ] : ["issue", "warning", "rec"]));
-    setStufe(Math.max(stufe, 2) as Stufe);
-    requestAnimationFrame(() => document.getElementById("stufe-2")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  function zeige(typ: Typ) {
+    const neu = kachel === typ ? null : typ;
+    setKachel(neu);
+    setFilter(new Set(neu ? [neu] : ["issue", "warning", "rec"]));
+    if (ansicht !== "fehler") {
+      setStufe(Math.max(stufe, 2) as Stufe);
+      if (neu) requestAnimationFrame(() => document.getElementById("stufe-2")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
   }
   /** Was / Estimated tiles: open level 3 and jump to the price table. */
   function zeigePreise() {
@@ -192,8 +199,10 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
       {/* Level 1: the summary from the sketch – was, score, estimated; issues, warnings, recommendations. */}
       <div className={styles.stufe1}>
         <button type="button" className={styles.preisKachel} onClick={zeigePreise} title={t("Show full estimated price report")}>
-          <span className={styles.label}>{t("Was")}</span>
-          <strong className={styles.preis}>{preis.war ? euroKurz.format(preis.war) : "–"}</strong>
+          <span className={styles.label} onClick={(e) => { if ((e.target as HTMLElement).closest(".info")) e.stopPropagation(); }}>
+            {t("Was")} <Info text={t("Sum of the prices already in the uploaded BoQ. Empty for blank BoQs with no unit prices.")} />
+          </span>
+          <strong className={`${styles.preis} ${ohneLvPreise ? styles.preisLeer : ""}`}>{ohneLvPreise ? t("No prices in BoQ") : euroKurz.format(preis.war)}</strong>
           <span className={styles.klein}>{t("total in the bill")}</span>
           <span className={styles.oeffnen}>{t("Price report")} ›</span>
         </button>
@@ -212,12 +221,14 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
           <span className={styles.label}><Icon name="sparkles" /> {t("Estimated")} <Info text={t("Item by item from the price list, past projects of the same trade and the AI evaluation. Open the full price report for every reason.")} /></span>
           <strong className={styles.preis}>{preis.geschaetzt ? euroKurz.format(preis.geschaetzt) : "–"}{spanneText(preis.von, preis.bis, euroKurz.format) && <small> {spanneText(preis.von, preis.bis, euroKurz.format)}</small>}</strong>
           <span className={styles.klein} style={{ color: preis.diff > 0 ? "var(--sev-kritisch)" : preis.diff < 0 ? "var(--sev-ok)" : undefined }}>
-            {preis.diff === 0 ? t("same as the bill") : `${preis.diff > 0 ? "+" : "−"}${euroKurz.format(Math.abs(preis.diff))} ${t("vs. was")}`}
+            {ohneLvPreise ? null : preis.diff === 0 ? t("same as the bill") : `${preis.diff > 0 ? "+" : "−"}${euroKurz.format(Math.abs(preis.diff))} ${t("vs. was")}`}
           </span>
           <span className={styles.oeffnen}>{t("Price report")} ›</span>
         </button>
         {([["issue", "Issues", zaehler("issue"), "alert"], ["warning", "Warnings", zaehler("warning"), "warning"], ["rec", "Recommendations", zaehler("rec"), "lightbulb"]] as const).map(([typ, name, n, icon]) => (
-          <button key={typ} type="button" className={styles.zaehler} style={{ "--balken": FARBE[typ] } as React.CSSProperties} onClick={() => zeige(typ)}>
+          <button key={typ} type="button" className={`${styles.zaehler} ${kachel === typ ? styles.zaehlerAktiv : ""}`}
+            style={{ "--balken": FARBE[typ] } as React.CSSProperties}
+            aria-pressed={kachel === typ} onClick={() => zeige(typ)}>
             <span className={styles.label}><Icon name={icon} /> {t(name)}</span>
             <strong style={{ color: typ === "warning" ? "var(--sev-mittel-text)" : FARBE[typ] }}>{zahl.format(n)}</strong>
           </button>
@@ -225,7 +236,9 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
       </div>
 
       {ansicht === "fehler" && (
-        <Pruefbericht bericht={bericht} offline={offline} anzeigeName={anzeigeName} bewertung={bewertung} eingebettet springeZu={sprung} originalUrl={originalUrl} />
+        <Pruefbericht bericht={bericht} offline={offline} anzeigeName={anzeigeName} bewertung={bewertung} eingebettet
+          anfangsReiter="findings" kachel={kachel} onKachel={setKachel} eintraege={eintraege}
+          springeZu={sprung} originalUrl={originalUrl} />
       )}
 
       {ansicht === "voll" && stufe < 2 ? (
