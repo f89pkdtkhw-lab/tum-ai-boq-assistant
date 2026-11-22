@@ -8,6 +8,7 @@ import {
   effektiverSchritt, istWizardSchritt, ladeStufe, leseSchritt, maxSchritt, schrittIndex, wizardPfad, wizardSichtbar,
   type WizardSchritt,
 } from "@/lib/wizard";
+import { setzeEvaluationSchritt } from "@/lib/evaluation-session";
 import styles from "./wizard.module.css";
 
 type Status = { hatBericht: boolean; laeuft: boolean };
@@ -70,6 +71,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     if (!sichtbar) return;
     if (gewuenscht !== schritt) router.replace(wizardPfad(schritt));
   }, [sichtbar, gewuenscht, schritt, router]);
+
+  useEffect(() => {
+    if (sichtbar) setzeEvaluationSchritt(schritt);
+  }, [sichtbar, schritt]);
 
   const kannWeiter = schritt === "hochladen" ? status.laeuft || status.hatBericht
     : schritt === "pruefen" ? status.hatBericht

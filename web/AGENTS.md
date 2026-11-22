@@ -16,7 +16,7 @@ Target concept: Epic #93 (`workflow-final.drawio`) and the team sketches. The UI
 | Step | Page / component | Notes |
 | --- | --- | --- |
 | UI 1 upload | `/` → `components/LvUpload.tsx` | One "Upload files" button, list of current files with a role each (bill · regulation document · price list, guessed by `rolleRaten`, editable), "Evaluate". No example/demo buttons in the UI (t255/t259). |
-| UI 2–3 run | `LvUpload` → `api.importiere` → `api.pruefen` | The open report survives page switches (sessionStorage `lv-aktuell-v1`). |
+| UI 2–3 run | `LvUpload` → `api.importiere` → `api.pruefen` | The open report and a running job survive page switches (sessionStorage `lv-aktuell-v1`, `lv-eval-sitzung-v1`); the sidebar/top bar links back. |
 | UI 4–5 report | `components/bericht/Bericht.tsx` | **Level 1** summary: was · large score ring (segments = the issue/warning/recommendation counts below it) · estimated ±; issues · warnings · recommendations. Every deeper level has a way back (Hide details, Hide price report, floating ↑ Summary). **Level 2** ("Show details"): filter + sort + expandable rows with status/comment. **Level 3** ("Show full estimated price report"): every item was → estimated ± why, then "All analysis tools" (`components/Pruefbericht.tsx`, embedded). The level is remembered per tab (`lv-stufe-v1`). |
 | Menu | `components/nav/Nav.tsx` | ≡ drawer: New evaluation · Submit (bill price per unit, final bill) · More (History, Step reports, Export, Tutorial) · Settings · theme ☀/☾. Dashboard and Statistics were removed on purpose (team decision). |
 | UI 1 price list | `/einreichen#preise` | Price list → browser price database (`lib/preisliste.ts`) until #99/#111 exist. |
