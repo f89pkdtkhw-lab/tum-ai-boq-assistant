@@ -581,23 +581,38 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
                 const erledigt = status === "bestaetigt";
                 const offen = auswahl?.findingId === finding.id;
                 const positionen = bericht.lv.positionen.filter((p) => p.oz === finding.oz);
+                const umschalten = () => offen ? setAuswahl(null) : waehle(finding.oz, finding.id);
+                const steuerung = (ziel: EventTarget | null) =>
+                  !!(ziel as HTMLElement | null)?.closest?.("button, a, select, input, textarea, label");
                 return (
                 <li key={finding.id}>
-                  <SwipeToDone
-                    done={erledigt}
-                    doneLabel={t("Mark as done")}
-                    resetLabel={t("Reset to open")}
-                    onToggle={() => bewerte(finding.id, { status: erledigt ? "offen" : "bestaetigt" })}>
-                    <MitStatus status={status} titel={finding.titel}
-                      onAendern={(s) => bewerte(finding.id, { status: s })}>
-                      <FindingKarte
-                        finding={finding}
-                        gewaehlt={offen}
-                        ozBekannt={positionenNachOz.has(finding.oz)}
-                        onWaehle={() => offen ? waehle(finding.oz, null) : waehle(finding.oz, finding.id)}
-                      />
-                    </MitStatus>
-                  </SwipeToDone>
+                  <div
+                    className={`${styles.zeileKarte} ${offen ? styles.karteGewaehlt : ""}`}
+                    style={gefahr([finding])}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={offen}
+                    aria-label={finding.titel}
+                    onClick={(e) => { if (!steuerung(e.target)) umschalten(); }}
+                    onKeyDown={(e) => {
+                      if (e.target !== e.currentTarget) return;
+                      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); umschalten(); }
+                    }}>
+                    <SwipeToDone
+                      done={erledigt}
+                      doneLabel={t("Mark as done")}
+                      resetLabel={t("Reset to open")}
+                      frontClassName={styles.zeileFront}
+                      onToggle={() => bewerte(finding.id, { status: erledigt ? "offen" : "bestaetigt" })}>
+                      <MitStatus status={status} titel={finding.titel}
+                        onAendern={(s) => bewerte(finding.id, { status: s })}>
+                        <FindingKarte
+                          finding={finding}
+                          ozBekannt={positionenNachOz.has(finding.oz)}
+                        />
+                      </MitStatus>
+                    </SwipeToDone>
+                  </div>
                   {offen && (
                     <BefundDetails
                       finding={finding}
@@ -767,13 +782,12 @@ function BefundDetails({ finding, positionen, datei, originalUrl, recherche, onI
   );
 }
 
-function FindingKarte({ finding, gewaehlt, ozBekannt, onWaehle }: {
-  finding: Finding; gewaehlt: boolean; ozBekannt: boolean; onWaehle: () => void;
+function FindingKarte({ finding, ozBekannt }: {
+  finding: Finding; ozBekannt: boolean;
 }) {
   const t = useT();
   return (
-    <button type="button" className={`${styles.karte} ${gewaehlt ? styles.karteGewaehlt : ""}`}
-      aria-pressed={gewaehlt} onClick={onWaehle} style={gefahr([finding])}>
+    <span className={styles.karte}>
       <span className={`${styles.schwere} ${styles[`schwere_${finding.schwere}`]}`}>{t(schwereName(finding.schwere))}</span>
       <span className={styles.oz}>{finding.oz}{!ozBekannt && <small> ({t("not in BoQ")})</small>}</span>
       <span className={styles.zeileText}>
@@ -782,7 +796,7 @@ function FindingKarte({ finding, gewaehlt, ozBekannt, onWaehle }: {
           {istNormFinding(finding) && <> · <b className={styles.markeNorm}>{t("Standards hint, not an expert opinion")}</b></>}</span>
       </span>
       <span className={styles.zeileEuro}><Euro wert={finding.euro_wirkung} /></span>
-    </button>
+    </span>
   );
 }
 
