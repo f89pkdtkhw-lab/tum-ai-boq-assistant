@@ -14,13 +14,12 @@ type Eintrag = { href: string; label: string; icon: IconName };
 // Submit is one page (price list and final bill), so it has one entry.
 const HAUPT: Eintrag[] = [
   { href: "/", label: "New evaluation", icon: "upload" },
-  { href: "/einreichen", label: "Submit", icon: "price" },
+  // t243: price database, history, stored documents and submissions live together on one page.
+  { href: "/vault", label: "Vault", icon: "folder" },
 ];
 const WEITERE: Eintrag[] = [
-  { href: "/history", label: "History", icon: "history" },
   { href: "/wettbewerb", label: "Competitors", icon: "chart" },
   { href: "/marge", label: "Margin", icon: "gauge" },
-  { href: "/preise", label: "Price database", icon: "euro" },
   { href: "/schritte", label: "Step reports", icon: "steps" },
   { href: "/export", label: "Export", icon: "download" },
   { href: "/anleitung", label: "Tutorial", icon: "help" },

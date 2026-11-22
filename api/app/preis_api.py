@@ -24,7 +24,7 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
 
-from fastapi import APIRouter, FastAPI, HTTPException, Query, UploadFile
+from fastapi import APIRouter, FastAPI, Header, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from .modelle import LV, Preisliste, PreislistenEintrag
@@ -380,7 +380,7 @@ def _als_neue_preise(liste: Preisliste, nur_mit_text: bool = False) -> list[Neue
 
 
 @router.post("/api/preisliste/import", response_model=Preisliste)
-async def import_preisliste(datei: UploadFile, lv: UploadFile | None = None):
+async def import_preisliste(datei: UploadFile, lv: UploadFile | None = None, x_lv_scout_user: str | None = Header(None)):
     """``lv`` (optional): the tender bill (D83/X83/…) that gives a D84 offer its item texts."""
     try:
         inhalt = await datei.read(MAX_UPLOAD_BYTES + 1)
@@ -402,6 +402,10 @@ async def import_preisliste(datei: UploadFile, lv: UploadFile | None = None):
         await datei.close()
         if lv is not None:
             await lv.close()
+    from . import vault  # noqa: PLC0415  t243: price lists are filed in the vault (deduplicated)
+    vault.lege_ab(inhalt, datei.filename or "preisliste", "preisliste", besitzer=x_lv_scout_user)
+    if lv is not None and lv_inhalt:
+        vault.lege_ab(lv_inhalt, lv.filename or "lv", "lv", besitzer=x_lv_scout_user)
     gaeb_datei = bool(re.fullmatch(r"\.[xd]8\d", Path(datei.filename or "").suffix.lower()))
     neue = _als_neue_preise(liste, nur_mit_text=gaeb_datei)
     try:

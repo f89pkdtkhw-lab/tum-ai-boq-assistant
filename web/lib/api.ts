@@ -1,3 +1,4 @@
+import { besitzerKopf } from "./vault.ts";
 // Shared contract: docs/schnittstelle.md and api/app/modelle.py.
 // Coordinate changes with the backend and announce them to @all on the board first.
 export type Position = {
@@ -176,10 +177,17 @@ async function once<T>(path: string, init: RequestInit | undefined, run: () => P
   return lauf;
 }
 
+/** t243: the signed-in e-mail goes along as X-LV-Scout-User, so vault entries record their owner. */
+function mitBesitzer(init?: RequestInit): RequestInit | undefined {
+  const kopf = besitzerKopf();
+  if (!kopf["X-LV-Scout-User"]) return init;
+  return { ...init, headers: { ...kopf, ...(init?.headers as Record<string, string> | undefined) } };
+}
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return once(path, init, async () => {
     // No short AbortController: the Grok Bot bridge may need the full proxyTimeout (960 s).
-    const response = await fetch(`/backend${path}`, init);
+    const response = await fetch(`/backend${path}`, mitBesitzer(init));
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
       const detail = typeof body.detail === "string" ? body.detail : `Request failed (${response.status}). Please check the input.`;

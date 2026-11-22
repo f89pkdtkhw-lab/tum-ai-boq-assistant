@@ -27,3 +27,6 @@ import-output/
 
 # LV Scout accounts and plans (lib/saas): JSON store and generated auth secret
 .data/
+
+# Local document vault (api/app/vault.py): uploaded files, reports and research, never commit
+data/vault/

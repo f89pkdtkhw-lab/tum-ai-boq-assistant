@@ -133,7 +133,7 @@ export function Einreichen() {
       </section>}
 
       {reiter === "schluss" && <section id="schluss" role="tabpanel" aria-labelledby="tab-schluss" className={styles.abschnittBlock}>
-        <ProjektAbschluss offen onFertig={(fall) => router.push(`/history?fall=${encodeURIComponent(fall.case_id)}`)} />
+        <ProjektAbschluss offen onFertig={(fall) => router.push(`/vault?tab=historie&fall=${encodeURIComponent(fall.case_id)}`)} />
       </section>}
     </main>
   );

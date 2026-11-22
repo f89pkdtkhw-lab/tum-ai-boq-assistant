@@ -1,0 +1,18 @@
+/* Vault page (t243); tokens from web/app/globals.css, cards and tables reuse the price database styles. */
+.tabs { overflow-x: auto; max-width: 100%; padding-bottom: 2px; }
+/* Embedded pages keep their own layout but not a second page padding. */
+.eingebettet > :global(*) { padding: 0 !important; max-width: none !important; }
+.name { min-width: 180px; overflow-wrap: anywhere; }
+.unter { display: block; color: var(--muted); font-size: 12.5px; }
+.datum { white-space: nowrap; color: var(--muted); font-size: 13px; }
+.aktionen { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.link { display: inline-flex; align-items: center; text-decoration: none; }
+.gefahr { color: var(--bad) !important; }
+.eingabe { font: inherit; font-size: 14px; padding: 5px 8px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--card); color: var(--ink); width: 100%; min-width: 120px; }
+.versteckt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.gruppe { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 10px 14px; background: var(--card); }
+.gruppe summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.versionen { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.versionen li { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding-top: 6px; border-top: 1px solid var(--line); }
+.typ { font-weight: 600; font-size: 14px; min-width: 170px; }
+.versionen .aktionen { margin-left: auto; }

@@ -14,6 +14,8 @@ import { KontingentHinweis } from "@/components/saas/KontingentHinweis";
 import { zaehleAuswertung } from "@/lib/saas/client";
 import { BewertungsmodellWahl } from "@/components/bewertung/BewertungsmodellWahl";
 import { useBewertungsmodell } from "@/lib/useBewertungsmodell";
+import { ActionSheet } from "./ui/ActionSheet";
+import { TYP_LABEL, datumText, rolleFuerTyp, vaultApi, type VaultEintrag } from "@/lib/vault";
 import styles from "./lv-upload.module.css";
 
 // Same limit as MAX_UPLOAD_BYTES in api/app/main.py; checked locally so oversized files never leave the browser.
@@ -152,6 +154,8 @@ export function LvUpload() {
   const meldungRef = useRef<HTMLDivElement>(null);
 
   const [beispiele, setBeispiele] = useState<Example[]>([]);
+  // t243: reuse a stored bill, regulation or price list from the vault instead of uploading it again.
+  const [vaultListe, setVaultListe] = useState<VaultEintrag[] | null>(null);
   const t = useT();
   const { schritt, setSchritt, setStatus } = useWizard();
   const [bewertungsmodell] = useBewertungsmodell();
@@ -166,8 +170,17 @@ export function LvUpload() {
 
   useEffect(() => {
     api.health().then(setHealth).catch(() => setHealth("offline"));
+    // Vault → "Use in analysis" opens /?vault=<id>: that document is put into the file list.
+    const ausVault = new URLSearchParams(window.location.search).get("vault");
+    if (ausVault) {
+      window.history.replaceState(null, "", "/");
+      vaultApi.liste(["lv", "regelwerk", "preisliste"]).then((liste) => {
+        const treffer = liste.find((x) => x.id === ausVault);
+        if (treffer) void ausVaultWaehlen(treffer, []);
+      }).catch(() => setDateiFehler(t("The vault is unreachable.")));
+    }
     // Coming back from another page: show the report that was open instead of the empty start screen.
-    const offen = new URLSearchParams(window.location.search).get("beispiel") ? null : ladeAktuell();
+    const offen = new URLSearchParams(window.location.search).get("beispiel") || ausVault ? null : ladeAktuell();
     if (offen) {
       const lauf: Lauf = offen.beispielId ? { art: "beispiel", id: offen.beispielId, titel: offen.titel } : { art: "lv", titel: offen.titel, lv: offen.bericht.lv };
       const fertig: Schritt = { status: "fertig", text: "Restored from this browser session." };
@@ -210,6 +223,26 @@ export function LvUpload() {
     const liste = [...dateien];
     for (const f of neu) liste.push({ datei: f, rolle: rolleRaten(f, liste.some((d) => d.rolle === "lv")) });
     setzeDateien(liste);
+  }
+
+  async function ausVaultWaehlen(eintrag: VaultEintrag, bisher = dateien) {
+    setVaultListe(null);
+    const rolle = rolleFuerTyp(eintrag.typ);
+    if (!rolle) return;
+    try {
+      const neu = await vaultApi.alsDatei(eintrag);
+      // One bill per run: a bill from the vault replaces a previous bill; attachments are added.
+      setzeDateien([...bisher.filter((d) => rolle !== "lv" || d.rolle !== "lv"), { datei: neu, rolle }]);
+    } catch (fehler) {
+      setDateiFehler(fehler instanceof Error ? fehler.message : String(fehler));
+    }
+  }
+  async function vaultOeffnen() {
+    try {
+      setVaultListe(await vaultApi.liste(["lv", "regelwerk", "preisliste"]));
+    } catch {
+      setDateiFehler(t("The vault is unreachable."));
+    }
   }
 
   // #115: the first synthetic example plus its demo price list (copy of data/preisliste_beispiel.csv), ready to evaluate.
@@ -424,6 +457,12 @@ export function LvUpload() {
           <input ref={inputRef} className={styles.dateiEingabe} type="file" multiple accept={`${ACCEPT},.csv,.docx,.txt,.md,.x86,.d84`} onChange={aufAuswahl} disabled={busy} />
           <Icon name="upload" size={22} /> {t("Upload files")}
         </label>
+        <button type="button" className={styles.vaultKnopf} disabled={busy} onClick={() => void vaultOeffnen()}>
+          <Icon name="folder" /> {t("Choose from vault")}
+        </button>
+        <ActionSheet open={vaultListe !== null} onClose={() => setVaultListe(null)} cancelLabel={t("Cancel")}
+          title={vaultListe?.length ? t("Choose from vault") : t("The vault is empty. Files you analyse are stored there automatically.")}
+          actions={(vaultListe ?? []).slice(0, 30).map((x) => ({ label: `${x.dateiname} · ${t(TYP_LABEL[x.typ])} · ${datumText(x.hochgeladen_am)}`, onClick: () => void ausVaultWaehlen(x) }))} />
         <p id="upload-regeln" className={styles.regeln}>{t("Bill (GAEB, Excel, PDF, JSON), optionally a regulation document and a price list. Drag files here or click.")}</p>
 
         <div className={styles.dateiListe} aria-live="polite">

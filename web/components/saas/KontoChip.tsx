@@ -4,6 +4,8 @@ import Link from "next/link";
 import styles from "./saas.module.css";
 import { useKonto } from "@/lib/saas/client";
 import { useEinstellungen } from "@/lib/einstellungen";
+import { useEffect } from "react";
+import { setzeBesitzer } from "@/lib/vault";
 
 export function planKlasse(plan: string): string {
   return plan === "pro" ? `${styles.planTag} ${styles.planPro}` : plan === "company" ? `${styles.planTag} ${styles.planCompany}` : styles.planTag;
@@ -15,6 +17,8 @@ export const PLAN_LABEL: Record<string, string> = { demo: "Demo", free: "Free", 
 export function KontoChip() {
   const { t } = useEinstellungen();
   const { konto } = useKonto();
+  // t243: vault entries record the signed-in e-mail as owner (local vault, shared by all accounts in the demo).
+  useEffect(() => { setzeBesitzer(konto?.angemeldet ? konto.email : null); }, [konto]);
   if (!konto) return null;
   if (!konto.angemeldet) {
     return (
