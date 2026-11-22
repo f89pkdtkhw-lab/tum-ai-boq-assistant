@@ -127,6 +127,14 @@ def test_key():
     """One small probe call with the current configuration. Never raises; the error is readable."""
     _require_ui()
     current = state()
+    if current["provider"] == "grokbot":
+        from . import grokbot
+        try:
+            grokbot.queue_dir().mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            return {"ok": False, "provider": "grokbot", "model": current["model"],
+                    "error": f"The Grok Bot queue directory is not writable ({exc})."}
+        return {"ok": True, "provider": "grokbot", "model": current["model"], "ms": 0}
     if current["mock"]:
         reason = current["reason"] or "No API key set."
         return {"ok": False, "provider": current["provider"], "model": current["model"],

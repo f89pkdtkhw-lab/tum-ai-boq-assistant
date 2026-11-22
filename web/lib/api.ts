@@ -106,6 +106,11 @@ export type KeyState = {
   reason: string | null; ui_enabled: boolean; persisted?: boolean;
 };
 export type KeyProbe = { ok: boolean; provider: string; model: string; ms?: number; error?: string };
+export type DevProvider = "anthropic" | "mock" | "grokbot";
+export type DevOptionsState = {
+  provider: string; model: string; mock: boolean; reason: string | null;
+  providers: DevProvider[]; queue_dir: string; timeout_s: number;
+};
 export type Answer = { answer: string; provider: string; model: string; ms: number };
 export type Example = { id: string; titel: string; beschreibung: string; lv: LV };
 // Optional inputs of POST /api/lv/analyse (epic #93): regulation document (B3) and price list (D4).
@@ -194,6 +199,13 @@ export const api = {
   }),
   clearKey: () => call<KeyState>("/api/ai/key", { method: "DELETE" }),
   testKey: () => call<KeyProbe>("/api/ai/key/test", { method: "POST" }),
+  unlockDevOptions: (code: string) => call<{ ok: true }>("/api/ai/dev-options/unlock", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }),
+  }),
+  devOptions: () => call<DevOptionsState>("/api/ai/dev-options"),
+  setDevProvider: (provider: DevProvider) => call<DevOptionsState>("/api/ai/dev-options", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider }),
+  }),
   aiEvaluation: (evidence: AiEvidence) => call<AiEvaluation>("/api/lv/ai-evaluation", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(evidence),
   }),

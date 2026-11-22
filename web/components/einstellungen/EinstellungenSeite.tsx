@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useEinstellungen, type Einstellungen } from "@/lib/einstellungen";
+import { Entwickleroptionen } from "./Entwickleroptionen";
 import styles from "./einstellungen.module.css";
 
 type Option<K extends keyof Einstellungen> = { wert: Einstellungen[K]; name: string; hinweis?: string };
@@ -69,6 +70,7 @@ export function EinstellungenSeite() {
         <Wahl feld="seitengroesse" titel="Rows per page" optionen={SEITEN} />
         <Wahl feld="mockAusblenden" titel="Demo findings from the offline mock" optionen={MOCK} />
       </section>
+      <Entwickleroptionen />
       <section className={styles.karte}>
         <h2 className={styles.abschnitt}>{t("Data in this browser")}</h2>
         <p className={styles.hinweis}>{t("Nothing here is sent anywhere. Clearing cannot be undone.")}</p>

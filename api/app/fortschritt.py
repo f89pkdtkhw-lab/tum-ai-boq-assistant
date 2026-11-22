@@ -16,7 +16,10 @@ raise, except `AnalyseAbgebrochen` when the job has hit its own timeout: that st
 """
 from __future__ import annotations
 
+from contextvars import ContextVar, Token
 from typing import Callable, Protocol
+
+_AKTUELL: ContextVar["Fortschritt | None"] = ContextVar("analyse_fortschritt", default=None)
 
 
 class AnalyseAbgebrochen(Exception):
@@ -64,3 +67,29 @@ def teilschritt(fortschritt: Fortschritt | None, schritt: int, gesamt: int) -> C
         ziel(schritt, gesamt, meldung, anteil)
 
     return melde
+
+def setze(fortschritt: Fortschritt | None) -> Token:
+    """Bind the current analysis job so model calls can update the progress message."""
+    return _AKTUELL.set(fortschritt)
+
+
+def zuruecksetzen(token: Token) -> None:
+    _AKTUELL.reset(token)
+
+
+def aktuell() -> Fortschritt | None:
+    return _AKTUELL.get()
+
+
+def warte(meldung: str) -> None:
+    """Update the running job's stage message (e.g. 'Wartet auf Grok Bot …').
+
+    No-op when no job is bound. Re-raises ``AnalyseAbgebrochen`` so a timed-out
+    analysis stops waiting for the queue.
+    """
+    ziel = _AKTUELL.get()
+    if ziel is None:
+        return
+    schritt = max(int(getattr(ziel, "schritt", 1) or 1), 1)
+    gesamt = max(int(getattr(ziel, "gesamt", 1) or 1), 1)
+    ziel(schritt, gesamt, meldung)

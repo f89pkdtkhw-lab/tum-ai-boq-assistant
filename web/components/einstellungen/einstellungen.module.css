@@ -18,3 +18,14 @@
 .knopf:hover { background: var(--fill-strong); }
 .meldung { margin: 0; color: var(--good); font-weight: 600; }
 .seite :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.devForm { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.devLabel { display: grid; gap: 4px; font-weight: 600; font-size: 13.5px; }
+.devInput {
+  font: 13.5px ui-monospace, Menlo, monospace; padding: 8px 12px; border-radius: var(--r-md); min-height: 36px;
+  border: 1px solid var(--line); background: var(--card); color: inherit; min-width: 180px;
+}
+.devInput:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.devKopf { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; justify-content: space-between; }
+.devKopf .hinweis { flex: 1; min-width: 200px; }
+.devFehler { margin: 0; color: var(--bad); font-weight: 600; }

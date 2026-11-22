@@ -1,17 +1,18 @@
 "use client";
 
-// #156: enter the Claude API key in the header. The key goes to the backend once by POST and is
-// cleared from this component right after saving; the backend only ever answers "key set: yes/no".
+// #156: enter the Claude API key in Settings → Entwickleroptionen. The key goes to the backend
+// once by POST and is cleared from this component right after saving; the backend only ever
+// answers "key set: yes/no".
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { api, type KeyState } from "@/lib/api";
 import styles from "./key-settings.module.css";
 
 type Message = { kind: "ok" | "error" | "info"; text: string } | null;
 
-/** `compact`: small key button for the navy top bar of the redesign; the panel opens as a popover below it. */
-export function KeySettings({ compact = false }: { compact?: boolean } = {}) {
+/** `embedded`: form only, for the Settings page. `compact` keeps the old header popover (unused). */
+export function KeySettings({ compact = false, embedded = false }: { compact?: boolean; embedded?: boolean } = {}) {
   const [state, setState] = useState<KeyState | null | "offline">(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(embedded);
   const [key, setKey] = useState("");
   const [model, setModel] = useState("");
   const [persist, setPersist] = useState(false);
@@ -26,7 +27,7 @@ export function KeySettings({ compact = false }: { compact?: boolean } = {}) {
   useEffect(refresh, [refresh]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || embedded) return;
     const close = (event: MouseEvent | KeyboardEvent) => {
       if (event instanceof KeyboardEvent ? event.key === "Escape" : !wrapper.current?.contains(event.target as Node)) {
         setOpen(false);
@@ -38,7 +39,7 @@ export function KeySettings({ compact = false }: { compact?: boolean } = {}) {
       document.removeEventListener("mousedown", close);
       document.removeEventListener("keydown", close);
     };
-  }, [open]);
+  }, [open, embedded]);
 
   async function run(kind: "save" | "test" | "clear", action: () => Promise<void>) {
     setBusy(kind);
@@ -81,6 +82,70 @@ export function KeySettings({ compact = false }: { compact?: boolean } = {}) {
     : state.mock ? { cls: styles.mock, text: "Mock · no API key" }
     : { cls: styles.live, text: `${state.provider} · ${state.model}` };
 
+  const panel = (
+    <div className={embedded ? styles.embedded : `${styles.panel} ${compact ? styles.compactPanel : ""}`}
+      id={panelId} role={embedded ? "region" : "dialog"} aria-label="Claude API key">
+      {state === "offline" || state === null ? (
+        <p className={styles.note}>The backend is not reachable. Start it with <code>python tools/dev.py</code>.</p>
+      ) : (
+        <>
+          <p className={styles.status}>
+            Key set: <b>{state.key_set ? "yes" : "no"}</b>
+            {state.key_source === "ui" && " (entered here)"}
+            {state.key_source === "env" && " (environment / .env.local)"}
+            {" · "}Model: <b>{state.model}</b>
+          </p>
+          {state.mock && (
+            <p className={styles.notice} role="status">
+              Mock mode: without a Claude API key, model findings are offline demonstration answers, not real review results.
+              {state.reason && <><br /><small>{state.reason}</small></>}
+            </p>
+          )}
+          {state.ui_enabled ? (
+            <form onSubmit={save} className={styles.form}>
+              <label className={styles.label}>
+                Claude API key
+                <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={live ? "Enter a new key to replace it" : "sk-ant-…"}
+                  autoComplete="off" spellCheck={false} required minLength={20} className={styles.input} />
+              </label>
+              <label className={styles.label}>
+                <span>Model <span className={styles.optional}>(optional)</span></span>
+                <input type="text" value={model} onChange={(e) => setModel(e.target.value)} placeholder="claude-sonnet-5-5"
+                  autoComplete="off" spellCheck={false} className={styles.input} />
+              </label>
+              <label className={styles.check}>
+                <input type="checkbox" checked={persist} onChange={(e) => setPersist(e.target.checked)} />
+                <span>Also save in <code>.env.local</code> on the server (kept after a restart, never committed)</span>
+              </label>
+              <div className={styles.actions}>
+                <button type="submit" className={styles.primary} disabled={busy !== null || key.trim().length < 20}>
+                  {busy === "save" ? "Saving …" : "Save"}
+                </button>
+                <button type="button" className={styles.secondary} onClick={test} disabled={busy !== null}>
+                  {busy === "test" ? "Testing …" : "Test"}
+                </button>
+                {state.key_source === "ui" && (
+                  <button type="button" className={styles.secondary} onClick={clear} disabled={busy !== null}>
+                    {busy === "clear" ? "Removing …" : "Remove"}
+                  </button>
+                )}
+              </div>
+            </form>
+          ) : (
+            <p className={styles.note}>Changing the key is disabled on this server (LLM_KEY_UI=off).</p>
+          )}
+          {message && (
+            <p className={`${styles.message} ${styles[message.kind]}`} role={message.kind === "error" ? "alert" : "status"}>
+              {message.text}
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+
+  if (embedded) return <div className={styles.wrapper}>{panel}</div>;
+
   return (
     <div className={styles.wrapper} ref={wrapper}>
       {compact ? (
@@ -98,66 +163,7 @@ export function KeySettings({ compact = false }: { compact?: boolean } = {}) {
           {chip.text}
         </button>
       )}
-      {open && (
-        <div className={`${styles.panel} ${compact ? styles.compactPanel : ""}`} id={panelId} role="dialog" aria-label="Claude API key">
-          {state === "offline" || state === null ? (
-            <p className={styles.note}>The backend is not reachable. Start it with <code>python tools/dev.py</code>.</p>
-          ) : (
-            <>
-              <p className={styles.status}>
-                Key set: <b>{state.key_set ? "yes" : "no"}</b>
-                {state.key_source === "ui" && " (entered here)"}
-                {state.key_source === "env" && " (environment / .env.local)"}
-                {" · "}Model: <b>{state.model}</b>
-              </p>
-              {state.mock && (
-                <p className={styles.notice} role="status">
-                  Mock mode: without a Claude API key, model findings are offline demonstration answers, not real review results.
-                  {state.reason && <><br /><small>{state.reason}</small></>}
-                </p>
-              )}
-              {state.ui_enabled ? (
-                <form onSubmit={save} className={styles.form}>
-                  <label className={styles.label}>
-                    Claude API key
-                    <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={live ? "Enter a new key to replace it" : "sk-ant-…"}
-                      autoComplete="off" spellCheck={false} required minLength={20} className={styles.input} />
-                  </label>
-                  <label className={styles.label}>
-                    <span>Model <span className={styles.optional}>(optional)</span></span>
-                    <input type="text" value={model} onChange={(e) => setModel(e.target.value)} placeholder="claude-sonnet-5-5"
-                      autoComplete="off" spellCheck={false} className={styles.input} />
-                  </label>
-                  <label className={styles.check}>
-                    <input type="checkbox" checked={persist} onChange={(e) => setPersist(e.target.checked)} />
-                    <span>Also save in <code>.env.local</code> on the server (kept after a restart, never committed)</span>
-                  </label>
-                  <div className={styles.actions}>
-                    <button type="submit" className={styles.primary} disabled={busy !== null || key.trim().length < 20}>
-                      {busy === "save" ? "Saving …" : "Save"}
-                    </button>
-                    <button type="button" className={styles.secondary} onClick={test} disabled={busy !== null}>
-                      {busy === "test" ? "Testing …" : "Test"}
-                    </button>
-                    {state.key_source === "ui" && (
-                      <button type="button" className={styles.secondary} onClick={clear} disabled={busy !== null}>
-                        {busy === "clear" ? "Removing …" : "Remove"}
-                      </button>
-                    )}
-                  </div>
-                </form>
-              ) : (
-                <p className={styles.note}>Changing the key is disabled on this server (LLM_KEY_UI=off).</p>
-              )}
-              {message && (
-                <p className={`${styles.message} ${styles[message.kind]}`} role={message.kind === "error" ? "alert" : "status"}>
-                  {message.text}
-                </p>
-              )}
-            </>
-          )}
-        </div>
-      )}
+      {open && panel}
     </div>
   );
 }
