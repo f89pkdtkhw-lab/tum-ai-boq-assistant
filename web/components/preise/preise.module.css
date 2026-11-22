@@ -1,4 +1,4 @@
-.karte { display: grid; gap: 10px; padding: 16px 20px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--card); box-shadow: 0 1px 2px var(--shadow); min-width: 0; }
+.karte { display: grid; gap: 10px; padding: 18px 20px; border-radius: 20px; min-width: 0; }
 .karte h2 { margin: 0; font-size: 18px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
 .label { font-weight: 600; font-size: 14px; }
 .wahlen { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
@@ -7,8 +7,8 @@
 .warnungen { margin: 0; padding-left: 18px; color: var(--warn); font-size: 13.5px; }
 .suche { display: flex; flex-wrap: wrap; gap: 10px 16px; }
 .suche label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
-.suche input { font: inherit; font-size: 14.5px; padding: 7px 10px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--card); color: var(--ink); min-width: 0; }
-.rahmen { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-lg); }
+.suche input { font: inherit; font-size: 14.5px; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); min-width: 0; }
+.rahmen { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
 .tabelle { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tabelle th, .tabelle td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 .tabelle th { color: var(--muted); font-size: 12.5px; font-weight: 600; }

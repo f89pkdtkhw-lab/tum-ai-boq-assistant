@@ -7,15 +7,15 @@
   initial-value: 120;
 }
 
-.seite { max-width: 1320px; margin: 0 auto; padding: 16px var(--page-x, 28px) 48px; display: grid; gap: 12px; }
-.titel { margin: 0; font-size: 24px; letter-spacing: -.02em; }
+.seite { max-width: 1320px; margin: 0 auto; padding: 20px 20px 48px; display: grid; gap: 14px; }
+.titel { margin: 0; font-size: 22px; }
 .kopf { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .datei { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line);
   border-radius: 999px; background: var(--card); font-size: 12.5px; font-weight: 600; color: var(--ink); }
 .datei small { color: var(--muted); font-weight: 400; }
 
-.karte { display: grid; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-lg);
-  background: var(--card); min-width: 0; box-shadow: 0 1px 2px var(--shadow); }
+.karte { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--card); min-width: 0; }
 .abschnitt { margin: 0; display: flex; align-items: center; font-size: 16px; }
 .ablage { position: relative; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 1px dashed var(--line);
   border-radius: var(--r-md); background: var(--fill); cursor: pointer; font-weight: 600; }
