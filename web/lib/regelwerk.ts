@@ -1,5 +1,5 @@
 // Optional regulation document next to the bill (issue #102, epic #93 B3) and shared helpers for attachments.
-import type { LV, Preisliste, Regelwerk } from "./api";
+import type { Bewertungsmodell, LV, Preisliste, Regelwerk } from "./api";
 
 export const MAX_BEILAGE_BYTES = 10 * 1024 * 1024; // same limit as MAX_UPLOAD_BYTES in api/app/main.py
 export const REGELWERK_FORMATE = [".pdf", ".txt", ".md"];
@@ -41,6 +41,7 @@ export function regelwerkText(r: Regelwerk): string {
 
 /** Always /api/lv/analyse (#167): without attachments the price database still prices the bill and the
  *  estimated bill is built; the findings are the same as /api/lv/pruefen. */
-export function analyseAnfrage(lv: LV, regelwerk: Regelwerk | null, preisliste: Preisliste | null) {
-  return { lv, regelwerk, preisliste };
+export function analyseAnfrage(lv: LV, regelwerk: Regelwerk | null, preisliste: Preisliste | null,
+  bewertungsmodell: Bewertungsmodell = "ausgewogen") {
+  return { lv, regelwerk, preisliste, bewertungsmodell };
 }

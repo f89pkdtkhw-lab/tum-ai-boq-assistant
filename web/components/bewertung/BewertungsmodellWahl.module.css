@@ -1,0 +1,62 @@
+.feld { display: grid; gap: 8px; min-width: 0; }
+.kursue { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+
+.bahn {
+  display: flex; width: 100%; overflow-x: auto; padding: 2px; background: #e5e5ea;
+  border-radius: 9px; -webkit-overflow-scrolling: touch;
+}
+[data-theme="dark"] .bahn { background: #39393d; }
+
+.zelle {
+  position: relative; display: flex; align-items: center; flex: 1 0 auto; min-width: 0;
+  border-radius: 7px;
+}
+.zelle[data-aktiv="true"] {
+  background: #fff;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .04), 0 3px 8px rgba(0, 0, 0, .12);
+}
+[data-theme="dark"] .zelle[data-aktiv="true"] { background: #636366; }
+
+.knopf {
+  flex: 1; border: 0; background: transparent; height: 28px; padding: 0 8px 0 10px;
+  font: inherit; font-size: 12px; font-weight: 550; color: var(--ink); cursor: pointer;
+  white-space: nowrap;
+}
+.knopf:focus-visible, .info:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.info {
+  flex: none; display: grid; place-items: center; width: 22px; height: 22px; margin-right: 2px;
+  border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; padding: 0;
+}
+.info:hover { color: var(--accent); background: color-mix(in srgb, var(--ink) 6%, transparent); }
+
+.bg {
+  position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center;
+  padding: 12px; background: rgba(10, 37, 64, .36);
+}
+[data-theme="dark"] .bg { background: rgba(0, 0, 0, .5); }
+
+.blatt {
+  width: min(440px, 100%); display: grid; gap: 10px; padding: 20px 18px 16px;
+  background: #f9f9f9; border-radius: 14px; color: var(--ink);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .18);
+  animation: up .28s ease;
+}
+[data-theme="dark"] .blatt { background: #2c2c2e; color: #fff; }
+@keyframes up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.titel { margin: 0; font-size: 19px; letter-spacing: -.02em; }
+.kurz { margin: 0; font-weight: 600; font-size: 14px; }
+.blatt p { margin: 0; font-size: 14px; line-height: 1.45; color: inherit; }
+.beispiel { color: var(--muted) !important; }
+.schliessen {
+  margin-top: 6px; height: 44px; border: 0; border-radius: 12px; font: inherit; font-size: 17px; font-weight: 600;
+  background: #fff; color: var(--ink); cursor: pointer;
+}
+[data-theme="dark"] .schliessen { background: #3a3a3c; color: #fff; }
+.schliessen:hover { background: color-mix(in srgb, var(--ink) 6%, #fff); }
+
+@media (min-width: 720px) {
+  .bg { align-items: center; }
+  .blatt { animation: none; }
+}

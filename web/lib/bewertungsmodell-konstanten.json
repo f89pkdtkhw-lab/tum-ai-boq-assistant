@@ -1,0 +1,42 @@
+{
+  "default": "ausgewogen",
+  "ids": ["streng", "gestaffelt", "anteil", "fehler_klaerung", "ausgewogen"],
+  "score_start": 10.0,
+  "score_min": 0.0,
+  "abzug": {
+    "kritisch": 2.0,
+    "hoch": 1.0,
+    "mittel": 0.2,
+    "niedrig": 0.0
+  },
+  "halb_gewicht": 0.5,
+  "findings_cap": 6.0,
+  "groesse_bezug": 20,
+  "streng": {
+    "abzug_bericht": 3.5,
+    "abzug_bericht_schwer": 4.0,
+    "grosse_probleme_schwer": 5,
+    "ampel_gruen": 8.5,
+    "ampel_gelb": 6.5
+  },
+  "ampel_gruen": 7.5,
+  "ampel_gelb": 5.0,
+  "approx": {
+    "abzug": 0.1,
+    "max": 1.0,
+    "grenze_relativ": 0.25
+  },
+  "preis_ausreisser": {
+    "abzug": 1.0,
+    "abzug_schwer": 2.0,
+    "schwelle_schwer": 5
+  },
+  "schaetzung": {
+    "abzug": 0.1,
+    "max": 1.0,
+    "grenze_prozent": 25
+  },
+  "echte_fehler_regeln": ["RECHENFEHLER", "MENGE_FEHLT", "EINHEIT_FEHLT", "LANGTEXT_FEHLT", "OZ_DUPLIKAT"],
+  "ai_quellen": ["modell", "llm", "ki"],
+  "halb_kategorien": ["risiko", "nachtrag"]
+}

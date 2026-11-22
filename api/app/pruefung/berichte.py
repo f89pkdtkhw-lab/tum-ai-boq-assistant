@@ -590,14 +590,16 @@ def erstelle_berichte(lv: LV, findings: Sequence[Finding], db: Any = _SEAM) -> d
     return {"berichte": berichte, "was_wenn": was_wenn.probleme, "schlussbericht": schluss}
 
 
-def zusammenfassung_mit_berichten(findings: Sequence[Finding], berichte: Sequence[Bericht]) -> Zusammenfassung:
+def zusammenfassung_mit_berichten(findings: Sequence[Finding], berichte: Sequence[Bericht],
+                                  n_positionen: int | None = None, modell: str | None = None) -> Zusammenfassung:
     """B1 summary on the B5 grouping: every finding belongs to Report 1; Report 2 approximations
     (approval-required Note 3) feed the "too big" penalty and count as recommendations, as do
     high-chance what-if items. Recommendations never cost points."""
     vergleich, was_wenn = berichte[1], berichte[2]
     ids = {n.note_id for n in vergleich.naeherungen}
     notes = [step_api.Note.model_validate(n) for n in vergleich.notes if n.get("id") in ids]
-    basis = zusammenfassen(findings, notes, bericht_von=lambda f: "regelwerk")
+    basis = zusammenfassen(findings, notes, bericht_von=lambda f: "regelwerk",
+                           n_positionen=n_positionen, modell=modell)
     hoch = sum(w.chance == "hoch" for w in [*vergleich.probleme, *was_wenn.probleme])
     eur = [n.abweichung_eur for n in vergleich.naeherungen if n.abweichung_eur is not None]
     return basis.model_copy(update={
@@ -614,7 +616,10 @@ def ergaenze_berichte(bericht: Pruefbericht, db: Any = _SEAM) -> Pruefbericht:
         teile = erstelle_berichte(bericht.lv, bericht.findings, db)
         if bericht.zusammenfassung is not None:
             try:
-                teile["zusammenfassung"] = zusammenfassung_mit_berichten(bericht.findings, teile["berichte"])
+                teile["zusammenfassung"] = zusammenfassung_mit_berichten(
+                    bericht.findings, teile["berichte"],
+                    n_positionen=len(bericht.lv.positionen),
+                    modell=bericht.zusammenfassung.bewertungsmodell)
             except Exception:
                 log.exception("B1 summary on the B5 grouping failed; previous summary kept")
         return bericht.model_copy(update=teile)

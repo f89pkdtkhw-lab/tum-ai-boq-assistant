@@ -1,8 +1,12 @@
 // One-glance assessment of a reviewed BoQ: traffic light, score, cost comparison and recommendations.
 // Only evidenced numbers: stated and recalculated prices come from the file, the history estimate from past
 // projects. No AI price is invented; that slot stays empty until a live estimation model exists.
-import type { Finding, Pruefbericht, Zusammenfassung } from "./api";
+import type { Finding, Pruefbericht } from "./api";
 import type { TradeStat } from "./history-api";
+import {
+  ampelVonScore, DEFAULT_MODELL, PREIS_AUSREISSER, SCHAETZUNG, zusammenfassenLokal,
+  type Bewertungsmodell,
+} from "./bewertungsmodell.ts";
 
 export type Ampel = "rot" | "gelb" | "gruen";
 export type Faktor = { name: string; wert: string; ampel: Ampel; werte?: Record<string, string | number> };
@@ -35,14 +39,38 @@ export type PreisSignal = { auffaellig: number; verglichen: number; rot?: number
 
 /** Backend reason texts (bewertung.py) as translatable templates; unknown texts pass through unchanged. */
 export function grundVorlage(grund: string): { name: string; werte?: Record<string, string | number> } {
-  const gross = grund.match(/^Report (\d): (\d+) big problems?( \(critical or 5\+\))?$/);
-  if (gross) return { name: gross[3] ? "Report {r}: {n} big problems (critical or 5+)" : "Report {r}: {n} big problems", werte: { r: gross[1], n: gross[2] } };
+  const share = grund.match(/^Share of affected items: (\d+(?:\.\d+)?) % \((?:−|-)([0-9.]+)\)$/);
+  if (share) return { name: "Share of affected items: {pct} % (−{p})", werte: { pct: share[1], p: share[2] } };
   const approx = grund.match(/^Report 2: (\d+) approximation\(s\) too big$/);
   if (approx) return { name: "Report 2: {n} approximations too big", werte: { n: approx[1] } };
+  const report = grund.match(/^Report (\d): (.+)$/);
+  if (report) {
+    const r = report[1];
+    let rest = report[2];
+    let p: string | undefined;
+    const withPts = rest.match(/^(.*) \((?:−|-)([0-9.]+)\)$/);
+    if (withPts) { rest = withPts[1]; p = withPts[2]; }
+    const schwer = / \(critical or 5\+\)$/.test(rest);
+    rest = rest.replace(/ \(critical or 5\+\)$/, "");
+    const both = rest.match(/^(\d+) big problems?(?:, (\d+) warnings?)?$/);
+    const warn = rest.match(/^(\d+) warnings?$/);
+    if (both) {
+      const n = both[1], w = both[2];
+      let name = schwer ? "Report {r}: {n} big problems (critical or 5+)" : "Report {r}: {n} big problems";
+      if (w) name = "Report {r}: {n} big problems, {w} warnings";
+      if (p) name += " (−{p})";
+      return { name, werte: w ? { r, n, w, ...(p ? { p } : {}) } : { r, n, ...(p ? { p } : {}) } };
+    }
+    if (warn) {
+      const name = p ? "Report {r}: {w} warnings (−{p})" : "Report {r}: {w} warnings";
+      return { name, werte: { r, w: warn[1], ...(p ? { p } : {}) } };
+    }
+  }
   return { name: grund };
 }
 
-export function einschaetzen(bericht: Pruefbericht, gewerke: TradeStat[] | null, preise: PreisSignal | null = null): Einschaetzung {
+export function einschaetzen(bericht: Pruefbericht, gewerke: TradeStat[] | null, preise: PreisSignal | null = null,
+  modell: Bewertungsmodell = DEFAULT_MODELL): Einschaetzung {
   const { lv, findings, zusammenfassung } = bericht;
   const echte = findings.filter((f) => !f.regel_id.startsWith("MOCK_"));
   const schlimmste = new Map<string, Finding["schwere"]>();
@@ -80,43 +108,38 @@ export function einschaetzen(bericht: Pruefbericht, gewerke: TradeStat[] | null,
   const gross = echte.filter((f) => ROT.includes(f.schwere)).length;
   const preisRot = preise?.rot ?? 0;
   const warnungen = echte.length - gross + Math.max(0, (preise?.auffaellig ?? 0) - preisRot);
-  // Match the API rule-check deduction when the backend summary is absent.
-  const kritisch = echte.some((f) => f.schwere === "kritisch");
-  const abzugRegeln = gross === 0 ? 0 : gross >= 5 || kritisch ? 4 : 3.5;
-  const abzugHistorie = preisRot === 0 ? 0 : preisRot >= 5 ? 2 : 1;
-  const zuWeit = rechenbar.filter((p) => Math.abs(abweichung.get(gewerkVon(p.kurztext) ?? "") ?? 0) > 25).length + preisRot;
-  const abzugSchaetzung = Math.round(Math.min(1, zuWeit * .1) * 10) / 10;
-  // The backend score (#94) is the official one. Until it sends Report 2 deductions ("vergleich"), the browser adds its
-  // own Report 2 signals (price outliers, history ±) so the score already reflects them.
-  const offiziell = zusammenfassung ?? null;
+  const abzugHistorie = preisRot === 0 ? 0 : preisRot >= PREIS_AUSREISSER.schwelle_schwer ? PREIS_AUSREISSER.abzug_schwer : PREIS_AUSREISSER.abzug;
+  const zuWeit = rechenbar.filter((p) => Math.abs(abweichung.get(gewerkVon(p.kurztext) ?? "") ?? 0) > SCHAETZUNG.grenze_prozent).length + preisRot;
+  const abzugSchaetzung = Math.round(Math.min(SCHAETZUNG.max, zuWeit * SCHAETZUNG.abzug) * 10) / 10;
+  // Official only when the backend summary was computed with the same model (or predates the field).
+  const z = zusammenfassung ?? null;
+  const offiziell = z !== null && (!z.bewertungsmodell || z.bewertungsmodell === modell) ? z : null;
   const backendVergleich = offiziell?.score_abzuege.some((a) => a.bericht === "vergleich") ?? false;
   const browserR2 = backendVergleich ? 0 : abzugHistorie + abzugSchaetzung;
-  const roh = offiziell ? offiziell.score - browserR2 : 10 - abzugRegeln - abzugHistorie - abzugSchaetzung;
+  const lokal = zusammenfassenLokal(echte, n, modell);
+  const roh = (offiziell ? offiziell.score : lokal.score) - browserR2;
   const score = Math.round(Math.max(0, Math.min(10, roh)) * 10) / 10;
   const punkte = Math.round(score * 10);
-  // Scores below 6.5 are red. Scores from 8.5 are ready to price.
-  const ampel: Ampel = score >= 8.5 ? "gruen" : score >= 6.5 ? "gelb" : "rot";
+  const ampel: Ampel = ampelVonScore(score, modell);
   const urteil = ampel === "gruen" ? "Looks good – ready to price" : ampel === "gelb" ? "Bid with care – clarify first" : "High risk – do not bid as is";
   const abzug = (x: number) => (x === 0 ? "0" : `−${x}`);
 
   const ampelAbzug = (x: number): Ampel => (x >= 2 ? "rot" : x > 0 ? "gelb" : "gruen");
-  const faktoren: Faktor[] = offiziell
-    ? [
-      // Backend deductions as sent (reason text from the backend), then the browser's Report 2 preview if needed.
-      ...offiziell.score_abzuege.map((a) => ({ ...grundVorlage(a.grund), wert: abzug(Math.abs(a.punkte)), ampel: ampelAbzug(Math.abs(a.punkte)) })),
-      ...(offiziell.score_abzuege.length === 0 ? [{ name: "Report 1: no big problems", wert: "0", ampel: "gruen" as Ampel }] : []),
-      ...(backendVergleich ? [] : [
-        { name: "Report 2 (browser preview): {n} price outliers", werte: { n: preisRot }, wert: abzug(abzugHistorie), ampel: ampelAbzug(abzugHistorie) },
-        { name: "Report 2 (browser preview): estimates too far off (±), {n} items", werte: { n: zuWeit }, wert: abzug(abzugSchaetzung), ampel: abzugSchaetzung >= 1 ? "rot" : ampelAbzug(abzugSchaetzung) },
-      ]),
-      { name: "Warnings and what-if cases (no penalty)", werte: {}, wert: "0", ampel: "gruen" },
-    ]
-    : [
-      { name: "Rule and regulation check: {n} big problems", werte: { n: gross }, wert: abzug(abzugRegeln), ampel: ampelAbzug(abzugRegeln) },
-      { name: "History and price check: {n} price outliers", werte: { n: preisRot }, wert: abzug(abzugHistorie), ampel: ampelAbzug(abzugHistorie) },
-      { name: "Estimates too far off (±): {n} items", werte: { n: zuWeit }, wert: abzug(abzugSchaetzung), ampel: abzugSchaetzung >= 1 ? "rot" : ampelAbzug(abzugSchaetzung) },
-      { name: "Warnings and what-if cases (no penalty)", werte: {}, wert: "0", ampel: "gruen" },
-    ];
+  const sichtbareAbzuege = offiziell ? offiziell.score_abzuege : lokal.score_abzuege;
+  const keinBefund = sichtbareAbzuege.filter((a) => a.bericht !== "vergleich").length === 0;
+  const keinAbzugHinweis = modell === "streng"
+    ? "Warnings and what-if cases (no penalty)"
+    : "Notices and what-if cases (no penalty)";
+  const r2Preview = backendVergleich ? [] : [
+    { name: "Report 2 (browser preview): {n} price outliers", werte: { n: preisRot }, wert: abzug(abzugHistorie), ampel: ampelAbzug(abzugHistorie) },
+    { name: "Report 2 (browser preview): estimates too far off (±), {n} items", werte: { n: zuWeit }, wert: abzug(abzugSchaetzung), ampel: abzugSchaetzung >= 1 ? "rot" : ampelAbzug(abzugSchaetzung) },
+  ];
+  const faktoren: Faktor[] = [
+    ...sichtbareAbzuege.map((a) => ({ ...grundVorlage(a.grund), wert: abzug(Math.abs(a.punkte)), ampel: ampelAbzug(Math.abs(a.punkte)) })),
+    ...(keinBefund ? [{ name: "Report 1: no big problems", wert: "0", ampel: "gruen" as Ampel }] : []),
+    ...r2Preview,
+    { name: keinAbzugHinweis, werte: {}, wert: "0", ampel: "gruen" },
+  ];
   const tief = nachgerechnet ?? angegeben;
   const schaetzung = tief === null ? null : { mitte: (tief + (historie ?? tief) + optional) / 2, plusMinus: ((historie ?? tief) + optional - tief) / 2 };
 

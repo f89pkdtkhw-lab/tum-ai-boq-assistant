@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 from starlette.concurrency import run_in_threadpool
-from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi import FastAPI, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ValidationError
 from .ai import llm
@@ -23,7 +23,7 @@ from .pruefung.llm_pruefung import pruefe_mit_llm, pruefe_mit_llm_status  # noqa
 from .pruefung.normen import ergaenze_annahmen, pruefe_normen_sicher  # B4 #97: ergaenze_annahmen
 from .pruefung.normen_ki import starte_recherche as starte_normrecherche  # #166
 from .pruefung.normen import ergaenze_note2  # #167: Note 2 (register_als_quellen) in the analysis path
-from .pruefung.bewertung import zusammenfassen
+from .pruefung.bewertung import Bewertungsmodell, DEFAULT_MODELL, zusammenfassen
 from .pruefung.berichte import ergaenze_berichte  # B5 (#98)
 from .pruefung.geschaetztes_lv import ergaenze_geschaetztes_lv  # B8 #114
 from .modelle import Regelwerk  # B3 (#96)
@@ -149,8 +149,8 @@ async def import_lv(datei: UploadFile):
 
 
 @app.post("/api/lv/pruefen", response_model=Pruefbericht)
-def pruefen(lv: LV):
-    return _pruefen(lv)
+def pruefen(lv: LV, bewertungsmodell: Bewertungsmodell = Query(DEFAULT_MODELL)):
+    return _pruefen(lv, bewertungsmodell=bewertungsmodell)
 
 
 def _recherche_schritte() -> int:
@@ -158,17 +158,18 @@ def _recherche_schritte() -> int:
     return 1 if recherche_aktiv()[0] else 0
 
 
-def _pruefen(lv: LV, fortschritt: Fortschritt | None = None):
+def _pruefen(lv: LV, fortschritt: Fortschritt | None = None, bewertungsmodell: Bewertungsmodell = DEFAULT_MODELL):
     """The /api/lv/pruefen pipeline plus deep research (E #169; unchanged without a Claude key)."""
     gesamt = PRUEF_SCHRITTE + _recherche_schritte()
-    bericht = _pruefbericht(lv, fortschritt=fortschritt, gesamt=gesamt)
+    bericht = _pruefbericht(lv, fortschritt=fortschritt, gesamt=gesamt, bewertungsmodell=bewertungsmodell)
     return vertiefe_recherche(bericht, fortschritt=fortschritt, schritt=gesamt, gesamt=gesamt)
 
 
 PRUEF_SCHRITTE = 7  # #165: steps of `_pruefbericht`; `_analyse` adds the price calculation as step 8
 
 
-def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None, gesamt: int = PRUEF_SCHRITTE):
+def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None, gesamt: int = PRUEF_SCHRITTE,
+                   bewertungsmodell: Bewertungsmodell = DEFAULT_MODELL):
     """`vorgaben`: requirements of the uploaded regulation document (B3 #96) for check 1; None = as before.
     `fortschritt` (#165): progress callback of a background job (see fortschritt.py); None = no reports."""
     melde = fortschritt or OHNE_FORTSCHRITT
@@ -208,7 +209,7 @@ def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None,
             modell_reason=modell.reason, modell=None if modell.mock else f"{modell.provider}/{modell.model}",
             modell_batches=None if modell.mock else modell.batches,  # #167
             modell_batches_fehlgeschlagen=None if modell.mock else modell.fehlgeschlagen,
-        ), zusammenfassung=zusammenfassen(findings)))
+        ), zusammenfassung=zusammenfassen(findings, n_positionen=len(lv.positionen), modell=bewertungsmodell)))
         melde(6, gesamt, f"Reports: {len(bericht.berichte or [])} built.", 1.0)
         melde(7, gesamt, "Adding assumptions and the final report …")
         bericht = ergaenze_note2(ergaenze_annahmen(bericht))  # #167: Note 2 from the norm register
@@ -243,6 +244,7 @@ class AnalyseAnfrage(BaseModel):
     lv: LV
     regelwerk: Regelwerk | None = None  # B3 #96
     preisliste: Preisliste | None = None  # B6 #112
+    bewertungsmodell: Bewertungsmodell = DEFAULT_MODELL
 
 
 # --- Regulation document (B3, issue #96): upload + analysis with the uploaded key values. ---
@@ -274,7 +276,7 @@ def _analyse(anfrage: AnalyseAnfrage, fortschritt: Fortschritt | None = None):
     preis_schritt = PRUEF_SCHRITTE + 1
     gesamt = preis_schritt + _recherche_schritte()  # E #169: + deep research when it runs
     vorgaben = vorgaben_aus_regelwerk(anfrage.regelwerk)  # B3 #96 -> B2 check 1 (lower/bigger/missing/extra)
-    bericht = _pruefbericht(anfrage.lv, vorgaben, fortschritt, gesamt)
+    bericht = _pruefbericht(anfrage.lv, vorgaben, fortschritt, gesamt, bewertungsmodell=anfrage.bewertungsmodell)
     # B6 #112 / B9 #133: upload first, price database fills the gaps; no price source → no `kalkulation` field
     melde(preis_schritt, gesamt, "Pricing the bill (price list, price database) …")
     bericht.kalkulation = kalkuliere_mit_preis_db(anfrage.lv, anfrage.preisliste)
@@ -296,7 +298,7 @@ class AnalyseJobAnfrage(AnalyseAnfrage):
 def analyse_start(anfrage: AnalyseJobAnfrage):
     """Starts the analysis in a background thread and answers at once; poll …/status/{job_id}."""
     if anfrage.nur_pruefen:
-        arbeit, gesamt = (lambda f: _pruefen(anfrage.lv, f)), PRUEF_SCHRITTE + _recherche_schritte()  # E #169
+        arbeit, gesamt = (lambda f: _pruefen(anfrage.lv, f, bewertungsmodell=anfrage.bewertungsmodell)), PRUEF_SCHRITTE + _recherche_schritte()  # E #169
     else:
         arbeit, gesamt = (lambda f: _analyse(anfrage, f)), PRUEF_SCHRITTE + 1 + _recherche_schritte()
     try:
