@@ -195,7 +195,7 @@ def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None,
         melde(2, gesamt, f"Quantity checks: {len(mengen)} findings.", 1.0)
         ki = llm.status()
         melde(3, gesamt, f"AI item review of {n} items with {ki['provider']}/{ki['model']} …" if not ki["mock"]
-              else f"AI item review of {n} items (offline mock) …")
+              else f"AI item review of {n} items (without AI model) …")
         if fortschritt is None:  # #147/#167: never raises; failed batches are named, partial results kept
             modell = pruefe_mit_llm_status(lv)
         else:  # #167: progress per model batch inside step 3
@@ -204,7 +204,7 @@ def _pruefbericht(lv: LV, vorgaben=None, fortschritt: Fortschritt | None = None,
         _melde_positionspruefung(modell)
         if modell.fehlgeschlagen:
             melde.fehler(f"AI item review: {modell.reason}")
-        melde(3, gesamt, f"AI item review: {len(modell.findings)} findings{' (mock)' if modell.mock else ''}.", 1.0)
+        melde(3, gesamt, f"AI item review: {len(modell.findings)} findings{' (without AI model)' if modell.mock else ''}.", 1.0)
         melde(4, gesamt, "Scoring risks and Nachtrag potential …")
         bewertet = bewerte(lv, regeln + mengen + modell.findings)
         melde(4, gesamt, f"Risk scoring: {len(bewertet)} findings scored.", 1.0)

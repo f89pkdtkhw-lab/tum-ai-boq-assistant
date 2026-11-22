@@ -17,7 +17,7 @@ def test_bridge_metadata_is_mock_and_preserves_user_data_without_inventing_reaso
     response = client.post('/api/history/metadata', json=request)
     assert response.status_code == 200
     body = response.json()
-    assert body['source'] == 'model_mock' and body['description'].startswith('Mock:')
+    assert body['source'] == 'model_mock' and body['description'] == 'Bridge repair case.'
     assert 'bridge' in body['tags']
     assert body['comments'] == request['comments']
     assert body['marks'] == request['marks'] and 'reason' not in body['marks'][0]
@@ -79,7 +79,7 @@ def test_generic_case_has_only_a_mock_count_and_no_invented_user_data():
     body = client.post('/api/history/metadata', json={
         'lv': {'name': 'Synthetic building', 'quelle': 'synthetic', 'positionen': []},
     }).json()
-    assert body['description'] == 'Mock: parsed case with 0 positions.' and body['tags'] == []
+    assert body['description'] == 'Parsed case with 0 positions.' and body['tags'] == []
     assert body['real_values'] == [] and body['comments'] == [] and body['marks'] == []
 
 

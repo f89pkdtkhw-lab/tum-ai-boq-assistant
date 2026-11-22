@@ -11,29 +11,29 @@ export class UpstreamError extends Error {
 }
 
 const hours = (oz: string, value: number | null, title: string): Measurement[] => [{ oz, title_path: [title], metric: "hours", value, unit: "h" }];
-const lv = (name: string, positionen: CaseLv["positionen"]): CaseLv => ({ name, quelle: "synthetic: history mock (#24)", positionen });
+const lv = (name: string, positionen: CaseLv["positionen"]): CaseLv => ({ name, quelle: "synthetic history (#24)", positionen });
 
 function seed(): Map<string, HistoryCase> {
   const cases: HistoryCase[] = [
     {
-      case_id: "H1", date: "2026-11-20", description: "Mock: bridge repair case.", tags: ["bridge"], source: "model_mock",
+      case_id: "H1", date: "2026-11-20", description: "Bridge repair case.", tags: ["bridge"], source: "model_mock",
       estimated_values: hours("01.001", 100, "Bridge"), real_values: [], comments: [], marks: [],
       lv: lv("Synthetic bridge repair", [{ oz: "01.001", kurztext: "Concrete repair, bridge deck" }]),
     },
     {
-      case_id: "H2", date: "2026-09-14", description: "Mock: bridge repair case.", tags: ["bridge"], source: "model_mock",
+      case_id: "H2", date: "2026-09-14", description: "Bridge repair case.", tags: ["bridge"], source: "model_mock",
       estimated_values: hours("01.001", 80, "Bridge"), real_values: hours("01.001", 95, "Bridge"),
       comments: ["Joint replacement took longer than planned"],
       marks: [{ oz: "01.001", title_path: ["Bridge"], status: "deviation", what_happened: "Extra work on joints", reason: "Corrosion found after opening" }],
       lv: lv("Synthetic bridge joint replacement", [{ oz: "01.001", kurztext: "Expansion joint replacement, bridge" }]),
     },
     {
-      case_id: "H3", date: "2026-10-02", description: "Mock: parsed case with 2 positions.", tags: [], source: "model_mock",
+      case_id: "H3", date: "2026-10-02", description: "Parsed case with 2 positions.", tags: [], source: "model_mock",
       estimated_values: [...hours("02.001", 40, "Shell"), ...hours("02.002", 24, "Shell")], real_values: [], comments: [], marks: [],
       lv: lv("Synthetic office shell", [{ oz: "02.001", kurztext: "Masonry walls" }, { oz: "02.002", kurztext: "Ceiling formwork" }]),
     },
     {
-      case_id: "H4", date: "2026-06-12", description: "Mock: residential shell works.", tags: ["shell"], source: "model_mock",
+      case_id: "H4", date: "2026-06-12", description: "Residential shell works.", tags: ["shell"], source: "model_mock",
       estimated_values: [...hours("01.001", 60, "Earthworks"), ...hours("02.001", 120, "Concrete"), ...hours("03.001", 90, "Masonry")],
       real_values: [...hours("01.001", 63, "Earthworks"), ...hours("02.001", 158, "Concrete"), ...hours("03.001", 101, "Masonry")],
       comments: ["Concrete pours delayed by rain"],
@@ -43,7 +43,7 @@ function seed(): Map<string, HistoryCase> {
       ]),
     },
     {
-      case_id: "H5", date: "2025-09-03", description: "Mock: small shell works.", tags: ["shell"], source: "model_mock",
+      case_id: "H5", date: "2025-09-03", description: "Small shell works.", tags: ["shell"], source: "model_mock",
       estimated_values: [...hours("01.001", 40, "Earthworks"), ...hours("02.001", 80, "Concrete")],
       real_values: hours("01.001", 52, "Earthworks"), comments: [],
       marks: [{ oz: "01.001", title_path: ["Earthworks"], status: "confirmed" }],
@@ -95,7 +95,7 @@ function generated(count: number): HistoryCase[] {
     const name = `Synthetic ${KINDS[Math.floor(rnd() * KINDS.length)]} ${PLACES[Math.floor(rnd() * PLACES.length)]}`;
     return {
       case_id: id, date: `${year}-${String(month).padStart(2, "0")}-${String(1 + Math.floor(rnd() * 28)).padStart(2, "0")}`,
-      description: `Mock: ${name.toLowerCase()}.`, tags: [], source: "model_mock",
+      description: `${name}.`, tags: [], source: "model_mock",
       estimated_values: [...est, ...prices], real_values: real, comments: [], marks, lv: lv(name, positionen),
     };
   });

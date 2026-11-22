@@ -75,15 +75,11 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
   useEffect(() => { setPreisliste(ladePreisliste()); }, []);
   const [preisOffen, setPreisOffen] = useState<string | null>(null);
   const preis = useMemo(() => preisbericht(bericht.lv.positionen, bewertung.gewerke, preisliste), [bericht, bewertung.gewerke, preisliste]);
-  /** Synthetic demo unit prices (tools/demo_preisliste.py), kept like an uploaded price list. */
-  async function demoPreise() {
-    const liste = lesePreisliste(await (await fetch("/demo-preisliste.json")).text());
-    speicherePreisliste(liste); setPreisliste(liste); setNurGeaendert(true);
-  }
+
 
   // Level 2 entries: findings as issues (critical/high) or warnings, plus recommendations from the assessment and the AI.
   const eintraege = useMemo<Eintrag[]>(() => {
-    // The demo entry (MOCK_) is not a finding: the header already says "offline mock", and the counts leave it out too.
+    // Offline-model placeholders (MOCK_*) are not findings: lists and counts leave them out.
     const befunde = bericht.findings.filter((f) => !f.regel_id.startsWith("MOCK_"))
       .map((f) => befundAnzeige(f, einstellungen.sprache))
       .map((f): Eintrag => ({ key: f.id, typ: RANG[f.schwere] <= 1 ? "issue" : "warning", titel: f.titel, oz: f.oz, text: f.begruendung, vorschlag: f.vorschlag, euro: f.euro_wirkung, rang: RANG[f.schwere], finding: f }));
@@ -151,7 +147,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
         <div>
           <h2 id="bericht-titel" className={styles.titel}>{anzeigeName || bericht.lv.name}</h2>
           <p className={styles.quelle}>{anzeigeName && anzeigeName !== bericht.lv.name && <>{bericht.lv.name} · </>}{zahl.format(bericht.lv.positionen.length)} {t("items")}
-            {bericht.kennzahlen.modell_mock && <> · <span className={styles.mock}>{t("model · offline mock")}</span></>}{offline && <> · {t("Offline example – not live analysis.")}</>}</p>
+            </p>
         </div>
         <a className={styles.knopfLeise} href="/export" onClick={zumExport}><Icon name="download" /> {t("Export report")}</a>
       </header>
@@ -270,10 +266,8 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
               <div className={styles.werkzeug}>
                 <h3 className={styles.abschnitt}>{t("Estimated price report")}
                   <Info text={t("Every bill item with the price in the bill (was), the estimate and why. Yellow rows changed; red numbers mean more expensive, green cheaper. The backend's estimated bill replaces this once it is connected.")} /></h3>
-                {preisliste.length ? (
+                {preisliste.length > 0 && (
                   <button type="button" className={styles.knopfLeise} onClick={() => { speicherePreisliste([]); setPreisliste([]); }}>{t("Remove price list")} ({preisliste.length})</button>
-                ) : (
-                  <button type="button" className={styles.knopfLeise} onClick={demoPreise}><Icon name="download" /> {t("Load demo unit prices")}</button>
                 )}
                 <label className={styles.sort}><input type="checkbox" checked={nurGeaendert} onChange={(ev) => setNurGeaendert(ev.target.checked)} /> {t("Only changed items")} ({preis.geaendert})</label>
               </div>

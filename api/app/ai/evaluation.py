@@ -239,10 +239,10 @@ def _ai_evaluation(evidence: Evidence):
     try:
         return live_evaluation(evidence, answer.data)
     except llm.LLMError as exc:
-        reason = f"{exc} The offline mock evaluation is shown instead."
+        reason = f"{exc} The evidence-based evaluation is shown instead."
     except (ValueError, ValidationError):
-        reason = f"{state['provider']} answered without a valid evaluation; offline mock evaluation shown instead."
+        reason = f"{state['provider']} answered without a valid evaluation; evidence-based evaluation shown instead."
     except Exception as exc:  # the demo must never crash on a model call
         logging.getLogger(__name__).warning("AI evaluation failed: %s", type(exc).__name__)
-        reason = f"{state['provider']} call failed ({type(exc).__name__}); offline mock evaluation shown instead."
+        reason = f"{state['provider']} call failed ({type(exc).__name__}); evidence-based evaluation shown instead."
     return Evaluation.model_validate({**answer.data, "reason": reason})

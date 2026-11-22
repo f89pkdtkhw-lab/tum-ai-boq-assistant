@@ -1,11 +1,7 @@
-import type { Metadata } from "next";
-import { Vorschau } from "./Vorschau";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Review report preview · TUM.ai Construction Hackathon",
-  description: "Synthetic example BoQ processed by the review pipeline and displayed as a review report.",
-};
-
+// The former display-test preview (synthetic example, invented prices) is not part of the app UI any more;
+// Vorschau.tsx stays in the repo for developers. The route sends users to the start page.
 export default function BerichtVorschauSeite() {
-  return <Vorschau />;
+  redirect("/");
 }

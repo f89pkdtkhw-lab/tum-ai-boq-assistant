@@ -134,7 +134,7 @@ def lesen(name: str, inhalt: bytes) -> dict:
             except (llm.LLMError, ValueError, json.JSONDecodeError) as exc:
                 hinweis = f"AI reading failed: {exc}"
         else:
-            hinweis = "Rules found fewer than two bidders; AI reading needs a model key (offline mock is active)."
+            hinweis = "Rules found fewer than two bidders; AI reading needs a model key."
     return {"bieter": bieter, "methode": methode, "hinweis": hinweis, "zeichen": len(text)}
 
 

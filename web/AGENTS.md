@@ -15,7 +15,7 @@ Target concept: Epic #93 (`workflow-final.drawio`) and the team sketches. The UI
 ### Flow and pages
 | Step | Page / component | Notes |
 | --- | --- | --- |
-| UI 1 upload | `/` → `components/LvUpload.tsx` | One "Upload files" button, list of current files with a role each (bill · regulation document · price list, guessed by `rolleRaten`, editable), "Evaluate". Examples as small chips. |
+| UI 1 upload | `/` → `components/LvUpload.tsx` | One "Upload files" button, list of current files with a role each (bill · regulation document · price list, guessed by `rolleRaten`, editable), "Evaluate". No example/demo buttons in the UI (t255/t259). |
 | UI 2–3 run | `LvUpload` → `api.importiere` → `api.pruefen` | The open report survives page switches (sessionStorage `lv-aktuell-v1`). |
 | UI 4–5 report | `components/bericht/Bericht.tsx` | **Level 1** summary: was · large score ring (segments = the issue/warning/recommendation counts below it) · estimated ±; issues · warnings · recommendations. Every deeper level has a way back (Hide details, Hide price report, floating ↑ Summary). **Level 2** ("Show details"): filter + sort + expandable rows with status/comment. **Level 3** ("Show full estimated price report"): every item was → estimated ± why, then "All analysis tools" (`components/Pruefbericht.tsx`, embedded). The level is remembered per tab (`lv-stufe-v1`). |
 | Menu | `components/nav/Nav.tsx` | ≡ drawer: New evaluation · Submit (bill price per unit, final bill) · More (History, Step reports, Export, Tutorial) · Settings · theme ☀/☾. Dashboard and Statistics were removed on purpose (team decision). |
@@ -26,8 +26,11 @@ Target concept: Epic #93 (`workflow-final.drawio`) and the team sketches. The UI
 ### Where numbers come from (never invent a price, item or standard)
 - **Score /10 and counters:** five selectable models (`bewertungsmodell`, default Balanced) in `lib/bewertungsmodell.ts` / `api/app/pruefung/bewertung.py`, constants in `lib/bewertungsmodell-konstanten.json`. Chosen on the upload step and on the assessment view (`BewertungsmodellWahl`), persisted as `lv-bewertungsmodell-v1`. Backend `Pruefbericht.zusammenfassung` is official when it was computed with the same model. Until the backend sends Report 2 ("vergleich") deductions, `lib/einschaetzung.ts` adds the browser's Report 2 preview. Traffic light: Strict green ≥ 8.5 / yellow ≥ 6.5; the other models green ≥ 7.5 / yellow ≥ 5.
 - **Estimated bill:** `lib/preisbericht.ts`: price list match → past projects of the same trade (`deviationByTrade`) → unchanged. Replace with the backend's estimated bill (#113/#114) when it exists.
-- **Price outliers:** `lib/preise.ts` (Tukey fences on the same short text + unit). **AI evaluation:** `POST /api/lv/ai-evaluation` (offline mock, evidence only).
+- **Price outliers:** `lib/preise.ts` (Tukey fences on the same short text + unit). **AI evaluation:** `POST /api/lv/ai-evaluation` (configured model; without one an evidence-only fallback).
 - **History:** `/api/history` (Next route; mock in `app/api/history/store.ts` until `HISTORY_API_URL` points to the DB service).
+
+### No mock or demo in the UI (t255/t258/t259)
+Nothing visible to users may say mock, demo or offer example/demo buttons, toggles, badges or notices — also not in Settings or the developer options. Offline-model placeholder findings (rule IDs `MOCK_*`) are filtered out of every list, count and export. The mock provider stays in code for tests only (`LLM_PROVIDER=mock`). Login: Google + email/password only (`docs/abo.md`).
 
 ### Conventions
 - Every visible string goes through `t()` (`lib/einstellungen.tsx`, dictionary `lib/i18n.ts`, test keeps placeholders equal). Backend finding texts are translated by patterns in `lib/befundtext.ts`; add a pattern when a rule is new.

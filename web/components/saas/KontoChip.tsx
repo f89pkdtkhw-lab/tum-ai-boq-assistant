@@ -11,19 +11,19 @@ export function planKlasse(plan: string): string {
   return plan === "pro" ? `${styles.planTag} ${styles.planPro}` : plan === "company" ? `${styles.planTag} ${styles.planCompany}` : styles.planTag;
 }
 
-export const PLAN_LABEL: Record<string, string> = { demo: "Demo", free: "Free", pro: "Pro", company: "Company" };
+export const PLAN_LABEL: Record<string, string> = { gast: "Guest", free: "Free", pro: "Pro", company: "Company" };
 
 /** Top bar: avatar + plan, or "Sign in". Hidden until /api/saas/me answered, so nothing flickers when it is missing. */
 export function KontoChip() {
   const { t } = useEinstellungen();
   const { konto } = useKonto();
-  // t243: vault entries record the signed-in e-mail as owner (local vault, shared by all accounts in the demo).
+  // t243: vault entries record the signed-in e-mail as owner (local vault on this machine, shared by all accounts).
   useEffect(() => { setzeBesitzer(konto?.angemeldet ? konto.email : null); }, [konto]);
   if (!konto) return null;
   if (!konto.angemeldet) {
     return (
       <Link href="/konto" className={styles.chip} title={t("Sign in")}>
-        <span className={styles.avatar}>→</span>{t("Sign in")}<span className={planKlasse("demo")}>{t("Demo")}</span>
+        <span className={styles.avatar}>→</span>{t("Sign in")}<span className={planKlasse("gast")}>{t("Guest")}</span>
       </Link>
     );
   }

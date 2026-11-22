@@ -1,11 +1,11 @@
 // LV Scout plans and quota rules. Pure functions only (no fs, no network), so node --test can import this file.
 // Prices live in Stripe (test mode, account "Print Pool") and are found by lookup_key; see docs/abo.md.
 
-export type PlanId = "demo" | "free" | "pro" | "company";
+export type PlanId = "gast" | "free" | "pro" | "company";
 export type Intervall = "month" | "year";
 
 export type Plan = {
-  id: Exclude<PlanId, "demo">;
+  id: Exclude<PlanId, "gast">;
   name: string;
   /** Evaluations per user and calendar month. Company: per seat. */
   quota: number;
@@ -71,6 +71,15 @@ export type Nutzer = {
   subscriptionIntervall?: Intervall;
   periodEnd?: string | null;
   companyId?: string;
+  /** Email + password accounts only (scrypt, see passwort.ts). Never sent to the browser. */
+  passwordHash?: string;
+  /** Signed in with Google at least once: email registration for this address is refused. */
+  google?: boolean;
+  /** Email accounts: false until the confirmation link was opened (Google and the seed account count as confirmed). */
+  emailVerified?: boolean;
+  /** SHA-256 of the pending confirmation / reset token with expiry (lib/saas/token.ts); never the raw token. */
+  verifyToken?: { hash: string; expiresAt: string };
+  resetToken?: { hash: string; expiresAt: string };
   usage: Record<string, number>;
 };
 
@@ -90,9 +99,9 @@ export function effektiverPlan(n: Nutzer, firma: Firma | null | undefined, jetzt
 
 export type Kontingent = { plan: PlanId; quota: number | null; used: number; remaining: number | null; ueber: boolean };
 
-/** Quota state for the banner. Demo (no login / auth not configured) is unlimited and never shows a banner. */
+/** Quota state for the banner. Guest (not signed in) is unlimited and never shows a banner. */
 export function kontingent(planId: PlanId, used: number): Kontingent {
-  if (planId === "demo") return { plan: "demo", quota: null, used, remaining: null, ueber: false };
+  if (planId === "gast") return { plan: "gast", quota: null, used, remaining: null, ueber: false };
   const quota = plan(planId).quota;
   const remaining = Math.max(0, quota - used);
   return { plan: planId, quota, used, remaining, ueber: used >= quota };

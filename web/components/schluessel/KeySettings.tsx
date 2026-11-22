@@ -72,14 +72,14 @@ export function KeySettings({ compact = false, embedded = false }: { compact?: b
   const clear = () => run("clear", async () => {
     const next = await api.clearKey();
     setState(next);
-    setMessage({ kind: "info", text: next.key_set ? "UI key removed; a key from the environment or .env.local is still used." : "Key removed. The app runs on the offline mock." });
+    setMessage({ kind: "info", text: next.key_set ? "UI key removed; a key from the environment or .env.local is still used." : "Key removed. AI steps run without a model." });
     window.dispatchEvent(new Event("llm-config-changed"));
   });
 
   const live = state && state !== "offline" && !state.mock;
   const chip = state === null ? { cls: "", text: "Model …" }
     : state === "offline" ? { cls: styles.off, text: "Backend offline" }
-    : state.mock ? { cls: styles.mock, text: "Mock · no API key" }
+    : state.mock ? { cls: styles.mock, text: "No API key" }
     : { cls: styles.live, text: `${state.provider} · ${state.model}` };
 
   const panel = (
@@ -97,7 +97,7 @@ export function KeySettings({ compact = false, embedded = false }: { compact?: b
           </p>
           {state.mock && (
             <p className={styles.notice} role="status">
-              Mock mode: without a Claude API key, model findings are offline demonstration answers, not real review results.
+              Without a Claude API key, AI steps run without a model.
               {state.reason && <><br /><small>{state.reason}</small></>}
             </p>
           )}

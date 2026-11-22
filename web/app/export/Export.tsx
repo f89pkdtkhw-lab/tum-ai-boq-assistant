@@ -135,8 +135,7 @@ export function Export() {
   }
   const { lv, kennzahlen } = bericht;
   // Same reader texts as the report: German when chosen, technical ranking tail removed.
-  const findings = bericht.findings.map((f) => befundAnzeige(f, sprache));
-  const mock = kennzahlen.modell_mock || findings.some(istMock);
+  const findings = bericht.findings.filter((f) => !istMock(f)).map((f) => befundAnzeige(f, sprache));
   const alleBlaetter = tabellen(bericht, bewertungen);
   const blaetter = Object.fromEntries(alleBlaetter.map((b) => [b.name, b.zeilen]));
   // Priced / estimated bill from the backend price database (#117, #158); only when the report has them.
@@ -221,12 +220,6 @@ export function Export() {
           <p className={styles.quelle}>Source: {lv.quelle}</p>
         </header>
 
-        {mock && (
-          <p className={styles.hinweis}>
-            {t("Demo mode: The model review ran as an offline mock. Entries marked “Demonstration” are not domain findings.")}
-          </p>
-        )}
-
         <dl className={styles.zahlen}>
           <div><dt>{t("Items")}</dt><dd>{zahl.format(lv.positionen.length)}</dd></div>
           <div><dt>{t("Entries")}</dt><dd>{zahl.format(findings.length)}</dd></div>
@@ -271,7 +264,7 @@ export function Export() {
                     <td className={styles.oz}>{f.oz}</td>
                     <td>{t(KATEGORIE[f.kategorie] ?? f.kategorie)}</td>
                     <td><span className={styles.schwere}>{t(SEVERITY_LABELS[f.schwere] ?? f.schwere)}</span></td>
-                    <td className={styles.spFinding}><b>{f.titel}</b><span className={styles.begruendung}>{f.begruendung}</span>{istMock(f) && <span className={styles.mock}> {t("Demonstration")}</span>}</td>
+                    <td className={styles.spFinding}><b>{f.titel}</b><span className={styles.begruendung}>{f.begruendung}</span></td>
                     <td className={styles.spVorschlag}>{f.vorschlag}</td>
                     <td className={styles.regel}>{t(f.quelle === "regel" ? "Rule" : "Model")}<br />{f.regel_id.replaceAll("_", "_\u200b")}</td>
                     <td className={styles.rechts}>{f.euro_wirkung === null ? t("unknown") : euro.format(f.euro_wirkung)}</td>

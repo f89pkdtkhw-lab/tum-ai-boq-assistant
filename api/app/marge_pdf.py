@@ -65,7 +65,7 @@ def pruefe_anbieter() -> dict:
     if zustand.get("mock") or zustand.get("provider") not in ERLAUBT:
         raise ValueError(
             "Reading a competitor PDF needs Claude or Grok Bot. "
-            "Choose one in the developer options (code 2211). The mock provider is not used here."
+            "Set up the AI provider in the developer options (code 2211)."
         )
     return zustand
 

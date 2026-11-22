@@ -13,9 +13,6 @@ const THEMEN: Option<"thema">[] = [
 ];
 const SEITEN: Option<"seitengroesse">[] = [{ wert: 50, name: "50" }, { wert: 100, name: "100" }, { wert: 250, name: "250" }];
 const START: Option<"startReiter">[] = [{ wert: "uebersicht", name: "Overview" }, { wert: "findings", name: "Findings" }, { wert: "positionen", name: "Items" }];
-const MOCK: Option<"mockAusblenden">[] = [
-  { wert: false, name: "Show" }, { wert: true, name: "Hide", hinweis: "Hides entries from the offline model mock (marked Demonstration) in reports" },
-];
 const DICHTEN: Option<"dichte">[] = [
   { wert: "normal", name: "Comfortable" }, { wert: "kompakt", name: "Compact", hinweis: "Smaller text and spacing, more rows on screen" },
 ];
@@ -68,7 +65,6 @@ export function EinstellungenSeite() {
         <h2 className={styles.abschnitt}>{t("Review report")}</h2>
         <Wahl feld="startReiter" titel="Report opens on" optionen={START} />
         <Wahl feld="seitengroesse" titel="Rows per page" optionen={SEITEN} />
-        <Wahl feld="mockAusblenden" titel="Demo findings from the offline mock" optionen={MOCK} />
       </section>
       <Entwickleroptionen />
       <section className={styles.karte}>

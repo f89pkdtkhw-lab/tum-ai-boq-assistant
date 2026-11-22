@@ -15,11 +15,9 @@ const SCHWERE_NAME: Record<Schwere, string> = {
   kritisch: "Critical", hoch: "High", mittel: "Medium", niedrig: "Low",
 };
 
-export function IosLeiste({ nurKritisch, onNurKritisch, mockAusblenden, onMockAusblenden, minSchwere, onMinSchwere, schwere, onSchwere }: {
+export function IosLeiste({ nurKritisch, onNurKritisch, minSchwere, onMinSchwere, schwere, onSchwere }: {
   nurKritisch: boolean;
   onNurKritisch: (an: boolean) => void;
-  mockAusblenden: boolean;
-  onMockAusblenden: (aus: boolean) => void;
   minSchwere: Schwere;
   onMinSchwere: (s: Schwere) => void;
   schwere: Schwere | null;
@@ -38,12 +36,6 @@ export function IosLeiste({ nurKritisch, onNurKritisch, mockAusblenden, onMockAu
           hint={t("Critical and high only")}
           checked={nurKritisch}
           onChange={onNurKritisch}
-        />
-        <IosToggle
-          label={t("Mock mode")}
-          hint={t("Show demo findings from the offline mock")}
-          checked={!mockAusblenden}
-          onChange={(an) => onMockAusblenden(!an)}
         />
         <div className={styles.segZeile}>
           <span className={styles.segLabel}>{t("Severity")}</span>

@@ -74,7 +74,7 @@ export function Tarife() {
         })}
       </div>
       <p className={styles.hinweis} style={{ textAlign: "center" }}>
-        {t("Prices in EUR. Payments run in Stripe test mode: use card 4242 4242 4242 4242.")}{" "}
+        {t("Prices in EUR.")}{" "}
         {t("Larger company? We unlock company plans by hand.")}
       </p>
     </main>

@@ -22,12 +22,11 @@ function merkeFreigabe(an: boolean) {
 
 const ANBIETER: { value: DevProvider; label: string }[] = [
   { value: "anthropic", label: "Claude-API (Key)" },
-  { value: "mock", label: "Mock" },
   { value: "grokbot", label: "Grok Bot" },
 ];
 
 function alsAnbieter(name: string | undefined): DevProvider {
-  if (name === "grokbot" || name === "mock" || name === "anthropic") return name;
+  if (name === "grokbot") return name;
   return "anthropic";
 }
 
@@ -86,7 +85,7 @@ export function Entwickleroptionen() {
     }
   };
 
-  const anbieter = state && state !== "offline" ? alsAnbieter(state.provider) : "mock";
+  const anbieter = state && state !== "offline" ? alsAnbieter(state.provider) : "anthropic";
 
   return (
     <section className={styles.karte}>
@@ -128,9 +127,6 @@ export function Entwickleroptionen() {
                   <p className={styles.hinweis}>{t("Enter the Claude API key here. It is sent to the backend once and never shown again.")}</p>
                   <KeySettings embedded />
                 </>
-              )}
-              {anbieter === "mock" && (
-                <p className={styles.hinweis}>{t("Mock mode uses offline demonstration answers. No API key and no Grok Bot queue.")}</p>
               )}
               {anbieter === "grokbot" && (
                 <p className={styles.hinweis}>

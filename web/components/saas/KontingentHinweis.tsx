@@ -21,7 +21,7 @@ export function KontingentHinweis() {
             ? t("You have used all {n} evaluations of your plan this month.", { n: k.quota })
             : t("{r} of {n} evaluations left this month.", { r: k.remaining, n: k.quota })}
         </strong>{" "}
-        {k.ueber && <span className={styles.hinweis}>{t("You can keep evaluating in this demo; upgrade for more.")}</span>}
+        {k.ueber && <span className={styles.hinweis}>{t("You can keep evaluating for now; upgrade for more.")}</span>}
         <div className={styles.balken} style={{ marginTop: 6 }}><span style={{ width: `${anteil}%` }} /></div>
       </div>
       <Link href="/tarife" className={styles.knopf}>{t("Upgrade")}</Link>

@@ -59,7 +59,7 @@ MetadataRequest.model_config["json_schema_extra"] = {"examples": [METADATA_EXAMP
              response_model_exclude_unset=True,
              responses={
                  200: {"content": {"application/json": {"example": {
-                     "description": "Mock: bridge repair case.", "tags": ["bridge"], "source": "model_mock",
+                     "description": "Bridge repair case.", "tags": ["bridge"], "source": "model_mock",
                      "estimated_values": [], "real_values": METADATA_EXAMPLE["real_values"],
                      "comments": METADATA_EXAMPLE["comments"], "marks": METADATA_EXAMPLE["marks"],
                  }}}},
@@ -69,8 +69,8 @@ def history_metadata(request: MetadataRequest) -> MetadataResponse:
     text = " ".join([request.lv.name, *[p.kurztext + " " + p.langtext for p in request.lv.positionen]]).casefold()
     bridge = "bridge" in text or "brücke" in text
     fixture = {
-        "description": "Mock: bridge repair case." if bridge else
-        f"Mock: parsed case with {len(request.lv.positionen)} positions.",
+        "description": "Bridge repair case." if bridge else
+        f"Parsed case with {len(request.lv.positionen)} positions.",
         "tags": ["bridge"] if bridge else [],
     }
     try:

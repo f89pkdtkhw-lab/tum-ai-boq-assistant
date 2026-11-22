@@ -34,12 +34,12 @@ export function KiBewertung({ daten, fehler }: { daten: AiEvaluation | null; feh
             {t("model")} · {daten.model ?? "live"}
           </span>
         ) : (
-          <span className={styles.quelle} title={t("Runs as an offline mock: the answer is derived only from the evidence above. A live model returns the same structure.")}>
-            {t("model · offline mock")}
+          <span className={styles.quelle} title={t("Derived only from the evidence above, without an AI model.")}>
+            {t("evidence-based")}
           </span>
         )}
       </div>
-      {!fehler && daten?.reason && <p className={styles.fehler} role="note">{t("Offline mock instead of the configured model")}: {daten.reason}</p>}
+      {!fehler && daten?.reason && <p className={styles.fehler} role="note">{t("AI model unavailable")}: {daten.reason}</p>}
       {fehler ? <p className={styles.fehler} role="alert">{t("AI evaluation unavailable")}: {fehler}</p>
         : !daten ? <p className={styles.hinweis}>{t("Evaluating the whole BoQ…")}</p>
         : (

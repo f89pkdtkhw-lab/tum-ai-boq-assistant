@@ -84,7 +84,7 @@ def test_public_routes_fall_back_to_mock_when_the_selected_provider_fails(monkey
     report = client.post("/api/lv/pruefen", json=lv)
     assert report.status_code == 200
     kennzahlen = report.json()["kennzahlen"]
-    assert kennzahlen["modell_mock"] is True and "mock" in kennzahlen["modell_reason"]
+    assert kennzahlen["modell_mock"] is True and "No AI findings in this run" in kennzahlen["modell_reason"]
     assert "synthetic-test-value" not in report.text
 
 

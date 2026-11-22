@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { historyApi, isMockSource, MARK_STATUSES, type CaseUpdate, type HistoryCase, type Measurement } from "@/lib/history-api";
+import { historyApi, MARK_STATUSES, type CaseUpdate, type HistoryCase, type Measurement } from "@/lib/history-api";
 import { Abschluss } from "./Abschluss";
 import styles from "./history.module.css";
 import { useT } from "@/lib/einstellungen";
@@ -86,7 +86,7 @@ export function HistoryView() {
       const saved = await historyApi.update(current.case_id, update);
       setCases((all) => (all ?? []).map((c) => (c.case_id === saved.case_id ? saved : c)));
       setDraft(draftFor(saved));
-      setSaveState({ kind: "ok", text: `Saved. Description and tags were regenerated${isMockSource(saved.source) ? " by the offline mock" : ""}.` });
+      setSaveState({ kind: "ok", text: "Saved. Description and tags were regenerated." });
     } catch (e) {
       setSaveState({ kind: "error", text: e instanceof Error ? e.message : "Saving failed; your input is kept." });
     }
@@ -138,7 +138,7 @@ export function HistoryView() {
                 </span>
                 <span className={styles.titel}>{c.lv.name}</span>
                 <span className={styles.beschreibung}>
-                  {c.description}{isMockSource(c.source) && <span className={styles.mock}>{t("Mock")}</span>}
+                  {c.description}
                 </span>
                 {c.tags.length > 0 && <span className={styles.tags}>{c.tags.map((t) => <span key={t}>{t}</span>)}</span>}
               </button>
@@ -156,7 +156,6 @@ export function HistoryView() {
                 <h2>{current.lv.name}</h2>
                 <p className={styles.beschreibung}>
                   {current.description}
-                  {isMockSource(current.source) && <span className={styles.mock}>{t("Mock · generated, not a fact")}</span>}
                 </p>
               </header>
 

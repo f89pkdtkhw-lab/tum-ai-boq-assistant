@@ -81,10 +81,9 @@ export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}, p
     ...bericht.lv.positionen.map((p) => [p.oz, p.kurztext, p.langtext, p.menge, p.einheit, p.ep, p.gp, ITEM_TYPE_LABELS[p.typ], p.titel_pfad.join(" › ")]),
   ];
   const befunde: Zelle[][] = [
-    ["OZ", "Category", "Severity", "Title", "Explanation", "Suggestion", "Source", "Rule", "Euro impact (EUR)", "Note", "Review status", "Comment"],
-    ...bericht.findings.map((f) => [
+    ["OZ", "Category", "Severity", "Title", "Explanation", "Suggestion", "Source", "Rule", "Euro impact (EUR)", "Review status", "Comment"],
+    ...bericht.findings.filter((f) => !istMock(f)).map((f) => [
       f.oz, CATEGORY_LABELS[f.kategorie], SEVERITY_LABELS[f.schwere], f.titel, f.begruendung, f.vorschlag, f.quelle === "regel" ? "Rule" : "Model", f.regel_id, f.euro_wirkung,
-      istMock(f) ? "Demonstration (mock), not a domain finding" : "",
       statusName(bewertungVon(bewertungen, f.id).status), bewertungVon(bewertungen, f.id).kommentar,
     ]),
   ];
@@ -97,8 +96,8 @@ export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}, p
     ...(m.ohneMenge ? [["Excluded: no quantity or unit", "", "", null, m.ohneMenge]] : []),
   ];
   const fragen: Zelle[][] = [
-    ["OZ", "Short description", "Title", "Question", "Note"],
-    ...bieterfragen(bericht.findings, bericht.lv.positionen).map((f) => [f.oz, f.kurztext, f.titel, f.frage, f.mock ? "Demonstration (mock)" : ""]),
+    ["OZ", "Short description", "Title", "Question"],
+    ...bieterfragen(bericht.findings, bericht.lv.positionen).map((f) => [f.oz, f.kurztext, f.titel, f.frage]),
   ];
   const z = bericht.zusammenfassung;
   const zusammenfassung: Zelle[][] = [
@@ -245,8 +244,7 @@ export function pdfInhalt(bericht: MitBerichten, bewertungen: Bewertungen = {}):
   const k = bericht.kennzahlen;
   const z = bericht.zusammenfassung;
   const zusammenfassung = [
-    `Items: ${pdfZahl.format(bericht.lv.positionen.length)} · Entries: ${pdfZahl.format(bericht.findings.length)} · Critical: ${pdfZahl.format(k.kritisch)}`,
-    ...(k.modell_mock ? ["Demo mode: the model review ran as an offline mock; entries marked as demonstration are not domain findings."] : []),
+    `Items: ${pdfZahl.format(bericht.lv.positionen.length)} · Entries: ${pdfZahl.format(bericht.findings.filter((f) => !istMock(f)).length)} · Critical: ${pdfZahl.format(k.kritisch)}`,
     ...(z ? [
       `Score: ${z.score.toFixed(1)} / 10 · Big problems: ${z.grosse_probleme} · Warnings: ${z.warnungen} · Notices: ${z.hinweise} · Recommendations: ${z.empfehlungen}`,
       `Estimate deviation: ${z.schaetzung_abweichung_eur === null ? "not connected" : `${pdfZahl.format(z.schaetzung_abweichung_eur)} EUR`}`,

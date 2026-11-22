@@ -16,7 +16,11 @@ export function KontoSeite() {
   const { t, e } = useEinstellungen();
   const { konto, neu } = useKonto();
   const params = useSearchParams();
+  const [modus, setModus] = useState<"anmelden" | "registrieren" | "vergessen">("anmelden");
   const [email, setEmail] = useState("");
+  const [passwort, setPasswort] = useState("");
+  const [name, setName] = useState("");
+  const [unbestaetigt, setUnbestaetigt] = useState(false);
   const [busy, setBusy] = useState(false);
   const [fehler, setFehler] = useState("");
   const [meldung, setMeldung] = useState("");
@@ -33,14 +37,51 @@ export function KontoSeite() {
 
   const ziel = weiter === "pro" || weiter === "company" ? "/tarife" : "/konto";
 
-  const demo = async (ev: React.FormEvent) => {
+  const postJson = async (url: string, body: unknown) => {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = (await r.json().catch(() => ({}))) as { fehler?: string };
+    return { ok: r.ok, fehler: j.fehler };
+  };
+
+  const absenden = async (ev: React.FormEvent) => {
     ev.preventDefault();
     setFehler("");
+    setMeldung("");
+    setUnbestaetigt(false);
     setBusy(true);
-    const r = await signIn("demo", { email: email.trim(), redirect: false });
-    setBusy(false);
-    if (r?.error) { setFehler(t("Please enter a valid email address.")); return; }
-    window.location.href = ziel;
+    try {
+      if (modus === "vergessen") {
+        await postJson("/api/saas/passwort-vergessen", { email: email.trim() });
+        setMeldung(t("If an account with this email exists, we sent a link to reset the password."));
+        return;
+      }
+      if (modus === "registrieren") {
+        const r = await postJson("/api/saas/registrieren", { email: email.trim(), password: passwort, name: name.trim() });
+        if (!r.ok) { setFehler(t(r.fehler || "Registration failed.")); return; }
+        setModus("anmelden");
+        setPasswort("");
+        setMeldung(t("Almost done: we sent a confirmation link to {email}. Open it, then sign in.", { email: email.trim() }));
+        return;
+      }
+      const r = await signIn("passwort", { email: email.trim(), password: passwort, redirect: false });
+      if (r?.code === "unbestaetigt") { setUnbestaetigt(true); setFehler(t("Please confirm your email first. Check your inbox for the link.")); return; }
+      if (r?.error) { setFehler(t("Email or password is wrong.")); return; }
+      window.location.href = ziel;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const erneutSenden = async () => {
+    setBusy(true);
+    try {
+      await postJson("/api/saas/bestaetigung-erneut", { email: email.trim() });
+      setFehler("");
+      setUnbestaetigt(false);
+      setMeldung(t("We sent a new confirmation link to {email}.", { email: email.trim() }));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const portal = async () => {
@@ -51,33 +92,51 @@ export function KontoSeite() {
   if (!konto) return <main className={`${styles.seite} ${styles.schmal}`}><p className={styles.hinweis}>{t("Loading …")}</p></main>;
 
   if (!konto.angemeldet) {
-    const keinLogin = !konto.konfiguriert.google && !konto.konfiguriert.demo;
+    const reg = modus === "registrieren";
+    const vergessen = modus === "vergessen";
+    const wechsel = (m: typeof modus) => { setModus(m); setFehler(""); setMeldung(""); setUnbestaetigt(false); };
     return (
       <main className={`${styles.seite} ${styles.schmal}`} style={{ maxWidth: 440 }}>
         <header style={{ display: "grid", justifyItems: "center", gap: 8, textAlign: "center", paddingTop: 24 }}>
           <Logo size={48} />
-          <h1 className={styles.titel} style={{ fontSize: 28 }}>{t("Sign in to LV Scout")}</h1>
+          <h1 className={styles.titel} style={{ fontSize: 28 }}>{t(reg ? "Create your LV Scout account" : vergessen ? "Reset your password" : "Sign in to LV Scout")}</h1>
           <p className={styles.hinweis}>{t("Your plan and evaluation quota follow your account.")}</p>
         </header>
         <section className={styles.karte}>
-          {konto.konfiguriert.google && (
-            <button type="button" className={styles.knopfZweit} onClick={() => void signIn("google", { redirectTo: ziel })}>
-              <svg viewBox="0 0 24 24" width={18} height={18} aria-hidden="true"><path d={GOOGLE} fill="currentColor" /></svg>
-              {t("Continue with Google")}
-            </button>
-          )}
-          {konto.konfiguriert.google && konto.konfiguriert.demo && <p className={styles.hinweis} style={{ textAlign: "center" }}>{t("or")}</p>}
-          {konto.konfiguriert.demo && (
-            <form onSubmit={demo} style={{ display: "grid", gap: 10 }}>
-              <label className={styles.feld}>{t("Email")}
-                <input className={styles.eingabe} type="email" required autoComplete="email" value={email} onChange={(ev) => setEmail(ev.target.value)} placeholder="name@firma.de" />
+          <button type="button" className={styles.knopfZweit} disabled={!konto.konfiguriert.google} aria-disabled={!konto.konfiguriert.google}
+            title={konto.konfiguriert.google ? undefined : t("Google sign-in is not set up")}
+            style={konto.konfiguriert.google ? undefined : { opacity: 0.5, cursor: "not-allowed" }}
+            onClick={() => { if (konto.konfiguriert.google) void signIn("google", { redirectTo: ziel }); }}>
+            <svg viewBox="0 0 24 24" width={18} height={18} aria-hidden="true"><path d={GOOGLE} fill="currentColor" /></svg>
+            {t("Continue with Google")}
+          </button>
+          {!konto.konfiguriert.google && <p className={styles.hinweis} style={{ textAlign: "center" }}>{t("Google sign-in is not set up (AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET in web/.env.local).")}</p>}
+          <p className={styles.hinweis} style={{ textAlign: "center" }}>{t("or")}</p>
+          <form onSubmit={absenden} style={{ display: "grid", gap: 10 }}>
+            {reg && (
+              <label className={styles.feld}>{t("Name")}
+                <input className={styles.eingabe} type="text" autoComplete="name" value={name} onChange={(ev) => setName(ev.target.value)} />
               </label>
-              <button type="submit" className={styles.knopf} disabled={busy}>{busy ? t("Signing in …") : t("Demo login (no password)")}</button>
-              <p className={styles.hinweis}>{t("Demo login: just your email, no password. For the hackathon demo only.")}</p>
-            </form>
-          )}
-          {keinLogin && <p className={styles.hinweis}>{t("No sign-in method is configured. The app works without an account in demo mode.")}</p>}
+            )}
+            <label className={styles.feld}>{t("Email")}
+              <input className={styles.eingabe} type="email" required autoComplete="email" value={email} onChange={(ev) => setEmail(ev.target.value)} placeholder="name@firma.de" />
+            </label>
+            {!vergessen && (
+              <label className={styles.feld}>{t("Password")}
+                <input className={styles.eingabe} type="password" required minLength={reg ? 8 : undefined} autoComplete={reg ? "new-password" : "current-password"} value={passwort} onChange={(ev) => setPasswort(ev.target.value)} />
+              </label>
+            )}
+            {reg && <p className={styles.hinweis}>{t("At least 8 characters.")}</p>}
+            <button type="submit" className={styles.knopf} disabled={busy}>{busy ? t("Please wait …") : t(reg ? "Create account" : vergessen ? "Send reset link" : "Sign in")}</button>
+            {modus === "anmelden" && <button type="button" className={styles.link} style={{ justifySelf: "start" }} onClick={() => wechsel("vergessen")}>{t("Forgot password?")}</button>}
+          </form>
+          <p className={styles.hinweis} style={{ textAlign: "center" }}>
+            {reg || vergessen ? t("Already have an account?") : t("No account yet?")}{" "}
+            <button type="button" className={styles.link} onClick={() => wechsel(reg || vergessen ? "anmelden" : "registrieren")}>{t(reg || vergessen ? "Sign in" : "Create account")}</button>
+          </p>
+          {meldung && <p className={styles.ok} role="status">{meldung}</p>}
           {fehler && <p className={styles.fehler} role="alert">{fehler}</p>}
+          {unbestaetigt && <button type="button" className={styles.knopfZweit} disabled={busy} onClick={() => void erneutSenden()}>{t("Send confirmation link again")}</button>}
         </section>
         <p className={styles.hinweis} style={{ textAlign: "center" }}>
           <Link href="/">{t("Continue without an account")}</Link> · <Link href="/tarife">{t("See plans")}</Link>

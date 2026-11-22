@@ -116,7 +116,7 @@ function NoteCard({ note }: { note: Note }) {
         <span className={styles.muted}>OZ {note.oz}</span>
       </div>
       <div className={styles.badges}>
-        {(note.placeholder || note.source === "model_mock") && <span className={`${styles.badge} ${styles.mock}`}>{t("Mock / Placeholder")}</span>}
+        {(note.placeholder || note.source === "model_mock") && <span className={`${styles.badge} ${styles.mock}`}>{t("Placeholder")}</span>}
         {note.manual_review && <span className={styles.badge}>{t("Manual review")}</span>}
         {istAnnahme(note) && <span className={`${styles.badge} ${styles.freigabe}`}>{t("Approval required")}</span>}
       </div>

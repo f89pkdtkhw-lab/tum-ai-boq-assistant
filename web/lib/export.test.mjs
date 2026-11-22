@@ -36,9 +36,8 @@ test("adds Quantities and Bidder questions sheets with numeric quantities", () =
     ["Excluded: no quantity or unit", "", "", null, 1],
   ]);
   assert.deepEqual(blaetter[3].zeilen, [
-    ["OZ", "Short description", "Title", "Question", "Note"],
-    ["01.01", "Excavation", "T 01.01", "T 01.01", "Demonstration (mock)"],
-    ["02.01", "Rebar", "T 02.01", "Confirm rebar grade?", ""],
+    ["OZ", "Short description", "Title", "Question"],
+    ["02.01", "Rebar", "T 02.01", "Confirm rebar grade?"],
   ]);
   const xml = xlsxDateien(b);
   assert.match(xml["xl/workbook.xml"], /name="Bidder questions" sheetId="4"/);
@@ -58,7 +57,7 @@ test("Findings sheet carries review status and comment, Open when not reviewed",
   assert.deepEqual(befunde.zeilen[1].slice(-2), ["Open", ""]);
   assert.deepEqual(befunde.zeilen[2].slice(-2), ["Dismissed", "covered by 01.02"]);
   assert.deepEqual(tabellen(b)[0].zeilen[2].slice(-2), ["Open", ""], "no decisions means all Open");
-  assert.match(xlsxDateien(b, { "01.01-R1": { status: "bestaetigt", kommentar: "" } })["xl/worksheets/sheet1.xml"], /<c r="K2" t="inlineStr" s="1"><is><t xml:space="preserve">Confirmed<\/t>/);
+  assert.match(xlsxDateien(b, { "01.01-R1": { status: "bestaetigt", kommentar: "" } })["xl/worksheets/sheet1.xml"], /<c r="J2" t="inlineStr" s="1"><is><t xml:space="preserve">Confirmed<\/t>/);
 });
 
 test("PDF content (#105): same rows as the XLSX, summary and reports when present, safe text and file name", async () => {
