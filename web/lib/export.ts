@@ -45,7 +45,7 @@ function kalkulationsTabellen(bericht: Pruefbericht): Tabelle[] {
       zeilen: [
         ["OZ", "Short description", "Quantity", "Unit", "Unit price (EUR)", "Total (EUR)", "Price-list match", "BoQ unit price (EUR)", "BoQ total (EUR)"],
         ...k.positionen.map((p) => [p.oz, p.kurztext || kurztext.get(p.oz) || "", p.menge, p.einheit, p.ep, p.gp,
-          p.treffer === "kein_treffer" ? "no price" : p.treffer, p.ep_lv, p.gp_lv]),
+          p.treffer === "kein_treffer" ? "no price" : p.treffer === "index" ? "estimated (index)" : p.treffer === "recherche" ? "estimated (research)" : p.treffer, p.ep_lv, p.gp_lv]),
         ["Net", "", null, "", null, k.summe_netto, "", null, null],
         [`Gross (VAT ${mwst})`, "", null, "", null, k.summe_brutto, "", null, null],
         ["Without price", "", k.ohne_preis, "items", null, null, "", null, null],

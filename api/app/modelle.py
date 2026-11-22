@@ -121,6 +121,16 @@ class Preisliste(Vertrag):
     warnungen: list[str] = Field(default_factory=list)
 
 
+class PreisQuelle(Vertrag):
+    """Fallback price source (index reference or web research): a URL when there is one, else a label."""
+    titel: str = ""
+    url: str | None = Field(default=None, exclude_if=_ohne_null)
+
+
+def _nicht_wahr(wert) -> bool:
+    return not wert
+
+
 class KalkulationsPosition(Vertrag):
     oz: str
     kurztext: str = ""
@@ -132,11 +142,18 @@ class KalkulationsPosition(Vertrag):
     gp_lv: float | None = None
     ep_differenz: float | None = None  # ep - ep_lv, only when both exist
     gp_differenz: float | None = None  # gp - gp_lv, only when both exist
-    treffer: Literal["oz", "text", "aehnlich", "kein_treffer"]
+    # "index"/"recherche": estimated fallback price (no list/DB match), see pruefung/preis_fallback.py
+    treffer: Literal["oz", "text", "aehnlich", "kein_treffer", "index", "recherche"]
     preis_eintrag: str | None = None   # PreislistenEintrag.id
     preisliste_id: str | None = None   # B9 (#133): source of the price, upload id or "preis-db"
     aehnlichkeit: float | None = None  # short-text token similarity 0–1
     in_summe: bool
+    # Fallback estimate (absent for list/DB prices, so existing payloads stay byte-identical)
+    geschaetzt: bool = Field(default=False, exclude_if=_nicht_wahr)
+    ep_von: float | None = Field(default=None, exclude_if=_ohne_null)   # estimated range, EUR net per unit
+    ep_bis: float | None = Field(default=None, exclude_if=_ohne_null)
+    preis_quellen: list[PreisQuelle] = Field(default_factory=list, exclude_if=_nicht_wahr)
+    schaetzung_hinweis: str | None = Field(default=None, exclude_if=_ohne_null)  # assumptions behind the estimate
 
 
 class Kalkulation(Vertrag):
@@ -150,6 +167,8 @@ class Kalkulation(Vertrag):
     ohne_menge: int = Field(ge=0)      # matched positions whose quantity is unknown (gp null)
     vollstaendig: bool                 # every summed position has a gp
     warnungen: list[str] = Field(default_factory=list)  # B9 (#133): e.g. price database unreachable
+    enthaelt_schaetzungen: bool = Field(default=False, exclude_if=_nicht_wahr)  # some EPs are fallback estimates
+    geschaetzt_anzahl: int = Field(default=0, ge=0, exclude_if=_nicht_wahr)
 
 
 # --- B5 (#98): three reports, final report and what-if list (epic #93 contract; optional) ---

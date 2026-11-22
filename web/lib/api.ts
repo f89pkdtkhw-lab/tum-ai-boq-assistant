@@ -38,12 +38,17 @@ export type Zusammenfassung = {
 // Price calculation (epic #93, B6/B7/B8): optional, absent until the backend prices the bill.
 export type KalkulationPosition = {
   oz: string; kurztext?: string; menge: number | null; einheit: string | null; ep: number | null; gp: number | null;
-  ep_lv: number | null; gp_lv: number | null; treffer: "oz" | "text" | "aehnlich" | "kein_treffer";
+  ep_lv: number | null; gp_lv: number | null; treffer: "oz" | "text" | "aehnlich" | "kein_treffer" | "index" | "recherche";
   preis_eintrag: string | null; aehnlichkeit: number | null; in_summe: boolean;
+  // t237: fallback estimate (index price or web research); absent for list/DB prices
+  geschaetzt?: boolean; ep_von?: number | null; ep_bis?: number | null;
+  preis_quellen?: PreisQuelle[]; schaetzung_hinweis?: string | null;
 };
+export type PreisQuelle = { titel: string; url?: string | null };
 export type Kalkulation = {
   waehrung: string; mwst_satz: number; positionen: KalkulationPosition[];
   summe_netto: number; summe_brutto: number; ohne_preis: number; vollstaendig: boolean;
+  warnungen?: string[]; enthaelt_schaetzungen?: boolean; geschaetzt_anzahl?: number;
 };
 export type Anpassung = {
   id: string; oz: string; art: "menge" | "hinzufuegen" | "entfernen"; menge_alt: number | null; menge_neu: number | null;

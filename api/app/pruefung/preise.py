@@ -114,9 +114,11 @@ def hole_preis_db() -> tuple[Preisliste | None, list[str]]:
         return None, ["Price database unreachable: prices come from the uploaded price list only."]
 
 
-def kalkuliere_mit_preis_db(lv: LV, preisliste: Preisliste | None, mwst_satz: float = MWST_SATZ) -> Kalkulation | None:
-    """Uploaded list first, the price database fills `kein_treffer`. None when there is no price source at all
-    (no upload, no database), so the report stays as without pricing. Also used for added items (B8)."""
+def kalkuliere_mit_preis_db(lv: LV, preisliste: Preisliste | None, mwst_satz: float = MWST_SATZ,
+                            indexpreise: bool = True) -> Kalkulation | None:
+    """Uploaded list first, the price database fills `kein_treffer`, then the index price fallback
+    (``preis_fallback``, estimates marked). None when there is no price source at all (no upload, no
+    database), so the report stays as without pricing. Also used for added items (B8)."""
     datenbank, warnungen = hole_preis_db()
     if preisliste is None and datenbank is None:
         if not warnungen:
@@ -124,7 +126,10 @@ def kalkuliere_mit_preis_db(lv: LV, preisliste: Preisliste | None, mwst_satz: fl
         preisliste = Preisliste(id=PREIS_DB_ID)  # DB failed and nothing uploaded: empty, marked, with the warning
     kalkulation = kalkuliere(lv, preisliste, mwst_satz, ergaenzung=datenbank)
     kalkulation.warnungen.extend(warnungen)
-    return kalkulation
+    if not indexpreise:
+        return kalkulation
+    from .preis_fallback import ergaenze_indexpreise  # t237: index price for items without a match
+    return ergaenze_indexpreise(kalkulation)
 
 
 def kalkuliere(lv: LV, preisliste: Preisliste | None, mwst_satz: float = MWST_SATZ,
