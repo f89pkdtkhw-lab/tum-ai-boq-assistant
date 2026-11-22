@@ -4,35 +4,13 @@
 
 LV Scout reviews a construction bill of quantities (German *Leistungsverzeichnis*, LV) before a contractor prices and submits a bid. Upload the LV as GAEB, Excel, PDF or JSON. LV Scout extracts every item, finds errors and risks, explains each finding with its item number (OZ) and evidence, estimates prices, and walks you to a final offer and export.
 
-![Review report with score, findings and price estimate](docs/screenshots/02-score.jpg)
-
 ## Why it matters
 
 An estimator often has a few days for a tender with hundreds or thousands of items. A missed error costs money after the job is won; a price set too high loses the job. One project partner described the task like this: the job is not to process 9,000 items, but to find the 100 that matter. LV Scout puts those items first and gives the reason, the source and a next step for each one.
 
 ## What it does
 
-| Step | What you get |
-| --- | --- |
-| 1. Upload | GAEB XML (X83, X84), GAEB 90 (D83, D84, D86), Excel (.xlsx), text PDF or JSON. Optionally a regulation document and a price list. |
-| 2. Review | Fixed rules, quantity plausibility, a standards register and an optional Claude review run on every item. Progress is shown live. |
-| 3. Resolve findings | A ranked list with severity, rule or model source, an explanation, a suggestion and a link to the exact place in the document. You confirm or dismiss each finding. |
-| 4. Evaluate price | Item-by-item estimate from your price list, past projects and public price indices, with a range and its sources. |
-| 5. Set margin | Compare against competitor bids and set your margin. Your price never drops below your own costs. |
-| 6. Final price and export | Final offer, then export as PDF, Excel, CSV or GAEB (X81–X86). |
-
-<table>
-<tr>
-<td width="50%"><img src="docs/screenshots/03-findings.jpg" alt="Findings list with detail panel for OZ 01.0010"><br><sub>Step 3: every finding names its OZ, rule and source and suggests what to do.</sub></td>
-<td width="50%"><img src="docs/screenshots/04-price.jpg" alt="Estimated price report with ranges and sources"><br><sub>Step 4: estimated unit prices with range and source, e.g. a public construction price index.</sub></td>
-</tr>
-<tr>
-<td width="50%"><img src="docs/screenshots/05-margin.jpg" alt="Margin page comparing competitor bids"><br><sub>Step 5: margin against synthetic competitor bids.</sub></td>
-<td width="50%"><img src="docs/screenshots/06-export.jpg" alt="Final offer and export options"><br><sub>Step 6: final offer and export to PDF, Excel, CSV or GAEB.</sub></td>
-</tr>
-</table>
-
-All screenshots use synthetic data only: [`data/demo/workshop-foundation.json`](data/demo/workshop-foundation.json) and [`data/testfaelle/marge/competitor_bids_synthetic.xlsx`](data/testfaelle/marge/competitor_bids_synthetic.xlsx).
+Upload a bill → review → resolve findings → price → margin → final offer and export. The [walkthrough](#walkthrough-from-bill-to-bid-in-six-steps) shows every step with a screenshot.
 
 ## Quick start
 
@@ -56,13 +34,57 @@ ANTHROPIC_API_KEY=your-key-here
 
 Keep keys in `.env.local` or environment variables, never in Git. All other settings, with defaults, are listed in [`.env.example`](.env.example).
 
-## Two-minute demo
+## Walkthrough: from bill to bid in six steps
 
-1. Open **New evaluation**, choose **Upload files** and select [`data/demo/workshop-foundation.json`](data/demo/workshop-foundation.json), a six-item synthetic LV. Click **Evaluate**, then **Continue to findings**.
-2. **OZ 01.0010**: the arithmetic rule shows 75 m³ × €24/m³ = €1,800, while the LV states €1,500 (−€300). The same item cites an outdated edition of ATV DIN 18300 (2012-09) and legacy soil classes instead of homogeneous zones.
-3. **OZ 02.0010**: the primer covers 180 m², while the three related slab layers each cover 120 m². Ask whether the primer covers an extra area.
-4. **OZ 01.0020**: the dewatering is "as required". The risk finding turns this into a question for the client: who instructs pumping, how is it measured and how is it paid?
-5. Click **Evaluate price** to see the estimate per item, then **Continue to margin** and **Continue to export** for the final offer and downloads.
+The app guides you through six steps; the bar at the top always shows where you are. The screenshots below follow one run on synthetic data from start to finish, so you can repeat it yourself after the [quick start](#quick-start): the six-item LV [`data/demo/workshop-foundation.json`](data/demo/workshop-foundation.json), the price list [`data/preisliste_beispiel.csv`](data/preisliste_beispiel.csv) and the competitor bids [`data/testfaelle/marge/competitor_bids_synthetic.xlsx`](data/testfaelle/marge/competitor_bids_synthetic.xlsx). No real partner data is shown.
+
+### Step 1 · Upload the bill
+
+Open **New evaluation** and click **Upload files**. Add the bill of quantities and, optionally, a price list and a regulation document. LV Scout guesses each file's role (*Bill of quantities*, *Price list*, *Regulation document*); you can change it in the dropdown. Click **Evaluate**.
+
+Supported bill formats: GAEB XML (X83, X84), GAEB 90 (D83, D84, D86), Excel (.xlsx), text PDF and JSON.
+
+![Step 1: upload page with the demo bill and the demo price list attached](docs/screenshots/step1-upload.jpg)
+
+### Step 2 · Review runs
+
+LV Scout reads the file, detects the items and runs the review: fixed rules, quantity checks, the standards register and, with an API key, the Claude review. Progress is shown live. When it says **Done**, click **Continue to findings**.
+
+![Step 2: review finished, six items imported and reviewed](docs/screenshots/step2-review.jpg)
+
+### Step 3 · Resolve findings
+
+First you see the overall result: a score out of 10 with the reasons behind it (**Why this score**), the bill total (*Was*) and the estimated total.
+
+![Step 3a: score 7.7 out of 10, bill total and estimate](docs/screenshots/step3-score.jpg)
+
+Click **Show details** for the ranked list. Each finding names its item number (OZ), severity, whether a fixed rule or the model found it, an explanation, a suggestion and where it is in the document. Mark each one **Confirmed** or **Dismissed**. In the demo:
+
+- **OZ 01.0010**: the arithmetic rule shows 75 m³ × €24/m³ = €1,800, while the LV states €1,500 (−€300). The same item cites an outdated edition of ATV DIN 18300 (2012-09) and legacy soil classes instead of homogeneous zones.
+- **OZ 01.0020**: dewatering "as required", flagged as a likely Nachtrag (change order) with a question for the client.
+- **OZ 02.0010**: the primer covers 180 m², while the related slab layers cover 120 m².
+
+![Step 3b: findings list with the detail panel for OZ 01.0010](docs/screenshots/step3-findings.jpg)
+
+### Step 4 · Evaluate price
+
+Click **Evaluate price**. Every item gets an estimated unit price with a range and its source: your price list, past projects or, for raw-material work, a public construction price index (Destatis). Items without any basis stay empty instead of guessed. You can overwrite any unit price.
+
+![Step 4: estimated price report with ranges and index-price sources](docs/screenshots/step4-price.jpg)
+
+### Step 5 · Set margin
+
+Click **Continue to margin** and load competitor bids (Excel, or a PDF read by AI). LV Scout shows where your bid sits against the competitors and lets you set your margin with a slider. Your price never drops below your own costs.
+
+![Step 5: margin against ten synthetic competitor bids](docs/screenshots/step5-margin.jpg)
+
+### Step 6 · Final price and export
+
+Click **Continue to export** for the final offer, then download it as PDF, Excel, a CSV price list or GAEB (X81–X86, including X84 with prices).
+
+![Step 6: final offer and export buttons](docs/screenshots/step6-export.jpg)
+
+> The competitor sheet in step 5 is a generic synthetic file for a larger project, so the final offer in step 6 is much higher than the six-item demo bill. With your own bids the numbers line up.
 
 ## How it works
 
