@@ -8,8 +8,13 @@ import { lesePreisliste, preislisteText, speicherePreisliste } from "@/lib/preis
 import { Icon } from "./icon/Icon";
 import { Bericht } from "@/components/bericht/Bericht";
 import { bietetOffline } from "@/lib/offline";
-import { fuehreAnalyseAus } from "@/lib/analyse-job";
+import { fuehreAnalyseAus, fuehreAnalyseWeiter } from "@/lib/analyse-job";
 import { Ladeanzeige, useWizard } from "@/components/wizard/Wizard";
+import {
+  aktiviereEvaluation, archiviereAktuelleEvaluation, istNeuerAuftrag, ladeBericht, ladeSitzung,
+  setzeAktuelleEvaluation, speichereBericht,
+} from "@/lib/evaluation-session";
+import { istWizardSchritt } from "@/lib/wizard";
 import { KontingentHinweis } from "@/components/saas/KontingentHinweis";
 import { zaehleAuswertung } from "@/lib/saas/client";
 import { BewertungsmodellWahl } from "@/components/bewertung/BewertungsmodellWahl";
@@ -101,22 +106,15 @@ function fehlerText(fehler: unknown) {
   return fehler instanceof Error && fehler.message ? fehler.message : "Unknown error.";
 }
 
-// The open report survives page switches within this tab (sessionStorage, never sent anywhere).
-const AKTUELL = "lv-aktuell-v1";
-type Aktuell = { titel: string; beispielId: string | null; bericht: PruefberichtDaten };
-function speichereAktuell(titel: string, beispielId: string | null, bericht: PruefberichtDaten) {
-  try { window.sessionStorage.setItem(AKTUELL, JSON.stringify({ titel, beispielId, bericht })); } catch { /* too large or blocked: start screen next time */ }
+function laufTitel(lauf: Lauf): string {
+  return lauf.art === "datei" ? lauf.datei.name : lauf.titel;
 }
-function ladeAktuell(): Aktuell | null {
-  try {
-    const roh = JSON.parse(window.sessionStorage.getItem(AKTUELL) ?? "null");
-    return roh && typeof roh.titel === "string" && roh.bericht?.lv ? roh : null;
-  } catch {
-    return null;
-  }
-}
-function vergiss() {
-  try { window.sessionStorage.removeItem(AKTUELL); } catch { /* nothing stored */ }
+
+function merkeLauf(lauf: Lauf, stand: { id: string; jobId: string | null; status: "laeuft" | "fertig" | "fehler"; prozent?: number | null; meldung?: string }) {
+  setzeAktuelleEvaluation({
+    id: stand.id, jobId: stand.jobId, titel: laufTitel(lauf), status: stand.status,
+    schritt: "pruefen", prozent: stand.prozent ?? null, meldung: stand.meldung ?? "",
+  });
 }
 
 type Rolle = "lv" | "regel" | "preise";
@@ -150,6 +148,7 @@ export function LvUpload() {
   const [ziehen, setZiehen] = useState(false);
   const [ergebnis, setErgebnis] = useState<Ergebnis>({ phase: "leer" });
   const laufNummer = useRef(0);
+  const lebend = useRef(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const meldungRef = useRef<HTMLDivElement>(null);
 
@@ -169,9 +168,14 @@ export function LvUpload() {
   }, [ergebnis.phase, schritt, setSchritt]);
 
   useEffect(() => {
+    lebend.current = true;
     api.health().then(setHealth).catch(() => setHealth("offline"));
-    // Vault → "Use in analysis" opens /?vault=<id>: that document is put into the file list.
-    const ausVault = new URLSearchParams(window.location.search).get("vault");
+    const params = new URLSearchParams(window.location.search);
+    const ausVault = params.get("vault");
+    const neu = istNeuerAuftrag(params);
+    const beispielId = params.get("beispiel");
+    const jobId = params.get("job");
+    const evalId = params.get("eval");
     if (ausVault) {
       window.history.replaceState(null, "", "/");
       vaultApi.liste(["lv", "regelwerk", "preisliste"]).then((liste) => {
@@ -179,13 +183,31 @@ export function LvUpload() {
         if (treffer) void ausVaultWaehlen(treffer, []);
       }).catch(() => setDateiFehler(t("The vault is unreachable.")));
     }
-    // Coming back from another page: show the report that was open instead of the empty start screen.
-    const offen = new URLSearchParams(window.location.search).get("beispiel") || ausVault ? null : ladeAktuell();
-    if (offen) {
-      const lauf: Lauf = offen.beispielId ? { art: "beispiel", id: offen.beispielId, titel: offen.titel } : { art: "lv", titel: offen.titel, lv: offen.bericht.lv };
-      const fertig: Schritt = { status: "fertig", text: "Restored from this browser session." };
-      setErgebnis({ phase: "fertig", lauf, lv: offen.bericht.lv, bericht: offen.bericht, nummer: ++laufNummer.current, offline: false,
-        schritte: { datei: fertig, import: fertig, pruefung: fertig } });
+    const sitzung = ladeSitzung();
+    const laufend = !neu && !ausVault && !beispielId
+      && (jobId || (sitzung.aktuell?.status === "laeuft" ? sitzung.aktuell.jobId : null));
+    if (laufend) {
+      const id = jobId || sitzung.aktuell!.jobId!;
+      const name = (sitzung.aktuell && (sitzung.aktuell.jobId === id || sitzung.aktuell.id === id) && sitzung.aktuell.titel)
+        || ladeBericht(id)?.titel
+        || sitzung.aktuell?.titel
+        || "Evaluation";
+      aktiviereEvaluation(id);
+      void setzeFortsetzen(id, name);
+      if (!istWizardSchritt(params.get("schritt"))) setSchritt(sitzung.aktuell?.schritt && sitzung.aktuell.schritt !== "hochladen" ? sitzung.aktuell.schritt : "pruefen");
+    } else if (!neu && !ausVault && !beispielId) {
+      // Coming back from another page: show the report that was open instead of the empty start screen.
+      const offen = ladeBericht(evalId || sitzung.aktuell?.id) ?? (sitzung.aktuell ? ladeBericht() : null);
+      if (offen) {
+        if (evalId) aktiviereEvaluation(evalId);
+        const lauf: Lauf = offen.beispielId ? { art: "beispiel", id: offen.beispielId, titel: offen.titel } : { art: "lv", titel: offen.titel, lv: offen.bericht.lv };
+        const fertig: Schritt = { status: "fertig", text: "Restored from this browser session." };
+        setErgebnis({ phase: "fertig", lauf, lv: offen.bericht.lv, bericht: offen.bericht, nummer: ++laufNummer.current, offline: false,
+          schritte: { datei: fertig, import: fertig, pruefung: fertig } });
+        if (!istWizardSchritt(params.get("schritt"))) {
+          setSchritt(sitzung.aktuell?.schritt && sitzung.aktuell.schritt !== "hochladen" ? sitzung.aktuell.schritt : "pruefen");
+        }
+      }
     }
     api.examples().then((liste) => {
       setBeispiele(liste);
@@ -194,7 +216,8 @@ export function LvUpload() {
       const treffer = liste.find((b) => b.id === id);
       if (treffer) void starte({ art: "beispiel", id: treffer.id, titel: treffer.titel });
     }).catch(() => {});
-    // starte is stable enough here: it only runs once, after the example list arrived.
+    return () => { lebend.current = false; };
+    // starte / setzeFortsetzen run only once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -261,9 +284,10 @@ export function LvUpload() {
     // #166: with a live model the review also researches standards on the web (N5), which takes longer.
     const recherche = health !== null && health !== "offline" && !health.mock;
     const nummer = ++laufNummer.current;
-    const aktuell = () => nummer === laufNummer.current;
+    const aktuell = () => nummer === laufNummer.current && lebend.current;
     let schritte = startSchritte(lauf);
     setErgebnis({ phase: "laeuft", lauf, schritte });
+    merkeLauf(lauf, { id: `lokal-${nummer}`, jobId: null, status: "laeuft", prozent: 0, meldung: "" });
     zaehleAuswertung(); // soft plan quota (lib/saas): fire-and-forget, never blocks or fails the run
 
     const scheitern = async (schritt: SchrittId, titel: string, fehler: unknown, tipp: string | null, stand: AnalyseStatus | null = null) => {
@@ -282,6 +306,7 @@ export function LvUpload() {
       }
       if (schritte.pruefung.status === "wartet") schritte.pruefung = { status: "wartet", text: "Not started." };
       setErgebnis({ phase: "fehler", lauf, schritte, titel, meldung, tipp: hinweis, offline: bietetOffline(fehler, erreichbar), stand });
+      merkeLauf(lauf, { id: stand?.job_id ?? `lokal-${nummer}`, jobId: stand?.job_id ?? null, status: "fehler", prozent: stand?.prozent ?? null, meldung });
     };
 
     let lv: LV;
@@ -359,10 +384,12 @@ export function LvUpload() {
       try {
         const ende = await fuehreAnalyseAus(api, anfrage, {
           aktiv: aktuell,
+          aufStart: (jobId) => merkeLauf(lauf, { id: jobId, jobId, status: "laeuft", prozent: 0, meldung: "" }),
           aufStand: (stand) => {
             job.stand = stand;
             schritte = { ...schritte, pruefung: { status: "laeuft", text: stand.meldung } };
             setErgebnis({ phase: "laeuft", lauf, schritte, stand });
+            merkeLauf(lauf, { id: stand.job_id, jobId: stand.job_id, status: "laeuft", prozent: stand.prozent, meldung: stand.meldung });
           },
         });
         if (ende === null) return;
@@ -382,8 +409,49 @@ export function LvUpload() {
       pruefung: { status: "fertig", text: `${anzahl(bericht.findings.length, "Entry", "Entries")} in the report.` },
     };
     setErgebnis({ phase: "fertig", lauf, schritte, lv, bericht, nummer, offline: false, hinweise });
-    speichereAktuell(lauf.art === "datei" ? lauf.datei.name : lauf.titel, lauf.art === "beispiel" ? lauf.id : null, bericht);
+    const fertigId = job.stand?.job_id ?? `lokal-${nummer}`;
+    speichereBericht(laufTitel(lauf), lauf.art === "beispiel" ? lauf.id : null, bericht, fertigId);
+    merkeLauf(lauf, { id: fertigId, jobId: job.stand?.job_id ?? null, status: "fertig", prozent: 100, meldung: "" });
     if (health === "offline") api.health().then(setHealth).catch(() => {});
+  }
+
+  async function setzeFortsetzen(jobId: string, titel: string) {
+    const nummer = ++laufNummer.current;
+    const aktuell = () => nummer === laufNummer.current && lebend.current;
+    const lauf: Lauf = { art: "lv", titel, lv: { name: titel, quelle: "session", positionen: [], summen: {} } };
+    let schritte: Schritte = {
+      datei: { status: "fertig", text: "Restored from this browser session." },
+      import: { status: "fertig", text: "Restored from this browser session." },
+      pruefung: { status: "laeuft", text: "Resuming the analysis …" },
+    };
+    merkeLauf(lauf, { id: jobId, jobId, status: "laeuft", prozent: 0, meldung: "Resuming the analysis …" });
+    setErgebnis({ phase: "laeuft", lauf, schritte, stand: null });
+    const job: { stand: AnalyseStatus | null } = { stand: null };
+    try {
+      const ende = await fuehreAnalyseWeiter(api, jobId, {
+        aktiv: aktuell,
+        aufStand: (stand) => {
+          job.stand = stand;
+          schritte = { ...schritte, pruefung: { status: "laeuft", text: stand.meldung } };
+          setErgebnis({ phase: "laeuft", lauf, schritte, stand });
+          merkeLauf(lauf, { id: stand.job_id, jobId: stand.job_id, status: "laeuft", prozent: stand.prozent, meldung: stand.meldung });
+        },
+      });
+      if (ende === null || !aktuell()) return;
+      const bericht = ende.bericht;
+      const lv = bericht.lv;
+      schritte = { ...schritte, pruefung: { status: "fertig", text: `${anzahl(bericht.findings.length, "Entry", "Entries")} in the report.` } };
+      setErgebnis({ phase: "fertig", lauf: { art: "lv", titel, lv }, schritte, lv, bericht, nummer, offline: false, hinweise: ende.stand.fehler });
+      speichereBericht(titel, null, bericht, jobId);
+      merkeLauf(lauf, { id: jobId, jobId, status: "fertig", prozent: 100, meldung: "" });
+    } catch (fehler) {
+      if (!aktuell()) return;
+      const stand = (fehler as { stand?: AnalyseStatus }).stand ?? job.stand ?? null;
+      const meldung = fehler instanceof Error && fehler.message ? fehler.message : "Unknown error.";
+      schritte = { ...schritte, pruefung: { status: "fehler", text: meldung } };
+      setErgebnis({ phase: "fehler", lauf, schritte, titel: "Review failed", meldung, tipp: null, offline: false, stand });
+      merkeLauf(lauf, { id: jobId, jobId, status: "fehler", meldung });
+    }
   }
 
   async function absenden(event: FormEvent) {
@@ -396,7 +464,7 @@ export function LvUpload() {
   }
 
   function zuruecksetzen() {
-    vergiss();
+    archiviereAktuelleEvaluation();
     setDateien([]);
     setRegelwerk(null);
     if (inputRef.current) inputRef.current.value = "";

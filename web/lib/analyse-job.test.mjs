@@ -1,7 +1,7 @@
 // Run: node --test web/lib/analyse-job.test.mjs  (Node >= 23 strips the TypeScript types of analyse-job.ts)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fuehreAnalyseAus, jobFehlerText } from "./analyse-job.ts";
+import { fuehreAnalyseAus, fuehreAnalyseWeiter, jobFehlerText } from "./analyse-job.ts";
 
 const lv = { name: "Synthetic", quelle: "test", positionen: [], summen: {} };
 const body = { lv, regelwerk: null, preisliste: null };
@@ -62,4 +62,17 @@ test("a replaced run stops polling and resolves with null", async () => {
   const ende = await fuehreAnalyseAus(api, body, { warte: async () => { aktiv = false; }, aktiv: () => aktiv });
   assert.equal(ende, null);
   assert.equal(api.gesehen.filter(([art]) => art === "status").length, 1);
+});
+
+test("aufStart receives the job id immediately, and fuehreAnalyseWeiter resumes without starting again", async () => {
+  const api = fakeApi([stand("laeuft", 2), stand("fertig", 8, { prozent: 100, ergebnis: bericht })]);
+  const starts = [];
+  await fuehreAnalyseAus(api, body, { aufStart: (id) => starts.push(id), warte: sofort });
+  assert.deepEqual(starts, ["j1"]);
+
+  const weiter = fakeApi([stand("laeuft", 4), stand("fertig", 8, { prozent: 100, ergebnis: bericht })]);
+  const ende = await fuehreAnalyseWeiter(weiter, "j1", { warte: sofort });
+  assert.deepEqual(ende.bericht, bericht);
+  assert.equal(weiter.gesehen.some(([art]) => art === "start"), false);
+  assert.deepEqual(weiter.gesehen[0], ["status", "j1"]);
 });
