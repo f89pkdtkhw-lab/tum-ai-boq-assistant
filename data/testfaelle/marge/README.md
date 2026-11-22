@@ -4,7 +4,7 @@
 
 ## Use
 
-- In the app: menu ☰ → More → **Margin** → "Choose Excel file" → load this file. The page reads it in the browser; no backend needed.
+- In the app: menu ☰ → More → **Margin** → "Choose Excel file" → load this file. The page reads it in the browser; no backend needed. Tick the competitors to compare against, optionally exclude IQR outliers, set the project duration (annual operating costs are pro-rated by months/12) and drag the margin slider. Our price never goes below our own costs.
 - Unit test: `web/lib/marge.test.mjs` reads this file and checks the outlier, low confidence and skew cases (`cd web && npm test`).
 
 ## Layout
