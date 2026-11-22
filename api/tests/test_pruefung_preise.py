@@ -231,7 +231,10 @@ def test_failing_service_equals_no_db_plus_warning(preis_db):
 def test_failing_service_without_upload_does_not_crash(preis_db):
     preis_db(lambda: (_ for _ in ()).throw(RuntimeError("x")))
     k = kalkuliere_mit_preis_db(LV_TEST, None)
-    assert k.warnungen and k.ohne_preis == len(LV_TEST.positionen) and not k.vollstaendig
+    assert k.warnungen and not k.vollstaendig
+    # t237: only the index fallback can price here, and every such price is marked as an estimate
+    assert k.ohne_preis + k.geschaetzt_anzahl == len(LV_TEST.positionen)
+    assert all(p.geschaetzt and p.treffer == "index" for p in k.positionen if p.ep is not None)
 
 
 def test_analyse_route_uses_the_price_db_without_upload(preis_db):

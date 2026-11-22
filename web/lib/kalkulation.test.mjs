@@ -76,3 +76,21 @@ test("diff formatting", () => {
   assert.equal(mitVorzeichen(-80, eur), "−€80.00");
   assert.equal(mitVorzeichen(0, eur), "€0.00");
 });
+
+test("t237: estimated prices carry their kind, range and sources; tiles count them", () => {
+  const kalkulation = {
+    waehrung: "EUR", mwst_satz: 0.19, summe_netto: 3124.06, summe_brutto: 3717.63, ohne_preis: 0, vollstaendig: true,
+    enthaelt_schaetzungen: true, geschaetzt_anzahl: 1,
+    positionen: [
+      { oz: "1", menge: 181, einheit: "m²", ep: 17.26, gp: 3124.06, ep_lv: null, gp_lv: null, treffer: "index", preis_eintrag: null,
+        aehnlichkeit: null, in_summe: true, geschaetzt: true, ep_von: 10.62, ep_bis: 23.9,
+        preis_quellen: [{ titel: "Destatis Baupreisindex", url: "https://www-genesis.destatis.de/x" }], schaetzung_hinweis: "Index estimate" },
+      { oz: "2", menge: 1, einheit: "St", ep: 5, gp: 5, ep_lv: null, gp_lv: null, treffer: "oz", preis_eintrag: "a", aehnlichkeit: 1, in_summe: true },
+    ],
+  };
+  const zeilen = kalkulationsZeilen({ lv, kalkulation });
+  assert.deepEqual(zeilen[0].schaetzung, { art: "index", von: 10.62, bis: 23.9, quellen: kalkulation.positionen[0].preis_quellen, hinweis: "Index estimate" });
+  assert.equal(zeilen[0].ohnePreis, false);
+  assert.equal(zeilen[1].schaetzung, null);
+  assert.equal(kosten(kalkulation, undefined, zeilen).geschaetzt, 1);
+});

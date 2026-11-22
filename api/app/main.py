@@ -17,6 +17,7 @@ from .lv.importer import importiere
 from .modelle import Beispiel, Beispiele, Kennzahlen, LV, Pruefbericht
 from .modelle import Preisliste  # B6 #112
 from .pruefung.preise import kalkuliere_mit_preis_db  # B6 #112, B9 #133
+from .pruefung.preis_fallback import ergaenze_recherchepreise  # t237
 from .pruefung.regeln import pruefe_regeln
 from .pruefung.mengen import pruefe_mengen
 from .pruefung.llm_pruefung import pruefe_mit_llm, pruefe_mit_llm_status  # noqa: F401 (pruefe_mit_llm: golden tests)
@@ -279,7 +280,10 @@ def _analyse(anfrage: AnalyseAnfrage, fortschritt: Fortschritt | None = None):
     bericht = _pruefbericht(anfrage.lv, vorgaben, fortschritt, gesamt, bewertungsmodell=anfrage.bewertungsmodell)
     # B6 #112 / B9 #133: upload first, price database fills the gaps; no price source → no `kalkulation` field
     melde(preis_schritt, gesamt, "Pricing the bill (price list, price database) …")
-    bericht.kalkulation = kalkuliere_mit_preis_db(anfrage.lv, anfrage.preisliste)
+    bericht.kalkulation = kalkuliere_mit_preis_db(anfrage.lv, anfrage.preisliste)  # + index price fallback
+    if bericht.kalkulation is not None and any(k.treffer == "kein_treffer" for k in bericht.kalkulation.positionen):
+        melde(preis_schritt, gesamt, "Researching prices for items without a price …", 0.5)
+        bericht.kalkulation = ergaenze_recherchepreise(bericht.kalkulation, anfrage.lv)  # t237: web research
     if bericht.kalkulation is not None:  # B8 #114: adjustments + estimated bill, only with a price source
         bericht = ergaenze_geschaetztes_lv(bericht, anfrage.preisliste)
     melde(preis_schritt, gesamt, "Price calculation: no price source." if bericht.kalkulation is None

@@ -50,7 +50,7 @@ from threading import Lock
 from ..ai import llm
 from ..fortschritt import Fortschritt, teilschritt
 from ..modelle import (
-    Finding, KiSchritt, LV, Position, Pruefbericht, Recherche, RechercheErgebnis, RechercheQuelle,
+    Finding, Kalkulation, KiSchritt, LV, Position, Pruefbericht, Recherche, RechercheErgebnis, RechercheQuelle,
 )
 
 log = logging.getLogger(__name__)
@@ -270,11 +270,11 @@ def gruppen_preise(bericht: Pruefbericht, max_items: int) -> list[Gruppe]:
     for k in bericht.kalkulation.positionen:
         if k.ep_lv is None or k.ep_lv <= 0:
             continue
-        if k.ep is not None and k.ep > 0:
+        if k.ep is not None and k.ep > 0 and not k.geschaetzt:
             abweichung = abs(k.ep_lv - k.ep) / k.ep
             if abweichung < PREIS_SCHWELLE:
                 continue
-        elif k.treffer != "kein_treffer":
+        elif k.treffer not in ("kein_treffer", "index", "recherche"):
             continue
         else:
             abweichung = 0.0
@@ -287,7 +287,7 @@ def gruppen_preise(bericht: Pruefbericht, max_items: int) -> list[Gruppe]:
         if len(liste) < max_items:
             liste.append({"oz": k.oz, "kurztext": k.kurztext or (p.kurztext if p else ""),
                           "langtext": _kurz(p.langtext, MAX_LANGTEXT) if p else "", "einheit": k.einheit,
-                          "ep_lv": k.ep_lv, "ep_preisquelle": k.ep})
+                          "ep_lv": k.ep_lv, "ep_preisquelle": None if k.geschaetzt else k.ep})
     return [Gruppe("preise", name, eingabe, 1) for name, eingabe in gruppen.items()]
 
 
@@ -620,3 +620,79 @@ def vertiefe_recherche(bericht: Pruefbericht, *, aufruf: Aufruf | None = None,
     return _mit_recherche(neuer, Recherche(
         status=status, meldung=" ".join(teile), aufrufe=aufrufe, suchen=budget.verbraucht,
         ergebnisse=sorted(ergebnisse, key=lambda r: ("positionen", "preise", "berichte").index(r.schritt))))
+
+
+# ----------------------------------------------------------------------------------------------
+# Price fallback (t237): research market prices for items that have no price at all
+# ----------------------------------------------------------------------------------------------
+FEHLENDE_PREISE_HINWEIS = (
+    "These items have no unit price in the price list or price database. For every item give the current "
+    "German market range marktpreis_von/marktpreis_bis (EUR net per the given unit, supply and installation) "
+    "as stated in the sources; einschaetzung is 'unklar' when ep_lv is null.")
+STANDARD_PREIS_TIMEOUT = 180.0
+MAX_PREIS_GRUPPEN = 6
+
+
+def gruppen_fehlende_preise(lv: LV, kalkulation: Kalkulation, max_items: int) -> list[Gruppe]:
+    """Items still ``kein_treffer`` (with a unit), grouped by trade, at most ``max_items`` per group."""
+    positionen = {p.oz: p for p in lv.positionen}
+    gruppen: OrderedDict[str, list[dict]] = OrderedDict()
+    for k in kalkulation.positionen:
+        if k.treffer != "kein_treffer" or not k.einheit:
+            continue
+        p = positionen.get(k.oz)
+        liste = gruppen.setdefault(_gewerk(p), [])
+        if len(liste) < max_items and all(e["oz"] != k.oz for e in liste):
+            liste.append({"oz": k.oz, "kurztext": k.kurztext or (p.kurztext if p else ""),
+                          "langtext": _kurz(p.langtext, MAX_LANGTEXT) if p else "", "einheit": k.einheit,
+                          "ep_lv": k.ep_lv, "ep_preisquelle": None})
+    return [Gruppe("preise", name, eingabe, 1) for name, eingabe in gruppen.items()][:MAX_PREIS_GRUPPEN]
+
+
+def recherchiere_fehlende_preise(lv: LV, kalkulation: Kalkulation, *, aufruf: Aufruf | None = None,
+                                 einstellungen: Einstellungen | None = None,
+                                 fortschritt: Fortschritt | None = None
+                                 ) -> tuple[dict[str, RechercheErgebnis], list[str]]:
+    """({oz: sourced result with marktpreis_von/bis}, warnings) for items without any price.
+
+    Same helper, prompt shape and source validation as the ``preise`` step of the deep research
+    (``validiere``: only URLs seen in this call count). Off (no warning) when deep research is off or the
+    mock runs; ``aufruf`` replaces the Claude call in tests. Never raises."""
+    if aufruf is None:
+        laeuft, grund = aktiv()
+        if not laeuft:
+            return {}, ([f"Web price research skipped: {grund}"] if grund else [])
+    cfg = einstellungen or Einstellungen.aus_env()
+    gruppen = gruppen_fehlende_preise(lv, kalkulation, cfg.max_items)
+    if not gruppen:
+        return {}, []
+    aufruf = aufruf or claude_recherche
+    timeout = llm.seconds("PREIS_RECHERCHE_TIMEOUT", STANDARD_PREIS_TIMEOUT)
+    frist = time.monotonic() + timeout
+
+    def eine(gruppe: Gruppe):
+        rest = max(1.0, frist - time.monotonic())
+        return gruppe, aufruf(f"{FEHLENDE_PREISE_HINWEIS}\n{_prompt(gruppe)}", system=SYSTEM,
+                              max_uses=cfg.max_uses, max_tokens=MAX_TOKENS, timeout=rest)
+
+    ergebnisse: dict[str, RechercheErgebnis] = {}
+    fehler: list[str] = []
+    pool = ThreadPoolExecutor(max_workers=min(cfg.parallel, len(gruppen)), thread_name_prefix="preis-recherche")
+    try:
+        futures = [pool.submit(contextvars.copy_context().run, eine, g) for g in gruppen]
+        try:
+            for future in as_completed(futures, timeout=timeout + 1):
+                try:
+                    gruppe, antwort = future.result()
+                except Exception as exc:  # noqa: BLE001
+                    text = str(exc) if isinstance(exc, llm.LLMError) else f"call failed ({type(exc).__name__})"
+                    fehler.append(f"Web price research: {text}")
+                    continue
+                for _, ergebnis in validiere(gruppe, antwort):
+                    if ergebnis.oz and (ergebnis.marktpreis_von or ergebnis.marktpreis_bis):
+                        ergebnisse.setdefault(ergebnis.oz, ergebnis)
+        except FutureTimeout:
+            fehler.append(f"Web price research did not finish within {timeout:g} s.")
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+    return ergebnisse, list(dict.fromkeys(fehler))

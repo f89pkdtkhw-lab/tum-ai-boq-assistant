@@ -973,4 +973,11 @@ export const DE: Record<string, string> = {
   "not saved": "nicht gespeichert",
   "The price database is empty.": "Die Preisdatenbank ist leer.",
   "No prices match.": "Keine passenden Preise.",
+  // Estimated fallback prices (t237)
+  "Estimated – index": "Geschätzt – Index",
+  "Estimated – research": "Geschätzt – Recherche",
+  "Estimated price: show source": "Geschätzter Preis: Quelle anzeigen",
+  "Guide value, not a quote. Check before pricing the bid.": "Richtwert, kein Angebot. Vor der Angebotskalkulation prüfen.",
+  "Contains estimates": "Enthält Schätzungen",
+  "{n} items have no price in the price list or database; their unit price is estimated from a price index or web research.": "{n} Positionen haben keinen Preis in Preisliste oder Datenbank; ihr EP ist per Preisindex oder Webrecherche geschätzt.",
 };
