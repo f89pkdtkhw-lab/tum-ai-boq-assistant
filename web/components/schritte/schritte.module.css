@@ -1,16 +1,16 @@
 /* Step reports page. Tokens from globals.css, same look as the export page. */
 .seite {
   max-width: 880px; margin: 0 auto; display: grid; gap: 16px; color: var(--ink);
-  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(64px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  padding: 8px max(var(--page-x, 28px), env(safe-area-inset-right, 0px)) calc(64px + env(safe-area-inset-bottom, 0px)) max(var(--page-x, 28px), env(safe-area-inset-left, 0px));
 }
 .seite :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .kopf { display: grid; gap: 6px; }
-.kopf h1 { margin: 0; font-size: 34px; letter-spacing: -.025em; }
+.kopf h1 { margin: 0; font-size: 28px; letter-spacing: -.03em; }
 .zurueck { color: var(--accent); text-decoration: none; font-size: 13.5px; min-height: 34px; display: inline-flex; align-items: center; }
 .muted { color: var(--muted); margin: 0; }
 .karte {
   background: var(--card); border-radius: var(--r-lg); padding: 20px 24px; display: grid; gap: 10px; min-width: 0;
-  box-shadow: 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow);
+  box-shadow: 0 1px 2px var(--shadow);
 }
 .karte h2 { margin: 0; font-size: 20px; letter-spacing: -.01em; }
 .karte p { margin: 0; overflow-wrap: anywhere; }
