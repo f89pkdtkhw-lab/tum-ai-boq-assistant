@@ -18,7 +18,7 @@ from typing import Callable, Literal
 from pydantic import BaseModel
 
 from .ai import llm
-from .fortschritt import AnalyseAbgebrochen, Fortschritt
+from .fortschritt import AnalyseAbgebrochen, Fortschritt, setze as setze_fortschritt, zuruecksetzen as reset_fortschritt
 from .modelle import Pruefbericht
 
 log = logging.getLogger(__name__)
@@ -185,6 +185,7 @@ def starte(arbeit: Callable[[Fortschritt], Pruefbericht], gesamt: int) -> str:
         _JOBS[job.id] = job
 
     def lauf() -> None:
+        token = setze_fortschritt(job)
         try:
             job.beenden(arbeit(job))
         except AnalyseAbgebrochen:
@@ -192,6 +193,8 @@ def starte(arbeit: Callable[[Fortschritt], Pruefbericht], gesamt: int) -> str:
         except Exception as exc:  # the pipeline must never kill the thread silently
             log.exception("Analysis job %s failed", job.id)
             job.scheitern(f"The analysis failed: {type(exc).__name__}: {str(exc)[:300]}")
+        finally:
+            reset_fortschritt(token)
 
     # copy_context: the job thread keeps the request's answer language (#196)
     threading.Thread(target=contextvars.copy_context().run, args=(lauf,), name=f"analyse-{job.id[:8]}",

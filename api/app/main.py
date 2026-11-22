@@ -93,6 +93,8 @@ verbinde_history_db()
 
 from .ai.schluessel import router as key_router  # #156: enter the Claude API key in the UI
 app.include_router(key_router)
+from .ai.dev_options import router as dev_options_router  # developer options + Grok Bot mode
+app.include_router(dev_options_router)
 
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=4000)

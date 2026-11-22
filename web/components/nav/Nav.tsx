@@ -7,7 +7,6 @@ import styles from "./nav.module.css";
 import { Logo } from "../logo/Logo";
 import { Icon, type IconName } from "../icon/Icon";
 import { useEinstellungen, nachts } from "@/lib/einstellungen";
-import { KeySettings } from "@/components/schluessel/KeySettings";
 
 type Eintrag = { href: string; label: string; icon: IconName };
 // Menu as sketched by the team: start an evaluation, submit files, history, settings, theme. Advanced pages sit under "More".
@@ -90,7 +89,6 @@ export function Nav() {
         </button>
         <Link href="/" className={styles.markeMobil}><Logo size={26} />BoQ Review</Link>
         <span className={styles.platz} />
-        <KeySettings compact />
         <ThemaSchalter />
       </header>
     </>

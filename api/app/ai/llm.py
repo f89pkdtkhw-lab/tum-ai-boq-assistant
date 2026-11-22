@@ -1,7 +1,9 @@
 """One interface for all model providers that may be available at the competition.
 
 Select through environment variables (see .env.example):
-    LLM_PROVIDER   anthropic | openai | azure | gemini | mock   (empty = first provider with a key, otherwise mock)
+    LLM_PROVIDER   anthropic | openai | azure | gemini | mock | grokbot
+                   (empty = first provider with a key, otherwise mock)
+
     LLM_MODEL      Model name; defaults to a provider-specific model when omitted
     LLM_TIMEOUT    Seconds per model call (default 60); the BoQ review has its own LLM_REVIEW_TIMEOUT
 
@@ -42,6 +44,7 @@ DEFAULT_MODELS = {
     "azure": "",
     "gemini": "gemini-2.5-flash",
     "mock": "mock",
+    "grokbot": "grok-bot",
 }
 KEY_FOR = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "azure": "AZURE_OPENAI_API_KEY",
            "gemini": "GEMINI_API_KEY"}
@@ -147,6 +150,9 @@ def status():
         return {"provider": "mock", "model": DEFAULT_MODELS["mock"], "mock": True, "keys": _keys(),
                 "reason": str(exc), "key_set": False, "key_source": None}
     chosen = model(name)
+    if name == "grokbot":
+        return {"provider": name, "model": chosen, "mock": False, "keys": _keys(), "reason": None,
+                "key_set": False, "key_source": None}
     key_name = KEY_FOR.get(name, KEY_FOR["anthropic"])  # #156: "key set" for the provider in use (Claude on mock)
     result = {"provider": name, "model": chosen, "mock": name == "mock", "keys": _keys(), "reason": None,
               "key_set": bool(env(key_name)),
@@ -168,16 +174,20 @@ def complete(prompt, system="", max_tokens=1024, *, timeout=None, json_mode=Fals
     name = provider()
     chosen = model(name)
     started = time.perf_counter()
-    if name != "mock" and not env(KEY_FOR[name]):
+    if name not in ("mock", "grokbot") and not env(KEY_FOR[name]):
         raise LLMError(f"Missing {KEY_FOR[name]} for {name}. Without a key, set LLM_PROVIDER=mock.")
     if not chosen:
         raise LLMError(f"Set LLM_MODEL for {name} (model name from the provider documentation).")
     limit = timeout if timeout and timeout > 0 else seconds()
-    if bilder and name != "anthropic":
+    if name == "grokbot":
+        from . import grokbot as _grokbot_mod
+        limit = _grokbot_mod.wartezeit(timeout)
+    if bilder and name not in ("anthropic", "grokbot"):
         raise LLMError(f"{name} cannot read page images here; AI page reading needs Claude (LLM_PROVIDER=anthropic).")
     extra = {"bilder": bilder} if bilder else {}
     try:
-        text = {"anthropic": _anthropic, "openai": _openai, "azure": _azure, "gemini": _gemini, "mock": _mock}[name](
+        text = {"anthropic": _anthropic, "openai": _openai, "azure": _azure, "gemini": _gemini, "mock": _mock,
+                "grokbot": _grokbot}[name](
             prompt, system, chosen, max_tokens, json_mode=json_mode, timeout=limit, effort=effort, **extra)
     except LLMError:
         raise
@@ -204,6 +214,9 @@ def complete_with_fallback(prompt, system="", max_tokens=1024, *, timeout=None, 
     """
     state = status()
     limit = timeout if timeout and timeout > 0 else seconds()
+    if state["provider"] == "grokbot":
+        from . import grokbot as _grokbot_mod
+        limit = _grokbot_mod.wartezeit(timeout)
 
     def fallback(reason):
         answer = mock(prompt, system, max_tokens)
@@ -357,6 +370,30 @@ def _mock(prompt, system, chosen, max_tokens, json_mode=False, timeout=None, eff
 def mock(prompt, system="", max_tokens=1024):
     """Explicit offline call, independent of keys and provider configuration."""
     return Answer(_mock(prompt, system, DEFAULT_MODELS["mock"], max_tokens), "mock", DEFAULT_MODELS["mock"], 0)
+
+
+def _grokbot(prompt, system, chosen, max_tokens, json_mode=False, timeout=None, effort=None, bilder=None):
+    """File-queue provider: the job waits in GROKBOT_QUEUE_DIR for an assistant answer."""
+    from . import grokbot
+    data = grokbot.complete(prompt, system, chosen, max_tokens, json_mode=json_mode, timeout=timeout,
+                            effort=effort, kind="complete", bilder=bilder)
+    text = (data.get("text") or "").strip()
+    if not text:
+        raise LLMError("Grok Bot returned an empty answer.")
+    return text
+
+
+def _grokbot_research(prompt, system="", max_tokens=8000, *, timeout=None, effort=None, max_searches=5):
+    from . import grokbot
+    system = sprache.mit_hinweis(system)
+    started = time.perf_counter()
+    data = grokbot.complete(prompt, system, model("grokbot"), max_tokens, timeout=timeout, effort=effort,
+                            kind="research", max_searches=max_searches)
+    text = (data.get("text") or "").strip()
+    if not text:
+        raise LLMError("Grok Bot returned an empty research answer.")
+    data["text"] = text
+    return grokbot.antwort_zu_research(data, started, model("grokbot"))
 
 
 @dataclass(frozen=True)
@@ -587,6 +624,9 @@ def research(prompt, system="", max_tokens=8000, *, max_searches=5, timeout=None
     other providers and the mock answer through complete() without citations.
     """
     name = provider()
+    if name == "grokbot":
+        return _grokbot_research(prompt, system, max_tokens, timeout=timeout, effort=effort,
+                                 max_searches=max_searches)
     if name != "anthropic":
         answer = complete(prompt, system, max_tokens, timeout=timeout, effort=effort)
         return ResearchAnswer(answer.text, answer.provider, answer.model, answer.ms)
