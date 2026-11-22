@@ -131,19 +131,16 @@ export function WizardFuss() {
         onClick={() => i > 0 && setSchritt(WIZARD_IDS[i - 1])}>{t("Back")}</button>
       <span className={styles.fussHint} />
       <div className={styles.fussPush}>
-        <button type="button" className={styles.knopf} disabled={!kannWeiter && schritt !== "export"}
+        {/* Export step: all downloads sit in the toolbar on the page, so the footer only offers Back. */}
+        {schritt !== "export" && <button type="button" className={styles.knopf} disabled={!kannWeiter}
           onClick={() => {
-            if (schritt === "export") {
-              document.getElementById("wizard-export")?.click();
-              return;
-            }
             if (!kannWeiter) return;
             const naechster = WIZARD_IDS[i + 1];
             if (naechster === "marge" || naechster === "export") router.push(wizardPfad(naechster));
             else setSchritt(naechster);
           }}>
           {t(WIZARD_WEITER[schritt])}
-        </button>
+        </button>}
       </div>
     </footer>
   );
