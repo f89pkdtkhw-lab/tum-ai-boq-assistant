@@ -1,3 +1,20 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// Login/subscription settings (docs/abo.md) may sit in the repository root .env.local next to the model keys.
+// Only these names are taken from there, never overriding web/.env.local or the shell; nothing is logged.
+const SAAS_ENV = /^(AUTH_[A-Z_]+|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|ADMIN_EMAILS|APP_URL|LV_SCOUT_DATA_DIR|DEV_OPTIONS_CODE)$/;
+try {
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".env.local");
+  for (const zeile of readFileSync(root, "utf8").split(/\r?\n/)) {
+    const m = zeile.match(/^\s*(?:export\s+)?([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (!m || !SAAS_ENV.test(m[1]) || process.env[m[1]] !== undefined) continue;
+    const wert = m[2].replace(/^(['"])(.*)\1$/, "$2");
+    if (wert) process.env[m[1]] = wert;
+  }
+} catch { /* no root .env.local: accounts run in demo mode */ }
+
 // The UI calls the backend at /backend/... . Locally, FastAPI runs on port 8000;
 // for deployment, set API_URL to the public backend address to avoid CORS issues.
 const api = (process.env.API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");

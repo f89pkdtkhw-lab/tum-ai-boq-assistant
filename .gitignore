@@ -24,3 +24,6 @@ graphify-out/
 
 # Local typed document exports; never commit confidential generated data.
 import-output/
+
+# LV Scout accounts and plans (lib/saas): JSON store and generated auth secret
+.data/
