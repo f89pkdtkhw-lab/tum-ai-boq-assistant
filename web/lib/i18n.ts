@@ -1024,6 +1024,13 @@ export const DE: Record<string, string> = {
   "Use on the margin page": "Auf der Margin-Seite verwenden",
   "Competitor bid files you load on the margin page are filed here automatically. The same file is stored only once.": "Wettbewerbsdateien, die du auf der Margin-Seite lädst, landen hier automatisch. Dieselbe Datei wird nur einmal gespeichert.",
   "The vault has no competitor bid files yet. Files you load on the margin page are stored automatically.": "Im Vault liegt noch keine Wettbewerbsdatei. Dateien, die du auf der Margin-Seite lädst, werden automatisch gespeichert.",
+  "Choose PDF": "PDF wählen",
+  "Choose PDF from vault": "PDF aus dem Vault wählen",
+  "Open in margin comparison": "Im Margin-Vergleich öffnen",
+  "Please choose a PDF file.": "Bitte wähle eine PDF-Datei.",
+  "The vault has no PDF files yet.": "Im Vault liegt noch keine PDF-Datei.",
+  "The Excel was saved in the vault as a new version.": "Die Excel wurde als neue Version im Vault gespeichert.",
+  "PDF · max. 10 MiB": "PDF · max. 10 MiB",
   "Price lists you upload under Submit are filed in the vault automatically. The same file is stored only once.": "Preislisten, die du unter Einreichen hochlädst, landen automatisch im Vault. Dieselbe Datei wird nur einmal gespeichert.",
 };
 
