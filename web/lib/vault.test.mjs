@@ -1,7 +1,7 @@
 // Run: node --test web/lib/vault.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { besitzerKopf, filtereVault, groesseText, gruppiereNachLv, rolleFuerTyp, setzeBesitzer, tabAusQuery, tagsAusText } from "./vault.ts";
+import { besitzerKopf, defaultWettbewerb, filtereVault, groesseText, gruppiereNachLv, rolleFuerTyp, setzeBesitzer, sollStandardMargeLaden, tabAusQuery, tagsAusText } from "./vault.ts";
 
 const e = (id, typ, am, extra = {}) => ({ id, typ, dateiname: `${id}.json`, groesse: 1, hash: id, hochgeladen_am: am, tags: [], projekt: null,
   besitzer: null, quelle: "analyse", lv_schluessel: null, lv_name: null, version: null, ...extra });
@@ -45,4 +45,27 @@ test("search, tags, size and owner header", () => {
   assert.deepEqual(besitzerKopf(), {});
   setzeBesitzer("s@x.de");
   assert.deepEqual(besitzerKopf(), { "X-LV-Scout-User": "s@x.de" });
+});
+
+
+test("default competitor file is the seeded demo, then a file named margin-demo.xlsx", () => {
+  assert.equal(defaultWettbewerb([]), null);
+  const pdf = e("p", "wettbewerb", "2026-11-22T08:00:00+00:00", { dateiname: "margin-demo.pdf", quelle: "ki" });
+  const upload = e("u", "wettbewerb", "2026-11-22T09:00:00+00:00", { dateiname: "andere.xlsx", quelle: "upload" });
+  const named = e("n", "wettbewerb", "2026-11-22T10:00:00+00:00", { dateiname: "margin-demo.xlsx", quelle: "upload" });
+  const seeded = e("s", "wettbewerb", "2026-11-22T07:00:00+00:00", { dateiname: "margin-demo.xlsx", quelle: "default" });
+  assert.equal(defaultWettbewerb([pdf, upload]), null);
+  assert.equal(defaultWettbewerb([pdf, upload, named])?.id, "n");
+  assert.equal(defaultWettbewerb([named, seeded, upload])?.id, "s");
+});
+
+test("the margin page auto-loads the demo only when no other competitor Excel is in the vault", () => {
+  const pdf = e("p", "wettbewerb", "2026-11-22T08:00:00+00:00", { dateiname: "angebot.pdf", quelle: "ki" });
+  const upload = e("u", "wettbewerb", "2026-11-22T09:00:00+00:00", { dateiname: "andere.xlsx", quelle: "upload" });
+  const seeded = e("s", "wettbewerb", "2026-11-22T07:00:00+00:00", { dateiname: "margin-demo.xlsx", quelle: "default" });
+  assert.equal(sollStandardMargeLaden([]), "fallback");
+  assert.equal(sollStandardMargeLaden([pdf]), "fallback");
+  assert.equal(sollStandardMargeLaden([seeded, pdf])?.id, "s");
+  assert.equal(sollStandardMargeLaden([seeded, upload]), null);
+  assert.equal(sollStandardMargeLaden([upload]), null);
 });

@@ -8,7 +8,10 @@
   timestamp and a reference to its bill (``lv_schluessel``), older versions stay.
 
 Routes: ``GET /api/vault`` (``?typ=``, ``?lv=``), ``POST /api/vault`` (multipart ``datei`` + ``typ``),
-``GET /api/vault/{id}``, ``GET /api/vault/{id}/datei``, ``PATCH /api/vault/{id}``, ``DELETE /api/vault/{id}``.
+``GET /api/vault/defaults/margin-demo`` (bundled demo competitor Excel), ``GET /api/vault/{id}``,
+``GET /api/vault/{id}/datei``, ``PATCH /api/vault/{id}``, ``DELETE /api/vault/{id}``.
+Listing competitor files seeds ``data/defaults/margin-demo.xlsx`` into the vault once (``quelle=default``),
+unless ``LV_SCOUT_SEED_DEFAULTS`` is ``0``. Deleting the seeded file does not put it back.
 All storage is local and shared by every account (demo); ``besitzer`` records the signed-in e-mail if the UI sends it.
 Storing never breaks an import or an analysis: ``lege_ab``/``archiviere`` swallow and log errors (no content logged).
 """
@@ -64,6 +67,79 @@ class VaultAenderung(BaseModel):
 def vault_dir() -> Path:
     eigen = os.environ.get("LV_SCOUT_VAULT_DIR")
     return Path(eigen) if eigen else Path(__file__).resolve().parents[2] / "data" / "vault"
+
+
+DEFAULT_MARGIN_NAME = "margin-demo.xlsx"
+DEFAULT_MARGIN_QUELLE = "default"
+
+
+def default_margin_pfad() -> Path:
+    """Bundled demo competitor Excel that ships with the repository."""
+    return Path(__file__).resolve().parents[2] / "data" / "defaults" / DEFAULT_MARGIN_NAME
+
+
+def _seed_erlaubt() -> bool:
+    return os.environ.get("LV_SCOUT_SEED_DEFAULTS", "1").strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _seed_flag() -> Path:
+    return vault_dir() / ".seeded-defaults"
+
+
+def _seed_schon(name: str) -> bool:
+    try:
+        roh = json.loads(_seed_flag().read_text("utf-8"))
+        return bool(isinstance(roh, dict) and roh.get(name))
+    except (OSError, ValueError):
+        return False
+
+
+def _merke_seed(name: str) -> None:
+    pfad = _seed_flag()
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        roh = json.loads(pfad.read_text("utf-8"))
+        merker = roh if isinstance(roh, dict) else {}
+    except (OSError, ValueError):
+        merker = {}
+    merker[name] = True
+    tmp = pfad.with_suffix(".tmp")
+    tmp.write_text(json.dumps(merker, ensure_ascii=False, indent=1), "utf-8")
+    tmp.replace(pfad)
+
+
+def stelle_standard_wettbewerb_bereit() -> VaultEintrag | None:
+    """Copy the bundled demo competitor Excel into the vault once (quelle=default)."""
+    if not _seed_erlaubt():
+        return None
+    pfad = default_margin_pfad()
+    if not pfad.is_file():
+        return None
+    try:
+        inhalt = pfad.read_bytes()
+    except OSError as exc:
+        log.warning("Vault: could not read the default margin file (%s)", type(exc).__name__)
+        return None
+    if not inhalt:
+        return None
+    digest = hashlib.sha256(inhalt).hexdigest()
+    with _LOCK:
+        for e in _lade():
+            if e["typ"] == "wettbewerb" and e["hash"] == digest and _datei_pfad(e).exists():
+                _merke_seed(DEFAULT_MARGIN_NAME)
+                return VaultEintrag.model_validate(e)
+        if _seed_schon(DEFAULT_MARGIN_NAME):
+            return None
+    try:
+        eintrag, _ = speichere(
+            inhalt, DEFAULT_MARGIN_NAME, "wettbewerb",
+            quelle=DEFAULT_MARGIN_QUELLE, tags=["demo"], projekt="Kindertagesstätte Nord",
+        )
+        _merke_seed(DEFAULT_MARGIN_NAME)
+        return eintrag
+    except Exception as exc:  # noqa: BLE001 - seeding must never break listing or the margin page
+        log.warning("Vault: could not seed the default margin file (%s)", type(exc).__name__)
+        return None
 
 
 def _index_pfad() -> Path:
@@ -206,8 +282,23 @@ def _finde(eintrag_id: str) -> dict:
     raise HTTPException(404, "Document not found in the vault.")
 
 
+@router.get("/api/vault/defaults/margin-demo")
+def standard_margin_datei():
+    """Bundled demo competitor Excel, even if it was removed from the vault."""
+    pfad = default_margin_pfad()
+    if not pfad.is_file():
+        raise HTTPException(404, "The default competitor file is missing.")
+    return FileResponse(
+        pfad,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename=DEFAULT_MARGIN_NAME,
+    )
+
+
 @router.get("/api/vault", response_model=list[VaultEintrag])
 def liste(typ: str | None = Query(None), lv: str | None = Query(None)):
+    if typ is None or "wettbewerb" in {t.strip() for t in typ.split(",")}:
+        stelle_standard_wettbewerb_bereit()
     return eintraege(typ, lv)
 
 
