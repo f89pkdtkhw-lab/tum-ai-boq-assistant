@@ -9,7 +9,7 @@ Before submitting a bid, an estimator needs to know which positions to correct, 
 Run this command from the repository root with Python 3.11+ and Node.js 20.9+ (including npm).
 
 ```sh
-python tools/dev.py
+python tools/dev.py --install
 ```
 
 On a fresh checkout the launcher installs the Python and web dependencies. Open [the app on port 3000](http://localhost:3000). The [API health endpoint](http://localhost:8000/health) shows the backend and model status. Use `python3` if your system has no `python` command.
