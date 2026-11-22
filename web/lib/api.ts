@@ -153,14 +153,33 @@ export type AnalyseStatus = {
   sekunden: number; ergebnis?: Pruefbericht | null;
 };
 
+// Synchronous model calls (Grok Bot queue up to 900 s). Reuse an identical in-flight POST
+// so a remount or a retry after a dropped proxy does not enqueue a second job.
+const LANGSAME_POSTS = new Set(["/api/lv/ai-evaluation", "/api/ask"]);
+const laufendePosts = new Map<string, Promise<unknown>>();
+
+async function once<T>(path: string, init: RequestInit | undefined, run: () => Promise<T>): Promise<T> {
+  const method = (init?.method ?? "GET").toUpperCase();
+  if (method !== "POST" || !LANGSAME_POSTS.has(path) || typeof init?.body !== "string") return run();
+  const schluessel = `${path}\n${init.body}`;
+  const offen = laufendePosts.get(schluessel);
+  if (offen) return offen as Promise<T>;
+  const lauf = run().finally(() => { if (laufendePosts.get(schluessel) === lauf) laufendePosts.delete(schluessel); });
+  laufendePosts.set(schluessel, lauf);
+  return lauf;
+}
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/backend${path}`, init);
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = typeof body.detail === "string" ? body.detail : `Request failed (${response.status}). Please check the input.`;
-    throw Object.assign(new Error(detail), { status: response.status });
-  }
-  return body as T;
+  return once(path, init, async () => {
+    // No short AbortController: the Grok Bot bridge may need the full proxyTimeout (960 s).
+    const response = await fetch(`/backend${path}`, init);
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = typeof body.detail === "string" ? body.detail : `Request failed (${response.status}). Please check the input.`;
+      throw Object.assign(new Error(detail), { status: response.status });
+    }
+    return body as T;
+  });
 }
 
 function upload<T>(path: string, datei: File) {
