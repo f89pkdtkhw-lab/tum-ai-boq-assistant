@@ -3,7 +3,10 @@
 // Margin page (variant A): pick competitors with checkboxes, set our margin on an iOS-style
 // slider (red at the cost floor → green at/above the competitor median). Logic in lib/marge.ts.
 import { useEffect, useMemo, useState } from "react";
+import { ActionSheet } from "../ui/ActionSheet";
+import { TYP_LABEL, datumText, vaultApi, type VaultEintrag } from "@/lib/vault";
 import { useEinstellungen } from "@/lib/einstellungen";
+import { api } from "@/lib/api";
 import { auswerten, leseGebote, leseXlsx, type Bieter, type Gebot } from "@/lib/marge";
 import { speichereMargeStand } from "@/lib/wizard";
 import { Icon } from "../icon/Icon";
@@ -27,6 +30,10 @@ export function Marge() {
   const [gebote, setGebote] = useState<Gebot[]>([]);
   const [datei, setDatei] = useState<string | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
+  const [vaultListe, setVaultListe] = useState<VaultEintrag[] | null>(null);
+  const [kiLaeuft, setKiLaeuft] = useState(false);
+  const [download, setDownload] = useState<{ name: string; url: string } | null>(null);
+  const [hinweis, setHinweis] = useState<string | null>(null);
   const [wahl, setWahl] = useState<Set<string> | null>(null);
   const [suche, setSuche] = useState("");
   const [ausreisser, setAusreisser] = useState(true);
@@ -57,16 +64,67 @@ export function Marge() {
     </th>
   );
 
-  async function laden(file: File | undefined) {
+  async function laden(file: File | undefined, alreadyStored = false) {
     if (!file) return;
     setFehler(null);
     try {
       const g = leseGebote(await leseXlsx(await file.arrayBuffer()));
       setGebote(g); setDatei(file.name); setWahl(null); setMarge(null); setSuche(""); setAusreisser(true); setMonate(12);
+      // t251: file in the vault automatically; hash-dedupe, never break the import.
+      if (!alreadyStored) void vaultApi.hochladen(file, "wettbewerb").catch(() => {});
     } catch (err) {
       setFehler(`${t("Could not read the document")}: ${(err as Error).message}`);
     }
   }
+
+  async function ausVaultWaehlen(eintrag: VaultEintrag) {
+    setVaultListe(null);
+    try {
+      await laden(await vaultApi.alsDatei(eintrag), true);
+    } catch (err) {
+      setFehler(`${t("Could not read the document")}: ${(err as Error).message}`);
+    }
+  }
+  async function vaultOeffnen() {
+    try {
+      setVaultListe(await vaultApi.liste(["wettbewerb"]));
+    } catch {
+      setFehler(t("The vault is unreachable."));
+    }
+  }
+
+  async function pdfEinlesen(file: File | undefined) {
+    if (!file) return;
+    setFehler(null);
+    setHinweis(null);
+    setKiLaeuft(true);
+    try {
+      const antwort = await api.margePdf(file);
+      const roh = Uint8Array.from(atob(antwort.xlsx_base64), (c) => c.charCodeAt(0));
+      const xlsx = new File([roh], antwort.dateiname, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      await laden(xlsx, true);
+      setDownload((alt) => {
+        if (alt) URL.revokeObjectURL(alt.url);
+        return { name: antwort.dateiname, url: URL.createObjectURL(xlsx) };
+      });
+      if (antwort.hinweis) setHinweis(antwort.hinweis);
+    } catch (err) {
+      setFehler(err instanceof Error ? err.message : String(err));
+    } finally {
+      setKiLaeuft(false);
+    }
+  }
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("vault");
+    if (!id) return;
+    window.history.replaceState(null, "", "/marge");
+    vaultApi.liste(["wettbewerb"]).then((liste) => {
+      const treffer = liste.find((x) => x.id === id);
+      if (treffer) void ausVaultWaehlen(treffer);
+    }).catch(() => setFehler(t("The vault is unreachable.")));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function toggle(name: string, an: boolean) {
     const alle = new Set(wahl ?? r.liste.map((x) => x.name));
@@ -101,11 +159,29 @@ export function Marge() {
 
       <section className={styles.karte}>
         <h2 className={styles.abschnitt}>{t("Load competitor bids")}
-          <Info text={t("Excel (.xlsx), one row per bid: Provider, Item, Unit, Quantity, Unit price, Current offer, and if known Direct cost, Operating cost %, Profit margin %. A row with provider \"Our company\" per item holds our quantity, direct cost and operating cost %; its profit margin % is our minimum margin.")} /></h2>
-        <label className={styles.ablage}>
-          <input type="file" accept=".xlsx" onChange={(ev) => { void laden(ev.target.files?.[0]); ev.target.value = ""; }} />
-          <Icon name="upload" />{datei ?? t("Choose Excel file")} <small>.xlsx</small>
-        </label>
+          <Info text={t("Excel (.xlsx), one row per bid: Provider, Item, Unit, Quantity, Unit price, Current offer, and if known Direct cost, Operating cost %, Profit margin %. A row with provider \"Our company\" per item holds our quantity, direct cost and operating cost %; its profit margin % is our minimum margin.") + " " + t("A competitor or offer PDF. The configured AI (Claude or Grok Bot) reads item numbers, texts, quantities, units, unit prices, totals and bidder names and builds the Excel the margin page uses. The file is stored in the vault as a new version.")} /></h2>
+        <div className={styles.knoepfe}>
+          <label className={styles.ablage}>
+            <input type="file" accept=".xlsx" onChange={(ev) => { void laden(ev.target.files?.[0]); ev.target.value = ""; }} disabled={kiLaeuft} />
+            <Icon name="upload" />{datei ?? t("Choose Excel file")} <small>.xlsx</small>
+          </label>
+          <label className={`${styles.ablage} ${kiLaeuft ? styles.wartet : ""}`}>
+            <input type="file" accept=".pdf,application/pdf" onChange={(ev) => { void pdfEinlesen(ev.target.files?.[0]); ev.target.value = ""; }} disabled={kiLaeuft} />
+            <Icon name="sparkles" />{kiLaeuft ? t("Reading the PDF with the AI … this can take a few minutes.") : t("Read PDF with AI")} <small>.pdf</small>
+          </label>
+          <button type="button" className={styles.vaultKnopf} onClick={() => void vaultOeffnen()} disabled={kiLaeuft}>
+            <Icon name="folder" /> {t("Choose from vault")}
+          </button>
+          {download && (
+            <a className={styles.vaultKnopf} href={download.url} download={download.name}>
+              <Icon name="download" /> {t("Download Excel")}
+            </a>
+          )}
+        </div>
+        <ActionSheet open={vaultListe !== null} onClose={() => setVaultListe(null)} cancelLabel={t("Cancel")}
+          title={vaultListe?.length ? t("Choose from vault") : t("The vault has no competitor bid files yet. Files you load on the margin page are stored automatically.")}
+          actions={(vaultListe ?? []).slice(0, 30).map((x) => ({ label: `${x.dateiname} · ${t(TYP_LABEL[x.typ])} · ${datumText(x.hochgeladen_am)}`, onClick: () => void ausVaultWaehlen(x) }))} />
+        {hinweis && <p className={styles.hint}>{t(hinweis)}</p>}
         {fehler && <p className={styles.fehler}>{fehler}</p>}
       </section>
 

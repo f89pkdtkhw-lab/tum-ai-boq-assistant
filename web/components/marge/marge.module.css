@@ -22,6 +22,14 @@
 .ablage:hover { border-color: var(--accent); }
 .ablage input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .ablage small { color: var(--muted); font-weight: 400; }
+.knoepfe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.knoepfe .ablage { flex: 1; min-width: 240px; }
+.vaultKnopf { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 14px; font-weight: 600;
+  padding: 10px 16px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--fill); color: var(--ink); cursor: pointer; }
+.vaultKnopf:hover { border-color: var(--button); }
+.vaultKnopf:disabled, .ablage:has(input:disabled) { opacity: .6; cursor: wait; }
+a.vaultKnopf { text-decoration: none; }
+.wartet { cursor: wait; }
 .fehler { margin: 0; color: var(--bad); }
 
 .layout { display: grid; grid-template-columns: 1.18fr .82fr; gap: 12px; align-items: stretch; }

@@ -33,7 +33,7 @@ export function Vault() {
       <section className={seite.einleitung}>
         <p className={seite.eyebrow}>{t("Vault")}</p>
         <h1>{t("All documents and results in one place.")}</h1>
-        <p className={seite.lead}>{t("Bills, regulations and price lists from your analyses are filed here automatically, together with every report and research run. Everything stays on this computer.")}</p>
+        <p className={seite.lead}>{t("Bills, regulations, price lists and competitor bid files from your analyses are filed here automatically, together with every report and research run. Everything stays on this computer.")}</p>
       </section>
       <div className={styles.tabs}>
         <SegmentedControl ariaLabel={t("Vault")} value={tab} onChange={wechsle} options={TABS.map((x) => ({ value: x.id, label: t(x.label) }))} />
@@ -117,7 +117,7 @@ function Dokumente({ typ }: { typ: VaultTyp }) {
             disabled={meldung?.art === "laeuft"} invalid={meldung?.art === "fehler"} chooseLabel={t("Choose file")}
             onChange={(d) => void hochladen(d)} />
         </div>
-        <p className={eigene.hinweis}>{t("Files used in an analysis on the start page are filed here automatically. The same file is stored only once.")}</p>
+        <p className={eigene.hinweis}>{t(typ === "wettbewerb" ? "Competitor bid files you load on the margin page are filed here automatically. The same file is stored only once." : "Files used in an analysis on the start page are filed here automatically. The same file is stored only once.")}</p>
         <div aria-live="polite">{meldung && <p className={meldung.art === "fehler" ? eigene.fehler : eigene.hinweis} role={meldung.art === "fehler" ? "alert" : undefined}>{meldung.text}</p>}</div>
       </section>
 
@@ -158,7 +158,7 @@ function Dokumente({ typ }: { typ: VaultTyp }) {
                               </>
                             ) : (
                               <>
-                                {DOKUMENT_TYPEN.includes(x.typ) && <button type="button" className={seite.knopfZweit} onClick={() => router.push(`/?vault=${encodeURIComponent(x.id)}`)}>{t("Use in analysis")}</button>}
+                                {x.typ === "wettbewerb" ? <button type="button" className={seite.knopfZweit} onClick={() => router.push(`/marge?vault=${encodeURIComponent(x.id)}`)}>{t("Use on the margin page")}</button> : ["lv", "regelwerk", "preisliste"].includes(x.typ) && <button type="button" className={seite.knopfZweit} onClick={() => router.push(`/?vault=${encodeURIComponent(x.id)}`)}>{t("Use in analysis")}</button>}
                                 <a className={seite.knopfZweit + " " + styles.link} href={vaultApi.dateiUrl(x.id)} download={x.dateiname}>{t("Download")}</a>
                                 <button type="button" className={seite.knopfZweit} onClick={() => setBearbeite({ id: x.id, name: x.dateiname, tags: x.tags.join(", ") })}>{t("Edit")}</button>
                                 <button type="button" className={`${seite.knopfZweit} ${styles.gefahr}`} onClick={() => void loeschen(x)}>{t("Delete")}</button>

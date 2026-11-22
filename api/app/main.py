@@ -98,6 +98,8 @@ from .ai.dev_options import router as dev_options_router  # developer options + 
 app.include_router(dev_options_router)
 from . import vault  # noqa: E402  t243: local document vault (data/vault/, git-ignored)
 app.include_router(vault.router)
+from .marge_pdf import router as marge_pdf_router  # noqa: E402  t256: AI competitor PDF → margin Excel
+app.include_router(marge_pdf_router)
 
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=4000)

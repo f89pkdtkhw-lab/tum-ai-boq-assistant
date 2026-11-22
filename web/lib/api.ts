@@ -104,6 +104,13 @@ export type Bericht = {
   notes: { id?: string; oz?: string; text?: string; approval_required?: boolean }[]; neue_tags: string[];
   tags?: string[]; zaehler?: BerichtZaehler; naeherungen?: Naeherung[]; probleme?: WasWenn[];
 };
+
+// t256: AI reading of a competitor PDF for the margin page (Claude or Grok Bot, never mock).
+export type MargePdfAntwort = {
+  dateiname: string; hinweis: string | null; gebote: number; xlsx_base64: string;
+  vault: { id: string; typ: string; dateiname: string; version: number | null } | null;
+};
+
 export type Health = {
   ok: boolean; provider: string; model: string; mock: boolean;
   key_set?: boolean; key_source?: "ui" | "env" | null; reason?: string | null;
@@ -163,7 +170,7 @@ export type AnalyseStatus = {
 
 // Synchronous model calls (Grok Bot queue up to 900 s). Reuse an identical in-flight POST
 // so a remount or a retry after a dropped proxy does not enqueue a second job.
-const LANGSAME_POSTS = new Set(["/api/lv/ai-evaluation", "/api/ask"]);
+const LANGSAME_POSTS = new Set(["/api/lv/ai-evaluation", "/api/ask", "/api/marge/pdf"]);
 const laufendePosts = new Map<string, Promise<unknown>>();
 
 async function once<T>(path: string, init: RequestInit | undefined, run: () => Promise<T>): Promise<T> {
@@ -249,6 +256,11 @@ export const api = {
   aiEvaluation: (evidence: AiEvidence) => call<AiEvaluation>("/api/lv/ai-evaluation", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(evidence),
   }),
+  margePdf: (datei: File) => {
+    const form = new FormData();
+    form.append("datei", datei);
+    return call<MargePdfAntwort>("/api/marge/pdf", { method: "POST", body: form });
+  },
   ask: (question: string) => call<Answer>("/api/ask", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }),
   }),

@@ -3,7 +3,7 @@
 - Files: ``$LV_SCOUT_VAULT_DIR`` (default ``data/vault/`` in the repository, git-ignored) under ``dateien/``.
 - Metadata: one JSON file ``index.json`` next to them (id, typ, dateiname, groesse, hash, hochgeladen_am,
   tags, projekt, besitzer, quelle, lv_schluessel, lv_name).
-- Uploaded files (LV, regulation, price list) are de-duplicated by SHA-256 per type. Results (reports,
+- Uploaded files (LV, regulation, price list, competitor-bid Excel) are de-duplicated by SHA-256 per type. Results (reports,
   research, price research, AI evaluation) are never de-duplicated: every run is a new version with a
   timestamp and a reference to its bill (``lv_schluessel``), older versions stay.
 
@@ -33,9 +33,9 @@ log = logging.getLogger(__name__)
 router = APIRouter(tags=["vault"])
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
-DOKUMENT_TYPEN = ("lv", "regelwerk", "preisliste")
+DOKUMENT_TYPEN = ("lv", "regelwerk", "preisliste", "wettbewerb")
 ERGEBNIS_TYPEN = ("bericht", "recherche", "preisrecherche", "auswertung")
-Typ = Literal["lv", "regelwerk", "preisliste", "bericht", "recherche", "preisrecherche", "auswertung"]
+Typ = Literal["lv", "regelwerk", "preisliste", "wettbewerb", "bericht", "recherche", "preisrecherche", "auswertung"]
 _LOCK = threading.RLock()
 
 
@@ -122,7 +122,8 @@ def speichere(inhalt: bytes, dateiname: str, typ: str, *, besitzer: str | None =
     digest = hashlib.sha256(inhalt).hexdigest()
     with _LOCK:
         eintraege = _lade()
-        if typ in DOKUMENT_TYPEN:
+        # t256: AI-read competitor workbooks are a new version each time (no hash-dedupe).
+        if typ in DOKUMENT_TYPEN and quelle != "ki":
             for e in eintraege:
                 if e["typ"] == typ and e["hash"] == digest and _datei_pfad(e).exists():
                     geaendert = False
@@ -134,6 +135,9 @@ def speichere(inhalt: bytes, dateiname: str, typ: str, *, besitzer: str | None =
         version = None
         if typ in ERGEBNIS_TYPEN and lv_key:
             version = 1 + sum(1 for e in eintraege if e["typ"] == typ and e.get("lv_schluessel") == lv_key)
+        elif typ == "wettbewerb" and quelle == "ki":
+            version = 1 + sum(1 for e in eintraege if e["typ"] == typ and e.get("quelle") == "ki"
+                              and (e.get("projekt") or "") == ((projekt or "").strip()))
         eintrag = {
             "id": secrets.token_hex(8), "typ": typ, "dateiname": _sauberer_name(dateiname), "groesse": len(inhalt),
             "hash": digest, "hochgeladen_am": datetime.now(timezone.utc).isoformat(timespec="seconds"),
