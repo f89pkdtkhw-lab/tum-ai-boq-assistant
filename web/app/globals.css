@@ -21,15 +21,16 @@
 }
 /* Dark: chosen in settings, or automatically from 19:00 to 07:00 (see lib/einstellungen.tsx). */
 :root[data-theme="dark"] {
-  --bg: #0B1524; --ink: #E8EEF5; --muted: #8AA0B5; --line: #1E3A56; --card: #10243A;
-  --accent: #7A73FF; --accent-2: #9BB0C7; --brand: #7A73FF; --good: #2DD4BF; --warn: #F0B429; --bad: #F87171;
-  --fill: #132C44; --fill-strong: #1A3754;
-  --button: #7A73FF; --button-ink: #ffffff;
+  /* GitHub Dimmed: slate canvas, blue accent, WCAG-AA text. */
+  --bg: #22272E; --ink: #C5D0DA; --muted: #96A0AB; --line: #444C56; --card: #2D333B;
+  --accent: #539BF5; --accent-2: #ADBAC7; --brand: #539BF5; --good: #5CB85F; --warn: #C69026; --bad: #F47067;
+  --fill: #373E47; --fill-strong: #444C56;
+  --button: #316DCA; --button-ink: #ffffff;
   --shadow: rgba(0, 0, 0, .35);
-  --nav-hover: #132C44; --nav-active: color-mix(in srgb, #635BFF 22%, transparent); --chip-on: #3D3A8C;
-  --sev-kritisch: #F87171; --sev-hoch: #FB923C; --sev-mittel: #F0B429; --sev-niedrig: #7C9A80; --sev-ok: #2DD4BF;
-  --sev-mittel-text: #F0B429;
-  --logo-tile: #10243A;
+  --nav-hover: #373E47; --nav-active: color-mix(in srgb, #539BF5 22%, transparent); --chip-on: #1F4B7A;
+  --sev-kritisch: #F47067; --sev-hoch: #DB6D28; --sev-mittel: #C69026; --sev-niedrig: #7BAF7D; --sev-ok: #5CB85F;
+  --sev-mittel-text: #C69026;
+  --logo-tile: #2D333B;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
