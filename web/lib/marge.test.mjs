@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { registerHooks } from "node:module";
 
 registerHooks({ resolve(spec, ctx, next) { try { return next(spec, ctx); } catch (e) { if (spec.startsWith(".")) return next(`${spec}.ts`, ctx); throw e; } } });
-const { auswerten, bereinige, kennzahlen, leseGebote, leseXlsx, monateFaktor, sliderHue } = await import("./marge.ts");
+const { auswerten, bereinige, bieterFarbe, bieterFarben, bieterFarbHue, BIETER_FARB_HUES, impliziteMarge, kennzahlen, leseGebote, leseXlsx, markerVersatz, monateFaktor, sliderHue, sliderMarker } = await import("./marge.ts");
 const { readFileSync } = await import("node:fs");
 
 const tabelle = [
@@ -107,4 +107,40 @@ test("the margin demo Excel is read and fills the page, with an outlier and a sk
   assert.ok(tueren.wenig && tueren.schief);
   assert.ok(r.posten.filter((p) => !p.item.startsWith("Innentüren")).every((p) => !p.wenig && p.median != null));
   assert.ok(r.summe.uns < r.summe.konk);
+});
+
+test("company colours come from a spaced palette and stay unique within a set", () => {
+  assert.equal(bieterFarbHue("A"), bieterFarbHue("A"));
+  assert.ok(BIETER_FARB_HUES.includes(bieterFarbHue("Blitzofferte Bau UG")));
+  assert.match(bieterFarbe("Nordbau"), /^hsl\(\d+ 72% 44%\)$/);
+  const namen = ["Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta"];
+  const map = bieterFarben(namen);
+  assert.equal(map.size, namen.length);
+  assert.equal(new Set(map.values()).size, namen.length);
+  assert.deepEqual([...map.keys()], [...namen].sort((a, b) => a.localeCompare(b)));
+});
+
+test("slider markers use implied margin, sort low to high, clamp and keep outliers visible", () => {
+  const r = auswerten(leseGebote(tabelle));
+  const marker = sliderMarker(r.liste, r.bgkUns, r.boden, r.hiMarge);
+  assert.equal(marker.length, 6);
+  const werte = marker.map((m) => m.marge);
+  assert.deepEqual(werte, [...werte].sort((a, b) => a - b));
+  const fuchs = marker.find((m) => m.name === "F");
+  assert.equal(fuchs.ausreisser, true);
+  assert.equal(fuchs.pct, 100); // 80 % markup is above hiMarge, clamped to the end
+  assert.equal(impliziteMarge(17, 10), 7);
+  for (const m of marker) {
+    assert.ok(m.pct >= 0 && m.pct <= 100);
+    assert.equal(m.marge, impliziteMarge(r.liste.find((b) => b.name === m.name).aufschlag, r.bgkUns));
+  }
+});
+
+test("close markers get staggered vertical lanes so they do not fully cover each other", () => {
+  const lanes = markerVersatz([{ pct: 10 }, { pct: 11 }, { pct: 50 }, { pct: 10.5 }], 3);
+  assert.equal(lanes[0], 0);
+  assert.equal(lanes[1], 1);
+  assert.equal(lanes[2], 0); // far from the cluster
+  assert.ok(lanes[3] !== 0 && lanes[3] !== 1);
+  assert.deepEqual(markerVersatz([{ pct: 0 }, { pct: 50 }, { pct: 100 }], 3), [0, 0, 0]);
 });
