@@ -18,10 +18,10 @@
 }
 .kommentar:focus { border-color: var(--pb-accent); }
 .hinweis { margin: 0; color: var(--pb-muted); font-size: 12.5px; }
-.zeile { display: grid; grid-template-columns: minmax(0, 1fr) 118px; align-items: center; gap: 8px; padding-right: 10px; }
+.zeile { display: grid; grid-template-columns: minmax(0, 1fr) 118px; align-items: center; gap: 8px; padding-right: 0; }
 .wahl {
   font: inherit; font-size: 13px; font-weight: 600; min-height: 32px; padding: 4px 8px; border-radius: var(--r-md); cursor: pointer;
-  border: 1px solid currentColor; background: var(--pb-card); margin-top: 10px;
+  border: 1px solid currentColor; background: var(--pb-card); margin-top: 0;
 }
 
 /* Larger review buttons (team feedback). */

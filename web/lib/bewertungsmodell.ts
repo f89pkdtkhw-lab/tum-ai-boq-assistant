@@ -198,33 +198,33 @@ export function beobachteBewertungsmodell(hoer: () => void): () => void {
 export const MODELL_INFO: Record<Bewertungsmodell, { name: string; kurz: string; text: string; beispiel: string }> = {
   streng: {
     name: "Strict",
-    kurz: "The original rule: one high finding already costs 3.5 points.",
-    text: "Starts at 10. Each report with at least one high or critical finding deducts 3.5; five or more big problems, or any critical finding, deduct 4. Warnings do not count. Approximations that are more than 25 % off deduct 0.1 each, at most 1. Traffic light: green from 8.5, yellow from 6.5, otherwise red.",
-    beispiel: "Example (2 items, 1 high AI finding): score 6.5, yellow.",
+    kurz: "Even a few serious problems drop the score sharply.",
+    text: "This model is strict: even a few serious problems lower the score a lot, and warnings barely count. Choose it when you want a clear yes or no before you bid.",
+    beispiel: "Example: a short BoQ with one serious AI finding gets 6.5 (yellow).",
   },
   gestaffelt: {
     name: "Graduated",
-    kurz: "Each finding has its own deduction, capped at 6.",
-    text: "Starts at 10. Every finding deducts on its own: critical −2, high −1, warning −0.2, notice 0. The sum of finding deductions is capped at 6. Approximations as usual (0.1 each, at most 1). Traffic light: green from 7.5, yellow from 5, otherwise red.",
-    beispiel: "Example (2 items, 1 high AI finding): score 9.0, green.",
+    kurz: "Each finding lowers the score; serious ones more than small ones.",
+    text: "Each finding lowers the score on its own, serious ones more than small ones. Choose it when you want the score to reflect how many problems there are.",
+    beispiel: "Example: a short BoQ with one serious AI finding gets 9.0 (green).",
   },
   anteil: {
     name: "Share",
-    kurz: "Deduction follows the share of affected items, so large BoQs are not punished for counts.",
-    text: "Starts at 10. The deduction is 10 × the share of items with a finding, weighted by severity (big problem = 1, warning = 0.2), capped at 6. A 300-item BoQ with 5 high findings therefore loses only about 0.2 points. Approximations as usual. Traffic light: green from 7.5, yellow from 5, otherwise red.",
-    beispiel: "Example (2 items, 1 high AI finding): 50 % affected → score 5.0, yellow.",
+    kurz: "Looks at the share of affected items, not the raw count.",
+    text: "The score follows the share of items with a problem, so a large BoQ is not punished just for having more lines. Choose it for long bills of quantities.",
+    beispiel: "Example: a short BoQ with one serious AI finding (half the items) gets 5.0 (yellow).",
   },
   fehler_klaerung: {
     name: "Errors vs. hints",
-    kurz: "Real errors count fully; clarifications and AI hints only half.",
-    text: "Starts at 10, with the graduated deductions (critical −2, high −1, warning −0.2). Arithmetic errors, missing quantities, units or descriptions, and duplicate item numbers count fully. Risk, change-order and clarification hints, and every AI finding, count only half. Cap 6. Approximations as usual. Traffic light: green from 7.5, yellow from 5, otherwise red.",
-    beispiel: "Example (2 items, 1 high AI finding): −0.5 → score 9.5, green.",
+    kurz: "Real errors count fully; hints and AI notes count less.",
+    text: "Clear mistakes, such as wrong figures or missing quantities, count fully; hints and AI notes count less. Choose it when you want real errors to weigh more than things that only need checking.",
+    beispiel: "Example: a short BoQ with one serious AI finding gets 9.5 (green).",
   },
   ausgewogen: {
     name: "Balanced",
-    kurz: "Default: graduated, half weight for hints, scaled by BoQ size, softer lights.",
-    text: "Starts at 10. Combines graduated deductions, half weight for clarifications and AI findings, and a size factor of √(20 / n) for BoQs with more than 20 items (small BoQs unchanged). Finding deductions are capped at 6. Approximations as usual (0.1 each, at most 1). Traffic light: green from 7.5, yellow from 5, otherwise red.",
-    beispiel: "Example (2 items, 1 high AI finding): −0.5 → score 9.5, green.",
+    kurz: "Default: a fair mix for everyday use.",
+    text: "A balanced mix: serious findings count more, hints less, and large BoQs are treated a little more gently. This is the default and a good choice for everyday use.",
+    beispiel: "Example: a short BoQ with one serious AI finding gets 9.5 (green).",
   },
 };
 
