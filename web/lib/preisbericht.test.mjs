@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { registerHooks } from "node:module";
 
 registerHooks({ resolve(spec, ctx, next) { try { return next(spec, ctx); } catch (e) { if (spec.startsWith(".")) return next(`${spec}.ts`, ctx); throw e; } } });
-const { preisbericht, preisSpanne, relFuer, summeSpannen } = await import("./preisbericht.ts");
+const { preisbericht, preisSpanne, relFuer, summeSpannen, mitManuellemEp, QUELLE_NAME } = await import("./preisbericht.ts");
 
 const pos = (oz, kurztext, menge, ep, gp = menge * ep) => ({ oz, kurztext, langtext: "", menge, einheit: "m³", ep, gp, typ: "normal", titel_pfad: [] });
 
@@ -51,4 +51,35 @@ test("index or research fallback uses the explicit range and stays wide without 
   assert.deepEqual([b.zeilen[0].von, b.zeilen[0].bis], [120, 200]);
   const weit = preisSpanne({ ep: 20, menge: 2, quelle: "recherche" });
   assert.deepEqual(weit, { epVon: 16, epBis: 24, von: 32, bis: 48 });
+  assert.ok(b.zeilen[0].verweise.some((v) => v.url && /genesis/i.test(v.url)));
+});
+
+test("manual EP override recalculates GP, range, source and the total", () => {
+  const b0 = preisbericht([pos("1", "Betonarbeiten Wand", 10, 100)], [], [{ item: "Betonarbeiten", unit: "m³", preis: 120 }]);
+  assert.equal(b0.zeilen[0].quelle, "preisliste");
+  assert.equal(b0.geschaetzt, 1200);
+  const b = preisbericht([pos("1", "Betonarbeiten Wand", 10, 100)], [], [{ item: "Betonarbeiten", unit: "m³", preis: 120 }], null, { "0": 130 });
+  assert.equal(b.zeilen[0].quelle, "manuell");
+  assert.equal(b.zeilen[0].epGeschaetzt, 130);
+  assert.equal(b.zeilen[0].geschaetzt, 1300);
+  assert.deepEqual([b.zeilen[0].von, b.zeilen[0].bis], [1235, 1365]); // ±5 %
+  assert.equal(b.geschaetzt, 1300);
+  assert.equal(b.von, 1235);
+  assert.equal(b.bis, 1365);
+  const reset = mitManuellemEp(b0.zeilen[0], 120);
+  assert.equal(reset.quelle, "manuell");
+  assert.equal(QUELLE_NAME.manuell, "Manual");
+});
+
+test("price-list match and index fallback carry source references", () => {
+  const liste = preisbericht([pos("1", "Betonarbeiten Wand", 10, 100)], [], [{ item: "Betonarbeiten Wand", unit: "m³", preis: 120 }]);
+  assert.deepEqual(liste.zeilen[0].verweise.map((v) => v.titel), ["Betonarbeiten Wand"]);
+  const idx = preisbericht([pos("2", "Bitumenanstrich", 10, 8)], [], [], [{
+    oz: "2", menge: 10, einheit: "m²", ep: 16, gp: 160, ep_lv: 8, gp_lv: 80,
+    treffer: "index", preis_eintrag: null, aehnlichkeit: null, in_summe: true,
+    geschaetzt: true, ep_von: 12, ep_bis: 20,
+    preis_quellen: [{ titel: "Destatis Baupreisindex Wohngebäude", url: "https://www-genesis.destatis.de/datenbank/online/table/61261-0001" }],
+  }]);
+  assert.equal(idx.zeilen[0].quelle, "index");
+  assert.equal(idx.zeilen[0].verweise[0].url, "https://www-genesis.destatis.de/datenbank/online/table/61261-0001");
 });

@@ -110,9 +110,9 @@ export function tabellen(bericht: Pruefbericht, bewertungen: Bewertungen = {}, p
       ["Difference (EUR)", preis.diff], ["Items with a changed price", preis.geaendert]] as Zelle[][] : []),
   ];
   const preise: Zelle[][] = preis ? [
-    ["OZ", "Item", "Quantity", "Unit", "Was (EUR)", "Estimated (EUR)", "Difference (EUR)", "Why", "Range low (EUR)", "Range high (EUR)"],
-    ...preis.zeilen.map((r) => [r.oz, r.kurztext, r.menge, r.einheit, r.war, r.geschaetzt, r.diff, grundText(r), r.von ?? null, r.bis ?? null]),
-    ["Total", "", null, "", preis.war, preis.geschaetzt, preis.diff, "", preis.von ?? null, preis.bis ?? null],
+    ["OZ", "Item", "Quantity", "Unit", "Was (EUR)", "Estimated (EUR)", "Difference (EUR)", "Why", "Range low (EUR)", "Range high (EUR)", "Source"],
+    ...preis.zeilen.map((r) => [r.oz, r.kurztext, r.menge, r.einheit, r.war, r.geschaetzt, r.diff, grundText(r), r.von ?? null, r.bis ?? null, r.quelle ?? ""]),
+    ["Total", "", null, "", preis.war, preis.geschaetzt, preis.diff, "", preis.von ?? null, preis.bis ?? null, ""],
   ] : [];
   return [
     ...(preis ? [{ name: "Summary", zeilen: zusammenfassung }, { name: "Estimated prices", zeilen: preise }] : []),

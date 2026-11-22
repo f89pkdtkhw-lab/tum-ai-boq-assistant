@@ -135,8 +135,8 @@ test("with a price report the workbook starts with a summary and the final estim
   assert.deepEqual(b[1].zeilen.at(-1).slice(4, 7), [1000, 1100, 100]);
   // Without a range the new columns stay empty (backwards compatible).
   assert.equal(b[0].zeilen.find((z) => z[0] === "Estimate range (EUR)"), undefined);
-  assert.deepEqual(b[1].zeilen[0].slice(-2), ["Range low (EUR)", "Range high (EUR)"]);
-  assert.deepEqual(b[1].zeilen[1].slice(-2), [null, null]);
+  assert.deepEqual(b[1].zeilen[0].slice(-3), ["Range low (EUR)", "Range high (EUR)", "Source"]);
+  assert.deepEqual(b[1].zeilen[1].slice(-3), [null, null, "historie"]);
 });
 
 test("price-report range is exported on the summary and the estimated-prices sheet", () => {
@@ -144,6 +144,6 @@ test("price-report range is exported on the summary and the estimated-prices she
     zeilen: [{ oz: "01.001", kurztext: "Aushub", menge: 10, einheit: "m³", war: 1000, geschaetzt: 1100, diff: 100, von: 990, bis: 1210, quelle: "historie", grund: "Past projects: {trade} {d} %", werte: { trade: "Erdarbeiten", d: "+10" } }] };
   const b = tabellen({ lv: { name: "LV", quelle: "q", positionen: [p("01.001", "Aushub", 10, "m³")], summen: {} }, findings: [], kennzahlen: { modell_mock: true } }, {}, preis);
   assert.deepEqual(b[0].zeilen.find((z) => z[0] === "Estimate range (EUR)"), ["Estimate range (EUR)", "990 – 1210"]);
-  assert.deepEqual(b[1].zeilen[1].slice(-2), [990, 1210]);
-  assert.deepEqual(b[1].zeilen.at(-1).slice(-2), [990, 1210]);
+  assert.deepEqual(b[1].zeilen[1].slice(-3), [990, 1210, "historie"]);
+  assert.deepEqual(b[1].zeilen.at(-1).slice(-3), [990, 1210, ""]);
 });
