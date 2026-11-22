@@ -1,0 +1,166 @@
+<mxfile host="app.diagrams.net" agent="LV Scout" version="22.1.0" type="device">
+  <diagram id="ablauf-lv-scout" name="LV Scout Ablauf">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1560" math="0" shadow="0">
+      <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="&lt;b&gt;LV Scout – Aktueller App-Ablauf&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#0F172A;strokeColor=#0F172A;fontColor=#F8FAFC;fontSize=22;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="40" y="20" width="2120" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="infra" value="Frontend Next.js  ·  &lt;b&gt;localhost:3000&lt;/b&gt;    |    Backend FastAPI  ·  &lt;b&gt;localhost:8000&lt;/b&gt;    |    DuckDB: &lt;b&gt;price.duckdb&lt;/b&gt; (Preis-DB)  ·  &lt;b&gt;database.duckdb&lt;/b&gt; (Historie)    |    Nur implementierter Stand (main), keine Zielarchitektur" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#1E293B;strokeColor=#1E293B;fontColor=#E2E8F0;fontSize=12;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="40" y="80" width="2120" height="44" as="geometry"/>
+    </mxCell>
+    <mxCell id="wiz-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=6;fillColor=#F8FAFC;strokeColor=#CBD5E1;strokeWidth=1;fontColor=#0F172A;fontFamily=Helvetica;" vertex="1" parent="1">
+      <mxGeometry x="40" y="140" width="2120" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="wiz-head" value="Wizard-Ablauf  ·  sechs Schritte in der Fortschrittsleiste  ·  URL ?schritt=  ·  Seiten /  ·  /marge  ·  /export" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#0F172A;fontColor=#F8FAFC;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=left;verticalAlign=middle;spacingLeft=16;" vertex="1" parent="1">
+      <mxGeometry x="40" y="140" width="2120" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="s1" value="1  Upload BoQ&lt;br&gt;&lt;font style=&quot;font-size:11px;font-weight:normal&quot;&gt;LV hochladen&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#2563EB;strokeColor=#1D4ED8;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="56" y="188" width="324" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="s2" value="2  Review&lt;br&gt;&lt;font style=&quot;font-size:11px;font-weight:normal&quot;&gt;Prüfung&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#0F766E;strokeColor=#0F766E;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="412" y="188" width="324" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="s3" value="3  Resolve findings&lt;br&gt;&lt;font style=&quot;font-size:11px;font-weight:normal&quot;&gt;Befunde klären&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#C2410C;strokeColor=#9A3412;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="768" y="188" width="324" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="s4" value="4  Evaluate price&lt;br&gt;&lt;font style=&quot;font-size:11px;font-weight:normal&quot;&gt;Preis bewerten&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#15803D;strokeColor=#166534;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="1124" y="188" width="324" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="s5" value="5  Set margin&lt;br&gt;&lt;font style=&quot;font-size:11px;font-weight:normal&quot;&gt;Marge setzen&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#6D28D9;strokeColor=#5B21B6;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="1480" y="188" width="324" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="s6" value="6  Final price &amp; export&lt;br&gt;&lt;font style=&quot;font-size:11px;font-weight:normal&quot;&gt;Endpreis und Export&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#1D4ED8;strokeColor=#1E3A8A;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="1836" y="188" width="324" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;strokeWidth=2;endArrow=block;endFill=1;startArrow=none;fontFamily=Helvetica;fontSize=10;fontColor=#334155;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s1" target="s2">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;strokeWidth=2;endArrow=block;endFill=1;startArrow=none;fontFamily=Helvetica;fontSize=10;fontColor=#334155;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s2" target="s3">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;strokeWidth=2;endArrow=block;endFill=1;startArrow=none;fontFamily=Helvetica;fontSize=10;fontColor=#334155;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s3" target="s4">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;strokeWidth=2;endArrow=block;endFill=1;startArrow=none;fontFamily=Helvetica;fontSize=10;fontColor=#334155;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s4" target="s5">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0F172A;strokeWidth=2;endArrow=block;endFill=1;startArrow=none;fontFamily=Helvetica;fontSize=10;fontColor=#334155;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s5" target="s6">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="7" value="&lt;b&gt;Formate&lt;/b&gt;&lt;br&gt;PDF · Excel (XLSX) · JSON&lt;br&gt;GAEB: X83, X84, D83, D84, D86&lt;br&gt;Max. 10 MiB" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#EFF6FF;strokeColor=#93C5FD;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="56" y="252" width="324" height="86" as="geometry"/>
+    </mxCell>
+    <mxCell id="8" value="&lt;b&gt;Import&lt;/b&gt;  ·  POST /api/lv/import&lt;br&gt;Format-Dispatcher in importer.py&lt;br&gt;PDF: zuerst Textparser, bei Lücken oder ohne erkannte Positionen &lt;b&gt;KI-Vision-Fallback&lt;/b&gt; (Seitenbilder; Claude oder Grok Bot)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#EFF6FF;strokeColor=#93C5FD;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="56" y="346" width="324" height="114" as="geometry"/>
+    </mxCell>
+    <mxCell id="9" value="&lt;b&gt;Zusätzlich am Upload&lt;/b&gt;&lt;br&gt;Regelwerk (PDF, TXT, MD) für die Normenprüfung&lt;br&gt;Preisliste (CSV, XLSX, GAEB X84/X86, JSON)&lt;br&gt;Bewertungsmodell wählen" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#EFF6FF;strokeColor=#93C5FD;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="56" y="468" width="324" height="100" as="geometry"/>
+    </mxCell>
+    <mxCell id="10" value="&lt;b&gt;Ablage im Vault&lt;/b&gt;&lt;br&gt;LV, Regelwerk und Preisliste werden lokal archiviert (Besitzer über Login-Header)." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#EFF6FF;strokeColor=#93C5FD;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="56" y="576" width="324" height="76" as="geometry"/>
+    </mxCell>
+    <mxCell id="11" value="Weiter erst, wenn der Import läuft oder ein Prüfbericht vorliegt" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#DBEAFE;strokeColor=#60A5FA;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=center;verticalAlign=middle;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="56" y="660" width="324" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="12" value="&lt;b&gt;Hintergrund-Job&lt;/b&gt;&lt;br&gt;POST /api/lv/analyse/start ergibt eine Job-ID&lt;br&gt;GET /api/lv/analyse/status/{id}&lt;br&gt;Fortschritt: Schritt, Prozent, Live-Meldung, erledigte Schritte mit Dauer, Fehler&lt;br&gt;Jobs liegen im Prozessspeicher, höchstens 4 parallel" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F0FDFA;strokeColor=#5EEAD4;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="412" y="252" width="324" height="128" as="geometry"/>
+    </mxCell>
+    <mxCell id="13" value="&lt;b&gt;Fortschrittsbox (UI)&lt;/b&gt;&lt;br&gt;Vier Stufen: PDF lesen → Positionen erkannt → Review läuft → Fertig&lt;br&gt;Dazu Live-Prozent, aktuelle Meldung und die Liste der fertigen Schritte" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F0FDFA;strokeColor=#5EEAD4;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="412" y="388" width="324" height="92" as="geometry"/>
+    </mxCell>
+    <mxCell id="14" value="&lt;b&gt;Prüfungspipeline&lt;/b&gt; (_pruefbericht, 7 Schritte; Analyse hängt die Preiskalkulation als Schritt 8 an)&lt;br&gt;1. Feste Regeln    2. Mengen und Einheiten&lt;br&gt;3. KI-Positionsprüfung (gewählter Anbieter, sonst Mock)&lt;br&gt;4. Risiko- und Nachtrag-Scoring&lt;br&gt;5. Normenprüfung; parallele Normen-Webrecherche (N5)&lt;br&gt;6. Berichte 1–3: Regeln, Vergleich, What-if&lt;br&gt;7. Annahmen und Schlussbericht (Note 2)&lt;br&gt;8. Preiskalkulation (nur volle Analyse, nicht nur_pruefen)&lt;br&gt;9. Tiefenrecherche – &lt;b&gt;nur Claude mit API-Key&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F0FDFA;strokeColor=#5EEAD4;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="412" y="488" width="324" height="216" as="geometry"/>
+    </mxCell>
+    <mxCell id="15" value="Bericht landet im Vault; der Wizard gibt den Schritt Findings frei" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#CCFBF1;strokeColor=#2DD4BF;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=center;verticalAlign=middle;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="412" y="712" width="324" height="48" as="geometry"/>
+    </mxCell>
+    <mxCell id="16" value="&lt;b&gt;Befundliste&lt;/b&gt;&lt;br&gt;Klick auf die Karte klappt die Details auf und zu.&lt;br&gt;Der Kreis markiert einen Befund als erledigt (Status bestätigt) oder wieder offen.&lt;br&gt;Filter nach Typ und Schwere; Verknüpfung zur LV-Position (OZ)." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFF7ED;strokeColor=#FDBA74;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="768" y="252" width="324" height="124" as="geometry"/>
+    </mxCell>
+    <mxCell id="17" value="&lt;b&gt;Quellen je Befund&lt;/b&gt;&lt;br&gt;Webrecherche-Treffer zur OZ bzw. Finding-ID, mit verlinkten Quellen – sofern die Recherche gelaufen ist." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFF7ED;strokeColor=#FDBA74;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="768" y="384" width="324" height="92" as="geometry"/>
+    </mxCell>
+    <mxCell id="18" value="&lt;b&gt;Ansicht&lt;/b&gt;&lt;br&gt;Prüfbericht, Titelbaum, Fundstellen im Dokument, KI-Hinweise und Zusammenfassung bleiben sichtbar." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFF7ED;strokeColor=#FDBA74;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="768" y="484" width="324" height="92" as="geometry"/>
+    </mxCell>
+    <mxCell id="19" value="Weiter zu „Evaluate price“, sobald ein Bericht vorliegt" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFEDD5;strokeColor=#FB923C;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=center;verticalAlign=middle;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="768" y="584" width="324" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="20" value="&lt;b&gt;Preisquelle je Position, in dieser Reihenfolge&lt;/b&gt;&lt;br&gt;1. Hochgeladene Preisliste (OZ, Text, Ähnlichkeit ≥ 0,8, gleiche Einheit)&lt;br&gt;2. DuckDB-Preisdatenbank (dieselben Regeln)&lt;br&gt;3. Destatis-Indexpreis (GENESIS 61261-0001, rohstoffnahe Leistungen; Mitte der Spanne)&lt;br&gt;4. Webrecherche – nur wenn die Tiefenrecherche aktiv ist (Claude mit Key)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F0FDF4;strokeColor=#86EFAC;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1124" y="252" width="324" height="152" as="geometry"/>
+    </mxCell>
+    <mxCell id="21" value="&lt;b&gt;Spannen low / high&lt;/b&gt;&lt;br&gt;Preisliste/DB ±5 % · Historie aus Streuung (mind. 5 %, sonst 10 %) · Index/Recherche explizite Spanne oder ±20 % · unveränderter LV-Preis ±15 % · ohne Preis keine Spanne&lt;br&gt;Die Gesamtsumme ist die Summe der Positionsspannen." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F0FDF4;strokeColor=#86EFAC;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1124" y="412" width="324" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="22" value="&lt;b&gt;Editierbare Preistabelle&lt;/b&gt;&lt;br&gt;Einheitspreis manuell ändern; Summe, Spanne und Endpreis rechnen sofort nach. Quellen als Links (z. B. Destatis). Badge „Geschätzt – Index“ bzw. „Geschätzt – Recherche“." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F0FDF4;strokeColor=#86EFAC;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1124" y="540" width="324" height="100" as="geometry"/>
+    </mxCell>
+    <mxCell id="23" value="&lt;b&gt;Historie und Preisspiegel&lt;/b&gt;&lt;br&gt;Vergleich mit Einheitspreisen früherer Projekte derselben Leistung (DuckDB-Historie). Ausreißer werden markiert." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F0FDF4;strokeColor=#86EFAC;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1124" y="648" width="324" height="84" as="geometry"/>
+    </mxCell>
+    <mxCell id="24" value="&lt;b&gt;Wettbewerber&lt;/b&gt;&lt;br&gt;Excel (.xlsx): Bieter, Position, Menge, Einheit, EP, Angebotsbetrag, optional Einzel-/Gemeinkosten und Gewinnmarge.&lt;br&gt;Die Zeile „Our company“ trägt die eigene Menge und die eigenen Kosten." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F5F3FF;strokeColor=#C4B5FD;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1480" y="252" width="324" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="25" value="&lt;b&gt;PDF per KI einlesen&lt;/b&gt;&lt;br&gt;POST /api/marge/pdf&lt;br&gt;Claude oder Grok Bot liest ein Angebots- oder Preisspiegel-PDF (Seitenbilder und Text). Das Ergebnis wird als Excel-Version im Vault-Tab „Wettbewerb / Marge“ gespeichert. Ohne echten Anbieter gibt es keinen stillen Mock." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F5F3FF;strokeColor=#C4B5FD;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1480" y="380" width="324" height="136" as="geometry"/>
+    </mxCell>
+    <mxCell id="26" value="&lt;b&gt;Slider&lt;/b&gt;&lt;br&gt;Vom Kostenboden (rot) bis zum oder über den Konkurrenz-Median (grün). Bieter sind auswählbar, Ausreißer filterbar. Der Zuschlag ist anteilige BGK plus Marge und liegt nie unter dem Boden." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F5F3FF;strokeColor=#C4B5FD;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1480" y="524" width="324" height="116" as="geometry"/>
+    </mxCell>
+    <mxCell id="27" value="Der Stand wird in der Sitzung gehalten und geht in den Endpreis ein" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#EDE9FE;strokeColor=#A78BFA;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=center;verticalAlign=middle;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1480" y="648" width="324" height="52" as="geometry"/>
+    </mxCell>
+    <mxCell id="28" value="&lt;b&gt;Endpreis&lt;/b&gt;&lt;br&gt;Geschätztes LV einschließlich manueller EP-Änderungen und gesetzter Marge. Spanne und Quellen bleiben sichtbar." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#EEF2FF;strokeColor=#A5B4FC;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1836" y="252" width="324" height="88" as="geometry"/>
+    </mxCell>
+    <mxCell id="29" value="&lt;b&gt;Download in der Export-Leiste&lt;/b&gt;&lt;br&gt;Excel (XLSX) – Bericht und Preistabelle&lt;br&gt;PDF – Prüfbericht (jsPDF)&lt;br&gt;CSV – Preisliste (Semikolon, UTF-8)&lt;br&gt;GAEB DA XML 3.2:&lt;br&gt;· X81 Leistungsverzeichnis&lt;br&gt;· X83 Angebotsaufforderung (ohne Preise)&lt;br&gt;· X84 Angebot (mit Preisen)&lt;br&gt;· X86 Auftragserteilung&lt;br&gt;Geschätztes LV zusätzlich als GAEB X84" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#EEF2FF;strokeColor=#A5B4FC;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1836" y="348" width="324" height="228" as="geometry"/>
+    </mxCell>
+    <mxCell id="30" value="Die Downloads sitzen in der Seitenleiste; der Wizard-Fuß bietet hier nur „Zurück“" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#E0E7FF;strokeColor=#818CF8;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=center;verticalAlign=middle;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1836" y="584" width="324" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="q-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=6;fillColor=#F8FAFC;strokeColor=#CBD5E1;strokeWidth=1;fontColor=#0F172A;fontFamily=Helvetica;" vertex="1" parent="1">
+      <mxGeometry x="40" y="980" width="2120" height="430" as="geometry"/>
+    </mxCell>
+    <mxCell id="q-head" value="Querschnitt  ·  gilt für den gesamten Wizard, nicht nur für einen Schritt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#0F172A;fontColor=#F8FAFC;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=left;verticalAlign=middle;spacingLeft=16;" vertex="1" parent="1">
+      <mxGeometry x="40" y="980" width="2120" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="q-ki" value="KI-Provider" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#BE185D;strokeColor=#9D174D;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="56" y="1028" width="412" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="31" value="&lt;b&gt;UI-Auswahl:&lt;/b&gt; Claude-API (Anthropic) oder Grok Bot. Das API-Token steht in den Einstellungen, ohne Entwickleroptionen.&lt;br&gt;&lt;br&gt;&lt;b&gt;Claude&lt;/b&gt; – direkter API-Aufruf mit Key; als einziger Anbieter mit serverseitiger Websuche. Deshalb laufen Tiefenrecherche und Preis-Webrecherche nur hier (sonst entfällt der Recherche-Schritt, der Bericht bleibt gleich).&lt;br&gt;&lt;br&gt;&lt;b&gt;Grok Bot&lt;/b&gt; – Datei-Job-Queue (inbox → outbox, Standardordner boq-grokbot-queue). Die Prüfung schreibt den Auftrag und wartet; die Fortschrittsbox zeigt „Wartet auf Grok Bot …“. Keine Schlüssel in der Queue. Timeout typisch 15 Minuten.&lt;br&gt;&lt;br&gt;Ohne Key oder bei Fehler: Offline-Mock, die Begründung bleibt im Bericht sichtbar. Im Backend existieren außerdem OpenAI, Azure und Gemini; in der UI sind sie nicht auswählbar." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FDF2F8;strokeColor=#F9A8D4;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="56" y="1072" width="412" height="318" as="geometry"/>
+    </mxCell>
+    <mxCell id="q-vault" value="Vault (lokal)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#B45309;strokeColor=#92400E;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="484" y="1028" width="412" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="32" value="Dokumente und Ergebnisse liegen lokal, nicht in einem Cloud-Speicher.&lt;br&gt;&lt;br&gt;&lt;b&gt;Tabs:&lt;/b&gt; LVs · Regelwerke · Preislisten · Wettbewerb / Marge · Preisdatenbank · Recherchen · Historie&lt;br&gt;&lt;br&gt;&lt;b&gt;Automatisch nach einer Analyse:&lt;/b&gt; Prüfbericht, Webrecherche, Preisrecherche (je Lauf eine neue Version, kein Cache).&lt;br&gt;&lt;br&gt;Wettbewerbs-Excel und per KI gelesene PDFs landen im Tab Wettbewerb / Marge und können von der Marge-Seite wiedergewählt werden.&lt;br&gt;&lt;br&gt;API: /api/vault  ·  Besitzer über X-LV-Scout-User" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFBEB;strokeColor=#FCD34D;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="484" y="1072" width="412" height="318" as="geometry"/>
+    </mxCell>
+    <mxCell id="q-login" value="Login und Stripe-Abo" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#4338CA;strokeColor=#3730A3;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="912" y="1028" width="412" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="33" value="&lt;b&gt;Anmeldung&lt;/b&gt; (Auth.js / NextAuth): Google (wenn eingerichtet) und E-Mail plus Passwort. Registrierung mit Bestätigungslink; Passwort-Reset.&lt;br&gt;&lt;br&gt;&lt;b&gt;Seed-Dummy:&lt;/b&gt; festes Konto dummy@gmail.com, vorausbestätigt, immer auf dem höchsten Plan (Company).&lt;br&gt;&lt;br&gt;&lt;b&gt;Pläne&lt;/b&gt; (Stripe-Testmodus, Kontingent weich – eine Evaluation wird nicht blockiert):&lt;br&gt;Gast (ohne Login, unbegrenzt) · Free (3/Monat) · Pro (50/Monat) · Company (200 je Sitz/Monat).&lt;br&gt;&lt;br&gt;Checkout, Kundenportal und Webhooks unter /api/saas/*. Ohne Konto bleibt die App nutzbar (Chip „Anmelden · Gast“)." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#EEF2FF;strokeColor=#A5B4FC;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="912" y="1072" width="412" height="318" as="geometry"/>
+    </mxCell>
+    <mxCell id="q-sess" value="Laufende Evaluation / Session" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#0369A1;strokeColor=#075985;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="1340" y="1028" width="412" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="34" value="Chip in der Navigation: „Laufende Evaluation“ bzw. „Letzte Evaluation“, mit Prozent.&lt;br&gt;&lt;br&gt;Die Analyse läuft im Backend weiter, auch wenn Vault oder Einstellungen geöffnet sind. Nach einem Tab-Reload wird der Job neu abgefragt, der Chip bleibt nicht bei 0 % stehen.&lt;br&gt;&lt;br&gt;Sitzung in sessionStorage: Job-ID, Wizard-Schritt, letzter Bericht (höchstens 8 in der Historie). Rückkehr über ?eval= und ?job= – ohne diese Parameter würde ein noch nicht erreichbarer Schritt auf die Startseite umleiten.&lt;br&gt;&lt;br&gt;Unbekannter oder abgelaufener Job: klare Fehlermeldung statt leerer Startseite." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F0F9FF;strokeColor=#7DD3FC;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1340" y="1072" width="412" height="318" as="geometry"/>
+    </mxCell>
+    <mxCell id="q-risk" value="Risiko-Bewertungsmodelle" style="rounded=1;whiteSpace=wrap;html=1;arcSize=10;fillColor=#BE123C;strokeColor=#9F1239;fontColor=#FFFFFF;fontSize=13;fontStyle=1;fontFamily=Helvetica;align=center;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="1768" y="1028" width="412" height="36" as="geometry"/>
+    </mxCell>
+    <mxCell id="35" value="Fünf Modelle, wählbar vor bzw. in der Prüfung (Standard: &lt;b&gt;Ausgewogen&lt;/b&gt;). Der Score startet bei 10, Ampel grün / gelb / rot.&lt;br&gt;&lt;br&gt;· &lt;b&gt;Streng&lt;/b&gt; – ein hoher Befund kostet schon 3,5 Punkte&lt;br&gt;· &lt;b&gt;Gestaffelt&lt;/b&gt; – Abzug je Befund, gedeckelt&lt;br&gt;· &lt;b&gt;Anteil&lt;/b&gt; – Abzug nach Anteil betroffener Positionen&lt;br&gt;· &lt;b&gt;Fehler / Hinweise&lt;/b&gt; – echte Fehler voll, KI- und Klärungshinweise halb&lt;br&gt;· &lt;b&gt;Ausgewogen&lt;/b&gt; – gestaffelt, halbes Gewicht für Hinweise, Größenfaktor bei großen LVs&lt;br&gt;&lt;br&gt;Umsetzung: risiko/scoring.py und pruefung/bewertung.py, Konstanten geteilt mit der UI." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFF1F2;strokeColor=#FDA4AF;fontColor=#0F172A;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;" vertex="1" parent="1">
+      <mxGeometry x="1768" y="1072" width="412" height="318" as="geometry"/>
+    </mxCell>
+    <mxCell id="footer" value="&lt;b&gt;Farblegende:&lt;/b&gt;  Blau = Upload  ·  Petrol = Prüfung  ·  Orange = Findings  ·  Grün = Preis  ·  Violett = Marge  ·  Indigo = Export    |    &lt;b&gt;Querschnitt:&lt;/b&gt;  Rosa = KI  ·  Gelb = Vault  ·  Indigo = Login/Abo  ·  Hellblau = Session  ·  Rot = Risiko&lt;br&gt;Quellen im Code: web/lib/wizard.ts, web/components/wizard, api/app/main.py, analyse_job.py, fortschritt.py, pruefung/*, ai/llm.py, ai/grokbot.py, vault.py, marge_pdf.py, web/lib/saas/*, web/lib/export.ts, db/client.py. Keine Schlüssel, keine Datensatzinhalte. Stand: aktuelles main." style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F1F5F9;strokeColor=#CBD5E1;fontColor=#334155;fontSize=11;fontFamily=Helvetica;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;" vertex="1" parent="1">
+      <mxGeometry x="40" y="1424" width="2120" height="96" as="geometry"/>
+    </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
