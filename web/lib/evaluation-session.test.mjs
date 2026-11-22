@@ -6,7 +6,7 @@ import { registerHooks } from "node:module";
 registerHooks({ resolve(spec, ctx, next) { try { return next(spec, ctx); } catch (e) { if (spec.startsWith(".")) return next(`${spec}.ts`, ctx); throw e; } } });
 const {
   AKTUELL_SCHLUESSEL, MAX_HISTORIE, SITZUNG_SCHLUESSEL,
-  archiviereAktuelleEvaluation, evaluationListe, evaluationPfad, istNeuerAuftrag,
+  archiviereAktuelleEvaluation, evaluationListe, evaluationPfad, fortzusetzenderJob, istNeuerAuftrag,
   ladeBericht, ladeSitzung, leseSitzung, leereSitzung, setzeAktuelleEvaluation, setzeEvaluationSchritt,
   speichereBericht,
 } = await import("./evaluation-session.ts");
@@ -86,4 +86,20 @@ test("reports are stored per evaluation and as the open session report", () => {
   assert.equal(JSON.parse(storage.getItem(AKTUELL_SCHLUESSEL)).titel, "Kita");
   assert.equal(ladeBericht("missing").titel, "Kita"); // falls back to the open report
   assert.ok(storage.getItem(SITZUNG_SCHLUESSEL) === null || ladeSitzung());
+});
+
+test("fortzusetzenderJob resumes running jobs, but opens a finished one from its stored report", () => {
+  const e = (id, status) => ({ id, jobId: id, titel: "LV", status, schritt: "pruefen", prozent: null, meldung: "", updatedAt: 1 });
+  const gespeichert = (ids) => (id) => ids.includes(id);
+  // Running evaluation chip: resume the job from the link.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "laeuft"), historie: [] }, "j1", "j1", gespeichert([])), "j1");
+  // No link params: resume the current running job of this tab.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "laeuft"), historie: [] }, null, null, gespeichert([])), "j1");
+  // Finished with a stored report: restore it, even if the backend has lost the job.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "fertig"), historie: [] }, "j1", "j1", gespeichert(["j1"])), null);
+  assert.equal(fortzusetzenderJob({ aktuell: null, historie: [e("j2", "fertig")] }, "j2", "j2", gespeichert(["j2"])), null);
+  // Finished but the report is gone (storage full): ask the backend again.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "fertig"), historie: [] }, "j1", "j1", gespeichert([])), "j1");
+  // Nothing running and no link: the start page.
+  assert.equal(fortzusetzenderJob({ aktuell: e("j1", "fertig"), historie: [] }, null, null, gespeichert(["j1"])), null);
 });

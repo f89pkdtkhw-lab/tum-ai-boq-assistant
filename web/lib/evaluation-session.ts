@@ -143,6 +143,18 @@ export function evaluationPfad(eintrag: Pick<EvaluationEintrag, "id" | "jobId" |
   return teile.join("&");
 }
 
+/**
+ * Job id to resume for a link back to an evaluation (`?eval=&job=`), or null. A finished evaluation whose report
+ * is stored in this session is restored from it instead, so it still opens after the backend lost the job.
+ */
+export function fortzusetzenderJob(
+  sitzung: EvaluationSitzung, jobId: string | null, evalId: string | null, berichtGespeichert: (id: string) => boolean,
+): string | null {
+  const eintrag = [sitzung.aktuell, ...sitzung.historie].find((e) => e && ((evalId && e.id === evalId) || (jobId && e.jobId === jobId)));
+  if (eintrag && eintrag.status === "fertig" && berichtGespeichert(eintrag.id)) return null;
+  return jobId || (sitzung.aktuell?.status === "laeuft" ? sitzung.aktuell.jobId : null);
+}
+
 export function istNeuerAuftrag(search: string | URLSearchParams): boolean {
   const q = typeof search === "string" ? new URLSearchParams(search.startsWith("?") ? search.slice(1) : search) : search;
   return q.get("neu") === "1";

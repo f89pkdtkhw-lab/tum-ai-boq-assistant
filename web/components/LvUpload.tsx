@@ -11,8 +11,8 @@ import { bietetOffline } from "@/lib/offline";
 import { fuehreAnalyseAus, fuehreAnalyseWeiter } from "@/lib/analyse-job";
 import { Ladeanzeige, useWizard } from "@/components/wizard/Wizard";
 import {
-  aktiviereEvaluation, archiviereAktuelleEvaluation, istNeuerAuftrag, ladeBericht, ladeSitzung,
-  setzeAktuelleEvaluation, speichereBericht,
+  aktiviereEvaluation, archiviereAktuelleEvaluation, fortzusetzenderJob, istNeuerAuftrag, ladeBericht, ladeSitzung,
+  setzeAktuelleEvaluation, speichereBericht, BERICHT_PRAEFIX,
 } from "@/lib/evaluation-session";
 import { istWizardSchritt } from "@/lib/wizard";
 import { KontingentHinweis } from "@/components/saas/KontingentHinweis";
@@ -21,6 +21,7 @@ import { BewertungsmodellWahl } from "@/components/bewertung/BewertungsmodellWah
 import { useBewertungsmodell } from "@/lib/useBewertungsmodell";
 import { ActionSheet } from "./ui/ActionSheet";
 import { TYP_LABEL, datumText, rolleFuerTyp, vaultApi, type VaultEintrag } from "@/lib/vault";
+import { ladeAuswahl, leereAuswahl, merkeAuswahl, type UploadRolle } from "@/lib/upload-auswahl";
 import styles from "./lv-upload.module.css";
 
 // Same limit as MAX_UPLOAD_BYTES in api/app/main.py; checked locally so oversized files never leave the browser.
@@ -117,7 +118,7 @@ function merkeLauf(lauf: Lauf, stand: { id: string; jobId: string | null; status
   });
 }
 
-type Rolle = "lv" | "regel" | "preise";
+type Rolle = UploadRolle;
 /** Guesses a file's role from its name and type; the user can change it in the list. */
 function rolleRaten(datei: File, hatLv: boolean): Rolle {
   const n = datei.name.toLowerCase();
@@ -148,6 +149,8 @@ export function LvUpload() {
   const [ziehen, setZiehen] = useState(false);
   const [ergebnis, setErgebnis] = useState<Ergebnis>({ phase: "leer" });
   const laufNummer = useRef(0);
+  // Resuming a job from an evaluation link: the wizard shows the step from the link once the status is reported.
+  const ausLink = useRef(false);
   const lebend = useRef(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const meldungRef = useRef<HTMLDivElement>(null);
@@ -164,7 +167,7 @@ export function LvUpload() {
   }, [ergebnis.phase, setStatus]);
 
   useEffect(() => {
-    if (ergebnis.phase === "laeuft" && (schritt === "hochladen" || !schritt)) setSchritt("pruefen");
+    if (ergebnis.phase === "laeuft" && !ausLink.current && (schritt === "hochladen" || !schritt)) setSchritt("pruefen");
   }, [ergebnis.phase, schritt, setSchritt]);
 
   useEffect(() => {
@@ -176,18 +179,24 @@ export function LvUpload() {
     const beispielId = params.get("beispiel");
     const jobId = params.get("job");
     const evalId = params.get("eval");
+    // Files picked before leaving the page (e.g. to Settings) come back with their roles.
+    const gemerkt = ladeAuswahl();
+    if (gemerkt.length > 0) setzeDateien(gemerkt);
     if (ausVault) {
       window.history.replaceState(null, "", "/");
       vaultApi.liste(["lv", "regelwerk", "preisliste"]).then((liste) => {
         const treffer = liste.find((x) => x.id === ausVault);
-        if (treffer) void ausVaultWaehlen(treffer, []);
+        if (treffer) void ausVaultWaehlen(treffer, gemerkt);
       }).catch(() => setDateiFehler(t("The vault is unreachable.")));
     }
     const sitzung = ladeSitzung();
     const laufend = !neu && !ausVault && !beispielId
-      && (jobId || (sitzung.aktuell?.status === "laeuft" ? sitzung.aktuell.jobId : null));
+      && fortzusetzenderJob(sitzung, jobId, evalId, (id) => {
+        try { return !!window.sessionStorage.getItem(BERICHT_PRAEFIX + id); } catch { return false; }
+      });
     if (laufend) {
-      const id = jobId || sitzung.aktuell!.jobId!;
+      const id = laufend;
+      ausLink.current = true;
       const name = (sitzung.aktuell && (sitzung.aktuell.jobId === id || sitzung.aktuell.id === id) && sitzung.aktuell.titel)
         || ladeBericht(id)?.titel
         || sitzung.aktuell?.titel
@@ -238,6 +247,7 @@ export function LvUpload() {
 
   // Current files with their role; the bill drives the review, the others are attached (see Rolle).
   function setzeDateien(liste: { datei: File; rolle: Rolle }[]) {
+    merkeAuswahl(liste);
     setDateien(liste);
     waehleDatei(liste.find((d) => d.rolle === "lv")?.datei ?? null);
     setRegelwerk(liste.find((d) => d.rolle === "regel")?.datei ?? null);
@@ -281,6 +291,7 @@ export function LvUpload() {
   }
 
   async function starte(lauf: Lauf) {
+    ausLink.current = false;
     // #166: with a live model the review also researches standards on the web (N5), which takes longer.
     const recherche = health !== null && health !== "offline" && !health.mock;
     const nummer = ++laufNummer.current;
@@ -460,11 +471,13 @@ export function LvUpload() {
     // A price list goes into the (browser) price database first, so the price report can use it.
     const preisDatei = dateien.find((d) => d.rolle === "preise")?.datei;
     if (preisDatei) { try { speicherePreisliste(lesePreisliste(await preisDatei.text())); } catch { /* not readable: review runs without it */ } }
+    leereAuswahl();
     void starte({ art: "datei", datei, regelwerk, preisliste: preisDatei ?? null });
   }
 
   function zuruecksetzen() {
     archiviereAktuelleEvaluation();
+    leereAuswahl();
     setDateien([]);
     setRegelwerk(null);
     if (inputRef.current) inputRef.current.value = "";

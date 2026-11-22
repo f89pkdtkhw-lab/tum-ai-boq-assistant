@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useT } from "@/lib/einstellungen";
 import {
   LADE_STUFEN, WIZARD_IDS, WIZARD_SCHRITTE, WIZARD_WEITER,
-  effektiverSchritt, istWizardSchritt, ladeStufe, leseSchritt, maxSchritt, schrittIndex, wizardPfad, wizardSichtbar,
+  effektiverSchritt, istWizardSchritt, ladeStufe, leseSchritt, maxSchritt, schrittIndex, wizardPfad, wizardSichtbar, wizardUmleitung,
   type WizardSchritt,
 } from "@/lib/wizard";
 import { setzeEvaluationSchritt } from "@/lib/evaluation-session";
@@ -67,14 +67,16 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     router.push(wizardPfad(ziel));
   }, [router, status, seite]);
 
+  const umleitung = wizardUmleitung(gewuenscht, schritt, search);
+  // Restoring an evaluation from its link: the step is not reachable until the page reports its status.
+  const wartet = gewuenscht !== schritt && umleitung === null;
   useEffect(() => {
-    if (!sichtbar) return;
-    if (gewuenscht !== schritt) router.replace(wizardPfad(schritt));
-  }, [sichtbar, gewuenscht, schritt, router]);
+    if (sichtbar && umleitung) router.replace(umleitung);
+  }, [sichtbar, umleitung, router]);
 
   useEffect(() => {
-    if (sichtbar) setzeEvaluationSchritt(schritt);
-  }, [sichtbar, schritt]);
+    if (sichtbar && !wartet) setzeEvaluationSchritt(schritt);
+  }, [sichtbar, wartet, schritt]);
 
   const kannWeiter = schritt === "hochladen" ? status.laeuft || status.hatBericht
     : schritt === "pruefen" ? status.hatBericht
