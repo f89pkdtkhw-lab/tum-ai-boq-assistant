@@ -63,12 +63,12 @@
 .mehr { color: var(--bad); font-weight: 600; }
 .eingabe { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
 
-.eingabe input, .feld input, .feld select, .feld textarea {
+.eingabe input, .feld input:not([type="file"]), .feld select, .feld textarea {
   font: inherit; font-size: 14px; color: var(--ink); background: var(--card); border: 1px solid var(--line);
   border-radius: var(--r-md); min-height: 32px; padding: 6px 10px;
 }
 /* Inputs fill their grid cell instead of keeping the browser's default width (which overflowed the card). */
-.feld input, .feld select, .feld textarea { width: 100%; min-width: 0; }
+.feld input:not([type="file"]), .feld select, .feld textarea { width: 100%; min-width: 0; }
 .eingabe input { width: 7em; text-align: right; font-variant-numeric: tabular-nums; }
 .feld { display: grid; gap: 4px; font-size: 13px; color: var(--muted); min-width: 0; }
 .feld i { font-style: normal; opacity: .7; }
@@ -112,8 +112,9 @@
 .abschluss { border-radius: var(--r-lg); padding: 12px 16px; }
 .abschluss > summary { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .abschluss > summary small { font-weight: 400; color: var(--muted); }
-.abschlussForm { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; align-items: end; }
-.abschlussForm .breit, .abschlussForm .aktionen, .abschlussForm .hinweis { grid-column: 1 / -1; }
+.abschlussForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; align-items: stretch; }
+.abschlussForm .datum { max-width: 280px; }
+.abschlussForm .breit, .abschlussForm .aktionen, .abschlussForm .hinweis, .abschlussForm .datum { grid-column: 1 / -1; }
 .abschlussForm .knopf { display: inline-flex; align-items: center; gap: 6px; }
 .fehlerText { color: var(--bad); font-size: 13.5px; }
 @media (max-width: 760px) { .abschlussForm { grid-template-columns: 1fr; } }
