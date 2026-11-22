@@ -5,14 +5,28 @@ import { zahl } from "./wettbewerb";
 /** One table row: a competitor bid, or our own row (bidder "Our company" / "Wir") with quantity and costs. */
 export type Gebot = { bieter: string; item: string; einheit: string; menge: number | null; preis: number | null; summe: number | null;
   direkt: number | null; bgk: number | null; marge: number | null };
-export type Punkt = { bieter: string; item: string; aufschlag: number; gewicht: number; angebot: number };
-/** One competitor over all its items: markup weighted by direct cost × quantity, offer = sum of its line totals. */
-export type Bieter = { name: string; aufschlag: number; angebot: number };
+export type Punkt = { bieter: string; item: string; aufschlag: number; gewicht: number; angebot: number;
+  bgk: number | null; marge: number | null };
+/** One competitor over all its items: markup weighted by direct cost × quantity, offer = sum of its line totals.
+ *  bgk/marge are unweighted averages of the disclosed split (annual, as in the file), or null. */
+export type Bieter = { name: string; aufschlag: number; angebot: number; bgk: number | null; marge: number | null; ausreisser: boolean };
 
 const EIGEN = /^(our|own|us|we|wir|eigen)/i;
 const median = (w: number[]) => { const s = [...w].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const mittel = (w: number[]) => w.reduce((a, b) => a + b, 0) / w.length;
 const quantil = (s: number[], q: number) => { const i = (s.length - 1) * q, u = Math.floor(i); return s[u] + (s[Math.ceil(i)] - s[u]) * (i - u); };
+const schnitt = (w: number[]) => (w.length ? w.reduce((a, b) => a + b, 0) / w.length : null);
+
+/** Project duration → factor on annual operating costs (10 months → 10/12). Non-positive falls back to a full year. */
+export function monateFaktor(monate: number | null | undefined): number {
+  return Number.isFinite(monate) && (monate as number) > 0 ? (monate as number) / 12 : 1;
+}
+
+/** Slider accent hue: 0 (red) at the cost-floor margin, 120 (green) at or above the competitor median margin. */
+export function sliderHue(marge: number, boden: number, median: number | null): number {
+  if (median == null || !(median > boden)) return marge <= boden ? 0 : 120;
+  return Math.min(1, Math.max(0, (marge - boden) / (median - boden))) * 120;
+}
 const ent = (s: string) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'")
   .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n))).replace(/&amp;/g, "&");
 const text = (xml: string) => [...xml.replace(/<rPh\b[\s\S]*?<\/rPh>/g, "").matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((m) => ent(m[1])).join("");
@@ -66,22 +80,31 @@ export function leseGebote(zeilen: string[][]): Gebot[] {
     menge: nr(z, i.menge), preis: nr(z, i.preis), summe: nr(z, i.summe), direkt: nr(z, i.direkt), bgk: nr(z, i.bgk), marge: nr(z, i.marge) })).filter((g) => g.bieter);
 }
 
-/** Section 1: markup = operating cost % + margin %; without that split back-calculated from price and direct cost
- *  (the bid's own, else our direct cost for the item). */
-export function punkte(gebote: Gebot[]): Punkt[] {
+/** Section 1: markup = (annual operating cost % × months/12) + margin %; without that split back-calculated from
+ *  price and direct cost (the bid's own, else our direct cost for the item). Back-calculated prices are already
+ *  project bids, so they are not pro-rated. */
+export function punkte(gebote: Gebot[], monate = 12): Punkt[] {
+  const faktor = monateFaktor(monate);
   const uns = new Map(gebote.filter((g) => EIGEN.test(g.bieter)).map((g) => [g.item, g]));
   return gebote.filter((g) => !EIGEN.test(g.bieter)).flatMap((g): Punkt[] => {
     const d = g.direkt ?? uns.get(g.item)?.direkt, menge = g.menge ?? uns.get(g.item)?.menge ?? 1;
-    const aufschlag = g.bgk != null && g.marge != null ? g.bgk + g.marge : d && g.preis != null ? ((g.preis - d) / d) * 100 : null;
-    return aufschlag == null ? [] : [{ bieter: g.bieter, item: g.item, aufschlag, gewicht: menge * (d ?? 1), angebot: g.summe ?? menge * (g.preis ?? 0) }];
+    const aufschlag = g.bgk != null && g.marge != null ? g.bgk * faktor + g.marge : d && g.preis != null ? ((g.preis - d) / d) * 100 : null;
+    return aufschlag == null ? [] : [{ bieter: g.bieter, item: g.item, aufschlag, gewicht: menge * (d ?? 1),
+      angebot: g.summe ?? menge * (g.preis ?? 0), bgk: g.bgk, marge: g.marge }];
   });
 }
 
 export function bieterListe(alle: Punkt[]): Bieter[] {
   const je = new Map<string, Punkt[]>();
   for (const p of alle) je.set(p.bieter, [...(je.get(p.bieter) ?? []), p]);
-  return [...je].map(([name, ps]) => ({ name, angebot: ps.reduce((s, p) => s + p.angebot, 0),
-    aufschlag: ps.reduce((s, p) => s + p.aufschlag * p.gewicht, 0) / ps.reduce((s, p) => s + p.gewicht, 0) }));
+  return [...je].map(([name, ps]) => {
+    const gewicht = ps.reduce((s, p) => s + p.gewicht, 0);
+    return { name, angebot: ps.reduce((s, p) => s + p.angebot, 0),
+      aufschlag: gewicht ? ps.reduce((s, p) => s + p.aufschlag * p.gewicht, 0) / gewicht : 0,
+      bgk: schnitt(ps.map((p) => p.bgk).filter((x): x is number => x != null)),
+      marge: schnitt(ps.map((p) => p.marge).filter((x): x is number => x != null)),
+      ausreisser: false };
+  });
 }
 
 /** Section 2: IQR fences from 5 points on; below that only implausible values (< 0 or > 100 %) go, and the result is low confidence. */
@@ -102,38 +125,71 @@ export function kennzahlen(werte: number[]) {
 export type Posten = { item: string; einheit: string; menge: number; direkt: number; bgk: number; n: number; raus: number; wenig: boolean;
   median: number | null; mittel: number | null; schief: boolean; aufschlag: number; amBoden: boolean; preis: number; preisKonk: number | null };
 
-/** The slider range picks the competitors (by their overall markup); their bids form the per-item benchmark.
- *  Sections 4–5: per item our markup = competitor median + offset (start −1 point), never below our operating costs
- *  plus the minimum margin (our row's margin %, else 0), so never below direct cost. Totals weighted by quantity. */
-export function auswerten(gebote: Gebot[], bereich: [number, number], abstand: number) {
-  const alle = punkte(gebote), liste = bieterListe(alle);
-  const bieter = liste.filter((x) => x.aufschlag >= bereich[0] && x.aufschlag <= bereich[1]);
-  const namen = new Set(bieter.map((x) => x.name));
-  const gewaehlt = alle.filter((p) => namen.has(p.bieter));
-  const posten: Posten[] = gebote.filter((g) => EIGEN.test(g.bieter) && g.direkt).map((u) => {
+export type Optionen = {
+  /** Selected competitor names; omit or null = every competitor. */
+  namen?: Iterable<string> | null;
+  /** Drop IQR outliers among the selection (default true). */
+  ausreisser?: boolean;
+  /** Our profit margin as % of direct cost. Omit for competitor-median implied margin − 1 point, floored. */
+  marge?: number | null;
+  /** Project duration in months; annual operating costs are pro-rated by months/12 (default 12). */
+  monate?: number;
+};
+
+function zaehle(werte: number[]) {
+  const m = new Map<number, number>();
+  for (const v of werte) m.set(v, (m.get(v) ?? 0) + 1);
+  return m;
+}
+
+/** The checked competitors (optional IQR drop) form the benchmark. Our price on every item is
+ *  pro-rated operating costs + the slider margin, never below our costs plus the minimum margin
+ *  (our row's margin %, else 0). Competitor mean/median and implied margins are taken from the selection. */
+export function auswerten(gebote: Gebot[], opt: Optionen = {}) {
+  const monate = opt.monate ?? 12, faktor = monateFaktor(monate);
+  const alle = punkte(gebote, monate), liste0 = bieterListe(alle);
+  const namen = opt.namen == null ? null : new Set([...opt.namen]);
+  const ausgewaehlt = namen ? liste0.filter((x) => namen.has(x.name)) : liste0;
+  const sauber = opt.ausreisser === false
+    ? ausgewaehlt.map((x) => x.aufschlag)
+    : bereinige(ausgewaehlt.map((x) => x.aufschlag)).werte;
+  const rest = zaehle(sauber);
+  const nimmt = (x: number) => { const n = rest.get(x) ?? 0; if (n <= 0) return false; rest.set(x, n - 1); return true; };
+  const liste = liste0.map((x) => ({ ...x, ausreisser: (!namen || namen.has(x.name)) && !nimmt(x.aufschlag) }));
+  const bieter = liste.filter((x) => (!namen || namen.has(x.name)) && !x.ausreisser);
+  const gewaehlt = alle.filter((p) => bieter.some((b) => b.name === p.bieter));
+
+  const uns = gebote.filter((g) => EIGEN.test(g.bieter) && g.direkt);
+  const bodenMarge = uns.length ? Math.max(0, ...uns.map((u) => Math.max(0, u.marge ?? 0))) : 0;
+  const gewichtUns = uns.reduce((s, u) => s + (u.menge ?? 1) * u.direkt!, 0);
+  const bgkUns = gewichtUns ? uns.reduce((s, u) => s + (u.menge ?? 1) * u.direkt! * (u.bgk ?? 0) * faktor, 0) / gewichtUns : 0;
+  const margen = bieter.map((x) => x.aufschlag - bgkUns);
+  const medianMarge = margen.length ? median(margen) : null, mittelMarge = margen.length ? mittel(margen) : null;
+  const vorgabe = medianMarge == null ? bodenMarge : Math.max(bodenMarge, medianMarge - 1);
+  const wunsch = opt.marge == null || !Number.isFinite(opt.marge) ? vorgabe : opt.marge;
+  const marge = Math.max(bodenMarge, wunsch);
+
+  const posten: Posten[] = uns.map((u) => {
     const b = bereinige(gewaehlt.filter((p) => p.item === u.item).map((p) => p.aufschlag));
     const k = kennzahlen(b.werte);
-    const direkt = u.direkt!, bgk = u.bgk ?? 0, boden = Math.max(0, bgk + Math.max(0, u.marge ?? 0));
-    const ziel = k ? k.median + abstand : boden;
-    const aufschlag = Math.max(ziel, boden);
+    const direkt = u.direkt!, bgk = (u.bgk ?? 0) * faktor, mindest = Math.max(0, u.marge ?? 0);
+    const effektiv = Math.max(marge, mindest);
+    const aufschlag = bgk + effektiv;
     return { item: u.item, einheit: u.einheit, menge: u.menge ?? 1, direkt, bgk, n: b.werte.length, raus: b.raus, wenig: b.wenig,
-      median: k?.median ?? null, mittel: k?.mittel ?? null, schief: k?.schief ?? false, aufschlag, amBoden: ziel < boden,
+      median: k?.median ?? null, mittel: k?.mittel ?? null, schief: k?.schief ?? false, aufschlag, amBoden: wunsch < mindest,
       preis: direkt * (1 + aufschlag / 100), preisKonk: k ? direkt * (1 + k.median / 100) : null };
   });
   const mit = posten.filter((p) => p.preisKonk != null);
   const summe = (f: (p: Posten) => number) => mit.reduce((s, p) => s + p.menge * f(p), 0);
   const gewinn = (auf: (p: Posten) => number) => summe((p) => (p.direkt * (auf(p) - p.bgk)) / 100);
   const w = bieter.map((x) => x.aufschlag);
+  const hiMarge = Math.max(bodenMarge, ...(margen.length ? margen : [bodenMarge]));
   return {
-    liste, bieter, posten,
-    auswahl: { bieter: bieter.length, vonBietern: liste.length, mittel: w.length ? mittel(w) : null, median: w.length ? median(w) : null },
+    liste, bieter, posten, monate, faktor, bgkUns,
+    boden: bodenMarge, marge, vorgabe, medianMarge, mittelMarge, hiMarge,
+    hue: sliderHue(marge, bodenMarge, medianMarge),
+    auswahl: { bieter: bieter.length, vonBietern: liste0.length, ausgewaehlt: ausgewaehlt.length,
+      mittel: w.length ? mittel(w) : null, median: w.length ? median(w) : null, mittelMarge, medianMarge },
     summe: { uns: summe((p) => p.preis), konk: summe((p) => p.preisKonk!), gewinn: gewinn((p) => p.aufschlag), gewinnKonk: gewinn((p) => p.median!) },
   };
-}
-
-/** Histogram bars over [lo, hi]. */
-export function histogramm(werte: number[], lo: number, hi: number, faecher = 24): number[] {
-  const h = new Array<number>(faecher).fill(0), breite = (hi - lo) / faecher || 1;
-  for (const x of werte) h[Math.min(faecher - 1, Math.max(0, Math.floor((x - lo) / breite)))]++;
-  return h;
 }

@@ -1,54 +1,53 @@
 "use client";
 
-// Margin slider: competitor bids from an Excel file → markup histogram with a range slider, the competitor median
-// as benchmark and our price just below it (never under our own costs). Logic in lib/marge.ts.
+// Margin page (variant A): pick competitors with checkboxes, set our margin on an iOS-style
+// slider (red at the cost floor → green at/above the competitor median). Logic in lib/marge.ts.
 import { useMemo, useState } from "react";
 import { useEinstellungen } from "@/lib/einstellungen";
-import { auswerten, bieterListe, histogramm, leseGebote, leseXlsx, punkte, type Bieter, type Gebot } from "@/lib/marge";
+import { auswerten, leseGebote, leseXlsx, type Bieter, type Gebot } from "@/lib/marge";
 import { Icon } from "../icon/Icon";
 import { Info } from "../info/Info";
 import styles from "./marge.module.css";
 
-const FAECHER = 24;
 type Spalte = "name" | "aufschlag" | "angebot";
+
+const kuerzel = (name: string) => {
+  const teile = name.replace(/&/g, " ").split(/\s+/).filter((w) => !/^(gmbh|kg|ag|ltd|inc|und|and|the|of)$/i.test(w));
+  return ((teile[0]?.[0] ?? "") + (teile[1]?.[0] ?? teile[0]?.[1] ?? "")).toUpperCase();
+};
+const avFarbe = (name: string) => {
+  let h = 0;
+  for (const c of name) h = (h * 33 + c.charCodeAt(0)) >>> 0;
+  return `hsl(${h % 360} 42% 42%)`;
+};
 
 export function Marge() {
   const { e, t } = useEinstellungen();
   const [gebote, setGebote] = useState<Gebot[]>([]);
   const [datei, setDatei] = useState<string | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
-  const [wahl, setWahl] = useState<[number, number] | null>(null);
-  const [abstand, setAbstand] = useState(-1);
+  const [wahl, setWahl] = useState<Set<string> | null>(null);
+  const [suche, setSuche] = useState("");
+  const [ausreisser, setAusreisser] = useState(true);
+  const [monate, setMonate] = useState(12);
+  const [marge, setMarge] = useState<number | null>(null);
   const [sortierung, setSortierung] = useState<{ spalte: Spalte; auf: boolean }>({ spalte: "aufschlag", auf: true });
   const loc = e.sprache === "de" ? "de-DE" : "en-GB";
   const euro = new Intl.NumberFormat(loc, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   const ep = new Intl.NumberFormat(loc, { style: "currency", currency: "EUR" });
   const pz = (x: number) => `${x.toLocaleString(loc, { maximumFractionDigits: 1 })} %`;
 
-  const werte = useMemo(() => bieterListe(punkte(gebote)).map((x) => x.aufschlag), [gebote]);
-  const lo = werte.length ? Math.floor(Math.min(...werte)) : 0, hi = werte.length ? Math.ceil(Math.max(...werte)) : 0;
-  const b: [number, number] = wahl ?? [lo, hi];
-  const r = auswerten(gebote, b, abstand);
-  const balken = useMemo(() => histogramm(werte, lo, hi, FAECHER), [werte, lo, hi]);
-  const spitze = Math.max(1, ...balken);
-  const f = (x: number) => (hi > lo ? (x - lo) / (hi - lo) : 0);
-
-  async function laden(file: File | undefined) {
-    if (!file) return;
-    setFehler(null);
-    try {
-      setGebote(leseGebote(await leseXlsx(await file.arrayBuffer()))); setDatei(file.name); setWahl(null); setAbstand(-1);
-    } catch (err) {
-      setFehler(`${t("Could not read the document")}: ${(err as Error).message}`);
-    }
-  }
-
+  const namen = useMemo(() => wahl ?? (gebote.length ? undefined : []), [wahl, gebote]);
+  const r = useMemo(() => auswerten(gebote, { namen, ausreisser, marge, monate }), [gebote, namen, ausreisser, marge, monate]);
   const { summe, auswahl } = r;
   const diff = summe.uns - summe.konk;
   const farbe = (d: number) => (d < 0 ? "var(--good)" : d > 0 ? "var(--bad)" : undefined);
   const vz = (d: number) => (d > 0 ? "+" : "");
   const { spalte, auf } = sortierung;
-  const zeilen = [...r.bieter].sort((x: Bieter, y: Bieter) => (auf ? 1 : -1) * (spalte === "name" ? x.name.localeCompare(y.name, loc) : x[spalte] - y[spalte]));
+  const q = suche.trim().toLowerCase();
+  const zeilen = [...r.liste]
+    .filter((x) => !q || x.name.toLowerCase().includes(q))
+    .sort((x: Bieter, y: Bieter) => (auf ? 1 : -1) * (spalte === "name" ? x.name.localeCompare(y.name, loc) : x[spalte] - y[spalte]));
   const kopf = (s: Spalte, label: string) => (
     <th className={s === "name" ? undefined : styles.rechts} aria-sort={spalte === s ? (auf ? "ascending" : "descending") : undefined}>
       <button type="button" className={styles.sortieren} onClick={() => setSortierung({ spalte: s, auf: spalte === s ? !auf : true })}>
@@ -57,9 +56,41 @@ export function Marge() {
     </th>
   );
 
+  async function laden(file: File | undefined) {
+    if (!file) return;
+    setFehler(null);
+    try {
+      const g = leseGebote(await leseXlsx(await file.arrayBuffer()));
+      setGebote(g); setDatei(file.name); setWahl(null); setMarge(null); setSuche(""); setAusreisser(true); setMonate(12);
+    } catch (err) {
+      setFehler(`${t("Could not read the document")}: ${(err as Error).message}`);
+    }
+  }
+
+  function toggle(name: string, an: boolean) {
+    const alle = new Set(wahl ?? r.liste.map((x) => x.name));
+    if (an) alle.add(name); else alle.delete(name);
+    setWahl(alle);
+  }
+  function alle(an: boolean) {
+    const sichtbar = new Set(zeilen.map((x) => x.name));
+    const basis = new Set(wahl ?? r.liste.map((x) => x.name));
+    for (const n of sichtbar) { if (an) basis.add(n); else basis.delete(n); }
+    setWahl(basis);
+  }
+
+  const spanne = Math.max(0.1, r.hiMarge - r.boden);
+  const pct = (x: number) => `${((Math.min(r.hiMarge, Math.max(r.boden, x)) - r.boden) / spanne) * 100}%`;
+  const abweichung = r.medianMarge == null ? null : r.marge - r.medianMarge;
+  const monateZahl = Number.isFinite(monate) && monate > 0 ? monate : 12;
+
   return (
     <main className={styles.seite}>
-      <h1 className={styles.titel}>{t("Margin")}</h1>
+      <div className={styles.kopf}>
+        <h1 className={styles.titel}>{t("Margin")}</h1>
+        {datei && <span className={styles.datei}>{datei} <small>· {t("Test or project file")}</small></span>}
+      </div>
+
       <section className={styles.karte}>
         <h2 className={styles.abschnitt}>{t("Load competitor bids")}
           <Info text={t("Excel (.xlsx), one row per bid: Provider, Item, Unit, Quantity, Unit price, Current offer, and if known Direct cost, Operating cost %, Profit margin %. A row with provider \"Our company\" per item holds our quantity, direct cost and operating cost %; its profit margin % is our minimum margin.")} /></h2>
@@ -70,61 +101,165 @@ export function Marge() {
         {fehler && <p className={styles.fehler}>{fehler}</p>}
       </section>
 
-      {werte.length > 0 && (
-        <section className={styles.karte}>
-          <h2 className={styles.abschnitt}>{t("Competitor markup")}
-            <Info text={t("Markup = operating cost % + margin %; without that split it is back-calculated from unit price and direct cost. One value per bidder, weighted by direct cost; the table shows it as profit margin. Drag the handles to narrow the bidders that count.")} /></h2>
-          <div className={styles.regler}>
-            <p className={styles.spanne}>{pz(b[0])} – {pz(b[1])}</p>
-            <svg className={styles.balken} viewBox={`0 0 ${FAECHER * 10} 80`} preserveAspectRatio="none" aria-hidden="true">
-              {balken.map((n, i) => {
-                const mitte = lo + ((i + 0.5) / FAECHER) * (hi - lo), h = (n / spitze) * 78;
-                return n > 0 && <rect key={i} x={i * 10 + 1} y={80 - h} width={8} height={h} data-aus={mitte < b[0] || mitte > b[1] || undefined} />;
-              })}
-            </svg>
-            <div className={styles.schiene}>
-              <span className={styles.spur} style={{ left: `calc(11px + (100% - 22px) * ${f(b[0])})`, right: `calc(11px + (100% - 22px) * ${1 - f(b[1])})` }} />
-              <input type="range" min={lo} max={hi} step={0.5} value={b[0]} aria-label={t("Lowest markup")} style={{ zIndex: f(b[0]) > 0.5 ? 2 : 1 }}
-                onChange={(ev) => setWahl([Math.min(Number(ev.target.value), b[1]), b[1]])} />
-              <input type="range" min={lo} max={hi} step={0.5} value={b[1]} aria-label={t("Highest markup")}
-                onChange={(ev) => setWahl([b[0], Math.max(Number(ev.target.value), b[0])])} />
+      {r.liste.length > 0 && (
+        <div className={styles.layout}>
+          <section className={styles.karte}>
+            <div className={styles.zeile}>
+              <h2 className={styles.abschnitt}>{t("Competitor list")}
+                <Info text={t("Mean and median are taken only from the checked bidders. Operating cost % and margin % are shown where the split is disclosed; otherwise markup is back-calculated from unit price and our direct cost.")} /></h2>
+              <span className={styles.hint}>{t("{n} of {m} selected", { n: auswahl.bieter, m: auswahl.vonBietern })}</span>
             </div>
-          </div>
-          <div className={styles.kacheln}>
-            <div><span>{t("Bidders in range")}</span><strong>{t("{n} of {m}", { n: auswahl.bieter, m: auswahl.vonBietern })}</strong></div>
-            <div><span>{t("Average")}</span><strong>{auswahl.mittel == null ? "–" : pz(auswahl.mittel)}</strong></div>
-            <div><span>{t("Median")}</span><strong>{auswahl.median == null ? "–" : pz(auswahl.median)}</strong></div>
-          </div>
-          <div className={styles.rahmen}>
-            <table className={styles.tabelle}>
-              <thead><tr>{kopf("name", "Provider")}{kopf("aufschlag", "Profit margin (%)")}{kopf("angebot", "Current offer (EUR)")}</tr></thead>
-              <tbody>
-                {zeilen.map((x) => <tr key={x.name}><td>{x.name}</td><td className={styles.rechts}>{pz(x.aufschlag)}</td><td className={styles.rechts}>{euro.format(x.angebot)}</td></tr>)}
-                {zeilen.length === 0 && <tr><td colSpan={3} className={styles.leise}>{t("No bidder in this range.")}</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </section>
+            <div className={styles.zeile}>
+              <label className={styles.suche}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+                <input type="search" value={suche} onChange={(ev) => setSuche(ev.target.value)} placeholder={t("Search competitors")} />
+              </label>
+              <div>
+                <button type="button" className={styles.linkbtn} onClick={() => alle(true)}>{t("All")}</button>
+                {" "}
+                <button type="button" className={styles.linkbtn} onClick={() => alle(false)}>{t("None")}</button>
+              </div>
+            </div>
+            <div className={styles.rahmen}>
+              <table className={styles.tabelle}>
+                <thead>
+                  <tr>
+                    <th style={{ width: 36 }} />
+                    {kopf("name", "Provider")}
+                    {kopf("angebot", "Current offer (EUR)")}
+                    <th className={styles.rechts}>{t("Operating cost %")}</th>
+                    <th className={styles.rechts}>{t("Margin %")}</th>
+                    {kopf("aufschlag", "Markup")}
+                  </tr>
+                </thead>
+                <tbody>
+                  {zeilen.map((x) => {
+                    const gesperrt = ausreisser && x.ausreisser;
+                    const an = !gesperrt && (wahl == null || wahl.has(x.name));
+                    return (
+                      <tr key={x.name} className={gesperrt ? styles.aus : undefined}>
+                        <td>
+                          <input className={styles.chk} type="checkbox" checked={an} disabled={gesperrt}
+                            aria-label={x.name} onChange={(ev) => toggle(x.name, ev.target.checked)} />
+                        </td>
+                        <td>
+                          <span className={styles.bieter}>
+                            <span className={styles.av} style={{ background: avFarbe(x.name) }}>{kuerzel(x.name)}</span>
+                            {x.name}
+                          </span>
+                        </td>
+                        <td className={styles.rechts}>{euro.format(x.angebot)}</td>
+                        <td className={styles.rechts}>{x.bgk == null ? "–" : x.bgk.toLocaleString(loc, { maximumFractionDigits: 1 })}</td>
+                        <td className={styles.rechts}>{x.marge == null ? "–" : x.marge.toLocaleString(loc, { maximumFractionDigits: 1 })}</td>
+                        <td className={styles.rechts}>{pz(x.aufschlag)}{x.ausreisser && <span className={styles.marke}>{t("outlier")}</span>}</td>
+                      </tr>
+                    );
+                  })}
+                  {zeilen.length === 0 && <tr><td colSpan={6} className={styles.leise}>{t("No matching competitor.")}</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className={styles.karte}>
+            <div className={styles.preisKicker}>{t("Our bid")}</div>
+            <p className={styles.preis}>{euro.format(summe.uns)}</p>
+            <p className={styles.delta} style={{ color: farbe(diff) }}>
+              {vz(diff)}{euro.format(diff)}{summe.konk ? ` (${vz(diff)}${pz((diff / summe.konk) * 100)})` : ""}{" "}
+              <span>{t(diff <= 0 ? "under the competitor median" : "above the competitor median")}</span>
+            </p>
+
+            <div className={styles.kacheln}>
+              <div><span>{t("Average markup")}</span><strong>{auswahl.mittel == null ? "–" : pz(auswahl.mittel)}</strong></div>
+              <div><span>{t("Median markup")}</span><strong>{auswahl.median == null ? "–" : pz(auswahl.median)}</strong></div>
+              <div><span>{t("Our profit")}</span><strong>{euro.format(summe.gewinn)}</strong></div>
+            </div>
+
+            <div className={styles.slider} style={{ ["--slider-hue" as string]: String(r.hue) }}>
+              <h3>{t("Our margin")}</h3>
+              <div className={styles.live}>
+                <div className={styles.wert}>{pz(r.marge)}</div>
+                <div className={styles.sub}>
+                  {t("Bid")} {euro.format(summe.uns)}
+                  {abweichung != null && ` · ${vz(abweichung)}${Math.abs(abweichung).toLocaleString(loc, { maximumFractionDigits: 1 })} ${t("points")} ${t("from the median")}`}
+                </div>
+              </div>
+              {r.medianMarge != null && (
+                <div className={styles.marks}>
+                  <div className={`${styles.mark} ${styles.markMedian}`} style={{ left: pct(r.medianMarge) }}><b>{t("Median")} {pz(r.medianMarge)}</b></div>
+                  {r.mittelMarge != null && <div className={`${styles.mark} ${styles.markMittel}`} style={{ left: pct(r.mittelMarge) }}><b>{t("Mean")} {pz(r.mittelMarge)}</b></div>}
+                </div>
+              )}
+              <div className={styles.trackWrap}>
+                <div className={styles.track}>
+                  <div className={styles.fill} style={{ width: pct(r.marge) }} />
+                  {r.medianMarge != null && <div className={`${styles.tick} ${styles.tickMedian}`} style={{ left: pct(r.medianMarge) }} />}
+                  {r.mittelMarge != null && <div className={styles.tick} style={{ left: pct(r.mittelMarge) }} />}
+                </div>
+                <div className={styles.schiene}>
+                  <input type="range" min={r.boden} max={r.hiMarge} step={0.1} value={r.marge}
+                    aria-label={t("Our margin")}
+                    onChange={(ev) => setMarge(Number(ev.target.value))} />
+                </div>
+              </div>
+              <div className={styles.ends}>
+                <span>{t("Cost floor {pct}", { pct: pz(r.boden) })}</span>
+                <span>{pz(r.hiMarge)}</span>
+              </div>
+              <p className={styles.hintFloor}>{t("The margin cannot go below our pro-rated operating costs plus the {pct} minimum margin.", { pct: pz(r.boden) })}</p>
+            </div>
+
+            <div className={styles.settings}>
+              <label className={styles.srow}>
+                <span className={styles.lbl}>
+                  <b>{t("Exclude outliers")}</b>
+                  <small>{r.liste.some((x) => x.ausreisser)
+                    ? t("{names} ({pct} markup) by IQR", {
+                        names: r.liste.filter((x) => x.ausreisser).map((x) => x.name).join(", "),
+                        pct: pz(r.liste.find((x) => x.ausreisser)!.aufschlag),
+                      })
+                    : t("No outliers in this selection.")}</small>
+                </span>
+                <span className={styles.sw}>
+                  <input type="checkbox" checked={ausreisser} onChange={(ev) => setAusreisser(ev.target.checked)} />
+                  <i />
+                </span>
+              </label>
+              <label className={styles.srow}>
+                <span className={styles.lbl}>
+                  <b>{t("Project duration")}</b>
+                  <small>{t("Operating costs pro-rated {n}/12 of the annual figures", { n: String(monateZahl) })}</small>
+                </span>
+                <span className={styles.dauer}>
+                  <input type="number" min={0.5} max={36} step={0.5} value={monate}
+                    onChange={(ev) => setMonate(Number(ev.target.value))} />
+                  {t("months")}
+                </span>
+              </label>
+            </div>
+          </section>
+        </div>
       )}
 
       {r.posten.length > 0 && (
-        <section className={styles.karte}>
-          <h2 className={styles.abschnitt}>{t("Our price")}
-            <Info text={t("Per item our markup = competitor median + offset, never below our operating costs plus the minimum margin. The competitor median price uses our direct cost with their median markup.")} /></h2>
-          <label className={styles.versatz}>
-            <span>{t("Offset to the competitor median")}: <b>{vz(abstand)}{abstand.toLocaleString(loc, { minimumFractionDigits: 1 })} {t("points")}</b></span>
-            <input type="range" min={-10} max={10} step={0.5} value={abstand} onChange={(ev) => setAbstand(Number(ev.target.value))} />
-          </label>
-          <div className={styles.kacheln}>
-            <div><span>{t("Our bid total")}</span><strong>{euro.format(summe.uns)}</strong><small>{t("Competitor median")}: {euro.format(summe.konk)}</small></div>
-            <div><span>{t("Difference")}</span><strong style={{ color: farbe(diff) }}>{vz(diff)}{euro.format(diff)}</strong>
-              <small style={{ color: farbe(diff) }}>{summe.konk ? `${vz(diff)}${pz((diff / summe.konk) * 100)}` : "–"} · {t(diff <= 0 ? "cheaper" : "more expensive")}</small></div>
-            <div><span>{t("Our profit")}</span><strong>{euro.format(summe.gewinn)}</strong><small>{t("at the median")}: {euro.format(summe.gewinnKonk)} ({vz(summe.gewinn - summe.gewinnKonk)}{euro.format(summe.gewinn - summe.gewinnKonk)})</small></div>
+        <section className={`${styles.karte} ${styles.posten}`}>
+          <div className={styles.zeile}>
+            <h2 className={styles.abschnitt}>{t("Our price per item")}
+              <Info text={t("Our markup = pro-rated operating costs + the margin from the slider, never below the cost floor. The median price uses the competitor median markup of the selection.")} /></h2>
           </div>
           <div className={styles.rahmen}>
             <table className={styles.tabelle}>
-              <thead><tr><th>{t("Item")}</th><th className={styles.rechts}>{t("Data points")}</th><th className={styles.rechts}>{t("Median (mean)")}</th><th className={styles.rechts}>{t("Our markup")}</th>
-                <th className={styles.rechts}>{t("Our unit price")}</th><th className={styles.rechts}>{t("Median price")}</th><th className={styles.rechts}>{t("Difference")}</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>{t("Position")}</th>
+                  <th className={styles.rechts}>{t("Data points")}</th>
+                  <th className={styles.rechts}>{t("Median (mean)")}</th>
+                  <th className={styles.rechts}>{t("Our markup")}</th>
+                  <th className={styles.rechts}>{t("Our unit price")}</th>
+                  <th className={styles.rechts}>{t("Median price")}</th>
+                  <th className={styles.rechts}>{t("Difference")}</th>
+                </tr>
+              </thead>
               <tbody>
                 {r.posten.map((p) => {
                   const d = p.preisKonk == null ? null : p.preis - p.preisKonk;
