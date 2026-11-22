@@ -1,49 +1,143 @@
-# LV Review Assistant
+# LV Scout: AI review and pricing assistant for bills of quantities
 
 **TUM.ai Construction Hackathon 2026 · Challenge A**
 
-Before submitting a bid, an estimator needs to know which positions to correct, which quantities to verify, and which ambiguities to raise with the client. Upload a bill of quantities (LV) in GAEB XML, Excel, PDF or structured LV JSON. The assistant extracts the items and brings pricing errors, unusual quantities, standards references and potential Nachträge into one review report. Each finding points to an item number (OZ) and shows the evidence and a suggested next action.
+LV Scout reviews a construction bill of quantities (German *Leistungsverzeichnis*, LV) before a contractor prices and submits a bid. Upload the LV as GAEB, Excel, PDF or JSON. LV Scout extracts every item, finds errors and risks, explains each finding with its item number (OZ) and evidence, estimates prices, and walks you to a final offer and export.
+
+![Review report with score, findings and price estimate](docs/screenshots/02-score.jpg)
+
+## Why it matters
+
+An estimator often has a few days for a tender with hundreds or thousands of items. A missed error costs money after the job is won; a price set too high loses the job. One project partner described the task like this: the job is not to process 9,000 items, but to find the 100 that matter. LV Scout puts those items first and gives the reason, the source and a next step for each one.
+
+## What it does
+
+| Step | What you get |
+| --- | --- |
+| 1. Upload | GAEB XML (X83, X84), GAEB 90 (D83, D84, D86), Excel (.xlsx), text PDF or JSON. Optionally a regulation document and a price list. |
+| 2. Review | Fixed rules, quantity plausibility, a standards register and an optional Claude review run on every item. Progress is shown live. |
+| 3. Resolve findings | A ranked list with severity, rule or model source, an explanation, a suggestion and a link to the exact place in the document. You confirm or dismiss each finding. |
+| 4. Evaluate price | Item-by-item estimate from your price list, past projects and public price indices, with a range and its sources. |
+| 5. Set margin | Compare against competitor bids and set your margin. Your price never drops below your own costs. |
+| 6. Final price and export | Final offer, then export as PDF, Excel, CSV or GAEB (X81–X86). |
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/03-findings.jpg" alt="Findings list with detail panel for OZ 01.0010"><br><sub>Step 3: every finding names its OZ, rule and source and suggests what to do.</sub></td>
+<td width="50%"><img src="docs/screenshots/04-price.jpg" alt="Estimated price report with ranges and sources"><br><sub>Step 4: estimated unit prices with range and source, e.g. a public construction price index.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/05-margin.jpg" alt="Margin page comparing competitor bids"><br><sub>Step 5: margin against synthetic competitor bids.</sub></td>
+<td width="50%"><img src="docs/screenshots/06-export.jpg" alt="Final offer and export options"><br><sub>Step 6: final offer and export to PDF, Excel, CSV or GAEB.</sub></td>
+</tr>
+</table>
+
+All screenshots use synthetic data only: [`data/demo/workshop-foundation.json`](data/demo/workshop-foundation.json) and [`data/testfaelle/marge/competitor_bids_synthetic.xlsx`](data/testfaelle/marge/competitor_bids_synthetic.xlsx).
 
 ## Quick start
 
-Run this command from the repository root with Python 3.11+ and Node.js 20.9+ (including npm).
+Requirements: Python 3.11+ and Node.js 20.9+ with npm. Run from the repository root:
 
 ```sh
 python tools/dev.py --install
 ```
 
-On a fresh checkout the launcher installs the Python and web dependencies. Open [the app on port 3000](http://localhost:3000). The [API health endpoint](http://localhost:8000/health) shows the backend and model status. Use `python3` if your system has no `python` command.
+This installs the Python and web dependencies and starts both services. Use `python3` if your system has no `python` command.
 
-The app uses the offline mock when no provider key is configured. Fixed rules, quantity checks and findings from the bundled standards register still run. The report labels mock model output. For live Claude review and supported web-backed standards research, create `.env.local` in the repository root, add the following, and restart the app.
+- App: <http://localhost:3000>
+- API health and model status: <http://localhost:8000/health>
+
+Without an API key, LV Scout runs **fully offline**: fixed rules, quantity checks and the bundled standards register still work, and the report marks the model part as a mock. For the live Claude review, standards research and PDF vision fallback, create `.env.local` in the repository root and restart:
 
 ```dotenv
 LLM_PROVIDER=anthropic
 ANTHROPIC_API_KEY=your-key-here
 ```
 
-Keep real keys in `.env.local` or environment variables and out of Git. Set `LLM_PROVIDER=mock` to explicitly choose offline mode.
+Keep keys in `.env.local` or environment variables, never in Git. All other settings, with defaults, are listed in [`.env.example`](.env.example).
 
-## Jury demo
+## Two-minute demo
 
-1. In **New evaluation**, choose **Upload files** and select [workshop-foundation.json](data/demo/workshop-foundation.json). This six-item LV is entirely synthetic and includes a deliberate total price error. Leave its role as **Bill of quantities** and click **Evaluate**.
-2. Click **Show details** and open **OZ 01.0010** in the findings list. The arithmetic rule shows that 75 m³ × €24/m³ gives €1,800, while the LV states €1,500. The same item cites ATV DIN 18300 (2012-09) and uses legacy soil classes. Check the register evidence and raise the soil classification with the client.
-3. Open **OZ 02.0010**. The primer covers 180 m² while the three related slab layers each cover 120 m². Use the quantity finding to ask whether the primer covers an additional area.
-4. Open **OZ 01.0020**. The provisional dewatering is specified “as required.” Use the Nachtrag finding to ask who authorizes pumping, how its duration is measured, and how it will be paid.
-5. Scroll back to the score at the top, then choose **Export report**. When a price list or matching database prices are available, open **Price report ›** to inspect the calculated estimate before using it in the bid.
+1. Open **New evaluation**, choose **Upload files** and select [`data/demo/workshop-foundation.json`](data/demo/workshop-foundation.json), a six-item synthetic LV. Click **Evaluate**, then **Continue to findings**.
+2. **OZ 01.0010**: the arithmetic rule shows 75 m³ × €24/m³ = €1,800, while the LV states €1,500 (−€300). The same item cites an outdated edition of ATV DIN 18300 (2012-09) and legacy soil classes instead of homogeneous zones.
+3. **OZ 02.0010**: the primer covers 180 m², while the three related slab layers each cover 120 m². Ask whether the primer covers an extra area.
+4. **OZ 01.0020**: the dewatering is "as required". The risk finding turns this into a question for the client: who instructs pumping, how is it measured and how is it paid?
+5. Click **Evaluate price** to see the estimate per item, then **Continue to margin** and **Continue to export** for the final offer and downloads.
 
-## Architecture
+## How it works
 
-| Stage | What it does |
+```mermaid
+flowchart LR
+    A["Upload<br/>GAEB · Excel · PDF · JSON"] --> B["Import<br/>common LV model"]
+    B --> C["Fixed rules<br/>arithmetic · quantities · text"]
+    B --> D["Standards register<br/>withdrawn or outdated norms"]
+    B --> E["Claude review<br/>optional, server side"]
+    C & D & E --> F["Risk and Nachtrag scoring"]
+    F --> G["Report<br/>score · findings · evidence"]
+    G --> H["Price estimate<br/>price list · history · indices"]
+    H --> I["Margin and final offer"]
+    I --> J["Export<br/>PDF · Excel · CSV · GAEB"]
+```
+
+| Layer | Technology | Where |
+| --- | --- | --- |
+| Web UI | Next.js (React, TypeScript) | [`web/`](web/) |
+| API | FastAPI (Python) | [`api/app/`](api/app/) |
+| Import | GAEB XML and GAEB 90, Excel, PDF with optional Claude vision fallback for parser gaps | [`api/app/lv/`](api/app/lv/) |
+| Review rules and standards | Fixed rules, quantity plausibility, standards register | [`api/app/pruefung/`](api/app/pruefung/) |
+| Risk and Nachtrag | Risk scoring per item type (optional, hourly, lump-sum, "as required") | [`api/app/risiko/`](api/app/risiko/) |
+| Model access | One server-side client for Claude and other providers; never called from the browser | [`api/app/ai/llm.py`](api/app/ai/llm.py) |
+| Price and history data | DuckDB price database, history of past projects | [`db/`](db/) |
+
+Design principles:
+
+- **Every finding cites its source.** Each finding names its OZ and says whether a fixed rule or the model produced it. Nothing invents items, prices or standards.
+- **No number without a basis.** Unknown prices stay empty instead of guessed. Estimates show a range and where it came from.
+- **People decide.** Findings are never confirmed automatically; the estimator confirms or dismisses each one.
+
+## Measured results
+
+One reproducible run against a manually reviewed benchmark LV (structural works for a single-family house, 40-page PDF, 25 documented findings), in offline mode with no model:
+
+| Metric | Result |
 | --- | --- |
-| Import | The Next.js upload UI sends the file to FastAPI. The importer normalizes OZ, descriptions, quantities, units and any supplied prices into a common LV model. |
-| Rules and model review | Fixed checks catch arithmetic and structural errors and compare related quantities. The server-side LLM reviews the item text for unclear scope and inconsistencies. |
-| Risk and standards | Risk scoring surfaces items that need clarification and potential Nachträge. The bundled standards register provides local checks, with live research available through Claude. |
-| Report and estimate | The report combines findings, evidence, and suggested actions. The estimate uses an uploaded price list or available database prices. The estimator reviews the result before bidding. |
-| History | When project history is available, compare previous estimates with actuals. At closeout, record final quantities and costs to inform future bids. |
+| Documented findings found by fixed rules alone | **16 of 25** |
+| Findings the reviewer marked as rule-findable, found | **12 of 13** |
+| Findings matching nothing on the reviewer's list | **1 of 34** |
+| Items imported from the PDF | 100 |
+| Import plus review time (median of 3 runs) | 2.70 s |
 
-## Team resources
+Most of the nine misses are marked in the reviewer's list as model work, such as preamble clauses or missing positions, so the offline run cannot find them. This is one document, so it says nothing about other LVs, and no manual review was timed, so we claim no time saving. Method, definitions and the full table: [`data/vergleich.md`](data/vergleich.md). Reproduce with `python tools/messe_demo.py`.
 
-- [Challenge brief](docs/case.md) and [domain guide](docs/domaene.md)
-- [Repository workflow](AGENTS.md) and [team board](https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant/issues/1)
+## Tests
 
-Run the team tooling tests from the repository root with `python -m unittest discover -s tests -v`. Run the API tests from `api/` with `python -m pytest -q`.
+| Suite | Command | Result on 22 Nov 2026 |
+| --- | --- | --- |
+| API | `cd api && python -m pytest -q` | 925 passed, 1 skipped |
+| Web unit tests | `cd web && npm test` | 225 passed |
+| Web build | `cd web && npm run build` | passes |
+| Team tooling | `python -m unittest discover -s tests -v` | passes |
+
+All tests run offline and free, with the model mocked.
+
+## Data and privacy
+
+- The partner dataset is confidential. It stays in this private repository and is never published. Demos, screenshots and fixtures use synthetic data only.
+- Model calls run only on the server. Without a key, no data leaves the machine. With a key, an LV goes only to the configured model provider.
+
+## Repository map
+
+| Path | Content |
+| --- | --- |
+| [`web/`](web/) | Next.js app: upload, report, prices, margin, export |
+| [`api/`](api/) | FastAPI backend: import, review, risk, pricing, model access |
+| [`db/`](db/) | Price database and history storage |
+| [`data/demo/`](data/demo/) | Synthetic demo LV for the jury |
+| [`data/vergleich.md`](data/vergleich.md) | Benchmark measurement |
+| [`docs/`](docs/) | [Challenge brief](docs/case.md), [domain guide](docs/domaene.md), [architecture](docs/architektur.md), [demo guide](docs/demo.md) |
+| [`pitch/`](pitch/) | Three-minute pitch and Q&A |
+| [`tools/`](tools/) | Launcher, measurement and team tooling |
+
+## Team
+
+Built in one weekend by five people for TUM.ai Construction Hackathon 2026, Challenge A. Team workflow: [AGENTS.md](AGENTS.md) and the [team board](https://github.com/f89pkdtkhw-lab/tum-ai-boq-assistant/issues/1).
