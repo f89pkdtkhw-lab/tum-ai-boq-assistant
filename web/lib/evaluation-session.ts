@@ -117,11 +117,12 @@ export function setzeAktuelleEvaluation(teil: Partial<EvaluationEintrag> & Pick<
 /** Update an evaluation where it is (current or history) without making it current; unknown ids are ignored. */
 export function aktualisiereEvaluation(id: string, teil: Partial<Pick<EvaluationEintrag, "status" | "prozent" | "meldung">>): void {
   const sitzung = ladeSitzung();
+  const trifft = (e: EvaluationEintrag) => e.id === id || e.jobId === id;
   const neu = (e: EvaluationEintrag): EvaluationEintrag => ({ ...e, ...teil, updatedAt: Date.now() });
-  if (sitzung.aktuell?.id === id) {
+  if (sitzung.aktuell && trifft(sitzung.aktuell)) {
     schreiben({ ...sitzung, aktuell: neu(sitzung.aktuell) });
-  } else if (sitzung.historie.some((e) => e.id === id)) {
-    schreiben({ ...sitzung, historie: sitzung.historie.map((e) => (e.id === id ? neu(e) : e)) });
+  } else if (sitzung.historie.some(trifft)) {
+    schreiben({ ...sitzung, historie: sitzung.historie.map((e) => (trifft(e) ? neu(e) : e)) });
   }
 }
 
@@ -167,6 +168,28 @@ export function fortzusetzenderJob(
   const eintrag = [sitzung.aktuell, ...sitzung.historie].find((e) => e && ((evalId && e.id === evalId) || (jobId && e.jobId === jobId)));
   if (eintrag && eintrag.status === "fertig" && berichtGespeichert(eintrag.id)) return null;
   return jobId || (sitzung.aktuell?.status === "laeuft" ? sitzung.aktuell.jobId : null);
+}
+
+/**
+ * An evaluation the chip or this tab wanted to reopen, but there is no job to resume and no stored report
+ * (backend lost the job, or the run never got a job id). The page must show this as an error, not the start screen.
+ */
+export function nichtWiederherstellbareEvaluation(
+  sitzung: EvaluationSitzung, jobId: string | null, evalId: string | null, berichtGespeichert: (id: string) => boolean,
+): EvaluationEintrag | null {
+  if (fortzusetzenderJob(sitzung, jobId, evalId, berichtGespeichert)) return null;
+  const eintrag = [sitzung.aktuell, ...sitzung.historie].find((e) =>
+    e && ((evalId && e.id === evalId) || (jobId && (e.jobId === jobId || e.id === jobId)))
+  ) ?? (!evalId && !jobId ? sitzung.aktuell : null);
+  if (!eintrag) return null;
+  if (berichtGespeichert(eintrag.id) || (eintrag.jobId && berichtGespeichert(eintrag.jobId))) return null;
+  return eintrag;
+}
+
+export function istBerichtGespeichert(id: string): boolean {
+  const s = speicher();
+  if (!s || !id) return false;
+  try { return s.getItem(BERICHT_PRAEFIX + id) != null; } catch { return false; }
 }
 
 export function istNeuerAuftrag(search: string | URLSearchParams): boolean {

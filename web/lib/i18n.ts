@@ -87,6 +87,8 @@ export const DE: Record<string, string> = {
   "Loading the example BoQ from the server …": "Beispiel-LV wird vom Server geladen …",
   "Import failed": "Import fehlgeschlagen",
   "Review failed": "Prüfung fehlgeschlagen",
+  "The analysis job was lost, probably because the backend restarted. Please try again.": "Der Analyseauftrag ist nicht mehr vorhanden, vermutlich weil das Backend neu gestartet wurde. Bitte erneut versuchen.",
+  "The analysis had not started yet, or the job is no longer known to the backend. Please start a new evaluation.": "Die Analyse war noch nicht gestartet, oder der Auftrag ist dem Backend nicht mehr bekannt. Bitte starte eine neue Auswertung.",
   "Offline example unavailable": "Offline-Beispiel nicht verfügbar",
   "The backend is unreachable.": "Das Backend ist nicht erreichbar.",
   "Cannot connect to the backend.": "Keine Verbindung zum Backend.",

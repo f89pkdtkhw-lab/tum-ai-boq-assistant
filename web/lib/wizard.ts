@@ -64,6 +64,7 @@ export function wizardUmleitung(gewuenscht: WizardSchritt, schritt: WizardSchrit
   return wizardPfad(schritt);
 }
 
+
 /** The progress bar is shown on the six flow pages; other menu pages stay as they are. */
 export function wizardSichtbar(pathname: string): boolean {
   return pathname === "/" || pathname === "/marge" || pathname === "/export"
@@ -82,6 +83,20 @@ export function effektiverSchritt(wunsch: WizardSchritt, status: { hatBericht: b
   const seiten = seite ? schrittIndex(seite) : 0;
   const oben = Math.max(max, seiten);
   return schrittIndex(wunsch) > oben ? WIZARD_IDS[oben] : wunsch;
+}
+
+/**
+ * Step shown in the wizard. While an evaluation link (`eval` / `job`) is being restored, keep the requested
+ * step even if the report is not in React state yet. Clamping to "hochladen" hid the error or progress view
+ * and looked like a silent return to the start page.
+ */
+export function wizardAnzeigeSchritt(
+  gewuenscht: WizardSchritt, status: { hatBericht: boolean; laeuft: boolean }, seite: WizardSchritt | undefined,
+  search: { has(name: string): boolean },
+): WizardSchritt {
+  const geklemmt = effektiverSchritt(gewuenscht, status, seite);
+  if (gewuenscht !== geklemmt && wizardUmleitung(gewuenscht, geklemmt, search) === null) return gewuenscht;
+  return geklemmt;
 }
 
 /**

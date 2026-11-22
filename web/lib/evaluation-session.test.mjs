@@ -6,7 +6,8 @@ import { registerHooks } from "node:module";
 registerHooks({ resolve(spec, ctx, next) { try { return next(spec, ctx); } catch (e) { if (spec.startsWith(".")) return next(`${spec}.ts`, ctx); throw e; } } });
 const {
   AKTUELL_SCHLUESSEL, MAX_HISTORIE, SITZUNG_SCHLUESSEL,
-  aktualisiereEvaluation, archiviereAktuelleEvaluation, beobachteSitzung, evaluationListe, evaluationPfad, fortzusetzenderJob, istNeuerAuftrag,
+  aktualisiereEvaluation, archiviereAktuelleEvaluation, beobachteSitzung, evaluationListe, evaluationPfad, fortzusetzenderJob, istBerichtGespeichert, istNeuerAuftrag,
+  nichtWiederherstellbareEvaluation,
   ladeBericht, ladeSitzung, leseSitzung, leereSitzung, setzeAktuelleEvaluation, setzeEvaluationSchritt,
   speichereBericht,
 } = await import("./evaluation-session.ts");
@@ -131,4 +132,41 @@ test("aktualisiereEvaluation updates a job where it is, without making it curren
   aktualisiereEvaluation("unbekannt", { status: "fehler" });
   assert.equal(ladeSitzung().aktuell.id, "j2");
   ab();
+});
+
+test("nichtWiederherstellbareEvaluation flags a chip target that has no job and no report", () => {
+  const e = (id, status, jobId = id) => ({ id, jobId, titel: "LV", status, schritt: "pruefen", prozent: 0, meldung: "", updatedAt: 1 });
+  const gespeichert = (ids) => (id) => ids.includes(id);
+  const leer = gespeichert([]);
+  // Running job: resume it, this is not a gap.
+  assert.equal(nichtWiederherstellbareEvaluation({ aktuell: e("j1", "laeuft"), historie: [] }, "j1", "j1", leer), null);
+  // Finished with a stored report: restore it.
+  assert.equal(nichtWiederherstellbareEvaluation({ aktuell: e("j1", "fertig"), historie: [] }, "j1", "j1", gespeichert(["j1"])), null);
+  // Left during import: 0 % placeholder, no job id, chip has only eval=.
+  const lokal = e("lokal-2", "laeuft", null);
+  const luecke = nichtWiederherstellbareEvaluation({ aktuell: lokal, historie: [] }, null, "lokal-2", leer);
+  assert.equal(luecke?.id, "lokal-2");
+  // Same gap when the user reloads on "/" and the current item is that placeholder.
+  assert.equal(nichtWiederherstellbareEvaluation({ aktuell: lokal, historie: [] }, null, null, leer)?.id, "lokal-2");
+  // Finished without a report and without a job to ask: also a gap, never a silent start page.
+  const fertig = e("e9", "fertig", null);
+  assert.equal(nichtWiederherstellbareEvaluation({ aktuell: fertig, historie: [] }, null, "e9", leer)?.id, "e9");
+  // Empty session, no link: the start page is correct.
+  assert.equal(nichtWiederherstellbareEvaluation({ aktuell: null, historie: [] }, null, null, leer), null);
+});
+
+test("aktualisiereEvaluation also matches a job id that differs from the entry id", () => {
+  mockStorage();
+  setzeAktuelleEvaluation({ id: "e1", jobId: "job-9", titel: "A", status: "laeuft", prozent: 10 });
+  aktualisiereEvaluation("job-9", { prozent: 40, meldung: "step 3" });
+  assert.equal(ladeSitzung().aktuell.prozent, 40);
+  assert.equal(ladeSitzung().aktuell.id, "e1");
+});
+
+test("istBerichtGespeichert only looks at the per-evaluation report key", () => {
+  mockStorage();
+  const bericht = { lv: { name: "Kita", quelle: "test", positionen: [], summen: {} }, findings: [] };
+  speichereBericht("Kita", null, bericht, "e1");
+  assert.equal(istBerichtGespeichert("e1"), true);
+  assert.equal(istBerichtGespeichert("missing"), false);
 });

@@ -10,9 +10,10 @@ import { Bericht } from "@/components/bericht/Bericht";
 import { bietetOffline } from "@/lib/offline";
 import { beobachteJob, verfolgeJob, type JobHaken } from "@/lib/analyse-lauf";
 import { Ladeanzeige, useWizard } from "@/components/wizard/Wizard";
+import { JOB_NICHT_GESTARTET_TEXT, JOB_VERLOREN_TEXT } from "@/lib/analyse-job";
 import {
-  aktiviereEvaluation, aktualisiereEvaluation, archiviereAktuelleEvaluation, fortzusetzenderJob, istNeuerAuftrag, ladeBericht, ladeSitzung,
-  setzeAktuelleEvaluation, speichereBericht, BERICHT_PRAEFIX,
+  aktiviereEvaluation, aktualisiereEvaluation, archiviereAktuelleEvaluation, fortzusetzenderJob, istBerichtGespeichert, istNeuerAuftrag,
+  ladeBericht, ladeSitzung, nichtWiederherstellbareEvaluation, setzeAktuelleEvaluation, speichereBericht,
 } from "@/lib/evaluation-session";
 import { istWizardSchritt } from "@/lib/wizard";
 import { KontingentHinweis } from "@/components/saas/KontingentHinweis";
@@ -204,10 +205,8 @@ export function LvUpload() {
       }).catch(() => setDateiFehler(t("The vault is unreachable.")));
     }
     const sitzung = ladeSitzung();
-    const laufend = !neu && !ausVault && !beispielId
-      && fortzusetzenderJob(sitzung, jobId, evalId, (id) => {
-        try { return !!window.sessionStorage.getItem(BERICHT_PRAEFIX + id); } catch { return false; }
-      });
+    const berichtDa = (id: string) => istBerichtGespeichert(id);
+    const laufend = !neu && !ausVault && !beispielId && fortzusetzenderJob(sitzung, jobId, evalId, berichtDa);
     if (laufend) {
       const id = laufend;
       ausLink.current = true;
@@ -229,6 +228,22 @@ export function LvUpload() {
           schritte: { datei: fertig, import: fertig, pruefung: fertig } });
         if (!istWizardSchritt(params.get("schritt"))) {
           setSchritt(sitzung.aktuell?.schritt && sitzung.aktuell.schritt !== "hochladen" ? sitzung.aktuell.schritt : "pruefen");
+        }
+      } else {
+        const verloren = nichtWiederherstellbareEvaluation(sitzung, jobId, evalId, berichtDa);
+        if (verloren) {
+          ausLink.current = true;
+          aktiviereEvaluation(verloren.id);
+          const meldung = verloren.jobId ? JOB_VERLOREN_TEXT : JOB_NICHT_GESTARTET_TEXT;
+          aktualisiereEvaluation(verloren.id, { status: "fehler", meldung });
+          const lauf: Lauf = { art: "lv", titel: verloren.titel, lv: { name: verloren.titel, quelle: "session", positionen: [], summen: {} } };
+          const fertig: Schritt = { status: "fertig", text: "Restored from this browser session." };
+          setErgebnis({
+            phase: "fehler", lauf,
+            schritte: { datei: fertig, import: fertig, pruefung: { status: "fehler", text: meldung } },
+            titel: "Review failed", meldung, tipp: null, offline: false,
+          });
+          if (!istWizardSchritt(params.get("schritt"))) setSchritt("pruefen");
         }
       }
     }
@@ -520,7 +535,7 @@ export function LvUpload() {
         <span className={`${styles.status} ${status.klasse}`}>{status.text}</span>
       </header>
 
-      {(ergebnis.phase === "leer" || schritt === "hochladen") && (<>
+      {(ergebnis.phase === "leer" || (schritt === "hochladen" && ergebnis.phase !== "fehler" && ergebnis.phase !== "laeuft")) && (<>
       <KontingentHinweis />
       {/* Start screen from the team sketch: one upload button, the list of current files, Evaluate. */}
       <form className={styles.start} onSubmit={absenden} aria-describedby="upload-regeln"
