@@ -26,6 +26,15 @@ const nextConfig = {
   // cuts the connection after 30 s (socket hang up / ECONNRESET) and the UI retries,
   // creating duplicate jobs. 960 s leaves a short buffer; Claude and mock still return in seconds.
   experimental: { proxyClientMaxBodySize: "11mb", proxyTimeout: 960_000 },
+  // t243: everything stored (price database, history, submitted price lists/final bills) lives on /vault.
+  // The query string is passed on, so /history?fall=<id> still opens that case.
+  async redirects() {
+    return [
+      { source: "/preise", destination: "/vault?tab=preisdatenbank", permanent: false },
+      { source: "/history", destination: "/vault?tab=historie", permanent: false },
+      { source: "/einreichen", destination: "/vault?tab=einreichen", permanent: false },
+    ];
+  },
   async rewrites() {
     return [{ source: "/backend/:path*", destination: `${api}/:path*` }];
   },

@@ -26,3 +26,7 @@
 .destr { color: #ff3b30 !important; }
 .abbrechen { font-weight: 600; color: var(--ink); background: #fff; }
 [data-theme="dark"] .abbrechen { background: #2c2c2e; color: #fff; }
+
+/* t243: long vault lists scroll inside the sheet. */
+.gruppe { max-height: 70vh; overflow-y: auto; }
+.gruppe button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 14px; }

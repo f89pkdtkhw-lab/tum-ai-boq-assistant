@@ -23,3 +23,10 @@ def offline_model_env(monkeypatch):
         monkeypatch.delenv(name, raising=False)
     # E #169: deep web research stays off in tests even with a fake key; its tests switch it on.
     monkeypatch.setenv("DEEP_RESEARCH", "off")
+
+
+@pytest.fixture(autouse=True)
+def vault_tmp(monkeypatch, tmp_path):
+    """t243: imports and analyses file documents in the vault; tests never write into data/vault/."""
+    monkeypatch.setenv("LV_SCOUT_VAULT_DIR", str(tmp_path / "vault"))
+    return tmp_path / "vault"

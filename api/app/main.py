@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 from starlette.concurrency import run_in_threadpool
-from fastapi import FastAPI, HTTPException, Query, UploadFile
+from fastapi import FastAPI, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ValidationError
 from .ai import llm
@@ -73,7 +73,7 @@ app.add_middleware(Antwortsprache)  # #196: answer language from the UI cookie
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[s.strip() for s in os.environ.get("WEB_ORIGINS", "http://localhost:3000").split(",") if s.strip()],
-    allow_methods=["GET", "POST"], allow_headers=["Content-Type"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"], allow_headers=["Content-Type", "X-LV-Scout-User"],
 )
 try:
     from db.client import router as db_router
@@ -96,6 +96,8 @@ from .ai.schluessel import router as key_router  # #156: enter the Claude API ke
 app.include_router(key_router)
 from .ai.dev_options import router as dev_options_router  # developer options + Grok Bot mode
 app.include_router(dev_options_router)
+from . import vault  # noqa: E402  t243: local document vault (data/vault/, git-ignored)
+app.include_router(vault.router)
 
 class Question(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
@@ -130,7 +132,7 @@ def examples():
 
 
 @app.post("/api/lv/import", response_model=LV)
-async def import_lv(datei: UploadFile):
+async def import_lv(datei: UploadFile, x_lv_scout_user: str | None = Header(None)):
     try:
         inhalt = await datei.read(MAX_UPLOAD_BYTES + 1)
         if len(inhalt) > MAX_UPLOAD_BYTES:
@@ -138,7 +140,11 @@ async def import_lv(datei: UploadFile):
         if not inhalt:
             raise HTTPException(422, "The uploaded file is empty.")
         # Synchronous parsers (PDF especially) must not block the event loop.
-        return await run_in_threadpool(importiere, datei.filename or "", inhalt)
+        lv = await run_in_threadpool(importiere, datei.filename or "", inhalt)
+        # t247: a bill used in an analysis is filed in the vault (same file = same entry).
+        vault.lege_ab(inhalt, datei.filename or "lv", "lv", besitzer=x_lv_scout_user, quelle="analyse",
+                      lv_key=vault.lv_schluessel(lv), lv_name=lv.name)
+        return lv
     except ValidationError:
         raise HTTPException(422, "Invalid BoQ JSON. Please use the documented BoQ contract.") from None
     except NotImplementedError as exc:
@@ -150,8 +156,10 @@ async def import_lv(datei: UploadFile):
 
 
 @app.post("/api/lv/pruefen", response_model=Pruefbericht)
-def pruefen(lv: LV, bewertungsmodell: Bewertungsmodell = Query(DEFAULT_MODELL)):
-    return _pruefen(lv, bewertungsmodell=bewertungsmodell)
+def pruefen(lv: LV, bewertungsmodell: Bewertungsmodell = Query(DEFAULT_MODELL), x_lv_scout_user: str | None = Header(None)):
+    bericht = _pruefen(lv, bewertungsmodell=bewertungsmodell)
+    vault.archiviere_bericht(bericht, lv, x_lv_scout_user)  # t248: every run is a new version
+    return bericht
 
 
 def _recherche_schritte() -> int:
@@ -250,14 +258,16 @@ class AnalyseAnfrage(BaseModel):
 
 # --- Regulation document (B3, issue #96): upload + analysis with the uploaded key values. ---
 @app.post("/api/regelwerk/import", response_model=Regelwerk)
-async def import_regelwerk(datei: UploadFile):
+async def import_regelwerk(datei: UploadFile, x_lv_scout_user: str | None = Header(None)):
     try:
         inhalt = await datei.read(MAX_UPLOAD_BYTES + 1)
         if len(inhalt) > MAX_UPLOAD_BYTES:
             raise HTTPException(413, "File is too large (maximum 10 MiB).")
         if not inhalt:
             raise HTTPException(422, "The uploaded file is empty.")
-        return importiere_regelwerk(datei.filename or "", inhalt)
+        regelwerk = importiere_regelwerk(datei.filename or "", inhalt)
+        vault.lege_ab(inhalt, datei.filename or "regelwerk", "regelwerk", besitzer=x_lv_scout_user, quelle="analyse")
+        return regelwerk
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from None
     finally:
@@ -265,11 +275,13 @@ async def import_regelwerk(datei: UploadFile):
 
 
 @app.post("/api/lv/analyse", response_model=Pruefbericht)
-def analyse(anfrage: AnalyseAnfrage):
+def analyse(anfrage: AnalyseAnfrage, x_lv_scout_user: str | None = Header(None)):
     """`/api/lv/pruefen` plus check 1 with the uploaded regulation document (B3, via B2's `vorgaben`) and
     the price list (B6); `regelwerk: null` and no `preisliste` = identical findings, plus the price DB
     calculation and estimated bill whenever the price database has prices (#167: the UI always uses it)."""
-    return _analyse(anfrage)
+    bericht = _analyse(anfrage)
+    vault.archiviere_bericht(bericht, anfrage.lv, x_lv_scout_user)  # t248
+    return bericht
 
 
 def _analyse(anfrage: AnalyseAnfrage, fortschritt: Fortschritt | None = None):
@@ -299,12 +311,17 @@ class AnalyseJobAnfrage(AnalyseAnfrage):
 
 
 @app.post("/api/lv/analyse/start", response_model=analyse_job.AnalyseStart, status_code=202)
-def analyse_start(anfrage: AnalyseJobAnfrage):
+def analyse_start(anfrage: AnalyseJobAnfrage, x_lv_scout_user: str | None = Header(None)):
     """Starts the analysis in a background thread and answers at once; poll …/status/{job_id}."""
     if anfrage.nur_pruefen:
-        arbeit, gesamt = (lambda f: _pruefen(anfrage.lv, f, bewertungsmodell=anfrage.bewertungsmodell)), PRUEF_SCHRITTE + _recherche_schritte()  # E #169
+        lauf, gesamt = (lambda f: _pruefen(anfrage.lv, f, bewertungsmodell=anfrage.bewertungsmodell)), PRUEF_SCHRITTE + _recherche_schritte()  # E #169
     else:
-        arbeit, gesamt = (lambda f: _analyse(anfrage, f)), PRUEF_SCHRITTE + 1 + _recherche_schritte()
+        lauf, gesamt = (lambda f: _analyse(anfrage, f)), PRUEF_SCHRITTE + 1 + _recherche_schritte()
+
+    def arbeit(f):
+        bericht = lauf(f)
+        vault.archiviere_bericht(bericht, anfrage.lv, x_lv_scout_user)  # t248: new version per run, no cache
+        return bericht
     try:
         return analyse_job.AnalyseStart(job_id=analyse_job.starte(arbeit, gesamt))
     except analyse_job.ZuVieleJobs as exc:

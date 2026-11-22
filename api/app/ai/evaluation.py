@@ -10,7 +10,7 @@ import json
 import logging
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import Field, ValidationError
 
 from ..modelle import Vertrag
@@ -219,7 +219,14 @@ def live_evaluation(evidence: Evidence, baseline: dict) -> Evaluation:
 
 @router.post("/api/lv/ai-evaluation", response_model=Evaluation,
              responses={502: {"description": "The model boundary failed; message is safe to show"}})
-def ai_evaluation(evidence: Evidence):
+def ai_evaluation(evidence: Evidence, x_lv_scout_user: str | None = Header(None)):
+    ergebnis = _ai_evaluation(evidence)
+    from .. import vault  # noqa: PLC0415  t248: every AI evaluation is kept as a new version in the vault
+    vault.archiviere("auswertung", ergebnis, "KI-Auswertung", lv_name=evidence.name, besitzer=x_lv_scout_user)
+    return ergebnis
+
+
+def _ai_evaluation(evidence: Evidence):
     run = llm.StructuredRun()
     try:
         answer = run.complete_batch([llm.JsonRequest(task=TASK, input=evidence.model_dump(),
