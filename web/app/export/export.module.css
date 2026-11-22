@@ -94,6 +94,9 @@
 .zeile_added td, .zeile_removed td, .zeile_updated td { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 .geschaetzt { background: color-mix(in srgb, var(--sev-ok) 12%, var(--fill)) !important; }
 
-/* Two button rows (files, GAEB) stacked on the right */
-.leiste { flex-wrap: wrap; row-gap: 8px; }
+/* All buttons (files, GAEB) in one row, the back link in its own row below */
+.leiste { flex-direction: column; flex-wrap: nowrap; align-items: stretch; justify-content: flex-start; row-gap: 4px; padding: 6px 8px; }
+.knopfreihe { display: flex; flex-wrap: nowrap; gap: 6px; min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: thin; padding-bottom: 2px; }
+.knopfreihe > .knopf, .knopfreihe > .knopfZweit { flex: 0 0 auto; white-space: nowrap; font-size: 12.5px; padding: 0 10px; min-height: 32px; gap: 5px; }
+.leiste > .zurueck { align-self: flex-start; min-height: 26px; padding-left: 6px; }
 select.knopfZweit { font: inherit; border: 1px solid var(--line); cursor: pointer; }

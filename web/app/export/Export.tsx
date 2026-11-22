@@ -183,22 +183,20 @@ export function Export() {
       </div>
 
       <nav className={`${styles.glas} ${styles.leiste}`} aria-label={t("Export")}>
-        <a className={styles.zurueck} href="/">{t("‹ Review")}</a>
-        <div className={styles.aktionen}>
+        <div className={styles.knopfreihe}>
           {/* Print opens the printer dialog; Save PDF downloads a real file without any dialog (lib/berichtpdf.ts). */}
           <button type="button" className={styles.knopfZweit} onClick={() => window.print()}><Icon name="report" /> {t("Print")}</button>
           <button type="button" className={styles.knopf} onClick={() => pdfSpeichern(berichtExport, bewertungen, preis)}><Icon name="download" /> {t("Save PDF")}</button>
           <button type="button" className={styles.knopf} onClick={() => excel(berichtExport, bewertungen, preis)}><Icon name="download" /> {t("Download Excel")}</button>
           <button type="button" className={styles.knopf} onClick={() => csvPreis()}><Icon name="download" /> {t("Price list as CSV")}</button>
-        </div>
-        {/* GAEB DA XML (lib/gaeb.ts): the bill in the chosen phase, and the estimated bill as an offer (X84). */}
-        <div className={styles.aktionen} role="group" aria-label="GAEB">
+          {/* GAEB DA XML (lib/gaeb.ts): the bill in the chosen phase, and the estimated bill as an offer (X84). */}
           <select className={styles.knopfZweit} value={phase} onChange={(e) => setPhase(e.target.value as GaebPhase)} aria-label={t("GAEB phase")}>
             {GAEB_PHASEN.map((p) => <option key={p.dp} value={p.dp}>{t(p.name)}</option>)}
           </select>
           <button type="button" className={styles.knopf} onClick={() => gaeb(bericht, phase)}><Icon name="download" /> {t("GAEB · bill")}</button>
           <button type="button" className={styles.knopf} onClick={() => gaeb(bericht, "84", preis)}><Icon name="download" /> {t("GAEB X84 · estimated bill")}</button>
         </div>
+        <a className={styles.zurueck} href="/">{t("‹ Review")}</a>
       </nav>
 
       <article className={styles.blatt}>
