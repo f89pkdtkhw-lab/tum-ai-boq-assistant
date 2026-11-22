@@ -8,10 +8,10 @@ import { lesePreisliste, preislisteText, speicherePreisliste } from "@/lib/preis
 import { Icon } from "./icon/Icon";
 import { Bericht } from "@/components/bericht/Bericht";
 import { bietetOffline } from "@/lib/offline";
-import { fuehreAnalyseAus, fuehreAnalyseWeiter } from "@/lib/analyse-job";
+import { beobachteJob, verfolgeJob, type JobHaken } from "@/lib/analyse-lauf";
 import { Ladeanzeige, useWizard } from "@/components/wizard/Wizard";
 import {
-  aktiviereEvaluation, archiviereAktuelleEvaluation, fortzusetzenderJob, istNeuerAuftrag, ladeBericht, ladeSitzung,
+  aktiviereEvaluation, aktualisiereEvaluation, archiviereAktuelleEvaluation, fortzusetzenderJob, istNeuerAuftrag, ladeBericht, ladeSitzung,
   setzeAktuelleEvaluation, speichereBericht, BERICHT_PRAEFIX,
 } from "@/lib/evaluation-session";
 import { istWizardSchritt } from "@/lib/wizard";
@@ -19,7 +19,7 @@ import { KontingentHinweis } from "@/components/saas/KontingentHinweis";
 import { zaehleAuswertung } from "@/lib/saas/client";
 import { BewertungsmodellWahl } from "@/components/bewertung/BewertungsmodellWahl";
 import { useBewertungsmodell } from "@/lib/useBewertungsmodell";
-import { ActionSheet } from "./ui/ActionSheet";
+import { AuswahlMenue } from "./ui/AuswahlMenue";
 import { TYP_LABEL, datumText, rolleFuerTyp, vaultApi, type VaultEintrag } from "@/lib/vault";
 import { ladeAuswahl, leereAuswahl, merkeAuswahl, type UploadRolle } from "@/lib/upload-auswahl";
 import styles from "./lv-upload.module.css";
@@ -111,11 +111,23 @@ function laufTitel(lauf: Lauf): string {
   return lauf.art === "datei" ? lauf.datei.name : lauf.titel;
 }
 
-function merkeLauf(lauf: Lauf, stand: { id: string; jobId: string | null; status: "laeuft" | "fertig" | "fehler"; prozent?: number | null; meldung?: string }) {
+function merkeLauf(lauf: Lauf, stand: { id: string; jobId: string | null; status: "laeuft" | "fertig" | "fehler"; prozent?: number | null; meldung?: string }, ersetzt?: string) {
   setzeAktuelleEvaluation({
     id: stand.id, jobId: stand.jobId, titel: laufTitel(lauf), status: stand.status,
     schritt: "pruefen", prozent: stand.prozent ?? null, meldung: stand.meldung ?? "",
-  });
+  }, ersetzt);
+}
+
+/** Session side of a job (lib/analyse-lauf.ts): progress, saved report and failure, whichever page is open. */
+function jobHaken(jobId: string, titel: string, beispielId: string | null): JobHaken {
+  return {
+    aufStand: (stand) => aktualisiereEvaluation(jobId, { status: "laeuft", prozent: stand.prozent, meldung: stand.meldung }),
+    aufFertig: ({ bericht }) => {
+      speichereBericht(titel, beispielId, bericht, jobId);
+      aktualisiereEvaluation(jobId, { status: "fertig", prozent: 100, meldung: "" });
+    },
+    aufFehler: (fehler) => aktualisiereEvaluation(jobId, { status: "fehler", meldung: fehler instanceof Error && fehler.message ? fehler.message : "Unknown error." }),
+  };
 }
 
 type Rolle = UploadRolle;
@@ -152,6 +164,8 @@ export function LvUpload() {
   // Resuming a job from an evaluation link: the wizard shows the step from the link once the status is reported.
   const ausLink = useRef(false);
   const lebend = useRef(true);
+  // Subscriptions of this page to background jobs (lib/analyse-lauf.ts); the jobs keep running without them.
+  const jobAbos = useRef<(() => void)[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const meldungRef = useRef<HTMLDivElement>(null);
 
@@ -225,7 +239,11 @@ export function LvUpload() {
       const treffer = liste.find((b) => b.id === id);
       if (treffer) void starte({ art: "beispiel", id: treffer.id, titel: treffer.titel });
     }).catch(() => {});
-    return () => { lebend.current = false; };
+    return () => {
+      lebend.current = false;
+      jobAbos.current.forEach((ab) => ab());
+      jobAbos.current = [];
+    };
     // starte / setzeFortsetzen run only once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -295,8 +313,10 @@ export function LvUpload() {
     // #166: with a live model the review also researches standards on the web (N5), which takes longer.
     const recherche = health !== null && health !== "offline" && !health.mock;
     const nummer = ++laufNummer.current;
-    const aktuell = () => nummer === laufNummer.current && lebend.current;
+    // Not tied to the page being mounted: leaving during import still starts the job (state updates are then no-ops).
+    const aktuell = () => nummer === laufNummer.current;
     let schritte = startSchritte(lauf);
+    let gestarteterJob: string | null = null;
     setErgebnis({ phase: "laeuft", lauf, schritte });
     merkeLauf(lauf, { id: `lokal-${nummer}`, jobId: null, status: "laeuft", prozent: 0, meldung: "" });
     zaehleAuswertung(); // soft plan quota (lib/saas): fire-and-forget, never blocks or fails the run
@@ -317,7 +337,8 @@ export function LvUpload() {
       }
       if (schritte.pruefung.status === "wartet") schritte.pruefung = { status: "wartet", text: "Not started." };
       setErgebnis({ phase: "fehler", lauf, schritte, titel, meldung, tipp: hinweis, offline: bietetOffline(fehler, erreichbar), stand });
-      merkeLauf(lauf, { id: stand?.job_id ?? `lokal-${nummer}`, jobId: stand?.job_id ?? null, status: "fehler", prozent: stand?.prozent ?? null, meldung });
+      const id = stand?.job_id ?? gestarteterJob;
+      merkeLauf(lauf, { id: id ?? `lokal-${nummer}`, jobId: id, status: "fehler", prozent: stand?.prozent ?? null, meldung });
     };
 
     let lv: LV;
@@ -393,21 +414,22 @@ export function LvUpload() {
       });
       // #165: background job with progress; #167: always the full analysis (no `nur_pruefen`).
       try {
-        const ende = await fuehreAnalyseAus(api, anfrage, {
-          aktiv: aktuell,
-          aufStart: (jobId) => merkeLauf(lauf, { id: jobId, jobId, status: "laeuft", prozent: 0, meldung: "" }),
-          aufStand: (stand) => {
-            job.stand = stand;
-            schritte = { ...schritte, pruefung: { status: "laeuft", text: stand.meldung } };
-            setErgebnis({ phase: "laeuft", lauf, schritte, stand });
-            merkeLauf(lauf, { id: stand.job_id, jobId: stand.job_id, status: "laeuft", prozent: stand.prozent, meldung: stand.meldung });
-          },
-        });
-        if (ende === null) return;
+        const { job_id } = await api.starteAnalyse(anfrage);
+        gestarteterJob = job_id;
+        merkeLauf(lauf, { id: job_id, jobId: job_id, status: "laeuft", prozent: 0, meldung: "" }, `lokal-${nummer}`);
+        // Polling runs in the background (lib/analyse-lauf.ts), so progress and the report survive leaving the page.
+        const fertig = verfolgeJob(api, job_id, jobHaken(job_id, laufTitel(lauf), lauf.art === "beispiel" ? lauf.id : null));
+        jobAbos.current.push(beobachteJob(job_id, (stand) => {
+          job.stand = stand;
+          if (!aktuell()) return;
+          schritte = { ...schritte, pruefung: { status: "laeuft", text: stand.meldung } };
+          setErgebnis({ phase: "laeuft", lauf, schritte, stand });
+        }));
+        const ende = await fertig;
         bericht = ende.bericht;
         hinweise.push(...ende.stand.fehler);
       } catch (fehler) {
-        if (job.stand || !routeFehlt(fehler)) throw fehler;
+        if (gestarteterJob || !routeFehlt(fehler)) throw fehler;
         bericht = await synchron(); // older backend without the job routes: one synchronous request as before
       }
     } catch (fehler) {
@@ -420,9 +442,10 @@ export function LvUpload() {
       pruefung: { status: "fertig", text: `${anzahl(bericht.findings.length, "Entry", "Entries")} in the report.` },
     };
     setErgebnis({ phase: "fertig", lauf, schritte, lv, bericht, nummer, offline: false, hinweise });
-    const fertigId = job.stand?.job_id ?? `lokal-${nummer}`;
-    speichereBericht(laufTitel(lauf), lauf.art === "beispiel" ? lauf.id : null, bericht, fertigId);
-    merkeLauf(lauf, { id: fertigId, jobId: job.stand?.job_id ?? null, status: "fertig", prozent: 100, meldung: "" });
+    if (!gestarteterJob) { // older backend without jobs; with a job the background hooks saved the report
+      speichereBericht(laufTitel(lauf), lauf.art === "beispiel" ? lauf.id : null, bericht, `lokal-${nummer}`);
+      merkeLauf(lauf, { id: `lokal-${nummer}`, jobId: null, status: "fertig", prozent: 100, meldung: "" });
+    }
     if (health === "offline") api.health().then(setHealth).catch(() => {});
   }
 
@@ -435,33 +458,30 @@ export function LvUpload() {
       import: { status: "fertig", text: "Restored from this browser session." },
       pruefung: { status: "laeuft", text: "Resuming the analysis …" },
     };
-    merkeLauf(lauf, { id: jobId, jobId, status: "laeuft", prozent: 0, meldung: "Resuming the analysis …" });
+    if (!aktiviereEvaluation(jobId)) merkeLauf(lauf, { id: jobId, jobId, status: "laeuft", prozent: 0, meldung: "Resuming the analysis …" });
     setErgebnis({ phase: "laeuft", lauf, schritte, stand: null });
     const job: { stand: AnalyseStatus | null } = { stand: null };
+    // Joins the background poller if this tab already follows the job, so the live percent shows at once.
+    const fertig = verfolgeJob(api, jobId, jobHaken(jobId, titel, null));
+    jobAbos.current.push(beobachteJob(jobId, (stand) => {
+      job.stand = stand;
+      if (!aktuell()) return;
+      schritte = { ...schritte, pruefung: { status: "laeuft", text: stand.meldung } };
+      setErgebnis({ phase: "laeuft", lauf, schritte, stand });
+    }));
     try {
-      const ende = await fuehreAnalyseWeiter(api, jobId, {
-        aktiv: aktuell,
-        aufStand: (stand) => {
-          job.stand = stand;
-          schritte = { ...schritte, pruefung: { status: "laeuft", text: stand.meldung } };
-          setErgebnis({ phase: "laeuft", lauf, schritte, stand });
-          merkeLauf(lauf, { id: stand.job_id, jobId: stand.job_id, status: "laeuft", prozent: stand.prozent, meldung: stand.meldung });
-        },
-      });
-      if (ende === null || !aktuell()) return;
+      const ende = await fertig;
+      if (!aktuell()) return;
       const bericht = ende.bericht;
       const lv = bericht.lv;
       schritte = { ...schritte, pruefung: { status: "fertig", text: `${anzahl(bericht.findings.length, "Entry", "Entries")} in the report.` } };
       setErgebnis({ phase: "fertig", lauf: { art: "lv", titel, lv }, schritte, lv, bericht, nummer, offline: false, hinweise: ende.stand.fehler });
-      speichereBericht(titel, null, bericht, jobId);
-      merkeLauf(lauf, { id: jobId, jobId, status: "fertig", prozent: 100, meldung: "" });
     } catch (fehler) {
       if (!aktuell()) return;
       const stand = (fehler as { stand?: AnalyseStatus }).stand ?? job.stand ?? null;
       const meldung = fehler instanceof Error && fehler.message ? fehler.message : "Unknown error.";
       schritte = { ...schritte, pruefung: { status: "fehler", text: meldung } };
       setErgebnis({ phase: "fehler", lauf, schritte, titel: "Review failed", meldung, tipp: null, offline: false, stand });
-      merkeLauf(lauf, { id: jobId, jobId, status: "fehler", meldung });
     }
   }
 
@@ -510,12 +530,11 @@ export function LvUpload() {
           <input ref={inputRef} className={styles.dateiEingabe} type="file" multiple accept={`${ACCEPT},.csv,.docx,.txt,.md,.x86,.d84`} onChange={aufAuswahl} disabled={busy} />
           <Icon name="upload" size={22} /> {t("Upload files")}
         </label>
-        <button type="button" className={styles.vaultKnopf} disabled={busy} onClick={() => void vaultOeffnen()}>
-          <Icon name="folder" /> {t("Choose from vault")}
-        </button>
-        <ActionSheet open={vaultListe !== null} onClose={() => setVaultListe(null)} cancelLabel={t("Cancel")}
-          title={vaultListe?.length ? t("Choose from vault") : t("The vault is empty. Files you analyse are stored there automatically.")}
-          actions={(vaultListe ?? []).slice(0, 30).map((x) => ({ label: `${x.dateiname} · ${t(TYP_LABEL[x.typ])} · ${datumText(x.hochgeladen_am)}`, onClick: () => void ausVaultWaehlen(x) }))} />
+        <AuswahlMenue knopfKlasse={styles.vaultKnopf} disabled={busy} ausrichtung="mitte" label={t("Choose from vault")}
+          knopfInhalt={<><Icon name="folder" /> {t("Choose from vault")}</>}
+          leerText={t("The vault is empty. Files you analyse are stored there automatically.")}
+          onOeffnen={() => void vaultOeffnen()} onSchliessen={() => setVaultListe(null)}
+          eintraege={vaultListe && vaultListe.slice(0, 30).map((x) => ({ key: x.id, label: `${x.dateiname} · ${t(TYP_LABEL[x.typ])} · ${datumText(x.hochgeladen_am)}`, onClick: () => void ausVaultWaehlen(x) }))} />
         <p id="upload-regeln" className={styles.regeln}>{t("Bill (GAEB, Excel, PDF, JSON), optionally a regulation document and a price list. Drag files here or click.")}</p>
 
         <div className={styles.dateiListe} aria-live="polite">

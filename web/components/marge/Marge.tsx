@@ -3,7 +3,7 @@
 // Margin page (variant A): pick competitors with checkboxes, set our margin on an iOS-style
 // slider (red at the cost floor → green at/above the competitor median). Logic in lib/marge.ts.
 import { useEffect, useMemo, useState } from "react";
-import { ActionSheet } from "../ui/ActionSheet";
+import { AuswahlMenue } from "../ui/AuswahlMenue";
 import { TYP_LABEL, datumText, vaultApi, type VaultEintrag } from "@/lib/vault";
 import { useEinstellungen } from "@/lib/einstellungen";
 import { api } from "@/lib/api";
@@ -174,18 +174,17 @@ export function Marge() {
             <input type="file" accept=".pdf,application/pdf" onChange={(ev) => { void pdfEinlesen(ev.target.files?.[0]); ev.target.value = ""; }} disabled={kiLaeuft} />
             <Icon name="sparkles" />{kiLaeuft ? t("Reading the PDF with the AI … this can take a few minutes.") : t("Read PDF with AI")} <small>.pdf</small>
           </label>
-          <button type="button" className={styles.vaultKnopf} onClick={() => void vaultOeffnen()} disabled={kiLaeuft}>
-            <Icon name="folder" /> {t("Choose from vault")}
-          </button>
+          <AuswahlMenue knopfKlasse={styles.vaultKnopf} disabled={kiLaeuft} label={t("Choose from vault")}
+            knopfInhalt={<><Icon name="folder" /> {t("Choose from vault")}</>}
+            leerText={t("The vault has no competitor bid files yet. Files you load on the margin page are stored automatically.")}
+            onOeffnen={() => void vaultOeffnen()} onSchliessen={() => setVaultListe(null)}
+            eintraege={vaultListe && vaultListe.slice(0, 30).map((x) => ({ key: x.id, label: `${x.dateiname} · ${t(TYP_LABEL[x.typ])} · ${datumText(x.hochgeladen_am)}`, onClick: () => void ausVaultWaehlen(x) }))} />
           {download && (
             <a className={styles.vaultKnopf} href={download.url} download={download.name}>
               <Icon name="download" /> {t("Download Excel")}
             </a>
           )}
         </div>
-        <ActionSheet open={vaultListe !== null} onClose={() => setVaultListe(null)} cancelLabel={t("Cancel")}
-          title={vaultListe?.length ? t("Choose from vault") : t("The vault has no competitor bid files yet. Files you load on the margin page are stored automatically.")}
-          actions={(vaultListe ?? []).slice(0, 30).map((x) => ({ label: `${x.dateiname} · ${t(TYP_LABEL[x.typ])} · ${datumText(x.hochgeladen_am)}`, onClick: () => void ausVaultWaehlen(x) }))} />
         {hinweis && <p className={styles.hint}>{t(hinweis)}</p>}
         {fehler && <p className={styles.fehler}>{fehler}</p>}
       </section>
