@@ -9,6 +9,8 @@ export type JobApi = {
 export type JobOptionen = {
   /** Called with every new status, e.g. to draw the progress bar. */
   aufStand?: (stand: AnalyseStatus) => void;
+  /** Called once the backend has accepted the job, so the id can be stored before the first poll. */
+  aufStart?: (jobId: string) => void;
   /** Return false to stop polling (a newer run replaced this one); the promise then resolves with null. */
   aktiv?: () => boolean;
   intervallMs?: number;
@@ -25,21 +27,19 @@ export function jobFehlerText(stand: AnalyseStatus): string {
 }
 
 /**
- * Runs the analysis as a background job. Throws the start error unchanged (so a 404 of an older backend can
- * fall back to the synchronous route), a job failure as Error with its messages, and a lost job (backend
- * restarted) as Error. Resolves with the report and the last status.
+ * Polls an already started analysis job until it finishes. Used when the user comes back to a
+ * running evaluation. Same errors as `fuehreAnalyseAus`.
  */
-export async function fuehreAnalyseAus(
-  api: JobApi, body: AnalyseJobAnfrage, optionen: JobOptionen = {},
+export async function fuehreAnalyseWeiter(
+  api: Pick<JobApi, "analyseStatus">, jobId: string, optionen: JobOptionen = {},
 ): Promise<{ bericht: Pruefbericht; stand: AnalyseStatus } | null> {
   const { aufStand, aktiv = () => true, intervallMs = 700, maxFehlversuche = 3, warte = schlafen } = optionen;
-  const { job_id } = await api.starteAnalyse(body);
   let fehlversuche = 0;
   for (;;) {
     if (!aktiv()) return null;
     let stand: AnalyseStatus;
     try {
-      stand = await api.analyseStatus(job_id);
+      stand = await api.analyseStatus(jobId);
       fehlversuche = 0;
     } catch (fehler) {
       if ((fehler as { status?: number }).status === 404) {
@@ -55,4 +55,17 @@ export async function fuehreAnalyseAus(
     if (stand.status === "fehler") throw Object.assign(new Error(jobFehlerText(stand)), { stand });
     await warte(intervallMs);
   }
+}
+
+/**
+ * Runs the analysis as a background job. Throws the start error unchanged (so a 404 of an older backend can
+ * fall back to the synchronous route), a job failure as Error with its messages, and a lost job (backend
+ * restarted) as Error. Resolves with the report and the last status.
+ */
+export async function fuehreAnalyseAus(
+  api: JobApi, body: AnalyseJobAnfrage, optionen: JobOptionen = {},
+): Promise<{ bericht: Pruefbericht; stand: AnalyseStatus } | null> {
+  const { job_id } = await api.starteAnalyse(body);
+  optionen.aufStart?.(job_id);
+  return fuehreAnalyseWeiter(api, job_id, optionen);
 }

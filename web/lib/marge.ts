@@ -27,6 +27,78 @@ export function sliderHue(marge: number, boden: number, median: number | null): 
   if (median == null || !(median > boden)) return marge <= boden ? 0 : 120;
   return Math.min(1, Math.max(0, (marge - boden) / (median - boden))) * 120;
 }
+
+/** Well-spaced hues so nearby companies stay distinguishable in light and dark mode. */
+export const BIETER_FARB_HUES = [220, 8, 152, 36, 280, 332, 190, 85, 22, 255, 172, 305, 48, 128];
+
+/** Preferred hue for a company name (stable across sessions). */
+export function bieterFarbHue(name: string): number {
+  let h = 0;
+  for (const c of name) h = (h * 33 + c.charCodeAt(0)) >>> 0;
+  return BIETER_FARB_HUES[h % BIETER_FARB_HUES.length];
+}
+
+/** CSS colour for avatars and tests (light-theme mid-tone). The UI also raises lightness in dark mode. */
+export function bieterFarbe(name: string): string {
+  return `hsl(${bieterFarbHue(name)} 72% 44%)`;
+}
+
+/** Unique hues for a set of names: preferred hue if free, otherwise the next palette slot. */
+export function bieterFarben(namen: Iterable<string>): Map<string, number> {
+  const liste = [...new Set(namen)].sort((a, b) => a.localeCompare(b));
+  const belegt = new Set<number>();
+  const map = new Map<string, number>();
+  for (const name of liste) {
+    let hue = bieterFarbHue(name);
+    if (belegt.has(hue)) {
+      const start = Math.max(0, BIETER_FARB_HUES.indexOf(hue));
+      for (let k = 1; k < BIETER_FARB_HUES.length; k++) {
+        const alt = BIETER_FARB_HUES[(start + k) % BIETER_FARB_HUES.length];
+        if (!belegt.has(alt)) { hue = alt; break; }
+      }
+    }
+    belegt.add(hue);
+    map.set(name, hue);
+  }
+  return map;
+}
+
+/** Implied profit margin on the slider scale: competitor markup minus our pro-rated operating costs. */
+export function impliziteMarge(aufschlag: number, bgkUns: number): number {
+  return aufschlag - bgkUns;
+}
+
+export type SliderMarker = { name: string; marge: number; ausreisser: boolean; pct: number };
+
+/** Markers for the margin slider, sorted by implied margin (low → high), positions clamped to the track. */
+export function sliderMarker(liste: Bieter[], bgkUns: number, boden: number, hi: number): SliderMarker[] {
+  const spanne = Math.max(0.1, hi - boden);
+  return liste
+    .map((x) => {
+      const marge = impliziteMarge(x.aufschlag, bgkUns);
+      const pct = ((Math.min(hi, Math.max(boden, marge)) - boden) / spanne) * 100;
+      return { name: x.name, marge, ausreisser: x.ausreisser, pct };
+    })
+    .sort((a, b) => a.marge - b.marge || a.name.localeCompare(b.name));
+}
+
+/** Vertical lane offsets (−2…2) so markers that sit within `minAbstand` percent of each other do not fully cover one another. */
+export function markerVersatz(marker: { pct: number }[], minAbstand = 3): number[] {
+  const lanes: number[] = [];
+  for (let i = 0; i < marker.length; i++) {
+    const used = new Set<number>();
+    for (let j = 0; j < i; j++) {
+      if (Math.abs(marker[i].pct - marker[j].pct) < minAbstand) used.add(lanes[j]);
+    }
+    let lane = 0, schritt = 1;
+    while (used.has(lane)) {
+      lane = schritt % 2 ? Math.ceil(schritt / 2) : -schritt / 2;
+      schritt++;
+    }
+    lanes.push(lane);
+  }
+  return lanes;
+}
 const ent = (s: string) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'")
   .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n))).replace(/&amp;/g, "&");
 const text = (xml: string) => [...xml.replace(/<rPh\b[\s\S]*?<\/rPh>/g, "").matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((m) => ent(m[1])).join("");

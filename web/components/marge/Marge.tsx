@@ -7,7 +7,8 @@ import { ActionSheet } from "../ui/ActionSheet";
 import { TYP_LABEL, datumText, vaultApi, type VaultEintrag } from "@/lib/vault";
 import { useEinstellungen } from "@/lib/einstellungen";
 import { api } from "@/lib/api";
-import { auswerten, leseGebote, leseXlsx, type Bieter, type Gebot } from "@/lib/marge";
+import { xlsxAusMargeAntwort } from "@/lib/marge-pdf";
+import { auswerten, bieterFarben, bieterFarbHue, leseGebote, leseXlsx, markerVersatz, sliderMarker, type Bieter, type Gebot } from "@/lib/marge";
 import { speichereMargeStand } from "@/lib/wizard";
 import { Icon } from "../icon/Icon";
 import { Info } from "../info/Info";
@@ -19,12 +20,6 @@ const kuerzel = (name: string) => {
   const teile = name.replace(/&/g, " ").split(/\s+/).filter((w) => !/^(gmbh|kg|ag|ltd|inc|und|and|the|of)$/i.test(w));
   return ((teile[0]?.[0] ?? "") + (teile[1]?.[0] ?? teile[0]?.[1] ?? "")).toUpperCase();
 };
-const avFarbe = (name: string) => {
-  let h = 0;
-  for (const c of name) h = (h * 33 + c.charCodeAt(0)) >>> 0;
-  return `hsl(${h % 360} 42% 42%)`;
-};
-
 export function Marge() {
   const { e, t } = useEinstellungen();
   const [gebote, setGebote] = useState<Gebot[]>([]);
@@ -39,6 +34,7 @@ export function Marge() {
   const [ausreisser, setAusreisser] = useState(true);
   const [monate, setMonate] = useState(12);
   const [marge, setMarge] = useState<number | null>(null);
+  const [aktiv, setAktiv] = useState<string | null>(null);
   const [sortierung, setSortierung] = useState<{ spalte: Spalte; auf: boolean }>({ spalte: "aufschlag", auf: true });
   const loc = e.sprache === "de" ? "de-DE" : "en-GB";
   const euro = new Intl.NumberFormat(loc, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -69,7 +65,7 @@ export function Marge() {
     setFehler(null);
     try {
       const g = leseGebote(await leseXlsx(await file.arrayBuffer()));
-      setGebote(g); setDatei(file.name); setWahl(null); setMarge(null); setSuche(""); setAusreisser(true); setMonate(12);
+      setGebote(g); setDatei(file.name); setWahl(null); setMarge(null); setAktiv(null); setSuche(""); setAusreisser(true); setMonate(12);
       // t251: file in the vault automatically; hash-dedupe, never break the import.
       if (!alreadyStored) void vaultApi.hochladen(file, "wettbewerb").catch(() => {});
     } catch (err) {
@@ -100,8 +96,7 @@ export function Marge() {
     setKiLaeuft(true);
     try {
       const antwort = await api.margePdf(file);
-      const roh = Uint8Array.from(atob(antwort.xlsx_base64), (c) => c.charCodeAt(0));
-      const xlsx = new File([roh], antwort.dateiname, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const xlsx = xlsxAusMargeAntwort(antwort);
       await laden(xlsx, true);
       setDownload((alt) => {
         if (alt) URL.revokeObjectURL(alt.url);
@@ -141,6 +136,16 @@ export function Marge() {
   const spanne = Math.max(0.1, r.hiMarge - r.boden);
   const pct = (x: number) => `${((Math.min(r.hiMarge, Math.max(r.boden, x)) - r.boden) / spanne) * 100}%`;
   const abweichung = r.medianMarge == null ? null : r.marge - r.medianMarge;
+  const sichtbar = r.liste.filter((x) => wahl == null || wahl.has(x.name));
+  const farben = useMemo(() => bieterFarben(r.liste.map((x) => x.name)), [r.liste]);
+  const hueVon = (name: string) => farben.get(name) ?? bieterFarbHue(name);
+  const marker = useMemo(() => sliderMarker(sichtbar, r.bgkUns, r.boden, r.hiMarge), [sichtbar, r.bgkUns, r.boden, r.hiMarge]);
+  const versatz = useMemo(() => markerVersatz(marker), [marker]);
+  const aktivName = aktiv && sichtbar.some((x) => x.name === aktiv) ? aktiv : null;
+  const aktivBieter = aktivName ? r.liste.find((x) => x.name === aktivName) ?? null : null;
+  const aktivMarke = aktivName ? marker.find((x) => x.name === aktivName) ?? null : null;
+  const aktivZeilen = aktivName ? gebote.filter((g) => g.bieter === aktivName) : [];
+  const waehle = (name: string) => setAktiv((jetzt) => (jetzt === name ? null : name));
   const monateZahl = Number.isFinite(monate) && monate > 0 ? monate : 12;
   useEffect(() => {
     if (!r.liste.length) return;
@@ -221,14 +226,14 @@ export function Marge() {
                     const gesperrt = ausreisser && x.ausreisser;
                     const an = !gesperrt && (wahl == null || wahl.has(x.name));
                     return (
-                      <tr key={x.name} className={gesperrt ? styles.aus : undefined}>
+                      <tr key={x.name} className={[gesperrt ? styles.aus : "", aktivName === x.name ? styles.zeileAktiv : ""].filter(Boolean).join(" ") || undefined}>
                         <td>
                           <input className={styles.chk} type="checkbox" checked={an} disabled={gesperrt}
                             aria-label={x.name} onChange={(ev) => toggle(x.name, ev.target.checked)} />
                         </td>
                         <td>
                           <span className={styles.bieter}>
-                            <span className={styles.av} style={{ background: avFarbe(x.name) }}>{kuerzel(x.name)}</span>
+                            <span className={styles.av} style={{ ["--h" as string]: String(hueVon(x.name)) }}>{kuerzel(x.name)}</span>
                             {x.name}
                           </span>
                         </td>
@@ -285,12 +290,89 @@ export function Marge() {
                     aria-label={t("Our margin")}
                     onChange={(ev) => setMarge(Number(ev.target.value))} />
                 </div>
+              {marker.length > 0 && (
+                <div className={styles.punkte} role="list" aria-label={t("Competitors on the slider")}>
+                  {marker.map((m, i) => (
+                    <button key={m.name} type="button" role="listitem"
+                      className={[styles.punkt, m.ausreisser ? styles.punktAus : "", aktivName === m.name ? styles.punktAktiv : aktivName ? styles.punktGedimmt : ""].filter(Boolean).join(" ")}
+                      style={{ left: `${m.pct}%`, ["--h" as string]: String(hueVon(m.name)), ["--lane" as string]: String(versatz[i] ?? 0) }}
+                      aria-pressed={aktivName === m.name}
+                      aria-label={t("{name}, {pct} margin", { name: m.name, pct: pz(m.marge) }) + (m.ausreisser ? ` · ${t("outlier")}` : "")}
+                      onClick={() => waehle(m.name)}>
+                      <span className={styles.punktTipp}>{m.name} · {pz(m.marge)}{m.ausreisser ? ` · ${t("outlier")}` : ""}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               </div>
               <div className={styles.ends}>
                 <span>{t("Cost floor {pct}", { pct: pz(r.boden) })}</span>
                 <span>{pz(r.hiMarge)}</span>
               </div>
               <p className={styles.hintFloor}>{t("The margin cannot go below our pro-rated operating costs plus the {pct} minimum margin.", { pct: pz(r.boden) })}</p>
+              {marker.length > 0 && (
+                <ul className={styles.legende}>
+                  {marker.map((m) => (
+                    <li key={m.name}>
+                      <button type="button"
+                        className={[styles.legendeEintrag, aktivName === m.name ? styles.legendeAktiv : aktivName ? styles.legendeGedimmt : ""].filter(Boolean).join(" ")}
+                        style={{ ["--h" as string]: String(hueVon(m.name)) }}
+                        aria-pressed={aktivName === m.name}
+                        onClick={() => waehle(m.name)}>
+                        <i className={`${styles.legendePunkt} ${m.ausreisser ? styles.punktAus : ""}`} style={{ ["--h" as string]: String(hueVon(m.name)) }} aria-hidden="true" />
+                        <span className={styles.legendeName}>{m.name}</span>
+                        <span className={styles.legendeMarge}>{pz(m.marge)}</span>
+                        {m.ausreisser && <span className={styles.marke}>{t("outlier")}</span>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {aktivBieter && aktivMarke && (
+                <div className={styles.detail}>
+                  <div className={styles.detailKopf}>
+                    <i className={`${styles.legendePunkt} ${aktivBieter.ausreisser ? styles.punktAus : ""}`} style={{ ["--h" as string]: String(hueVon(aktivBieter.name)) }} aria-hidden="true" />
+                    <strong>{aktivBieter.name}</strong>
+                    <span className={styles.legendeMarge}>{pz(aktivMarke.marge)}</span>
+                    {aktivBieter.ausreisser && <span className={styles.marke}>{t("outlier")}</span>}
+                    <button type="button" className={styles.linkbtn} onClick={() => setAktiv(null)}>{t("Clear selection")}</button>
+                  </div>
+                  <p className={styles.hint}>
+                    {t("Current offer (EUR)")} {euro.format(aktivBieter.angebot)}
+                    {" · "}
+                    {t("Markup")} {pz(aktivBieter.aufschlag)}
+                    {aktivBieter.bgk != null && ` · ${t("Operating cost %")} ${aktivBieter.bgk.toLocaleString(loc, { maximumFractionDigits: 1 })}`}
+                    {aktivBieter.marge != null && ` · ${t("Margin %")} ${aktivBieter.marge.toLocaleString(loc, { maximumFractionDigits: 1 })}`}
+                  </p>
+                  <h3 className={styles.detailTitel}>{t("Positions of {name}", { name: aktivBieter.name })}</h3>
+                  {aktivZeilen.length === 0 ? (
+                    <p className={styles.hint}>{t("No positions for this competitor.")}</p>
+                  ) : (
+                    <div className={styles.rahmen}>
+                      <table className={styles.tabelle}>
+                        <thead>
+                          <tr>
+                            <th>{t("Item")}</th>
+                            <th className={styles.rechts}>{t("Quantity")}</th>
+                            <th className={styles.rechts}>{t("Unit price")}</th>
+                            <th className={styles.rechts}>{t("Current offer (EUR)")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {aktivZeilen.map((g, i) => (
+                            <tr key={`${g.item}-${i}`}>
+                              <td>{g.item}{g.einheit ? <small className={styles.leise}> {g.einheit}</small> : null}</td>
+                              <td className={styles.rechts}>{g.menge == null ? "–" : g.menge.toLocaleString(loc)}</td>
+                              <td className={styles.rechts}>{g.preis == null ? "–" : ep.format(g.preis)}</td>
+                              <td className={styles.rechts}>{g.summe == null ? "–" : euro.format(g.summe)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className={styles.settings}>

@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <EinstellungenProvider>
           <div className="app">
-            <Nav />
+            <Suspense fallback={null}><Nav /></Suspense>
             <div className="app-main">
               <Suspense fallback={<div className="app-page">{children}</div>}>
                 <WizardRahmen>{children}</WizardRahmen>

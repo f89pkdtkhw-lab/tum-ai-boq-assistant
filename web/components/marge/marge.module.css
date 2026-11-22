@@ -52,8 +52,9 @@ a.vaultKnopf { text-decoration: none; }
 .tabelle td { padding: 6px 10px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: middle; }
 .rechts { text-align: right !important; white-space: nowrap; }
 .bieter { display: flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
-.av { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 8px; font-weight: 700;
-  color: #fff; letter-spacing: -.02em; flex: none; }
+.av { --h: 220; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 8px; font-weight: 700;
+  color: #fff; letter-spacing: -.02em; flex: none; background: hsl(var(--h) 72% 44%); }
+:root[data-theme="dark"] .av { background: hsl(var(--h) 78% 62%); color: #141414; }
 .chk { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; margin: 0; border: 1.5px solid var(--line);
   border-radius: 6px; background: var(--card); display: inline-grid; place-items: center; cursor: pointer; }
 .chk:checked { background: var(--accent); border-color: var(--accent); }
@@ -141,3 +142,114 @@ a.vaultKnopf { text-decoration: none; }
 
 .posten .tabelle { font-size: 12.5px; }
 .posten th, .posten td { padding: 5px 8px; }
+
+.zeileAktiv td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+
+/* Coloured competitor markers on the slider (names live in the legend below). */
+.punkte { position: absolute; left: 0; right: 0; top: 0; height: 16px; pointer-events: none; z-index: 2; }
+.punkt {
+  --h: 220;
+  --lane: 0;
+  position: absolute;
+  top: calc(0px + (var(--lane) * 8px));
+  left: 0;
+  pointer-events: auto;
+  width: 14px; height: 14px;
+  padding: 0;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  background: hsl(var(--h) 72% 44%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 22%, transparent);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 1;
+  transition: transform .15s ease, opacity .15s ease, box-shadow .15s ease, width .15s ease, height .15s ease;
+}
+:root[data-theme="dark"] .punkt,
+:root[data-theme="dark"] .legendePunkt { background: hsl(var(--h) 78% 62%); }
+.punkt:hover, .punkt:focus-visible { z-index: 3; transform: translate(-50%, -50%) scale(1.15); }
+.punkt:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, hsl(var(--h) 72% 44%) 45%, transparent); }
+.punktAus {
+  background: transparent !important;
+  border: 2px dashed hsl(var(--h) 72% 44%);
+  box-shadow: none;
+}
+:root[data-theme="dark"] .punktAus { border-color: hsl(var(--h) 78% 62%); }
+.punktAktiv {
+  width: 18px; height: 18px;
+  z-index: 4;
+  box-shadow: 0 0 0 3px color-mix(in srgb, hsl(var(--h) 72% 44%) 55%, transparent), 0 0 0 1px hsl(var(--h) 72% 44%);
+}
+.punktGedimmt { opacity: .28; }
+.punktTipp {
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--card);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+.punkt:hover .punktTipp,
+.punkt:focus-visible .punktTipp { opacity: 1; }
+
+.legende {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+.legendeEintrag {
+  --h: 220;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.legendeEintrag:hover { border-color: color-mix(in srgb, hsl(var(--h) 72% 44%) 70%, var(--line)); }
+.legendeEintrag:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.legendeAktiv {
+  border-color: hsl(var(--h) 72% 44%);
+  background: color-mix(in srgb, hsl(var(--h) 72% 44%) 14%, var(--card));
+}
+.legendeGedimmt { opacity: .42; }
+.legendePunkt {
+  --h: 220;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: hsl(var(--h) 72% 44%);
+  flex: none;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 15%, transparent);
+}
+.legendePunkt.punktAus {
+  background: transparent !important;
+  border: 2px dashed hsl(var(--h) 72% 44%);
+  box-shadow: none;
+  width: 10px; height: 10px;
+}
+.legendeName { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.legendeMarge { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; white-space: nowrap; }
+
+.detail { display: grid; gap: 8px; margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--fill); }
+.detailKopf { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.detailKopf strong { font-size: 14.5px; }
+.detailKopf .linkbtn { margin-left: auto; }
+.detailTitel { margin: 4px 0 0; font-size: 13px; font-weight: 600; }

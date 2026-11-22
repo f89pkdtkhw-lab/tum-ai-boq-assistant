@@ -9,6 +9,7 @@ import {
 } from "@/lib/vault";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { DateiWahl } from "../ui/DateiWahl";
+import { MargePdfKi } from "../marge/MargePdfKi";
 import { Preise } from "../preise/Preise";
 import { HistoryView } from "../history/HistoryView";
 import { Einreichen } from "../einreichen/Einreichen";
@@ -120,6 +121,7 @@ function Dokumente({ typ }: { typ: VaultTyp }) {
         <p className={eigene.hinweis}>{t(typ === "wettbewerb" ? "Competitor bid files you load on the margin page are filed here automatically. The same file is stored only once." : "Files used in an analysis on the start page are filed here automatically. The same file is stored only once.")}</p>
         <div aria-live="polite">{meldung && <p className={meldung.art === "fehler" ? eigene.fehler : eigene.hinweis} role={meldung.art === "fehler" ? "alert" : undefined}>{meldung.text}</p>}</div>
       </section>
+      {typ === "wettbewerb" && <MargePdfKi onFertig={() => void laden()} />}
 
       <section className={`${seite.glas} ${eigene.karte}`} aria-label={t("Stored documents")}>
         <h2>{t("Stored documents")} {liste && <span className={eigene.hinweis}>{t("{a} of {b}", { a: gezeigt.length, b: liste.length })}</span>}</h2>
@@ -158,7 +160,7 @@ function Dokumente({ typ }: { typ: VaultTyp }) {
                               </>
                             ) : (
                               <>
-                                {x.typ === "wettbewerb" ? <button type="button" className={seite.knopfZweit} onClick={() => router.push(`/marge?vault=${encodeURIComponent(x.id)}`)}>{t("Use on the margin page")}</button> : ["lv", "regelwerk", "preisliste"].includes(x.typ) && <button type="button" className={seite.knopfZweit} onClick={() => router.push(`/?vault=${encodeURIComponent(x.id)}`)}>{t("Use in analysis")}</button>}
+                                {x.typ === "wettbewerb" && !x.dateiname.toLowerCase().endsWith(".pdf") ? <button type="button" className={seite.knopfZweit} onClick={() => router.push(`/marge?vault=${encodeURIComponent(x.id)}`)}>{t("Use on the margin page")}</button> : ["lv", "regelwerk", "preisliste"].includes(x.typ) && <button type="button" className={seite.knopfZweit} onClick={() => router.push(`/?vault=${encodeURIComponent(x.id)}`)}>{t("Use in analysis")}</button>}
                                 <a className={seite.knopfZweit + " " + styles.link} href={vaultApi.dateiUrl(x.id)} download={x.dateiname}>{t("Download")}</a>
                                 <button type="button" className={seite.knopfZweit} onClick={() => setBearbeite({ id: x.id, name: x.dateiname, tags: x.tags.join(", ") })}>{t("Edit")}</button>
                                 <button type="button" className={`${seite.knopfZweit} ${styles.gefahr}`} onClick={() => void loeschen(x)}>{t("Delete")}</button>
