@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Suspense } from "react";
 import { Nav } from "@/components/nav/Nav";
+import { WizardRahmen } from "@/components/wizard/WizardRahmen";
 import { EinstellungenProvider } from "@/lib/einstellungen";
 
 const geist = localFont({
@@ -12,7 +14,8 @@ const geist = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "BoQ Review Assistant",
+  title: { default: "LV Scout", template: "%s · LV Scout" },
+  applicationName: "LV Scout",
   description: "Our team's prototype for TUM.ai Construction Hackathon 2026",
 };
 
@@ -30,7 +33,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <EinstellungenProvider>
           <div className="app">
             <Nav />
-            {children}
+            <div className="app-main">
+              <Suspense fallback={<div className="app-page">{children}</div>}>
+                <WizardRahmen>{children}</WizardRahmen>
+              </Suspense>
+            </div>
           </div>
         </EinstellungenProvider>
       </body>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Preise } from "@/components/preise/Preise";
 
 export const metadata: Metadata = {
-  title: "Prices · BoQ Review Assistant",
+  title: "Prices",
   description: "Price database: unit prices from priced bills, kept for later reviews.",
 };
 

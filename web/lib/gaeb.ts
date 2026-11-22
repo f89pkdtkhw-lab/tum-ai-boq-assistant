@@ -74,7 +74,7 @@ export function gaebXml(lv: LV, dp: GaebPhase, opt: { preis?: Preisbericht; name
     `<BoQBkdn><Type>Item</Type><Length>${Math.min(posBreite, 14)}</Length><Num>Yes</Num></BoQBkdn>`].join("");
   const datum = (opt.datum ?? new Date()).toISOString().slice(0, 10);
   return `<?xml version="1.0" encoding="UTF-8"?>\n<GAEB xmlns="http://www.gaeb.de/GAEB_DA_XML/DA${dp}/3.2">`
-    + `<GAEBInfo><Version>3.2</Version><ProgSystem>BoQ Review</ProgSystem><Date>${datum}</Date></GAEBInfo>`
+    + `<GAEBInfo><Version>3.2</Version><ProgSystem>LV Scout</ProgSystem><Date>${datum}</Date></GAEBInfo>`
     + `<Award><DP>${dp}</DP><AwardInfo><Cur>EUR</Cur></AwardInfo><BoQ><BoQInfo><Name>${esc(opt.name ?? lv.name)}</Name>${bkdn}</BoQInfo>`
     + `<BoQBody>${body(wurzel)}</BoQBody></BoQ></Award></GAEB>\n`;
 }

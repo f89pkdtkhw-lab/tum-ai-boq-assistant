@@ -74,7 +74,7 @@ export function Nav() {
   return (
     <>
       <nav className={`app-sidebar ${styles.sidebar} ${offen ? styles.offen : ""}`} aria-label={t("Main")} aria-hidden={mobil && !offen}>
-        <Link href="/" className={styles.marke} onClick={() => setOffen(false)}><Logo size={26} />BoQ Review</Link>
+        <Link href="/" className={styles.marke} onClick={() => setOffen(false)}><Logo size={32} />LV Scout</Link>
         {liste(HAUPT)}
         <p className={styles.gruppe}>{t("More")}</p>
         {liste(WEITERE)}
@@ -87,7 +87,7 @@ export function Nav() {
         <button type="button" className={styles.burger} aria-label={t("Menu")} aria-expanded={offen} onClick={() => setOffen(!offen)}>
           <span /><span /><span />
         </button>
-        <Link href="/" className={styles.markeMobil}><Logo size={26} />BoQ Review</Link>
+        <Link href="/" className={styles.markeMobil}><Logo size={32} />LV Scout</Link>
         <span className={styles.platz} />
         <ThemaSchalter />
       </header>

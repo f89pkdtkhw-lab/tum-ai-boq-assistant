@@ -1,0 +1,51 @@
+// Run: node --test web/lib/wizard.test.mjs
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import {
+  effektiverSchritt, ladeStufe, leseSchritt, maxSchritt, rechercheZumBefund, wizardPfad, wizardSichtbar,
+} from "./wizard.ts";
+
+test("leseSchritt reads the query or infers from the path", () => {
+  assert.equal(leseSchritt("preis", "/"), "preis");
+  assert.equal(leseSchritt(null, "/marge"), "marge");
+  assert.equal(leseSchritt("nope", "/export"), "export");
+  assert.equal(leseSchritt(null, "/"), "hochladen");
+});
+
+test("wizardPfad and visibility", () => {
+  assert.equal(wizardPfad("fehler"), "/?schritt=fehler");
+  assert.equal(wizardPfad("marge"), "/marge?schritt=marge");
+  assert.equal(wizardSichtbar("/"), true);
+  assert.equal(wizardSichtbar("/einstellungen"), false);
+});
+
+test("maxSchritt and clamp", () => {
+  assert.equal(maxSchritt({ hatBericht: false, laeuft: false }), "hochladen");
+  assert.equal(maxSchritt({ hatBericht: false, laeuft: true }), "pruefen");
+  assert.equal(maxSchritt({ hatBericht: true, laeuft: false }), "export");
+  assert.equal(effektiverSchritt("export", { hatBericht: false, laeuft: false }), "hochladen");
+  assert.equal(effektiverSchritt("export", { hatBericht: false, laeuft: false }, "marge"), "marge");
+  assert.equal(effektiverSchritt("fehler", { hatBericht: true, laeuft: false }), "fehler");
+});
+
+test("ladeStufe maps the job to four plain-language stages", () => {
+  assert.deepEqual(ladeStufe({ phase: "leer" }), { stufe: 1, aktiv: false });
+  assert.deepEqual(ladeStufe({ phase: "laeuft", importFertig: false }), { stufe: 1, aktiv: true });
+  assert.deepEqual(ladeStufe({ phase: "laeuft", importFertig: true }), { stufe: 2, aktiv: true });
+  assert.deepEqual(ladeStufe({ phase: "laeuft", importFertig: true, standStatus: "laeuft" }), { stufe: 3, aktiv: true });
+  assert.deepEqual(ladeStufe({ phase: "fertig" }), { stufe: 4, aktiv: false });
+  assert.deepEqual(ladeStufe({ phase: "fehler", standStatus: "fehler" }), { stufe: 3, aktiv: false });
+});
+
+test("rechercheZumBefund prefers finding_id and falls back to the same OZ", () => {
+  const finding = { id: "F1", oz: "01.001", kategorie: "fehler", schwere: "hoch", titel: "x", begruendung: "y", vorschlag: "z", quelle: "regel", regel_id: "R", euro_wirkung: null };
+  const rows = [
+    { schritt: "positionen", gruppe: "a", oz: "01.001", finding_id: "F1", einschaetzung: "bestaetigt", text: "direct", quellen: [{ url: "https://example.com", titel: "E" }], marktpreis_von: null, marktpreis_bis: null },
+    { schritt: "preise", gruppe: "a", oz: "01.001", finding_id: null, einschaetzung: "zu_hoch", text: "price", quellen: [{ url: "https://example.com/p", titel: "P" }], marktpreis_von: 1, marktpreis_bis: 2 },
+    { schritt: "positionen", gruppe: "b", oz: "02.001", finding_id: "F2", einschaetzung: "unklar", text: "other", quellen: [{ url: "https://example.com/o", titel: "O" }], marktpreis_von: null, marktpreis_bis: null },
+  ];
+  assert.equal(rechercheZumBefund(rows, finding)[0].text, "direct");
+  assert.equal(rechercheZumBefund(rows, { ...finding, id: "missing" }).length, 1);
+  assert.equal(rechercheZumBefund(rows, { ...finding, id: "missing" })[0].text, "price");
+  assert.deepEqual(rechercheZumBefund([], finding), []);
+});

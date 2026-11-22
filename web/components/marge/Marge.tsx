@@ -2,9 +2,10 @@
 
 // Margin page (variant A): pick competitors with checkboxes, set our margin on an iOS-style
 // slider (red at the cost floor → green at/above the competitor median). Logic in lib/marge.ts.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useEinstellungen } from "@/lib/einstellungen";
 import { auswerten, leseGebote, leseXlsx, type Bieter, type Gebot } from "@/lib/marge";
+import { speichereMargeStand } from "@/lib/wizard";
 import { Icon } from "../icon/Icon";
 import { Info } from "../info/Info";
 import styles from "./marge.module.css";
@@ -83,6 +84,13 @@ export function Marge() {
   const pct = (x: number) => `${((Math.min(r.hiMarge, Math.max(r.boden, x)) - r.boden) / spanne) * 100}%`;
   const abweichung = r.medianMarge == null ? null : r.marge - r.medianMarge;
   const monateZahl = Number.isFinite(monate) && monate > 0 ? monate : 12;
+  useEffect(() => {
+    if (!r.liste.length) return;
+    speichereMargeStand({
+      angebot: summe.uns, gewinn: summe.gewinn, marge: r.marge, median: summe.konk,
+      monate: monateZahl, bieter: auswahl.bieter, ausreisserAus: ausreisser,
+    });
+  }, [r.liste.length, summe.uns, summe.gewinn, r.marge, summe.konk, monateZahl, auswahl.bieter, ausreisser]);
 
   return (
     <main className={styles.seite}>

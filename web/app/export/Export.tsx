@@ -2,6 +2,9 @@
 
 import { useDok } from "@/components/dok/useDok";
 import { type ChangeEvent, useEffect, useState } from "react";
+import { ActionSheet } from "@/components/ui/ActionSheet";
+import { ladeMargeStand } from "@/lib/wizard";
+import wStyles from "@/components/wizard/wizard.module.css";
 import type { Pruefbericht } from "@/lib/api";
 import { PRUEFBERICHT_SPEICHER_SCHLUESSEL } from "@/components/Pruefbericht";
 import { dateiname, istMock, leseBericht, tabellen, xlsx, type Tabelle } from "@/lib/export";
@@ -52,8 +55,11 @@ export function Export() {
   // Inputs of the estimated price report: past projects per trade and the browser price list (same as the report, level 3).
   const [gewerke, setGewerke] = useState<TradeStat[] | null>(null);
   const [preisliste, setPreisliste] = useState<Preis[]>([]);
+  const [sheetAn, setSheetAn] = useState(false);
+  const [marge, setMarge] = useState<ReturnType<typeof ladeMargeStand>>(null);
   useEffect(() => {
     setPreisliste(ladePreisliste());
+    setMarge(ladeMargeStand());
     historyApi.list(null, 100).then((c) => setGewerke(deviationByTrade(c))).catch(() => setGewerke([]));
   }, []);
 
@@ -139,8 +145,57 @@ export function Export() {
   const euroGanz = new Intl.NumberFormat(sprache === "de" ? "de-DE" : "en-GB", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   const geaendert = preis.zeilen.filter((r) => r.war && r.diff && Math.abs(r.diff) / Math.abs(r.war) >= .02).sort((a, b) => Math.abs(b.diff ?? 0) - Math.abs(a.diff ?? 0));
 
+  function csvPreis() {
+    const kopf = ["OZ", t("Item"), t("Quantity"), t("Was"), t("Estimated"), "±", t("Why")];
+    const zelle = (w: string | number | null) => {
+      const s = w == null ? "" : String(w);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const zeilen = [kopf, ...preis.zeilen.map((r) => [r.oz, r.kurztext, r.menge, r.war, r.geschaetzt, r.diff, t(r.grund, r.werte)])];
+    const blob = new Blob(["\uFEFF" + zeilen.map((z) => z.map(zelle).join(";")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement("a"), { href: url, download: dateiname(bericht.lv.name, "csv") });
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  const angebot = marge?.angebot ?? preis.geschaetzt;
+  const unter = marge?.median != null ? angebot - marge.median : null;
+
   return (
     <main className={styles.seite}>
+      <div className={wStyles.zusammenfassung}>
+        <div className={wStyles.hero}>
+          <div className={wStyles.heroLabel}>{t("Final offer")}</div>
+          <div className={wStyles.heroPreis}>{euroGanz.format(angebot)}</div>
+          {unter != null && (
+            <div className={wStyles.heroDelta} style={{ color: unter <= 0 ? "var(--good)" : "var(--bad)" }}>
+              {euroGanz.format(Math.abs(unter))} {unter <= 0 ? t("under the competitor median") : t("above the competitor median")}
+            </div>
+          )}
+          <ul className={wStyles.zeilen}>
+            <li><span className={wStyles.muted}>{t("Direct costs (evaluated)")}</span><span>{euroGanz.format(preis.geschaetzt)}</span></li>
+            {marge && <li><span className={wStyles.muted}>{t("Our margin")}</span><span>{marge.marge.toLocaleString(sprache === "de" ? "de-DE" : "en-GB", { maximumFractionDigits: 1 })} %</span></li>}
+            {marge && <li><span className={wStyles.muted}>{t("Our profit")}</span><span>{euroGanz.format(marge.gewinn)}</span></li>}
+            {marge && <li><span className={wStyles.muted}>{t("Project duration")}</span><span>{t("{n} of 12 months", { n: marge.monate })}</span></li>}
+            <li><span>{t("Final offer")}</span><span>{euroGanz.format(angebot)}</span></li>
+          </ul>
+        </div>
+        <div>
+          <button type="button" className={styles.knopf} id="wizard-export" style={{ width: "100%", justifyContent: "center", minHeight: 48 }}
+            onClick={() => setSheetAn(true)}>
+            <Icon name="download" /> {t("Export offer")}
+          </button>
+        </div>
+      </div>
+      <ActionSheet open={sheetAn} onClose={() => setSheetAn(false)} title={t("Export offer")} cancelLabel={t("Cancel")}
+        actions={[
+          { label: t("Save PDF"), onClick: () => pdfSpeichern(bericht, bewertungen, preis) },
+          { label: t("Download Excel"), onClick: () => excel(bericht, bewertungen, preis) },
+          { label: t("Price list as CSV"), onClick: () => csvPreis() },
+          { label: t("GAEB X84 · estimated bill"), onClick: () => gaeb(bericht, "84", preis) },
+        ]}
+      />
+
       <nav className={`${styles.glas} ${styles.leiste}`} aria-label={t("Export")}>
         <a className={styles.zurueck} href="/">{t("‹ Review")}</a>
         <div className={styles.aktionen}>
