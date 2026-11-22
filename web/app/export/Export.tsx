@@ -138,7 +138,7 @@ export function Export() {
   const blaetter = Object.fromEntries(alleBlaetter.map((b) => [b.name, b.zeilen]));
   // Priced / estimated bill from the backend price database (#117, #158); only when the report has them.
   const preisBlaetter = alleBlaetter.filter((b) => b.name === "Priced bill" || b.name === "Estimated bill");
-  const preis = preisbericht(lv.positionen, gewerke, preisliste);
+  const preis = preisbericht(lv.positionen, gewerke, preisliste, bericht.kalkulation?.positionen ?? null);
   const euroGanz = new Intl.NumberFormat(sprache === "de" ? "de-DE" : "en-GB", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   const geaendert = preis.zeilen.filter((r) => r.war && r.diff && Math.abs(r.diff) / Math.abs(r.war) >= .02).sort((a, b) => Math.abs(b.diff ?? 0) - Math.abs(a.diff ?? 0));
 

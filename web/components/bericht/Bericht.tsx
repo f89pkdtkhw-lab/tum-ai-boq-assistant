@@ -74,7 +74,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
   const [preisliste, setPreisliste] = useState<Preis[]>([]);
   useEffect(() => { setPreisliste(ladePreisliste()); }, []);
   const [preisOffen, setPreisOffen] = useState<string | null>(null);
-  const preis = useMemo(() => preisbericht(bericht.lv.positionen, bewertung.gewerke, preisliste), [bericht, bewertung.gewerke, preisliste]);
+  const preis = useMemo(() => preisbericht(bericht.lv.positionen, bewertung.gewerke, preisliste, bericht.kalkulation?.positionen ?? null), [bericht, bewertung.gewerke, preisliste]);
 
 
   // Level 2 entries: findings as issues (critical/high) or warnings, plus recommendations from the assessment and the AI.
@@ -139,7 +139,8 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
 
   const preisZeilen = preis.zeilen.filter((z) => !nurGeaendert || (z.war && z.diff && Math.abs(z.diff) / Math.abs(z.war) >= .02))
     .sort((a, b) => Math.abs(b.diff ?? 0) - Math.abs(a.diff ?? 0));
-  const plusMinus = Math.abs(bericht.zusammenfassung?.schaetzung_abweichung_eur ?? e.schaetzung?.plusMinus ?? 0);
+  const spanneText = (von: number | null, bis: number | null, format: (n: number) => string) =>
+    von === null || bis === null ? null : `${format(von)} – ${format(bis)}`;
 
   return (
     <section className={styles.bericht} aria-labelledby="bericht-titel">
@@ -175,7 +176,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
         </div>
         <button type="button" className={`${styles.preisKachel} ${styles.geschaetzt}`} onClick={zeigePreise} title={t("Show full estimated price report")}>
           <span className={styles.label}><Icon name="sparkles" /> {t("Estimated")} <Info text={t("Item by item from the price list, past projects of the same trade and the AI evaluation. Open the full price report for every reason.")} /></span>
-          <strong className={styles.preis}>{preis.geschaetzt ? euroKurz.format(preis.geschaetzt) : "–"}{plusMinus > 0 && <small> ± {euroKurz.format(plusMinus)}</small>}</strong>
+          <strong className={styles.preis}>{preis.geschaetzt ? euroKurz.format(preis.geschaetzt) : "–"}{spanneText(preis.von, preis.bis, euroKurz.format) && <small> {spanneText(preis.von, preis.bis, euroKurz.format)}</small>}</strong>
           <span className={styles.klein} style={{ color: preis.diff > 0 ? "var(--sev-kritisch)" : preis.diff < 0 ? "var(--sev-ok)" : undefined }}>
             {preis.diff === 0 ? t("same as the bill") : `${preis.diff > 0 ? "+" : "−"}${euroKurz.format(Math.abs(preis.diff))} ${t("vs. was")}`}
           </span>
@@ -273,7 +274,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
               </div>
               <div className={styles.rahmen}>
                 <table className={styles.tabelle}>
-                  <thead><tr><th>OZ</th><th>{t("Item")}</th><th className={styles.rechts}>{t("Quantity")}</th><th className={styles.rechts}>{t("Was")}</th><th className={styles.rechts}>{t("Estimated")}</th><th className={styles.rechts}>±</th><th>{t("Why")}</th></tr></thead>
+                  <thead><tr><th>OZ</th><th>{t("Item")}</th><th className={styles.rechts}>{t("Quantity")}</th><th className={styles.rechts}>{t("Was")}</th><th className={styles.rechts}>{t("Estimated")}</th><th className={styles.rechts}>{t("Range")}</th><th className={styles.rechts}>±</th><th>{t("Why")}</th></tr></thead>
                   <tbody>
                     {preisZeilen.slice(0, preisAnzahl).map((z, i) => { const k = `${z.oz}-${i}`; const auf = preisOffen === k; return (<Fragment key={k}>
                       <tr tabIndex={0} aria-expanded={auf} className={`${styles.klickbar} ${z.diff && z.war && Math.abs(z.diff) / Math.abs(z.war) >= .02 ? styles.geaendert : ""}`}
@@ -282,18 +283,20 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
                         <td className={styles.rechts}>{z.menge === null ? "–" : `${zahl.format(z.menge)} ${z.einheit ?? ""}`}</td>
                         <td className={styles.rechts}>{z.war === null ? "–" : euro.format(z.war)}</td>
                         <td className={styles.rechts}>{z.geschaetzt === null ? "–" : euro.format(z.geschaetzt)}</td>
+                        <td className={styles.rechts}>{spanneText(z.von, z.bis, euro.format) ?? "–"}</td>
                         <td className={styles.rechts} style={{ color: (z.diff ?? 0) > 0 ? "var(--sev-kritisch)" : (z.diff ?? 0) < 0 ? "var(--sev-ok)" : undefined }}>
                           {z.diff ? `${z.diff > 0 ? "+" : "−"}${euro.format(Math.abs(z.diff))}` : "0"}</td>
                         <td className={styles.grund}>{t(z.grund, z.werte)} <span className={styles.pfeilKlein}>{auf ? "▴" : "▾"}</span></td>
                       </tr>
                       {auf && (
-                        <tr className={styles.preisDetail}><td colSpan={7}>
+                        <tr className={styles.preisDetail}><td colSpan={8}>
                           <dl>
                             <div><dt>{t("Quantity")}</dt><dd>{z.menge === null ? "–" : `${zahl.format(z.menge)} ${z.einheit ?? ""}`}</dd></div>
                             <div><dt>{t("Unit price in the bill")}</dt><dd>{z.epWar === null ? "–" : `${euro2.format(z.epWar)} / ${z.einheit ?? ""}`}</dd></div>
                             <div><dt>{t("Estimated unit price")}</dt><dd>{z.epGeschaetzt === null ? "–" : `${euro2.format(z.epGeschaetzt)} / ${z.einheit ?? ""}`}</dd></div>
+                            <div><dt>{t("Estimate range")}</dt><dd>{spanneText(z.von, z.bis, euro.format) ?? "–"}{z.epVon !== null && z.epBis !== null ? ` (${euro2.format(z.epVon)}–${euro2.format(z.epBis)} / ${z.einheit ?? ""})` : ""}</dd></div>
                             <div><dt>{t("Unit price change")}</dt><dd>{z.epWar && z.epGeschaetzt !== null ? `${z.epGeschaetzt >= z.epWar ? "+" : "−"}${euro2.format(Math.abs(z.epGeschaetzt - z.epWar))} (${z.epGeschaetzt >= z.epWar ? "+" : "−"}${Math.abs(Math.round((z.epGeschaetzt / z.epWar - 1) * 1000) / 10)} %)` : "–"}</dd></div>
-                            <div><dt>{t("Source")}</dt><dd>{t(z.quelle === "preisliste" ? "Price list" : z.quelle === "historie" ? "Past projects" : z.quelle === "ohne_preis" ? "No price in the bill" : "Unchanged")}</dd></div>
+                            <div><dt>{t("Source")}</dt><dd>{t(z.quelle === "preisliste" ? "Price list" : z.quelle === "historie" ? "Past projects" : z.quelle === "index" ? "Index price" : z.quelle === "recherche" ? "Web research" : z.quelle === "ohne_preis" ? "No price in the bill" : "Unchanged")}</dd></div>
                           </dl>
                           {z.menge !== null && z.epGeschaetzt !== null && <p className={styles.klein}>{zahl.format(z.menge)} {z.einheit} × {euro2.format(z.epGeschaetzt)} = {euro.format(z.geschaetzt ?? 0)}</p>}
                         </td></tr>
@@ -301,6 +304,7 @@ export function Bericht({ bericht, offline = false, anzeigeName, original = null
                     </Fragment>); })}
                   </tbody>
                   <tfoot><tr><td colSpan={3}>{t("Total")}</td><td className={styles.rechts}>{euro.format(preis.war)}</td><td className={styles.rechts}>{euro.format(preis.geschaetzt)}</td>
+                    <td className={styles.rechts}>{spanneText(preis.von, preis.bis, euro.format) ?? "–"}</td>
                     <td className={styles.rechts} style={{ color: preis.diff > 0 ? "var(--sev-kritisch)" : "var(--sev-ok)" }}>{preis.diff > 0 ? "+" : "−"}{euro.format(Math.abs(preis.diff))}</td><td /></tr></tfoot>
                 </table>
               </div>

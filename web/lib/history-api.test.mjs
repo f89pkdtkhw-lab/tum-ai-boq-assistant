@@ -75,4 +75,7 @@ test("deviation by trade averages actual vs estimate per work type, worst first"
   assert.equal(stats[1].avgDeviation, 20);
   assert.equal(stats[1].projects, 2);
   assert.equal(stats[0].withActual, 1);
+  // Betonarbeiten has one observation → no spread; Erdarbeiten 10 % and 30 % → sample std √200 ≈ 14.14
+  assert.equal(stats[0].deviationSpread, null);
+  assert.ok(Math.abs((stats[1].deviationSpread ?? 0) - Math.sqrt(200)) < 1e-9);
 });

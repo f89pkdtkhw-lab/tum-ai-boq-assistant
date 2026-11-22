@@ -64,7 +64,8 @@ export function berichtPdf(bericht: Pruefbericht, opt: { t: Uebersetzer; sprache
   if (preis) {
     const geld = (n: number) => (Math.abs(n) >= 1e7 ? euroKurz : euro).format(n);
     const preisKacheln: [string, string, [number, number, number]][] = [
-      [t("Was"), geld(preis.war), [0.95, 0.96, 0.97]], [t("Final estimated price"), geld(preis.geschaetzt), [0.9, 0.97, 0.92]],
+      [t("Was"), geld(preis.war), [0.95, 0.96, 0.97]],
+      [t("Final estimated price"), preis.von != null && preis.bis != null ? `${geld(preis.geschaetzt)}  (${geld(preis.von)}–${geld(preis.bis)})` : geld(preis.geschaetzt), [0.9, 0.97, 0.92]],
       [t("Difference"), `${preis.diff > 0 ? "+" : ""}${geld(preis.diff)}`, preis.diff > 0 ? [0.99, 0.92, 0.9] : [0.9, 0.97, 0.92]],
       [t("Items with a changed price"), zahl.format(preis.geaendert), [0.95, 0.96, 0.97]],
     ];
@@ -104,7 +105,10 @@ export function berichtPdf(bericht: Pruefbericht, opt: { t: Uebersetzer; sprache
       pdf.text(PS[0].x + 6, y + 8, r.oz, 8);
       item.forEach((l, i) => pdf.text(PS[1].x + 3, y + 8 + i * 10, l, 8));
       rechts(PS[2].x, PS[2].b, euro.format(r.war ?? 0), y + 8);
-      rechts(PS[3].x, PS[3].b, euro.format(r.geschaetzt ?? 0), y + 8);
+      const geschaetztText = r.von != null && r.bis != null
+        ? `${euro.format(r.geschaetzt ?? 0)} (${euro.format(r.von)}–${euro.format(r.bis)})`
+        : euro.format(r.geschaetzt ?? 0);
+      rechts(PS[3].x, PS[3].b, geschaetztText, y + 8);
       rechts(PS[4].x, PS[4].b, `${(r.diff ?? 0) > 0 ? "+" : ""}${euro.format(r.diff ?? 0)}`, y + 8, (r.diff ?? 0) > 0 ? [0.85, 0.18, 0.13] : [0.13, 0.6, 0.3]);
       grund.forEach((l, i) => pdf.text(PS[5].x + 3, y + 8 + i * 9, l, 7.5, false, GRAU));
       y += hoehe;

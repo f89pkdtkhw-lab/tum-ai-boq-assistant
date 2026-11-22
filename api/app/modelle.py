@@ -86,10 +86,17 @@ class ScoreAbzug(Vertrag):
     bericht: Literal["regelwerk", "vergleich", "was_wenn"]
 
 
+def _ohne_null(wert) -> bool:
+    return wert is None
+
+
 class Zusammenfassung(Vertrag):
     score: float = Field(ge=0, le=10)
     score_abzuege: list[ScoreAbzug] = Field(default_factory=list)
     schaetzung_abweichung_eur: float | None = None
+    # #225: total estimate range (sum of item ranges); absent on older reports
+    schaetzung_von: float | None = Field(default=None, exclude_if=_ohne_null)
+    schaetzung_bis: float | None = Field(default=None, exclude_if=_ohne_null)
     grosse_probleme: int = Field(ge=0)
     warnungen: int = Field(ge=0)
     hinweise: int = Field(ge=0)
@@ -99,8 +106,6 @@ class Zusammenfassung(Vertrag):
 
 # --- Price calculation (B6 #112, epic #93): optional, absent unless a price list is supplied ---
 
-def _ohne_null(wert) -> bool:
-    return wert is None
 
 
 class PreislistenEintrag(Vertrag):
@@ -291,6 +296,11 @@ class GeschaetztePosition(Vertrag):
     grund: str = ""
     freigabe_noetig: bool = False      # true for adjustments from Report 2/3 or needing approval
     in_summe: bool = True              # false for "bedarf"/"alternativ" items, as in `kalkulation`
+    # #225: estimate range; absent when there is no price or on older reports
+    ep_von: float | None = Field(default=None, exclude_if=_ohne_null)
+    ep_bis: float | None = Field(default=None, exclude_if=_ohne_null)
+    gp_von: float | None = Field(default=None, exclude_if=_ohne_null)
+    gp_bis: float | None = Field(default=None, exclude_if=_ohne_null)
 
 
 class StatusAnzahl(Vertrag):
@@ -312,6 +322,9 @@ class GeschaetztesLv(Vertrag):
     ohne_preis: int = Field(default=0, ge=0)  # kept or added rows without a unit price
     vollstaendig: bool = False                # every summed row has a gp_neu
     anzahl: StatusAnzahl = Field(default_factory=StatusAnzahl)
+    # #225: sum of item ranges (items in the net sum); absent without prices
+    summe_netto_von: float | None = Field(default=None, exclude_if=_ohne_null)
+    summe_netto_bis: float | None = Field(default=None, exclude_if=_ohne_null)
 # --- end B8 ---------------------------------------------------------------------------------------
 
 

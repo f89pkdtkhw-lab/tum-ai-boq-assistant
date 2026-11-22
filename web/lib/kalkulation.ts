@@ -10,6 +10,7 @@ export type Zeile = {
   grund: string; findingId: string | null; freigabe: boolean; ohnePreis: boolean;
   /** t237: the EP is a fallback estimate (index price or web research), null for list/DB prices. */
   schaetzung?: Schaetzung | null;
+  von?: number | null; bis?: number | null;
 };
 
 export type Schaetzung = {
@@ -62,6 +63,7 @@ export function kalkulationsZeilen(bericht: Pick<Pruefbericht, "lv" | "kalkulati
       findingId: p.anpassung_ids.map((id) => anpassungen.get(id)?.finding_id).find((id) => id) ?? null,
       ohnePreis: p.ep === null || treffer.get(p.oz) === "kein_treffer",
       schaetzung: p.status === "added" ? null : schaetzungVon(kpos.get(p.oz)),
+      von: p.gp_von ?? null, bis: p.gp_bis ?? null,
     }));
   }
   if (!k) return [];
@@ -88,7 +90,7 @@ export function filtereStatus(zeilen: readonly Zeile[], status: AenderungsStatus
 export type Kosten = {
   originalNetto: number | null; geschaetztNetto: number | null; differenz: number | null; prozent: number | null;
   bruttoOriginal: number | null; bruttoGeschaetzt: number | null; ohnePreis: number; vollstaendig: boolean | null;
-  geschaetzt: number;
+  geschaetzt: number; von: number | null; bis: number | null;
 };
 
 /** Cost tiles. Missing values stay null ("unknown"), never 0. */
@@ -104,6 +106,7 @@ export function kosten(k: Kalkulation | null | undefined, g: GeschaetztesLv | nu
     ohnePreis: k?.ohne_preis ?? zeilen.filter((z) => z.ohnePreis).length,
     vollstaendig: k?.vollstaendig ?? null,
     geschaetzt: k?.geschaetzt_anzahl ?? zeilen.filter((z) => z.schaetzung).length,
+    von: g?.summe_netto_von ?? null, bis: g?.summe_netto_bis ?? null,
   };
 }
 
