@@ -6,7 +6,7 @@ import { useT } from "@/lib/einstellungen";
 import type { AnalyseStatus } from "@/lib/api";
 import {
   LADE_STUFEN, WIZARD_IDS, WIZARD_SCHRITTE, WIZARD_WEITER,
-  effektiverSchritt, istWizardSchritt, ladeStufe, leseSchritt, liveFortschritt, maxSchritt, schrittIndex, wizardPfad, wizardSichtbar, wizardUmleitung,
+  effektiverSchritt, istWizardSchritt, ladeStufe, leseSchritt, liveFortschritt, maxSchritt, schrittIndex, wizardAnzeigeSchritt, wizardPfad, wizardSichtbar, wizardUmleitung,
   type WizardSchritt,
 } from "@/lib/wizard";
 import { setzeEvaluationSchritt } from "@/lib/evaluation-session";
@@ -61,16 +61,18 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   }, [status, seite]);
 
   const gewuenscht = leseSchritt(search.get("schritt"), pathname);
-  const schritt = effektiverSchritt(gewuenscht, status, seite);
+  const geklemmt = effektiverSchritt(gewuenscht, status, seite);
+  // Keep the requested step while eval/job is being restored, otherwise the start form covers the error/progress.
+  const schritt = wizardAnzeigeSchritt(gewuenscht, status, seite, search);
 
   const setSchritt = useCallback((s: WizardSchritt) => {
     const ziel = effektiverSchritt(s, status, seite);
     router.push(wizardPfad(ziel));
   }, [router, status, seite]);
 
-  const umleitung = wizardUmleitung(gewuenscht, schritt, search);
+  const umleitung = wizardUmleitung(gewuenscht, geklemmt, search);
   // Restoring an evaluation from its link: the step is not reachable until the page reports its status.
-  const wartet = gewuenscht !== schritt && umleitung === null;
+  const wartet = gewuenscht !== geklemmt && umleitung === null;
   useEffect(() => {
     if (sichtbar && umleitung) router.replace(umleitung);
   }, [sichtbar, umleitung, router]);

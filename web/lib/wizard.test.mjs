@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  effektiverSchritt, ladeStufe, leseSchritt, liveFortschritt, maxSchritt, rechercheZumBefund, wizardPfad, wizardSichtbar, wizardUmleitung,
+  effektiverSchritt, ladeStufe, leseSchritt, liveFortschritt, maxSchritt, rechercheZumBefund, wizardAnzeigeSchritt, wizardPfad, wizardSichtbar, wizardUmleitung,
 } from "./wizard.ts";
 
 test("leseSchritt reads the query or infers from the path", () => {
@@ -65,4 +65,16 @@ test("liveFortschritt clamps step and percent for the review box", () => {
   assert.deepEqual(liveFortschritt({ schritt: 3, schritte_gesamt: 8, prozent: 25 }), { schritt: 3, gesamt: 8, prozent: 25 });
   assert.deepEqual(liveFortschritt({ schritt: 0, schritte_gesamt: 8, prozent: -5 }), { schritt: 1, gesamt: 8, prozent: 0 });
   assert.deepEqual(liveFortschritt({ schritt: 99, schritte_gesamt: 8, prozent: 140.6 }), { schritt: 8, gesamt: 8, prozent: 100 });
+});
+
+test("wizardAnzeigeSchritt keeps the requested step while an evaluation link is restored", () => {
+  const q = (s) => new URLSearchParams(s);
+  const leer = { hatBericht: false, laeuft: false };
+  // No evaluation link: clamp an unreachable step to the start page.
+  assert.equal(wizardAnzeigeSchritt("preis", leer, undefined, q("schritt=preis")), "hochladen");
+  // Chip / resume link: stay on the requested step so progress or a lost-job error is visible.
+  assert.equal(wizardAnzeigeSchritt("pruefen", leer, undefined, q("schritt=pruefen&eval=j1&job=j1")), "pruefen");
+  assert.equal(wizardAnzeigeSchritt("preis", leer, undefined, q("schritt=preis&eval=lokal-3")), "preis");
+  // Once the report is there, the requested step is used as usual.
+  assert.equal(wizardAnzeigeSchritt("preis", { hatBericht: true, laeuft: false }, undefined, q("schritt=preis")), "preis");
 });

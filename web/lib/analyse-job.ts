@@ -19,6 +19,11 @@ export type JobOptionen = {
   warte?: (ms: number) => Promise<void>;
 };
 
+/** Shown when the backend no longer has the job (restart, expired). */
+export const JOB_VERLOREN_TEXT = "The analysis job was lost, probably because the backend restarted. Please try again.";
+/** Running placeholder without a job id, or a link that cannot be restored from this session. */
+export const JOB_NICHT_GESTARTET_TEXT = "The analysis had not started yet, or the job is no longer known to the backend. Please start a new evaluation.";
+
 const schlafen = (ms: number) => new Promise<void>((fertig) => setTimeout(fertig, ms));
 
 /** Readable error text of a failed job; the job's own messages first. */
@@ -43,7 +48,7 @@ export async function fuehreAnalyseWeiter(
       fehlversuche = 0;
     } catch (fehler) {
       if ((fehler as { status?: number }).status === 404) {
-        throw new Error("The analysis job was lost, probably because the backend restarted. Please try again.");
+        throw new Error(JOB_VERLOREN_TEXT);
       }
       if (++fehlversuche >= maxFehlversuche) throw fehler;
       await warte(intervallMs);
