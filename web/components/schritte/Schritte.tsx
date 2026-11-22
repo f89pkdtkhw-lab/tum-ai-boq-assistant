@@ -6,6 +6,7 @@ import { FIXTURE_SOURCES, toSpecifications } from "@/lib/spezifikationen";
 import { Spezifikationen } from "@/components/spezifikationen/Spezifikationen";
 import styles from "./schritte.module.css";
 import { useT } from "@/lib/einstellungen";
+import { istAnnahme } from "@/lib/normen"; // #83: assumption marker
 
 const LABEL: Record<Step, string> = {
   comparison: "Comparison", standards: "Standards", historical_adjustment: "Historical adjustment", what_if: "What-if",
@@ -117,7 +118,7 @@ function NoteCard({ note }: { note: Note }) {
       <div className={styles.badges}>
         {(note.placeholder || note.source === "model_mock") && <span className={`${styles.badge} ${styles.mock}`}>{t("Mock / Placeholder")}</span>}
         {note.manual_review && <span className={styles.badge}>{t("Manual review")}</span>}
-        {note.approval_required && <span className={`${styles.badge} ${styles.freigabe}`}>{t("Approval required")}</span>}
+        {istAnnahme(note) && <span className={`${styles.badge} ${styles.freigabe}`}>{t("Approval required")}</span>}
       </div>
       <p>{note.text}</p>
       {estimate && (
