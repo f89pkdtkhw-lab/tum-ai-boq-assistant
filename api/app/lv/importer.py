@@ -20,8 +20,8 @@ def importiere(dateiname: str, inhalt: bytes) -> LV:
     if endung == ".json":
         return LV.model_validate_json(inhalt)
     parser = {".x83": gaeb.importiere, ".x84": gaeb.importiere,
-              ".d83": gaeb.importiere, ".d86": gaeb.importiere,  # GAEB 90 (DA83, DA86)
+              ".d83": gaeb.importiere, ".d84": gaeb.importiere, ".d86": gaeb.importiere,  # GAEB 90 (DA83/84/86)
               ".xlsx": excel.importiere, ".pdf": _pdf}.get(endung)
     if parser is None:
-        raise ValueError("Unsupported format. Allowed: JSON, X83, X84, D83, D86, XLSX, PDF.")
+        raise ValueError("Unsupported format. Allowed: JSON, X83, X84, D83, D84, D86, XLSX, PDF.")
     return parser(dateiname, inhalt)

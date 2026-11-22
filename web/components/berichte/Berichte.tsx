@@ -4,6 +4,8 @@ import { useState } from "react";
 import type { Finding, Pruefbericht } from "@/lib/api";
 import { abschnitte, chanceName, hatBerichte, prozentText, TABS, wasWennListe, type Abschnitt, type TabId } from "@/lib/berichte";
 import { schlussZeilen } from "@/lib/schlussbericht";
+import { useT } from "@/lib/einstellungen";
+import { istAnnahme } from "@/lib/normen"; // #83: assumption marker
 import styles from "./berichte.module.css";
 
 const SCHWERE: Record<Finding["schwere"], string> = { kritisch: "Critical", hoch: "High", mittel: "Medium", niedrig: "Low" };
@@ -88,6 +90,7 @@ function WasWennListe({ liste }: { liste: ReturnType<typeof wasWennListe> }) {
 }
 
 function BerichtInhalt({ a, onWaehle }: { a: Abschnitt; onWaehle: (oz: string, id: string | null) => void }) {
+  const t = useT();
   const b = a.bericht;
   if (b.status !== "ok") return <p className={styles.leer} role="note">{a.leer}</p>;
   return (
@@ -125,7 +128,7 @@ function BerichtInhalt({ a, onWaehle }: { a: Abschnitt; onWaehle: (oz: string, i
       {b.id === "was_wenn" && <WasWennListe liste={wasWennListe({ berichte: [b] })} />}
       {b.notes.length > 0 && b.id !== "vergleich" && (
         <ul className={styles.liste}>
-          {b.notes.map((n, i) => <li key={n.id ?? i} className={styles.karte}>{n.oz && <span className={styles.oz}>OZ {n.oz}</span>} {n.text}</li>)}
+          {b.notes.map((n, i) => <li key={n.id ?? i} className={styles.karte}>{istAnnahme(n) && <span className={`${styles.marke} ${styles.hoch}`}>{t("Assumption")} · {t("Approval required")}</span>} {n.oz && <span className={styles.oz}>OZ {n.oz}</span>} {n.text}</li>)}
         </ul>
       )}
     </div>

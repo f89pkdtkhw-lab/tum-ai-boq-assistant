@@ -7,7 +7,7 @@
 }
 .titel { margin: 0; font-size: 16px; font-weight: 700; }
 .kacheln { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 10px; margin: 0; }
-.kachel { background: var(--pb-card); border: 1px solid var(--pb-line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.kachel { background: var(--pb-card); border: 1px solid var(--pb-line); border-radius: var(--r-lg); padding: 12px 14px; min-width: 0; }
 .kachel dt { color: var(--pb-muted); font-size: 13px; font-weight: 600; }
 .kachel dd { margin: 2px 0 0; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .kachel small { display: block; color: var(--pb-muted); font-size: 12.5px; margin-top: 2px; }

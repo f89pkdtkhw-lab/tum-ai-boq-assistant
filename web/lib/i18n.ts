@@ -340,6 +340,8 @@ export const DE: Record<string, string> = {
   "All four steps done.": "Alle vier Schritte erledigt.",
   "Approval required": "Freigabe nötig",
   "Assumption": "Annahme",
+  "Standards hint, not an expert opinion": "Normhinweis, kein Gutachten",
+  "Standards source": "Normquelle",
   "Back to review": "Zurück zur Prüfung",
   "Case details": "Falldetails",
   "Cases": "Fälle",

@@ -7,7 +7,7 @@
   initial-value: 120;
 }
 
-.seite { max-width: 1320px; margin: 0 auto; padding: 16px 20px 48px; display: grid; gap: 12px; }
+.seite { max-width: 1320px; margin: 0 auto; padding: 16px var(--page-x, 28px) 48px; display: grid; gap: 12px; }
 .titel { margin: 0; font-size: 24px; letter-spacing: -.02em; }
 .kopf { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .datei { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line);
