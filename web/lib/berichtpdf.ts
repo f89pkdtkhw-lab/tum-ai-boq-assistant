@@ -23,6 +23,8 @@ const SPALTEN = [
 /** `preis`: the estimated price report (final estimated price and changed items), shown before the findings. */
 export function berichtPdf(bericht: Pruefbericht, opt: { t: Uebersetzer; sprache: Sprache; status: Status; titel?: string; datum?: Date; preis?: Preisbericht }): Uint8Array {
   const { t, sprache } = opt;
+  // Offline-model placeholders (rule IDs MOCK_*) are not findings and never appear in the PDF.
+  const echteBefunde = bericht.findings.filter((f) => !f.regel_id.startsWith("MOCK_"));
   const loc = sprache === "de" ? "de-DE" : "en-GB";
   // The euro sign goes after the number: PDF viewers draw the standard-font "€" wider than its advance,
   // so a digit right after it overlapped ("€65" looked smeared). "65.4M €" has nothing after the sign.
@@ -76,13 +78,6 @@ export function berichtPdf(bericht: Pruefbericht, opt: { t: Uebersetzer; sprache
     y += 52;
   }
   y += 10;
-  if (bericht.kennzahlen.modell_mock) {
-    for (const l of umbrechen(`${t("Demo mode:")} ${t("The model review runs as an offline mock. Entries with the identifier")} MOCK_LLM ${t("only demonstrate the report format and are not domain findings.")}`, A4.breite - 2 * RAND, 8)) {
-      pdf.text(RAND, y, l, 8, false, GRAU);
-      y += 10;
-    }
-    y += 6;
-  }
 
   // Estimated price report: changed items, largest difference first (all items are in the Excel export)
   if (preis && preis.geaendert > 0) {
@@ -126,10 +121,10 @@ export function berichtPdf(bericht: Pruefbericht, opt: { t: Uebersetzer; sprache
     SPALTEN.forEach((s) => pdf.text(s.x + 3, y + 12.5, t(s.titel), 8, true, [1, 1, 1]));
     y += 22;
   };
-  pdf.text(RAND, y + 4, `${t("Findings")} (${zahl.format(bericht.findings.length)})`, 12, true);
+  pdf.text(RAND, y + 4, `${t("Findings")} (${zahl.format(echteBefunde.length)})`, 12, true);
   y += 14;
   kopf();
-  for (const roh of bericht.findings) {
+  for (const roh of echteBefunde) {
     const f = befundAnzeige(roh, sprache);
     const status = opt.status(roh);
     const finding = umbrechen(f.titel, SPALTEN[2].b - 6, 8.5, true);

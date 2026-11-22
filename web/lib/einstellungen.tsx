@@ -10,9 +10,9 @@ for (const [en, de] of Object.entries(DE_SAAS)) if (!(en in DE)) DE[en] = de;
 export type Thema = "auto" | "light" | "dark";
 export type Dichte = "normal" | "kompakt";
 export type StartReiter = "uebersicht" | "findings" | "positionen";
-export type Einstellungen = { sprache: Sprache; thema: Thema; dichte: Dichte; seitengroesse: 50 | 100 | 250; startReiter: StartReiter; mockAusblenden: boolean };
+export type Einstellungen = { sprache: Sprache; thema: Thema; dichte: Dichte; seitengroesse: 50 | 100 | 250; startReiter: StartReiter };
 
-export const STANDARD: Einstellungen = { sprache: "en", thema: "auto", dichte: "normal", seitengroesse: 100, startReiter: "uebersicht", mockAusblenden: false };
+export const STANDARD: Einstellungen = { sprache: "en", thema: "auto", dichte: "normal", seitengroesse: 100, startReiter: "uebersicht" };
 export const EINSTELLUNGEN_SCHLUESSEL = "lv-einstellungen-v1";
 
 /** Dark from 19:00 to 07:00 local time when the theme is "auto". */
@@ -27,7 +27,6 @@ export function lies(roh: string | null): Einstellungen {
       dichte: wert.dichte === "kompakt" ? "kompakt" : "normal",
       seitengroesse: [50, 100, 250].includes(wert.seitengroesse) ? wert.seitengroesse : 100,
       startReiter: ["findings", "positionen"].includes(wert.startReiter) ? wert.startReiter : "uebersicht",
-      mockAusblenden: wert.mockAusblenden === true,
     };
   } catch {
     return STANDARD;

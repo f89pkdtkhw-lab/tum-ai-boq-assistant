@@ -158,9 +158,9 @@ def status():
               "key_set": bool(env(key_name)),
               "key_source": "ui" if RUNTIME.get(key_name) else "env" if env(key_name) else None}
     if name != "mock" and not env(KEY_FOR[name]):
-        result.update(mock=True, reason=f"Missing {KEY_FOR[name]} for {name}; the offline mock answers instead.")
+        result.update(mock=True, reason=f"Missing {KEY_FOR[name]} for {name}; AI steps run without a model.")
     elif name != "mock" and not chosen:
-        result.update(mock=True, reason=f"Set LLM_MODEL for {name}; the offline mock answers instead.")
+        result.update(mock=True, reason=f"Set LLM_MODEL for {name}; AI steps run without a model.")
     return result
 
 
@@ -235,11 +235,11 @@ def complete_with_fallback(prompt, system="", max_tokens=1024, *, timeout=None, 
                            effort=effort).result(
             timeout=limit + 1)
     except FutureTimeout:
-        return fallback(f"{state['provider']} did not answer within {limit:g} s; offline mock used.")
+        return fallback(f"{state['provider']} did not answer within {limit:g} s; no AI answer used.")
     except LLMError as exc:
-        return fallback(f"{exc} Offline mock used.")
+        return fallback(f"{exc} No AI answer used.")
     except Exception as exc:  # the demo must never crash on a model call
-        return fallback(f"{state['provider']} call failed ({type(exc).__name__}); offline mock used.")
+        return fallback(f"{state['provider']} call failed ({type(exc).__name__}); no AI answer used.")
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
 

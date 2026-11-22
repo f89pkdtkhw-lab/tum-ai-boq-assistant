@@ -82,7 +82,7 @@ def test_failing_model_marks_position_review_and_norm_research(claude, monkeypat
     schritte = steps(body)
     review = schritte["positionspruefung"]
     assert review["status"] == "mock" and review["titel"] == "AI position review"
-    assert "HTTP 529" in review["grund"] and "mock" in review["grund"]
+    assert "HTTP 529" in review["grund"] and "No AI findings in this run" in review["grund"]
     assert review["grund"] == body["kennzahlen"]["modell_reason"]
     norms = schritte["normrecherche"]
     assert norms["status"] == "fehler" and "HTTP 529" in norms["grund"] and "no AI norm hints" in norms["grund"]
@@ -164,4 +164,4 @@ def test_evaluation_names_why_the_mock_answered_only_when_a_model_is_configured(
         529, json={}, request=httpx.Request("POST", url)))
     body = client.post("/api/lv/ai-evaluation", json=EVIDENCE).json()
     assert body["source"] == "model_mock"
-    assert "offline mock" in body["reason"] and FAKE_KEY not in body["reason"]
+    assert "evidence-based evaluation" in body["reason"] and FAKE_KEY not in body["reason"]

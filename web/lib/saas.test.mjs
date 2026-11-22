@@ -23,8 +23,8 @@ test("effective plan: company grant > active subscription > free", () => {
   assert.equal(effektiverPlan({ ...basis, companyId: "f1" }, { ...firma, members: [] }), "free");
 });
 
-test("quota is soft and demo is unlimited", () => {
-  assert.deepEqual(kontingent("demo", 9), { plan: "demo", quota: null, used: 9, remaining: null, ueber: false });
+test("quota is soft and guest is unlimited", () => {
+  assert.deepEqual(kontingent("gast", 9), { plan: "gast", quota: null, used: 9, remaining: null, ueber: false });
   assert.equal(kontingent("free", 2).remaining, 1);
   assert.equal(kontingent("free", 3).ueber, true);
   assert.equal(kontingent("free", 7).remaining, 0);
@@ -57,4 +57,43 @@ test("German plan texts keep their placeholders", async () => {
   const { DE_SAAS } = await import("./saas/i18n-saas.ts");
   const platzhalter = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join();
   for (const [en, de] of Object.entries(DE_SAAS)) assert.equal(platzhalter(de), platzhalter(en), en);
+});
+
+test("email accounts: scrypt hash round-trip, wrong password and tampering fail, minimum length", async () => {
+  const { hashPasswort, pruefePasswort, passwortOk } = await import("./saas/passwort.ts");
+  const h = hashPasswort("geheim123");
+  assert.match(h, /^scrypt\$16384\$8\$1\$[\w-]+\$[\w-]+$/);
+  assert.equal(h.includes("geheim123"), false);
+  assert.notEqual(hashPasswort("geheim123"), h); // random salt
+  assert.equal(pruefePasswort("geheim123", h), true);
+  assert.equal(pruefePasswort("geheim124", h), false);
+  assert.equal(pruefePasswort("geheim123", h.slice(0, -2) + "AA"), false);
+  assert.equal(pruefePasswort("geheim123", undefined), false);
+  assert.equal(pruefePasswort("geheim123", "bcrypt$x"), false);
+  assert.equal(passwortOk("1234567"), false);
+  assert.equal(passwortOk("12345678"), true);
+  assert.equal(passwortOk(12345678), false);
+});
+
+test("no demo login and no mock or demo texts in the German UI dictionary", async () => {
+  const { readFileSync } = await import("node:fs");
+  const auth = readFileSync(new URL("./saas/auth.ts", import.meta.url), "utf8");
+  assert.equal(/AUTH_DEMO_LOGIN|id: "demo"/.test(auth), false);
+  const { DE } = await import("./i18n.ts");
+  const treffer = Object.entries(DE).filter(([en, de]) => /\b(mock|demo)\b/i.test(en) || /\b(mock|demo)/i.test(de));
+  assert.deepEqual(treffer, []);
+});
+
+test("confirmation / reset tokens: only the hash is stored, expiry and wrong token fail", async () => {
+  const { neuerToken, tokenOk, tokenHash, RESET_MS } = await import("./saas/token.ts");
+  const jetzt = new Date("2026-11-22T08:00:00Z");
+  const { token, gespeichert } = neuerToken(RESET_MS, jetzt);
+  assert.equal(JSON.stringify(gespeichert).includes(token), false);
+  assert.equal(gespeichert.hash, tokenHash(token));
+  assert.equal(gespeichert.expiresAt, "2026-11-22T09:00:00.000Z");
+  assert.equal(tokenOk(token, gespeichert, jetzt), true);
+  assert.equal(tokenOk(token + "x", gespeichert, jetzt), false);
+  assert.equal(tokenOk(token, gespeichert, new Date("2026-11-22T09:00:01Z")), false);
+  assert.equal(tokenOk("", gespeichert, jetzt), false);
+  assert.equal(tokenOk(token, undefined, jetzt), false);
 });

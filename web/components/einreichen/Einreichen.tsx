@@ -43,12 +43,7 @@ export function Einreichen() {
     }
   }
 
-  /** Synthetic demo unit prices (tools/demo_preisliste.py), same as in the report's price report. */
-  async function demo() {
-    const neu = lesePreisliste(await (await fetch("/demo-preisliste.json")).text());
-    speicherePreisliste(neu); setListe(neu);
-    setMeldung({ ok: true, text: t("{n} prices saved from {name}.", { n: neu.length, name: "demo-preisliste.json" }) });
-  }
+
 
   function speichern(neu: Preis[]) { speicherePreisliste(neu); setListe(neu); }
   function hinzufuegen(ev: React.FormEvent<HTMLFormElement>) {
@@ -91,7 +86,6 @@ export function Einreichen() {
             <input type="file" accept=".csv,.txt,.json" onChange={(e) => void laden(e.target.files?.[0])} />
             <Icon name="upload" size={20} /> {t("Choose price list")} <small>CSV · JSON</small>
           </label>
-          {liste.length === 0 && <button type="button" className={styles.leise} onClick={demo}>{t("Load demo unit prices")}</button>}
         </div>
 
         <form className={styles.formular} onSubmit={hinzufuegen}>

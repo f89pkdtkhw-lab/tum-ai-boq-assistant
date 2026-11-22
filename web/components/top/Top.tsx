@@ -70,7 +70,7 @@ export function Top({ findings, positionen, onWaehle }: {
                   <span className={`${styles.marke} ${styles.schwere}`}>{t(SCHWERE_NAME[z.schwere])}</span>
                   <span className={styles.marke}>{z.anzahl} {t(z.anzahl === 1 ? "finding" : "findings")}</span>
                   <span className={styles.euro}>{z.euro === null ? <em className={styles.unbekannt}>{t("unknown")}</em> : euro.format(z.euro)}</span>
-                  {z.nurModell && <span className={styles.markeMock}>Mock</span>}
+                  {z.nurModell && <span className={styles.markeMock}>{t("AI only")}</span>}
                 </span>
               </button>
             </li>

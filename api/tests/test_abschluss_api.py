@@ -107,7 +107,7 @@ def test_without_description_and_tags_metadata_is_generated(client):
     r = _post(client)
     assert r.status_code == 200, r.text
     rec = r.json()
-    assert rec["description"].startswith("Mock:")
+    assert rec["description"].startswith(("Parsed case", "Bridge repair"))
     assert rec["tags"] == []
     assert any("No tags" in w for w in rec["warnungen"])
     assert [x["id"] for x in client.get("/api/db/records/latest").json()] == [rec["id"]]

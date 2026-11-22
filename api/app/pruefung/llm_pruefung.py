@@ -337,9 +337,9 @@ def pruefe_mit_llm_status(
     if len(fehler) == len(batches):
         erster = fehler[min(fehler)]
         if all(text == erster for text in fehler.values()) and "within" in erster and "finish" in erster:
-            return mock_pruefung(lv, f"{erster.rstrip('.')}; offline mock findings shown instead.")
+            return mock_pruefung(lv, f"{erster.rstrip('.')}; no AI findings in this run.")
         prefix = f"Batch 1/1: " if len(batches) == 1 else f"All {len(batches)} batches failed; first: "
-        return mock_pruefung(lv, f"{prefix}{erster} Offline mock findings shown instead.")
+        return mock_pruefung(lv, f"{prefix}{erster} No AI findings in this run.")
     reason = None
     if fehler:
         teile = [f"batch {i + 1} (OZ {_bereich(batches[i])}): {fehler[i]}" for i in sorted(fehler)[:5]]

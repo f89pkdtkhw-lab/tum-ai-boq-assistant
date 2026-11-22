@@ -198,7 +198,7 @@ def test_timeout_or_network_error_falls_back_to_mock_and_endpoint_returns_200(ge
     assert response.status_code == 200
     kennzahlen = response.json()["kennzahlen"]
     assert kennzahlen["modell_mock"] is True and expected in kennzahlen["modell_reason"]
-    assert "Offline mock findings shown instead" in kennzahlen["modell_reason"]
+    assert "No AI findings in this run" in kennzahlen["modell_reason"]
     assert "modell" not in kennzahlen
     assert [f["regel_id"] for f in response.json()["findings"]].count("MOCK_LLM") == 1
 
@@ -367,7 +367,7 @@ def test_complete_with_fallback_never_raises(gemini, monkeypatch):
     monkeypatch.setattr(httpx, "post", slow)
     answer = llm.complete_with_fallback("Question: hi", timeout=1, mock_text='{"positionen": []}')
     assert answer.provider == "mock" and answer.text == '{"positionen": []}'
-    assert "did not answer within" in answer.reason and "mock" in answer.reason
+    assert "did not answer within" in answer.reason and "No AI answer used" in answer.reason
     monkeypatch.setattr(llm, "complete", lambda *a, **k: llm.Answer("real answer", "gemini", "m", 1))
     assert llm.complete_with_fallback("x").text == "real answer"
 

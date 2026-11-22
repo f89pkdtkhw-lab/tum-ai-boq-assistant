@@ -8,7 +8,7 @@ const f = (id, oz, kategorie, schwere, quelle = "regel", regel_id = "R1", vorsch
 const p = (oz, kurztext) =>
   ({ oz, kurztext, langtext: "", menge: null, einheit: null, ep: null, gp: null, typ: "normal", titel_pfad: [] });
 
-test("keeps only risk and change-order findings, by severity then OZ, mock flag carried", () => {
+test("keeps only risk and change-order findings, by severity then OZ, offline-model placeholders left out", () => {
   const fragen = bieterfragen([
     f("e", "01.01", "fehler", "kritisch"),
     f("a", "01.10", "risiko", "mittel"),
@@ -17,12 +17,12 @@ test("keeps only risk and change-order findings, by severity then OZ, mock flag 
     f("d", "09.99", "nachtrag", "niedrig", "regel", "R2", "  "),
   ], [p("01.2", "Excavation"), p("01.2", "Duplicate"), p("01.10", "")]);
 
-  assert.deepEqual(fragen.map((x) => x.id), ["c", "b", "a", "d"]);
-  assert.deepEqual(fragen.map((x) => x.mock), [true, false, false, false]);
-  assert.equal(fragen[1].kurztext, "Excavation");
-  assert.equal(fragen[2].kurztext, null);
-  assert.equal(fragen[3].frage, "Title d"); // empty vorschlag falls back to the title
-  assert.equal(alsText(fragen), "02.01 – Ask about c\n01.2 – Ask about b\n01.10 – Ask about a\n09.99 – Title d");
+  assert.deepEqual(fragen.map((x) => x.id), ["b", "a", "d"]);
+  assert.equal(fragen.some((x) => "mock" in x), false);
+  assert.equal(fragen[0].kurztext, "Excavation");
+  assert.equal(fragen[1].kurztext, null);
+  assert.equal(fragen[2].frage, "Title d"); // empty vorschlag falls back to the title
+  assert.equal(alsText(fragen), "01.2 – Ask about b\n01.10 – Ask about a\n09.99 – Title d");
 });
 
 test("no risk or change-order findings gives an empty list", () => {

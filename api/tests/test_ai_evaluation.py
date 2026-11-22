@@ -101,7 +101,7 @@ def test_with_a_key_claude_answers_and_source_is_model(claude, monkeypatch):
 def test_invalid_model_answer_falls_back_to_the_mock_with_reason(claude, monkeypatch, text):
     stub_reply(monkeypatch, text, [])
     body = client.post("/api/lv/ai-evaluation", json=EVIDENCE).json()
-    assert body["source"] == "model_mock" and "offline mock evaluation" in body["reason"]
+    assert body["source"] == "model_mock" and "evidence-based evaluation" in body["reason"]
     assert body["recommendations"][0]["title"] == "Fix 2 price errors first"
 
 

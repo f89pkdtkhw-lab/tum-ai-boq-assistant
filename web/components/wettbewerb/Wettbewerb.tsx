@@ -4,7 +4,7 @@
 // (strip chart, one dot per tender) and a warning for bidders whose prices are unrealistic.
 import { useEffect, useMemo, useState } from "react";
 import { useEinstellungen } from "@/lib/einstellungen";
-import { auswerten, bewerte, demo, empfehle, lade, leseDokument, speichere, zahl, type Firma, type Gebot, type Submission } from "@/lib/wettbewerb";
+import { auswerten, bewerte, empfehle, lade, leseDokument, speichere, zahl, type Firma, type Gebot, type Submission } from "@/lib/wettbewerb";
 import { AUFGREIFSCHWELLE, STANDARD, kalkuliere } from "@/lib/zuschlag";
 import { Info } from "../info/Info";
 import styles from "./wettbewerb.module.css";
@@ -121,8 +121,7 @@ export function Wettbewerb() {
 
       {firmen.length === 0 ? (
         <section className={styles.karte}>
-          <p>{t("No tender results yet. Add one below, save one from the bid section of a report, or load the demo history.")}</p>
-          <button type="button" className={styles.knopf} onClick={() => setzen(demo())}>{t("Load demo history")}</button>
+          <p>{t("No tender results yet. Add one below or save one from the bid section of a report.")}</p>
         </section>
       ) : (
         <section className={styles.karte}>

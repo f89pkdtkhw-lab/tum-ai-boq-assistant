@@ -2,7 +2,7 @@
 
 import { useDok } from "@/components/dok/useDok";
 import { useEffect, useState } from "react";
-import { historyApi, isMockSource, similarPositions, type HistoryCase, type Measurement } from "@/lib/history-api";
+import { historyApi, similarPositions, type HistoryCase, type Measurement } from "@/lib/history-api";
 import styles from "./historie.module.css";
 import { useT } from "@/lib/einstellungen";
 
@@ -47,7 +47,6 @@ export function Historie({ oz, kurztext }: { oz: string; kurztext: string | null
                   <p className={styles.kopf}>
                     <strong>{p.case.lv.name}</strong>
                     <span className={styles.klein}>{p.case.date} · OZ {p.oz}</span>
-                    {isMockSource(p.case.source) && <span className={styles.mock}>{t("Synthetic")}</span>}
                   </p>
                   <p className={styles.klein}>{d(p.kurztext)}</p>
                   <dl className={styles.werte}>

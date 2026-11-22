@@ -52,7 +52,6 @@ import { excelHerunterladen, jsonHerunterladen, pdfHerunterladen } from "@/lib/b
  */
 export const PRUEFBERICHT_SPEICHER_SCHLUESSEL = "lv-pruefbericht-v1";
 
-const MOCK_REGEL = "MOCK_LLM";
 const REITER_SCHLUESSEL = "lv-reiter-v1";
 
 type Kategorie = Finding["kategorie"];
@@ -131,14 +130,14 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
   springeZu?: { oz: string; n: number } | null; originalUrl?: string | null;
 }) {
   const d = useDok();
-  const { e: einstellungen, setze: setzeEinstellungen, t } = useEinstellungen();
+  const { e: einstellungen, t } = useEinstellungen();
   const { lv, kennzahlen } = bericht;
   const eigene = useEinschaetzung(bericht, !vonAussen);
   const bewertung = vonAussen ?? eigene;
-  // Setting "hide demo findings": entries from the offline model mock leave every list and count.
+  // Placeholder entries of the offline model (rule IDs MOCK_*) are never shown to users: they leave every list and count.
   // Display texts: German when chosen, ranking tail removed (lib/befundtext.ts).
-  const findings = useMemo(() => (einstellungen.mockAusblenden ? bericht.findings.filter((f) => !istMock(f)) : bericht.findings)
-    .map((f) => befundAnzeige(f, einstellungen.sprache)), [bericht.findings, einstellungen.mockAusblenden, einstellungen.sprache]);
+  const findings = useMemo(() => bericht.findings.filter((f) => !istMock(f))
+    .map((f) => befundAnzeige(f, einstellungen.sprache)), [bericht.findings, einstellungen.sprache]);
   // The open tab survives page switches in this browser tab; a fresh report starts on the tab chosen in settings.
   const [reiter, setReiterState] = useState<Reiter>(() => {
     try { return (window.sessionStorage.getItem(REITER_SCHLUESSEL) as Reiter | null) ?? liesJetzt().startReiter; } catch { return "uebersicht"; }
@@ -211,9 +210,8 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
   }
   const geprueft = anzahlGeprueft(findings, bewertungen);
 
-  const mockAnzahl = findings.filter(istMock).length;
-  const echteAnzahl = findings.length - mockAnzahl;
-  const bekannteEuro = findings.filter((f) => !istMock(f) && f.euro_wirkung !== null);
+  const echteAnzahl = findings.length;
+  const bekannteEuro = findings.filter((f) => f.euro_wirkung !== null);
   const euroSumme = bekannteEuro.reduce((summe, f) => summe + (f.euro_wirkung ?? 0), 0);
   const euroUnbekannt = echteAnzahl - bekannteEuro.length;
   const doppelteOz = [...positionenNachOz.values()].filter((liste) => liste.length > 1).length;
@@ -387,18 +385,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
       </header>
       {exportFehler && <p className={styles.fehler} role="alert">{exportFehler}</p>}
 
-      {offline && (
-        <p className={styles.offlineHinweis} role="note">
-          <strong>{t("Offline example – not live analysis.")}</strong> {t("The backend is unreachable; this is a saved report for the synthetic example BoQ.")}
-        </p>
-      )}
 
-      {kennzahlen.modell_mock && (
-        <p className={styles.mockHinweis} role="note">
-          <strong>{t("Demo mode:")}</strong> {t("The model review runs as an offline mock. Entries with the identifier")}{" "}
-          <code>{MOCK_REGEL}</code> {t("only demonstrate the report format and are not domain findings.")}
-        </p>
-      )}
       <KiHinweis hinweise={kiHinweise(bericht, bewertung.ki)} />
       {bericht.recherche && <RechercheHinweis recherche={bericht.recherche} />}
 
@@ -439,8 +426,6 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
       <IosLeiste
         nurKritisch={gruppe === "gross"}
         onNurKritisch={nurKritischSetzen}
-        mockAusblenden={einstellungen.mockAusblenden}
-        onMockAusblenden={(aus) => setzeEinstellungen({ mockAusblenden: aus })}
         minSchwere={minSchwere}
         onMinSchwere={minSchwereSetzen}
         schwere={schwere}
@@ -461,7 +446,7 @@ export function Pruefbericht({ bericht, offline = false, anzeigeName, bewertung:
 
       <p className={styles.metaZeile}>
         {t("{n} items", { n: zahl.format(kennzahlen.positionen) })}{doppelteOz > 0 && <> · {t("{n} duplicate item numbers", { n: doppelteOz })}</>}
-        {" · "}{t("{n} entries", { n: zahl.format(kennzahlen.findings) })}{mockAnzahl > 0 && <> ({t("including {n} demo entries", { n: mockAnzahl })})</>}
+        {" · "}{t("{n} entries", { n: zahl.format(findings.length) })}
         {" · "}{t("Reviewed")} {zahl.format(geprueft)}/{zahl.format(findings.length)}
         {" · "}{t("Evidenced euro impact")} {bekannteEuro.length > 0 ? <span title={euro.format(euroSumme)}>{(Math.abs(euroSumme) >= 1e6 ? euroKurz : euroGanz).format(euroSumme)}</span> : <Unbekannt />}
         {echteAnzahl > 0 && euroUnbekannt > 0 && <> ({t("unknown for {a} of {b} findings", { a: euroUnbekannt, b: echteAnzahl })})</>}
@@ -726,7 +711,6 @@ function Merkmale({ finding }: { finding: Finding }) {
       <span className={`${styles.schwere} ${styles[`schwere_${finding.schwere}`]}`}>{t(schwereName(finding.schwere))}</span>
       <span className={styles.marke}>{t(kategorieName(finding.kategorie))}</span>
       <span className={styles.marke}>{t(finding.quelle === "regel" ? "Rule" : "Model")} · {finding.regel_id}</span>
-      {istMock(finding) && <span className={styles.markeMock}>{t("Demonstration")}</span>}
       {istNormFinding(finding) && <span className={styles.markeNorm}>{t("Standards hint, not an expert opinion")}</span>}
     </span>
   );
@@ -788,14 +772,13 @@ function FindingKarte({ finding, gewaehlt, ozBekannt, onWaehle }: {
 }) {
   const t = useT();
   return (
-    <button type="button" className={`${styles.karte} ${gewaehlt ? styles.karteGewaehlt : ""} ${istMock(finding) ? styles.karteMock : ""}`}
+    <button type="button" className={`${styles.karte} ${gewaehlt ? styles.karteGewaehlt : ""}`}
       aria-pressed={gewaehlt} onClick={onWaehle} style={gefahr([finding])}>
       <span className={`${styles.schwere} ${styles[`schwere_${finding.schwere}`]}`}>{t(schwereName(finding.schwere))}</span>
       <span className={styles.oz}>{finding.oz}{!ozBekannt && <small> ({t("not in BoQ")})</small>}</span>
       <span className={styles.zeileText}>
         <span className={styles.karteTitel}>{finding.titel}</span>
         <span className={styles.zeileMeta}>{t(kategorieName(finding.kategorie))} · {t(finding.quelle === "regel" ? "Rule" : "Model")} · {finding.regel_id}
-          {istMock(finding) && <> · <b className={styles.markeMock}>{t("Demonstration")}</b></>}
           {istNormFinding(finding) && <> · <b className={styles.markeNorm}>{t("Standards hint, not an expert opinion")}</b></>}</span>
       </span>
       <span className={styles.zeileEuro}><Euro wert={finding.euro_wirkung} /></span>
@@ -831,7 +814,7 @@ function Detail({ oz, findingId, positionen, datei, originalUrl, findings, onWae
       </div>
 
       {gewaehlt && (
-        <article className={`${styles.befund} ${istMock(gewaehlt) ? styles.karteMock : ""}`}>
+        <article className={styles.befund}>
           <Merkmale finding={gewaehlt} />
           <h4>{gewaehlt.titel}</h4>
           <dl className={styles.felder}>

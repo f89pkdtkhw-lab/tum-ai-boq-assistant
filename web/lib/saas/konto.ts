@@ -1,5 +1,5 @@
 // Server helpers shared by the /api/saas routes: who is signed in, their plan and quota, admin rights.
-import { auth, demoLoginAktiv, googleAktiv } from "./auth";
+import { auth, googleAktiv } from "./auth";
 import { lesenNur, type Daten } from "./db";
 import { adminEmails, effektiverPlan, kontingent, monatsSchluessel, type Kontingent, type PlanId } from "./plaene";
 import { stripeAktiv } from "./stripe";
@@ -14,7 +14,7 @@ export type KontoStand = {
   abo: { status: string; intervall: string | null; periodEnd: string | null } | null;
   kunde: boolean;
   admin: boolean;
-  konfiguriert: { google: boolean; demo: boolean; stripe: boolean };
+  konfiguriert: { google: boolean; email: boolean; stripe: boolean };
 };
 
 export async function sitzungsEmail(): Promise<{ email: string; name: string | null } | null> {
@@ -37,9 +37,9 @@ export function adminCodeOk(code: string | null | undefined): boolean {
 }
 
 export function stand(d: Daten, s: { email: string; name: string | null } | null): KontoStand {
-  const konfiguriert = { google: googleAktiv(), demo: demoLoginAktiv(), stripe: stripeAktiv() };
+  const konfiguriert = { google: googleAktiv(), email: true, stripe: stripeAktiv() };
   if (!s) {
-    return { angemeldet: false, email: null, name: null, plan: "demo", kontingent: kontingent("demo", 0), firma: null, abo: null, kunde: false, admin: false, konfiguriert };
+    return { angemeldet: false, email: null, name: null, plan: "gast", kontingent: kontingent("gast", 0), firma: null, abo: null, kunde: false, admin: false, konfiguriert };
   }
   const n = d.users[s.email] ?? { email: s.email, createdAt: "", usage: {} };
   const firma = n.companyId ? d.companies[n.companyId] : null;

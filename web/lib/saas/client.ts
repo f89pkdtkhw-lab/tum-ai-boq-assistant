@@ -1,6 +1,6 @@
 "use client";
 // Browser side of accounts and plans. Every call fails soft: when /api/saas is missing or errors,
-// the app behaves exactly as before (plan "Demo", no banner, nothing blocked).
+// the app behaves exactly as before (guest, no banner, nothing blocked).
 import { useCallback, useEffect, useState } from "react";
 import type { KontoStand } from "./konto";
 

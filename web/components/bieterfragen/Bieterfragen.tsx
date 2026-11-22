@@ -38,12 +38,11 @@ export function Bieterfragen({ findings, positionen }: { findings: Finding[]; po
       ) : (
         <ol className={styles.liste}>
           {fragen.map((f) => (
-            <li key={f.id} className={`${styles.eintrag} ${f.mock ? styles.mock : ""}`}>
+            <li key={f.id} className={styles.eintrag}>
               <p className={styles.merkmale}>
                 <span className={styles.oz}>OZ {f.oz}</span>
                 <span>{f.kurztext ? d(f.kurztext) : <em>{t("short text unknown")}</em>}</span>
                 <span className={styles.marke}>{t(SCHWERE_NAME[f.schwere])} · {t(KATEGORIE_NAME[f.kategorie])}</span>
-                {f.mock && <span className={styles.markeMock}>{t("Demonstration")}</span>}
               </p>
               <p className={styles.finding}>{f.titel}</p>
               <p className={styles.frage}>{f.frage}</p>

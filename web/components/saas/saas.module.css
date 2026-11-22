@@ -81,3 +81,4 @@
 .tabelle th, .tabelle td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .tabelle th { color: var(--muted); font-weight: 600; }
 .scroll { overflow-x: auto; }
+.link { background: none; border: 0; padding: 0; color: var(--brand); font: inherit; cursor: pointer; text-decoration: underline; }

@@ -7,7 +7,7 @@ import { useT } from "@/lib/einstellungen";
 import { lesePreisliste, preislisteText, speicherePreisliste } from "@/lib/preisliste";
 import { Icon } from "./icon/Icon";
 import { Bericht } from "@/components/bericht/Bericht";
-import { bietetOffline, ladeOfflineBericht } from "@/lib/offline";
+import { bietetOffline } from "@/lib/offline";
 import { fuehreAnalyseAus } from "@/lib/analyse-job";
 import { Ladeanzeige, useWizard } from "@/components/wizard/Wizard";
 import { KontingentHinweis } from "@/components/saas/KontingentHinweis";
@@ -245,17 +245,6 @@ export function LvUpload() {
     }
   }
 
-  // #115: the first synthetic example plus its demo price list (copy of data/preisliste_beispiel.csv), ready to evaluate.
-  async function beispielMitPreisen() {
-    const b = beispiele[0];
-    if (!b) return;
-    const csv = await (await fetch("/preisliste_beispiel.csv")).blob();
-    setzeDateien([
-      { datei: new File([JSON.stringify(b.lv)], "beispiel_lv.json", { type: "application/json" }), rolle: "lv" },
-      { datei: new File([csv], "preisliste_beispiel.csv", { type: "text/csv" }), rolle: "preise" },
-    ]);
-  }
-
   function aufAuswahl(event: ChangeEvent<HTMLInputElement>) {
     hinzufuegen([...(event.target.files ?? [])]);
     event.target.value = "";
@@ -313,7 +302,7 @@ export function LvUpload() {
         // The dev/start proxy in front of the backend may cut request bodies near the 10 MiB limit.
         tipp = "The file is close to the 10 MiB limit. Please try a smaller file.";
       } else if (lauf.art === "datei" && endung(lauf.datei.name) !== ".json") {
-        tipp = "Use a BoQ JSON file or the synthetic example to try the flow immediately.";
+        tipp = "Use a GAEB, Excel, PDF or BoQ JSON file.";
       }
       await scheitern("import", "Import failed", fehler, tipp);
       return;
@@ -397,25 +386,6 @@ export function LvUpload() {
     if (health === "offline") api.health().then(setHealth).catch(() => {});
   }
 
-  async function zeigeOffline(lauf: Lauf, schritte: Schritte) {
-    const nummer = ++laufNummer.current;
-    let bericht: PruefberichtDaten;
-    try {
-      bericht = await ladeOfflineBericht();
-    } catch (fehler) {
-      if (nummer !== laufNummer.current) return;
-      const meldung = fehlerText(fehler);
-      setErgebnis({ phase: "fehler", lauf, schritte, titel: "Offline example unavailable", meldung, tipp: BACKEND_TIPP, offline: false });
-      return;
-    }
-    if (nummer !== laufNummer.current) return;
-    const text = "Offline example: saved report, not a live analysis.";
-    setErgebnis({
-      phase: "fertig", lauf, lv: bericht.lv, bericht, nummer, offline: true,
-      schritte: { ...schritte, pruefung: { status: "fertig", text } },
-    });
-  }
-
   async function absenden(event: FormEvent) {
     event.preventDefault();
     if (!datei || dateiFehler || busy) return;
@@ -438,7 +408,9 @@ export function LvUpload() {
     ? { klasse: styles.statusWartet, text: t("Checking backend …") }
     : health === "offline"
       ? { klasse: styles.statusOffline, text: t("Backend offline") }
-      : { klasse: health.mock ? styles.statusMock : styles.statusLive, text: `${health.provider} · ${health.model}` };
+      : health.mock
+        ? { klasse: styles.statusMock, text: t("AI not configured") }
+        : { klasse: styles.statusLive, text: `${health.provider} · ${health.model}` };
 
   return (
     <main className={styles.seite}>
@@ -487,19 +459,6 @@ export function LvUpload() {
         <button type="submit" className={`${styles.knopf} ${styles.auswerten}`} disabled={!datei || !!dateiFehler || busy}>
           <Icon name="sparkles" /> {t("Evaluate")}
         </button>
-        <p className={styles.beispielZeile}>{t("No file at hand?")}{" "}
-          {beispiele.map((b) => (
-            <button key={b.id} type="button" className={styles.beispielChip} disabled={busy}
-              onClick={() => { setzeDateien([]); void starte({ art: "beispiel", id: b.id, titel: b.titel }); }}>
-              {t(b.titel)} · {anzahl(b.lv.positionen.length, t("item"), t("items"))}
-            </button>
-          ))}
-          {beispiele.length > 0 && (
-            <button type="button" className={styles.beispielChip} disabled={busy} onClick={() => void beispielMitPreisen()}>
-              {t("{name} with demo price list", { name: t(beispiele[0].titel) })}
-            </button>
-          )}
-        </p>
       </form>
       </>)}
 
@@ -527,11 +486,6 @@ export function LvUpload() {
               {ergebnis.tipp && <p className={styles.tipp}>{t(ergebnis.tipp)}</p>}
               <div className={styles.aktionen}>
                 <button type="button" className={styles.knopf} onClick={() => void starte(ergebnis.lauf)}>{t("Try again")}</button>
-                {ergebnis.offline && (
-                  <button type="button" className={styles.knopfZweit} onClick={() => void zeigeOffline(ergebnis.lauf, ergebnis.schritte)}>
-                    {t("Show offline example report")}
-                  </button>
-                )}
                 {ergebnis.lauf.art === "datei" && (
                   <button type="button" className={styles.knopfZweit} onClick={zuruecksetzen}>{t("Choose another file")}</button>
                 )}
@@ -545,9 +499,7 @@ export function LvUpload() {
         <div ref={meldungRef} tabIndex={-1} className={`${styles.karte} ${styles.geladen}`}>
           <p>
             <span className={styles.haken} aria-hidden="true">✓</span>{" "}
-            {ergebnis.offline
-              ? <>{t("The backend is unreachable. Below is the saved report for the synthetic example, not an analysis of your file.")}</>
-              : <><strong>{ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei.name : t(ergebnis.lauf.titel)}</strong> · {t("{n} items imported and reviewed.", { n: zahl.format(ergebnis.lv.positionen.length) })}
+            {<><strong>{ergebnis.lauf.art === "datei" ? ergebnis.lauf.datei.name : t(ergebnis.lauf.titel)}</strong> · {t("{n} items imported and reviewed.", { n: zahl.format(ergebnis.lv.positionen.length) })}
                 {regelwerk && <> · {t("Regulation document")}: {regelwerk.name}</>}</>}
           </p>
           {ergebnis.hinweise?.map((h) => <p key={h} className={styles.tipp} role="note">{h}</p>)}
