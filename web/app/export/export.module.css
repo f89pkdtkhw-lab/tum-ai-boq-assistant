@@ -1,6 +1,6 @@
 /* Export page: glass controls on screen, plain black-on-white document in print. Tokens from globals.css. */
 .seite {
-  max-width: 1280px; margin: 0 auto; display: grid; gap: 14px; color: var(--ink);
+  box-sizing: border-box; max-width: 1280px; width: 100%; min-width: 0; margin: 0 auto; display: grid; gap: 14px; color: var(--ink);
   padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(64px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
 }
 .seite :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
@@ -10,11 +10,12 @@
   box-shadow: inset 0 1px 0 var(--glass-light), 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow);
 }
 .leiste {
-  position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); z-index: 10; min-height: 56px; border-radius: var(--r-lg);
+  position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); z-index: 10; min-height: 56px; min-width: 0; max-width: 100%;
+  box-sizing: border-box; border-radius: var(--r-lg);
   padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
 }
 .zurueck { color: var(--accent); text-decoration: none; font-size: 13.5px; min-height: 34px; display: inline-flex; align-items: center; }
-.aktionen { display: flex; flex-wrap: wrap; gap: 8px; }
+.aktionen { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .knopf, .knopfZweit { gap: 6px;
   font: inherit; font-size: 13.5px; font-weight: 600; min-height: 34px; padding: 0 14px; border-radius: var(--r-sm); border: 0; cursor: pointer;
   display: inline-flex; align-items: center; text-decoration: none; transition: transform .12s ease, opacity .12s ease;
@@ -32,19 +33,20 @@
 .leer p { margin: 0; color: var(--muted); }
 .fehler { color: var(--bad) !important; font-weight: 500; }
 
-.blatt { background: var(--card); border-radius: var(--r-lg); padding: 32px; display: grid; gap: 16px; box-shadow: 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow); min-width: 0; }
-.kopf { display: grid; gap: 4px; }
-.eyebrow { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
-.kopf h1 { margin: 0; font-size: 34px; line-height: 1.12; letter-spacing: -.025em; }
-.quelle { margin: 0; color: var(--muted); font-size: 13.5px; }
-.blatt h2 { margin: 8px 0 0; font-size: 22px; letter-spacing: -.02em; }
-.hinweis { margin: 0; padding: 12px 16px; border-radius: var(--r-lg); font-size: 13.5px; background: color-mix(in srgb, var(--warn) 14%, transparent); }
-.zahlen { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.zahlen div { padding: 12px 16px; border-radius: var(--r-lg); background: var(--fill); }
-.zahlen dt { font-size: 13px; color: var(--muted); font-weight: 600; }
-.zahlen dd { margin: 0; font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.blatt { background: var(--card); border-radius: var(--r-lg); padding: 32px; display: grid; gap: 16px; box-shadow: 0 0 0 .5px var(--glass-line), 0 10px 30px -12px var(--shadow); min-width: 0; max-width: 100%; box-sizing: border-box; }
+.blatt > *, .blatt section { min-width: 0; max-width: 100%; }
+.kopf { display: grid; gap: 4px; min-width: 0; }
+.eyebrow { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--muted); overflow-wrap: anywhere; }
+.kopf h1 { margin: 0; font-size: clamp(22px, 3.4vw, 34px); line-height: 1.12; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.quelle { margin: 0; color: var(--muted); font-size: 13.5px; overflow-wrap: anywhere; }
+.blatt h2 { margin: 8px 0 0; font-size: clamp(18px, 2.4vw, 22px); letter-spacing: -.02em; overflow-wrap: anywhere; }
+.hinweis { margin: 0; padding: 12px 16px; border-radius: var(--r-lg); font-size: 13.5px; background: color-mix(in srgb, var(--warn) 14%, transparent); overflow-wrap: anywhere; }
+.zahlen { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 8px; }
+.zahlen div { min-width: 0; overflow: hidden; padding: 12px 16px; border-radius: var(--r-lg); background: var(--fill); box-sizing: border-box; }
+.zahlen dt { font-size: 13px; color: var(--muted); font-weight: 600; overflow-wrap: break-word; }
+.zahlen dd { margin: 0; font-size: clamp(18px, 2.4vw, 28px); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; overflow-wrap: anywhere; }
 
-.rahmen { overflow-x: auto; }
+.rahmen { overflow-x: auto; min-width: 0; max-width: 100%; }
 .tabelle { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tabelle th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 8px 10px; border-bottom: .5px solid var(--line); white-space: nowrap; }
 .tabelle td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: break-word; line-height: 1.45; }
@@ -64,6 +66,10 @@
 .rechts { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .mock { font-size: 12px; font-weight: 600; color: var(--warn); }
 
+@media (max-width: 1024px) {
+  .blatt { padding: 24px 20px; }
+  .leiste { padding-left: 14px; }
+}
 @media (max-width: 640px) {
   .blatt { padding: 20px 16px; border-radius: var(--r-lg); }
   .zahlen { grid-template-columns: minmax(0, 1fr); }
