@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import styles from "./nav.module.css";
 import { Logo } from "../logo/Logo";
 import { Icon, type IconName } from "../icon/Icon";
+import { KontoChip } from "../saas/KontoChip";
 import { useEinstellungen, nachts } from "@/lib/einstellungen";
 
 type Eintrag = { href: string; label: string; icon: IconName };
@@ -23,6 +24,8 @@ const WEITERE: Eintrag[] = [
   { href: "/schritte", label: "Step reports", icon: "steps" },
   { href: "/export", label: "Export", icon: "download" },
   { href: "/anleitung", label: "Tutorial", icon: "help" },
+  { href: "/tarife", label: "Plans", icon: "sparkles" },
+  { href: "/start", label: "About LV Scout", icon: "lightbulb" },
 ];
 
 const MOBIL = "(max-width: 860px)";
@@ -89,6 +92,7 @@ export function Nav() {
         </button>
         <Link href="/" className={styles.markeMobil}><Logo size={32} />LV Scout</Link>
         <span className={styles.platz} />
+        <KontoChip />
         <ThemaSchalter />
       </header>
     </>

@@ -1,7 +1,11 @@
 "use client";
 // User settings (language, theme, density), kept in this browser and applied to <html> as data attributes.
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { uebersetze, type Sprache } from "./i18n";
+import { DE, uebersetze, type Sprache } from "./i18n";
+import { DE_SAAS } from "./saas/i18n-saas";
+
+// Account/plan texts live in their own dictionary (lib/saas/i18n-saas.ts); entries in DE win.
+for (const [en, de] of Object.entries(DE_SAAS)) if (!(en in DE)) DE[en] = de;
 
 export type Thema = "auto" | "light" | "dark";
 export type Dichte = "normal" | "kompakt";

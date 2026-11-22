@@ -10,6 +10,8 @@ import { Bericht } from "@/components/bericht/Bericht";
 import { bietetOffline, ladeOfflineBericht } from "@/lib/offline";
 import { fuehreAnalyseAus } from "@/lib/analyse-job";
 import { Ladeanzeige, useWizard } from "@/components/wizard/Wizard";
+import { KontingentHinweis } from "@/components/saas/KontingentHinweis";
+import { zaehleAuswertung } from "@/lib/saas/client";
 import styles from "./lv-upload.module.css";
 
 // Same limit as MAX_UPLOAD_BYTES in api/app/main.py; checked locally so oversized files never leave the browser.
@@ -235,6 +237,7 @@ export function LvUpload() {
     const aktuell = () => nummer === laufNummer.current;
     let schritte = startSchritte(lauf);
     setErgebnis({ phase: "laeuft", lauf, schritte });
+    zaehleAuswertung(); // soft plan quota (lib/saas): fire-and-forget, never blocks or fails the run
 
     const scheitern = async (schritt: SchrittId, titel: string, fehler: unknown, tipp: string | null, stand: AnalyseStatus | null = null) => {
       let meldung = fehlerText(fehler);
@@ -407,6 +410,7 @@ export function LvUpload() {
       </header>
 
       {(ergebnis.phase === "leer" || schritt === "hochladen") && (<>
+      <KontingentHinweis />
       {/* Start screen from the team sketch: one upload button, the list of current files, Evaluate. */}
       <form className={styles.start} onSubmit={absenden} aria-describedby="upload-regeln"
         onDragOver={(e) => { e.preventDefault(); setZiehen(true); }} onDragLeave={() => setZiehen(false)} onDrop={aufAblegen}>
