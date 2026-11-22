@@ -31,3 +31,6 @@ import-output/
 
 # Local document vault (api/app/vault.py): uploaded files, reports and research, never commit
 data/vault/
+
+# Offline demo replay (tools/demo_fixture.py): stored run, local only
+.demo-replay/

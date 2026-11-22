@@ -31,6 +31,7 @@ from .modelle import Regelwerk  # B3 (#96)
 from .pruefung.regelwerk import importiere_regelwerk  # B3 (#96)
 from .pruefung.normen import vorgaben_aus_regelwerk  # B3 (#96)
 from .risiko.scoring import bewerte
+from . import demo_replay  # offline replay of a stored run (DEMO_REPLAY)
 from . import analyse_job  # #165: background analysis jobs
 from .fortschritt import OHNE_FORTSCHRITT, Fortschritt  # #165: progress API
 from .fortschritt import teilschritt  # #166: N5 research rounds report under step 5
@@ -64,6 +65,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 app = FastAPI(title="BoQ Review Assistant", version="0.2.0")
+app.middleware("http")(demo_replay.middleware)  # offline replay; does nothing without DEMO_REPLAY
 app.include_router(comparison_router)
 app.include_router(metadata_router)
 app.include_router(evaluation_router)

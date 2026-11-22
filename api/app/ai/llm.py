@@ -144,6 +144,9 @@ def status():
     missing key or a missing model name. ``reason`` explains why a configured provider is not used
     (None when the mock was chosen on purpose or no key exists at all).
     """
+    from .. import demo_replay  # noqa: PLC0415  offline replay: report the stored run's model
+    if demo_replay.aktiv():
+        return demo_replay.status(_keys())
     try:
         name = provider()
     except LLMError as exc:
@@ -170,6 +173,9 @@ def complete(prompt, system="", max_tokens=1024, *, timeout=None, json_mode=Fals
     Claude effort level (default: ANTHROPIC_EFFORT, else the model default). ``bilder`` (#192) is a list
     of JPEG bytes sent before the prompt (Claude only; other providers raise LLMError). Raises LLMError
     with a UI-safe message."""
+    from .. import demo_replay  # noqa: PLC0415  offline replay: no model call ever leaves the backend
+    if demo_replay.aktiv():
+        raise LLMError("Model calls are off in this offline replay.")
     system = sprache.mit_hinweis(system)
     name = provider()
     chosen = model(name)
@@ -273,6 +279,9 @@ def parse_json(text):
 
 
 def _post(url, headers, payload, timeout=None):
+    from .. import demo_replay  # noqa: PLC0415  offline replay: no model call ever leaves the backend
+    if demo_replay.aktiv():
+        raise LLMError("Model calls are off in this offline replay.")
     response = httpx.post(url, headers=headers, json=payload, timeout=timeout or seconds())
     response.raise_for_status()
     return response.json()
@@ -623,6 +632,9 @@ def research(prompt, system="", max_tokens=8000, *, max_searches=5, timeout=None
     default LLM_TIMEOUT) bounds the whole call including every pause_turn continuation. Claude only:
     other providers and the mock answer through complete() without citations.
     """
+    from .. import demo_replay  # noqa: PLC0415  offline replay: no model call ever leaves the backend
+    if demo_replay.aktiv():
+        raise LLMError("Model calls are off in this offline replay.")
     name = provider()
     if name == "grokbot":
         return _grokbot_research(prompt, system, max_tokens, timeout=timeout, effort=effort,

@@ -2,6 +2,7 @@
 
     python tools/dev.py            # Start both, Ctrl+C stops both
     python tools/dev.py --install  # Install dependencies first (pip in .venv, npm in web/)
+    python tools/dev.py --demo     # Offline replay of the run in .demo-replay/ (no key, no AI calls)
 
 Keys come from .env.local in the repository root; without keys the model uses a mock.
 """
@@ -41,7 +42,15 @@ def pump(name, process, color):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--install", action="store_true", help="install dependencies")
+    parser.add_argument("--demo", action="store_true",
+                        help="replay the stored run in .demo-replay/ (tools/demo_fixture.py); no model calls")
     args = parser.parse_args()
+    if args.demo:
+        ordner = Path(os.environ.get("DEMO_REPLAY") or ROOT / ".demo-replay")
+        if not (ordner / "bericht.json").exists():
+            sys.exit(f"✗ {ordner}/bericht.json is missing. Export a run first: python3 tools/demo_fixture.py")
+        os.environ["DEMO_REPLAY"] = str(ordner.resolve())
+        print(f"Replay mode: {ordner}", flush=True)
     if args.install or not PY.exists() or not (ROOT / "web" / "node_modules").exists():
         print("Installing dependencies …", flush=True)
         install()
