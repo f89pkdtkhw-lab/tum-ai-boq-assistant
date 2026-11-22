@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Shared Google/Stripe test values in web/.env.shared, then optional root .env.local (docs/abo.md).
-// Only allow-listed names, never overriding web/.env.local or the shell; nothing is logged.
+// Optional SaaS/auth values from web/.env.local and the repository-root .env.local (docs/abo.md).
+// Only allow-listed names, never overriding a value already set in the shell; nothing is logged.
+// Copy web/.env.example to web/.env.local (or use the root .env.example). Do not commit secrets.
 const SAAS_ENV = /^(AUTH_[A-Z_]+|SMTP_HOST|SMTP_PORT|SMTP_USER|SMTP_PASS|MAIL_FROM|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|ADMIN_EMAILS|APP_URL|LV_SCOUT_DATA_DIR|DEV_OPTIONS_CODE)$/;
-const SHARED_ENV = /^(AUTH_GOOGLE_ID|AUTH_GOOGLE_SECRET|STRIPE_SECRET_KEY)$/;
 const webDir = path.dirname(fileURLToPath(import.meta.url));
 function loadEnvFile(file, allowed) {
   try {
@@ -17,7 +17,7 @@ function loadEnvFile(file, allowed) {
     }
   } catch { /* optional file */ }
 }
-loadEnvFile(path.join(webDir, ".env.shared"), SHARED_ENV);
+loadEnvFile(path.join(webDir, ".env.local"), SAAS_ENV);
 loadEnvFile(path.resolve(webDir, "..", ".env.local"), SAAS_ENV);
 
 // The UI calls the backend at /backend/... . Locally, FastAPI runs on port 8000;

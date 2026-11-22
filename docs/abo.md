@@ -71,7 +71,7 @@ The app looks prices up by lookup key, so no price IDs need to be configured.
 
 ## Activate
 
-Google login and the Stripe test key also live in committed `web/.env.shared` (loaded by `web/next.config.mjs` when the name is not already set; `web/.env.local` still overrides). Put other secrets only in `.env.local` in the repository root or `web/.env.local`, never in commits, issues or chat:
+Put secrets only in `.env.local` in the repository root or `web/.env.local` (see `web/.env.example` and the root `.env.example`), never in commits, issues or chat. `web/next.config.mjs` reads allow-listed names from those files when they are not already set:
 
 1. **Google login** (step by step):
    1. Open <https://console.cloud.google.com/>, pick or create a project (e.g. "LV Scout").

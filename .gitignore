@@ -3,8 +3,10 @@ __pycache__/
 .venv/
 .env
 .env.*
+.env.local
+.env*.local
+.env.shared
 !.env.example
-!.env.shared
 .DS_Store
 Thumbs.db
 
